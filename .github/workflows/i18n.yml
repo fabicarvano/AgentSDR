@@ -1,0 +1,41 @@
+name: i18n
+
+# Translation guard. The interface is translated through message keys
+# (messages/<locale>/<domain>.json); this fails a pull request that
+#
+#  - leaves the English and Portuguese catalogs out of step (a missing or extra key,
+#    a lost {placeholder} or <tag>, an empty message, invalid ICU, a pt-BR message
+#    left identical to the English one, a domain file missing or orphaned), or
+#  - types new user-facing text straight into a component instead of a message key.
+#
+# How the rules work and how to fix a failure: messages/CONVENTIONS.md.
+# Already covered by CI.yml, so not repeated here: a component asking for a key English
+# does not have (typecheck), and English typed into a file already marked as translated
+# (lint, the TRANSLATED list in eslint.config.mjs).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: i18n-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  translations:
+    name: Translations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Catalogs in step (keys, placeholders, nothing left in English)
+        run: bun test --conditions=react-server src/i18n
+      - name: No text typed straight into components (translated files at zero, the rest can only go down)
+        run: bun run i18n:literals

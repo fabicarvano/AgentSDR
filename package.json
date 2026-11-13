@@ -23,6 +23,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "i18n:literals": "bun scripts/check-i18n-literals.ts",
     "test": "bun test --conditions=react-server",
     "db:setup": "bun scripts/db/setup.ts",
     "db:seed:demo": "bun --conditions=react-server scripts/db/seed-demo.ts",

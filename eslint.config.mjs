@@ -18,6 +18,78 @@ const TRANSLATED = [
   "src/components/i18n/**/*.tsx",
   "src/components/settings/AppearanceSettings.tsx",
   "src/components/theme/ThemeSwitch.tsx",
+  "src/components/Filters.tsx",
+  "src/components/ExportModal.tsx",
+  "src/components/DomainsTable.tsx",
+  "src/components/AppFilter.tsx",
+  "src/components/CategoryFilter.tsx",
+  "src/components/alignui/**/*.tsx",
+  "src/app/sign-up/**/*.tsx",
+  "src/app/forgot-password/**/*.tsx",
+  "src/app/reset-password/**/*.tsx",
+  "src/app/setup/**/*.tsx",
+  "src/app/onboarding/**/*.tsx",
+  "src/app/accept-invitation/**/*.tsx",
+  "src/app/oauth/**/*.tsx",
+  "src/app/unsubscribe/**/*.tsx",
+  "src/app/login/**/*.tsx",
+  "src/components/auth/AuthShowcase.tsx",
+  "src/components/auth/SessionGate.tsx",
+  "src/components/Sidebar.tsx",
+  "src/components/AppShell.tsx",
+  "src/components/NavigationProvider.tsx",
+  "src/components/DialogProvider.tsx",
+  "src/components/TableLoadingOverlay.tsx",
+  "src/components/TableSkeleton.tsx",
+  "src/components/nav/**/*.tsx",
+  "src/components/page/**/*.tsx",
+  // ui/responsive-hero-banner.tsx is left out on purpose: an unused marketing hero (see its header comment).
+  "src/components/ui/ActionsMenu.tsx",
+  "src/components/ui/Badge.tsx",
+  "src/components/ui/Select.tsx",
+  "src/components/ui/StatCard.tsx",
+  "src/components/ui/Tabs.tsx",
+  "src/components/brand/**/*.tsx",
+  "src/components/demo/**/*.tsx",
+  "src/components/theme/ThemeProvider.tsx",
+  "src/app/page.tsx",
+  "src/app/loading.tsx",
+  "src/app/settings/layout.tsx",
+  "src/components/settings/SettingsShell.tsx",
+];
+
+/**
+ * Options of i18next/no-literal-string: JSX text and the attributes a person reads or
+ * hears. Shared by the rule applied to TRANSLATED files below and by the census
+ * (scripts/check-i18n-literals.ts), so both agree on what counts as "text typed straight
+ * into a component".
+ *
+ * The plugin's options replace its defaults rather than extending them, so the defaults
+ * that still matter are repeated: numbers/punctuation, ALL_CAPS constants, and the
+ * translator functions (t, but also tc/tl/te… when a component opens more than one namespace).
+ */
+export const literalStringOptions = {
+  mode: "jsx-only",
+  "jsx-attributes": { include: ["placeholder", "title", "aria-label", "alt", "label", "description", "hint", "subtitle", "tooltip"] },
+  // Also not words: typographic symbols used as separators and icons-in-text, and brand names.
+  words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧]+", "AgentSDR", "Google", "⌘K"] },
+  callees: {
+    // `t.rich(...)` and `t.has(...)` are the same translator, as a member call.
+    exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
+  },
+};
+
+/**
+ * The same rule on EVERY component file, for `bun run i18n:literals`. Plain `eslint` does not
+ * use it (it would flag the screens that are still waiting for their translation batch).
+ */
+export const literalCensusConfig = [
+  {
+    files: ["src/**/*.tsx"],
+    ignores: ["**/*.test.tsx"],
+    plugins: { i18next },
+    rules: { "i18next/no-literal-string": ["error", literalStringOptions] },
+  },
 ];
 
 const eslintConfig = defineConfig([
@@ -43,23 +115,7 @@ const eslintConfig = defineConfig([
     // the attributes a person reads or hears. Brand names are allowed.
     files: TRANSLATED,
     plugins: { i18next },
-    rules: {
-      "i18next/no-literal-string": [
-        "error",
-        {
-          mode: "jsx-only",
-          "jsx-attributes": { include: ["placeholder", "title", "aria-label", "alt", "label", "description", "hint", "subtitle", "tooltip"] },
-          // Options replace the plugin's defaults rather than extending them, so the
-          // defaults that still matter are repeated: numbers/punctuation, ALL_CAPS
-          // constants, and the translator functions (t, but also tc/tl/te… when a
-          // component opens more than one namespace).
-          words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "AgentSDR", "Google", "⌘K"] },
-          callees: {
-            exclude: ["i18n(ext)?", "t[a-z]?", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
-          },
-        },
-      ],
-    },
+    rules: { "i18next/no-literal-string": ["error", literalStringOptions] },
   },
 ]);
 
