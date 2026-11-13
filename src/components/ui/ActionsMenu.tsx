@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export type ActionsMenuItem = {
   key: string;
@@ -12,6 +13,7 @@ export type ActionsMenuItem = {
 
 /** Kebab (3-dot) action menu — click-outside-to-close dropdown, modeled on Select.tsx. */
 export default function ActionsMenu({ items }: { items: ActionsMenuItem[] }) {
+  const t = useTranslations("shell.actionsMenu");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -30,7 +32,7 @@ export default function ActionsMenu({ items }: { items: ActionsMenuItem[] }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="More actions"
+        aria-label={t("more")}
         className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
           open ? "border-stroke-sub-300 bg-bg-weak-50" : "border-stroke-soft-200 hover:bg-bg-weak-50"
         }`}

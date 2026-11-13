@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import type { DomainsRow } from "@/lib/queries";
 import ExportModal from "./ExportModal";
 import { useNavigation } from "./NavigationProvider";
@@ -14,18 +15,28 @@ type Props = {
   totalPages: number;
 };
 
-function fmt(val: string | null): string {
-  if (!val) return "—";
+// Punctuation used as cell and pagination glyphs: symbols, not language.
+const EMPTY_CELL = "—";
+const CATEGORY_SEPARATOR = "›";
+const ELLIPSIS = "…";
+
+/** Annual sales are US dollars; the compact suffix (K/M/B, mil/mi/bi) follows the interface language. */
+function fmt(format: ReturnType<typeof useFormatter>, val: string | null): string {
+  if (!val) return EMPTY_CELL;
   const n = parseFloat(val);
-  if (isNaN(n)) return "—";
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n.toFixed(0)}`;
+  if (isNaN(n)) return EMPTY_CELL;
+  const usd = { style: "currency", currency: "USD" } as const;
+  if (n >= 1_000_000) return format.number(n, { ...usd, notation: "compact", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (n >= 1_000) return format.number(n, { ...usd, notation: "compact", maximumFractionDigits: 0 });
+  return format.number(n, { ...usd, maximumFractionDigits: 0 });
 }
 
+// Stored status values mapped to their label keys; any other value is shown as it is.
+const STATUS_KEYS = { Active: "active" } as const;
 
 export default function DomainsTable({ data, total, page, pageSize, totalPages }: Props) {
+  const t = useTranslations("shared.domainsTable");
+  const format = useFormatter();
   const { navigate } = useNavigation();
   const searchParams = useSearchParams();
   const [showExport, setShowExport] = useState(false);
@@ -38,6 +49,12 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
 
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
+  const showing = t.rich("showing", {
+    start,
+    end,
+    total,
+    b: (chunks) => <span className="font-semibold text-text-strong-950">{chunks}</span>,
+  });
 
   const pages = (() => {
     const n = Math.min(7, totalPages);
@@ -52,9 +69,7 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
       {/* Count bar + Export */}
       <div className="flex items-center justify-between shrink-0">
         <p className="text-sm text-text-strong-950">
-          Showing{" "}
-          <span className="font-semibold text-text-strong-950">{start.toLocaleString()}–{end.toLocaleString()}</span>{" "}
-          of <span className="font-semibold text-text-strong-950">{total.toLocaleString()}</span> companies
+          {showing}
         </p>
         <button
           onClick={() => setShowExport(true)}
@@ -63,7 +78,7 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
           <svg className="w-4 h-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          Export CSV
+          {t("exportCsv")}
         </button>
       </div>
 
@@ -77,19 +92,19 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
           <thead className="sticky top-0 z-10">
             <tr className="bg-slate-900 text-slate-300">
               <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap w-8">#</th>
-              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Company</th>
-              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Domain</th>
-              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Category</th>
-              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Country</th>
-              <th className="text-right px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Annual Revenue</th>
-              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.company")}</th>
+              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.domain")}</th>
+              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.category")}</th>
+              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.country")}</th>
+              <th className="text-right px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.annualRevenue")}</th>
+              <th className="text-left px-4 py-3 font-medium text-xs tracking-wide whitespace-nowrap">{t("columns.status")}</th>
             </tr>
           </thead>
           <tbody className="bg-bg-white-0">
             {data.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-20 text-center text-text-strong-950/50">
-                  No results — try adjusting your filters.
+                  {t("empty")}
                 </td>
               </tr>
             ) : (
@@ -104,7 +119,7 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
                   {/* Company */}
                   <td className="px-4 py-3.5">
                     <span className="font-semibold text-text-strong-950 truncate block max-w-52" title={row.merchantName ?? ""}>
-                      {row.merchantName || <span className="text-text-strong-950/30 font-normal">—</span>}
+                      {row.merchantName || <span className="text-text-strong-950/30 font-normal">{EMPTY_CELL}</span>}
                     </span>
                   </td>
 
@@ -130,24 +145,24 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
                     {row.c1 ? (
                       <span
                         className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full ring-1 ring-indigo-100 dark:ring-indigo-500/20 truncate max-w-48"
-                        title={[row.c1, row.c2, row.c3].filter(Boolean).join(" › ")}
+                        title={[row.c1, row.c2, row.c3].filter(Boolean).join(` ${CATEGORY_SEPARATOR} `)}
                       >
                         {row.c1}
-                        {row.c2 && <><span className="text-indigo-300">›</span>{row.c2}</>}
+                        {row.c2 && <><span className="text-indigo-300">{CATEGORY_SEPARATOR}</span>{row.c2}</>}
                       </span>
-                    ) : <span className="text-text-strong-950/30">—</span>}
+                    ) : <span className="text-text-strong-950/30">{EMPTY_CELL}</span>}
                   </td>
 
                   {/* Country */}
                   <td className="px-4 py-3.5">
                     {row.countryCode
                       ? <span className="font-mono text-xs bg-bg-weak-50 text-text-strong-950/70 px-2 py-1 rounded ring-1 ring-stroke-soft-200">{row.countryCode}</span>
-                      : <span className="text-text-strong-950/30">—</span>}
+                      : <span className="text-text-strong-950/30">{EMPTY_CELL}</span>}
                   </td>
 
                   {/* Annual Revenue */}
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">{fmt(row.annualSales)}</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">{fmt(format, row.annualSales)}</span>
                   </td>
 
                   {/* Status */}
@@ -158,9 +173,9 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
                           ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-500/30"
                           : "bg-bg-weak-50 text-text-strong-950/60 ring-1 ring-stroke-soft-200"
                       }`}>
-                        {row.status}
+                        {row.status in STATUS_KEYS ? t(`status.${STATUS_KEYS[row.status as keyof typeof STATUS_KEYS]}`) : row.status}
                       </span>
-                    ) : <span className="text-text-strong-950/30">—</span>}
+                    ) : <span className="text-text-strong-950/30">{EMPTY_CELL}</span>}
                   </td>
                 </tr>
               ))
@@ -178,20 +193,20 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-strong-950/70 border border-stroke-soft-200 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-bg-weak-50 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Prev
+            {t("previous")}
           </button>
 
           <div className="flex items-center gap-1">
             {pages[0] > 1 && (
               <>
                 <PageBtn p={1} current={page} onClick={goToPage} />
-                {pages[0] > 2 && <span className="w-8 text-center text-text-strong-950/30 text-sm">…</span>}
+                {pages[0] > 2 && <span className="w-8 text-center text-text-strong-950/30 text-sm">{ELLIPSIS}</span>}
               </>
             )}
             {pages.map((p) => <PageBtn key={p} p={p} current={page} onClick={goToPage} />)}
             {pages[pages.length - 1] < totalPages && (
               <>
-                {pages[pages.length - 1] < totalPages - 1 && <span className="w-8 text-center text-text-strong-950/30 text-sm">…</span>}
+                {pages[pages.length - 1] < totalPages - 1 && <span className="w-8 text-center text-text-strong-950/30 text-sm">{ELLIPSIS}</span>}
                 <PageBtn p={totalPages} current={page} onClick={goToPage} />
               </>
             )}
@@ -202,7 +217,7 @@ export default function DomainsTable({ data, total, page, pageSize, totalPages }
             disabled={page >= totalPages}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-strong-950/70 border border-stroke-soft-200 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-bg-weak-50 transition-colors"
           >
-            Next
+            {t("next")}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>

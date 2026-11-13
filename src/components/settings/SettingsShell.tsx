@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { RiCloseLine, RiSettings3Line } from "@remixicon/react";
 import * as Modal from "@/components/alignui/modal";
 import { cn } from "@/utils/cn";
@@ -26,10 +27,12 @@ const rowState = (active: boolean) =>
  * like the rail does, and leave room for the close button.
  */
 function SectionTabs({ tabs, activeHref, modal, label }: { tabs: SettingsTab[]; activeHref: string; modal: boolean; label: string }) {
+  const t = useTranslations("settings.shell");
+  const ti = useTranslations("settings.nav.items");
   return (
-    <nav aria-label={`${label} pages`} className={cn("shrink-0 border-b border-stroke-soft-200 px-4 sm:px-6 lg:px-8 lg:pt-3", modal && "lg:pr-16")}>
+    <nav aria-label={t("sectionPages", { section: label })} className={cn("shrink-0 border-b border-stroke-soft-200 px-4 sm:px-6 lg:px-8 lg:pt-3", modal && "lg:pr-16")}>
       <div className="-mb-px flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {tabs.map(({ href, label: tabLabel, icon: Icon }) => {
+        {tabs.map(({ href, labelKey, icon: Icon }) => {
           const active = href === activeHref;
           return (
             <Link
@@ -41,7 +44,7 @@ function SectionTabs({ tabs, activeHref, modal, label }: { tabs: SettingsTab[]; 
               className={cn("relative flex h-11 shrink-0 items-center gap-2 text-label-sm outline-none transition-colors focus-visible:text-text-strong-950", active ? "text-text-strong-950" : "text-text-sub-600 hover:text-text-strong-950")}
             >
               <Icon className={cn("size-[18px] shrink-0", active ? "text-text-strong-950" : "text-text-soft-400")} aria-hidden="true" />
-              {tabLabel}
+              {ti(labelKey)}
               <span className={cn("absolute inset-x-0 bottom-0 h-0.5 rounded-full", active ? "bg-primary-base" : "bg-transparent")} aria-hidden="true" />
             </Link>
           );
@@ -52,9 +55,10 @@ function SectionTabs({ tabs, activeHref, modal, label }: { tabs: SettingsTab[]; 
 }
 
 function CloseButton({ className }: { className?: string }) {
+  const t = useTranslations("settings.shell");
   return (
     <Modal.Close
-      aria-label="Close settings"
+      aria-label={t("close")}
       className={cn(
         "flex size-8 shrink-0 items-center justify-center rounded-lg text-text-soft-400 outline-none transition hover:bg-bg-weak-50 hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base",
         className,
@@ -76,6 +80,9 @@ function CloseButton({ className }: { className?: string }) {
  * so a single Back — which is what Close does — returns to the page beneath.
  */
 function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: boolean }) {
+  const t = useTranslations("settings.shell");
+  const tg = useTranslations("settings.nav.groups");
+  const ti = useTranslations("settings.nav.items");
   const pathname = usePathname();
   // A row is active on any of its pages; with tabs, the page is one of them.
   const activeItem = ITEMS.find((item) => itemPages(item).some((page) => isActive(pathname, page.href)));
@@ -104,16 +111,16 @@ function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: 
             <RiSettings3Line className="size-4 text-text-sub-600" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <Title className="text-label-md text-text-strong-950">Settings</Title>
-            <Description className="sr-only">Connected accounts, AI, CRM and your preferences.</Description>
+            <Title className="text-label-md text-text-strong-950">{t("title")}</Title>
+            <Description className="sr-only">{t("description")}</Description>
           </div>
         </div>
-        <nav aria-label="Settings sections" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+        <nav aria-label={t("sections")} className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           {SETTINGS_NAV.map((group, index) => (
-            <div key={group.label} className={cn(index > 0 && "mt-4")}>
-              <p className="mb-1 px-2 text-paragraph-xs text-text-soft-400">{group.label}</p>
+            <div key={group.labelKey} className={cn(index > 0 && "mt-4")}>
+              <p className="mb-1 px-2 text-paragraph-xs text-text-soft-400">{tg(group.labelKey)}</p>
               <ul className="space-y-0.5">
-                {group.items.map(({ href, label, icon: Icon }) => {
+                {group.items.map(({ href, labelKey, icon: Icon }) => {
                   const active = href === activeHref;
                   return (
                     <li key={href}>
@@ -125,7 +132,7 @@ function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: 
                         className={cn(rowBase, rowState(active), "h-9 px-2")}
                       >
                         <Icon className={cn("size-[18px] shrink-0", active ? "text-text-strong-950" : "text-text-soft-400")} aria-hidden="true" />
-                        <span className="min-w-0 flex-1 truncate">{label}</span>
+                        <span className="min-w-0 flex-1 truncate">{ti(labelKey)}</span>
                       </Link>
                     </li>
                   );
@@ -142,16 +149,16 @@ function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: 
           <div className="flex min-w-0 items-center gap-2.5">
             <RiSettings3Line className="size-5 shrink-0 text-text-soft-400" aria-hidden="true" />
             {/* The rail's title is hidden here; one Title per dialog is enough for screen readers. */}
-            <p className="text-label-md text-text-strong-950" aria-hidden="true">Settings</p>
+            <p className="text-label-md text-text-strong-950" aria-hidden="true">{t("title")}</p>
           </div>
           {modal && <CloseButton />}
         </div>
-        <nav aria-label="Settings sections">
+        <nav aria-label={t("sections")}>
           <div
             ref={stripRef}
             className="flex gap-1 overflow-x-auto px-3 pb-2.5 sm:px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {ITEMS.map(({ href, label, icon: Icon }) => {
+            {ITEMS.map(({ href, labelKey, icon: Icon }) => {
               const active = href === activeHref;
               return (
                 <Link
@@ -168,7 +175,7 @@ function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: 
                   )}
                 >
                   <Icon className={cn("size-4 shrink-0", active ? "text-text-strong-950" : "text-text-soft-400")} aria-hidden="true" />
-                  {label}
+                  {ti(labelKey)}
                 </Link>
               );
             })}
@@ -178,7 +185,7 @@ function SettingsFrame({ children, modal }: { children: React.ReactNode; modal: 
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         {modal && <CloseButton className="absolute right-4 top-4 z-10 hidden lg:flex" />}
-        {activeItem?.tabs && <SectionTabs tabs={activeItem.tabs} activeHref={activePage} modal={modal} label={activeItem.label} />}
+        {activeItem?.tabs && <SectionTabs tabs={activeItem.tabs} activeHref={activePage} modal={modal} label={ti(activeItem.labelKey)} />}
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           {children}
         </div>

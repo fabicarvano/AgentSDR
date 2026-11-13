@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import appsData from "@/data/apps.json";
 
 type Props = {
@@ -8,15 +9,21 @@ type Props = {
   onChange: (app: string) => void;
 };
 
-function fmt(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
+/** Counts next to each option: 1.2M / 12K in English, 1,2 mi / 12 mil in Portuguese. */
+function fmt(format: ReturnType<typeof useFormatter>, n: number) {
+  if (n >= 1_000_000) return format.number(n, { notation: "compact", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (n >= 1_000) return format.number(n, { notation: "compact", maximumFractionDigits: 0 });
+  return format.number(n);
 }
 
 const ALL_APPS = appsData as { name: string; count: number }[];
 
+// A multiplication sign on the clear button: a symbol, not language.
+const CLEAR_SIGN = "×";
+
 export default function AppFilter({ value, onChange }: Props) {
+  const t = useTranslations("shared.appFilter");
+  const format = useFormatter();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -51,15 +58,16 @@ export default function AppFilter({ value, onChange }: Props) {
             ${open ? "ring-2 ring-violet-300 dark:ring-violet-500/30 border-violet-400" : ""}
           `}
         >
-          <span className="truncate">{value || "All Apps"}</span>
+          <span className="truncate">{value || t("allApps")}</span>
           <div className="flex items-center gap-1 shrink-0">
             {value && (
               <span
                 role="button"
+                aria-label={t("clear")}
                 onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
                 className="w-4 h-4 flex items-center justify-center rounded-full text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/25 hover:text-violet-700 dark:hover:text-violet-400 transition-colors text-xs"
               >
-                ×
+                {CLEAR_SIGN}
               </span>
             )}
             <svg className={`w-4 h-4 text-text-strong-950/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
@@ -81,7 +89,7 @@ export default function AppFilter({ value, onChange }: Props) {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search apps..."
+                  placeholder={t("searchPlaceholder")}
                   className="w-full pl-7 pr-3 py-1.5 text-sm border border-stroke-soft-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300 dark:focus:ring-violet-500/30 focus:border-transparent placeholder-text-disabled-300"
                 />
               </div>
@@ -96,11 +104,11 @@ export default function AppFilter({ value, onChange }: Props) {
                   !value ? "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 font-medium" : "text-text-strong-950/50 hover:bg-bg-weak-50"
                 }`}
               >
-                All Apps
+                {t("allApps")}
               </button>
 
               {filtered.length === 0 && (
-                <p className="text-center py-6 text-sm text-text-strong-950/50">No apps found</p>
+                <p className="text-center py-6 text-sm text-text-strong-950/50">{t("noResults")}</p>
               )}
 
               {filtered.map(({ name, count }) => (
@@ -114,7 +122,7 @@ export default function AppFilter({ value, onChange }: Props) {
                 >
                   <span className="truncate min-w-0 flex-1">{name}</span>
                   <span className={`text-xs tabular-nums shrink-0 ${name === value ? "text-violet-400" : "text-text-strong-950/50"}`}>
-                    {fmt(count)}
+                    {fmt(format, count)}
                   </span>
                 </button>
               ))}

@@ -1,3 +1,108 @@
 {
-  "shell": {}
+  "shell": {
+    "nav": {
+      "analytics": "Analytics",
+      "actionRequired": "Ação necessária",
+      "leads": "Leads",
+      "outreach": "Abordagem",
+      "email": "E-mail",
+      "linkedin": "LinkedIn",
+      "whatsapp": "WhatsApp",
+      "campaigns": "Campanhas",
+      "inbox": "Caixa de entrada",
+      "messages": "Mensagens",
+      "search": "Busca",
+      "messageCampaigns": "Campanhas de mensagens",
+      "callCampaigns": "Campanhas de chamadas",
+      "crm": "CRM",
+      "pipeline": "Pipeline",
+      "sequences": "Sequências",
+      "data": "Dados",
+      "tables": "Tabelas",
+      "prospecting": "Prospecção",
+      "allDomains": "Todos os domínios",
+      "qualificationCampaigns": "Campanhas de qualificação",
+      "developers": "Desenvolvedores",
+      "connections": "Conexões",
+      "jobHistory": "Histórico de execuções",
+      "linkedinWebhooks": "Webhooks do LinkedIn",
+      "settings": "Configurações"
+    },
+    "help": {
+      "documentation": "Documentação",
+      "reportBug": "Relatar um bug",
+      "requestFeature": "Sugerir um recurso",
+      "askCommunity": "Perguntar à comunidade",
+      "reportSecurity": "Relatar um problema de segurança"
+    },
+    "sidebar": {
+      "home": "Página inicial do AgentSDR",
+      "themeTooltip": "Claro ou escuro",
+      "closeMenu": "Fechar menu",
+      "expandSidebar": "Expandir barra lateral",
+      "collapseSidebar": "Recolher barra lateral",
+      "searchTooltip": "Buscar (⌘K)",
+      "searchLabel": "Buscar ou ir para",
+      "searchPlaceholder": "Buscar ou ir para…",
+      "main": "Principal",
+      "badgeNeedsAttention": "{count, plural, one {# precisa de atenção} other {# precisam de atenção}}",
+      "needsAttention": "Precisa de atenção",
+      "help": "Ajuda",
+      "workspaceMenu": "Menu do espaço de trabalho",
+      "noOrganization": "Nenhuma organização",
+      "account": "Conta",
+      "organizations": "Organizações",
+      "active": "Ativa",
+      "createOrganization": "Criar organização",
+      "signOut": "Sair",
+      "switchFailed": "Não foi possível trocar de organização."
+    },
+    "commandPalette": {
+      "title": "Buscar ou ir para",
+      "placeholder": "Buscar páginas, configurações, ações…",
+      "inputLabel": "Buscar páginas, configurações e ações",
+      "empty": "Nada corresponde a “{query}”.",
+      "groupPages": "Páginas",
+      "groupSettings": "Configurações",
+      "groupCreate": "Criar",
+      "groupHelp": "Ajuda",
+      "newEmailCampaign": "Nova campanha de e-mail",
+      "newLinkedinCampaign": "Nova campanha do LinkedIn"
+    },
+    "appShell": {
+      "home": "Página inicial do AgentSDR",
+      "openMenu": "Abrir menu",
+      "navigation": "Navegação"
+    },
+    "dialogs": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "save": "Salvar",
+      "ok": "OK"
+    },
+    "demo": {
+      "toastTitle": "Esta é uma demonstração somente leitura",
+      "toastBody": "Explore à vontade. As alterações não são salvas aqui. <link>Hospede o AgentSDR por conta própria</link> para usá-lo de verdade.",
+      "dismiss": "Fechar",
+      "bannerTitle": "Demonstração ao vivo",
+      "bannerDetail": "dados de exemplo: as pessoas e as conversas são fictícias, e nada do que você alterar é salvo",
+      "starOnGithub": "Dar uma estrela no GitHub",
+      "selfHost": "Hospede grátis"
+    },
+    "select": {
+      "placeholder": "Selecionar…"
+    },
+    "actionsMenu": {
+      "more": "Mais ações"
+    },
+    "skeleton": {
+      "loading": "Carregando"
+    },
+    "tableLoadingOverlay": {
+      "loadingResults": "Carregando resultados…"
+    },
+    "docsLink": {
+      "howToConnect": "Como conectar"
+    }
+  }
 }

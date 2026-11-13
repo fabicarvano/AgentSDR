@@ -1,32 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Spinner } from "@/components/auth/fields";
 import { useOAuthClient } from "@/components/oauth/useOAuthClient";
 
 export function OrganizationPicker({ clientId }: { clientId: string | null }) {
+  const t = useTranslations("auth.oauth.organization");
+  const authError = useAuthError();
   const client = useOAuthClient(clientId);
   const { data: orgs, isPending } = authClient.useListOrganizations();
   const { data: active } = authClient.useActiveOrganization();
   const [choosing, setChoosing] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const assistant = client.name ?? "your AI assistant";
+  const assistant = client.name ?? t("assistantFallback");
 
   async function choose(organizationId: string) {
     setChoosing(organizationId);
     setError("");
     const set = await authClient.organization.setActive({ organizationId });
     if (set.error) {
-      setError(set.error.message || "Could not switch organization.");
+      setError(authError(set.error, t("switchFailed")));
       setChoosing(null);
       return;
     }
     const { data, error: err } = await authClient.oauth2.continue({ postLogin: true });
     const next = data as { redirect?: boolean; url?: unknown } | null;
     if (err || !next || typeof next.url !== "string") {
-      setError(err?.message || "Something went wrong. Please try again.");
+      setError(authError(err, t("genericError")));
       setChoosing(null);
       return;
     }
@@ -34,14 +38,14 @@ export function OrganizationPicker({ clientId }: { clientId: string | null }) {
   }
 
   return (
-    <AuthShell title={`Which organization should ${assistant} work in?`} subtitle="You can connect another one later.">
+    <AuthShell title={t("title", { assistant })} subtitle={t("subtitle")}>
       <div className="flex flex-col gap-3">
         {isPending && (
           <div className="flex justify-center py-4 text-zinc-400">
             <Spinner />
           </div>
         )}
-        {!isPending && (orgs ?? []).length === 0 && <ErrorCallout>You are not a member of any organization yet.</ErrorCallout>}
+        {!isPending && (orgs ?? []).length === 0 && <ErrorCallout>{t("noOrganizations")}</ErrorCallout>}
         {(orgs ?? []).map((org) => (
           <button
             key={org.id}
@@ -54,7 +58,7 @@ export function OrganizationPicker({ clientId }: { clientId: string | null }) {
             {choosing === org.id ? (
               <Spinner />
             ) : (
-              active?.id === org.id && <span className="shrink-0 text-xs font-normal text-zinc-400">Current</span>
+              active?.id === org.id && <span className="shrink-0 text-xs font-normal text-zinc-400">{t("current")}</span>
             )}
           </button>
         ))}

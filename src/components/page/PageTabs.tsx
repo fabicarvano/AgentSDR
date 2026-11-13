@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import { useFormatter } from "next-intl";
 import { cn } from "@/utils/cn";
 
 /**
@@ -31,6 +32,7 @@ export function PageTabs<T extends string>({
   trailing?: React.ReactNode;
   className?: string;
 }) {
+  const format = useFormatter();
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-stroke-soft-200", className)}>
       <div role="tablist" aria-label={label} className="-mb-px flex gap-5 overflow-x-auto">
@@ -50,7 +52,7 @@ export function PageTabs<T extends string>({
               {tab.label}
               {tab.count !== undefined && (
                 <span className={cn("rounded-md px-1.5 py-0.5 text-label-xs tabular-nums", active ? "bg-bg-strong-950 text-text-white-0" : "bg-bg-weak-50 text-text-sub-600")}>
-                  {tab.count.toLocaleString("en-US")}
+                  {format.number(tab.count)}
                 </span>
               )}
               <span className={cn("absolute inset-x-0 bottom-0 h-0.5 rounded-full", active ? "bg-primary-base" : "bg-transparent")} />

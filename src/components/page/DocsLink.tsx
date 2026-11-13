@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { RiBookOpenLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -15,7 +16,7 @@ import { cn } from "@/utils/cn";
 export function DocsLink({
   page,
   href,
-  children = "How to connect",
+  children,
   appearance = "button",
   size = "small",
   className,
@@ -26,6 +27,8 @@ export function DocsLink({
   size?: "xsmall" | "small";
   className?: string;
 }) {
+  const t = useTranslations("shell.docsLink");
+  const label = children === undefined ? t("howToConnect") : children;
   const url = page ? docsPageUrl(page) : href;
   if (appearance === "inline") {
     return (
@@ -36,7 +39,7 @@ export function DocsLink({
         className={cn("inline-flex items-center gap-1 font-medium text-primary-base underline-offset-2 hover:underline", className)}
       >
         <RiBookOpenLine className="size-3.5 shrink-0" aria-hidden="true" />
-        {children}
+        {label}
       </a>
     );
   }
@@ -44,7 +47,7 @@ export function DocsLink({
     <Button.Root asChild variant="neutral" mode="stroke" size={size} className={className}>
       <a href={url} target="_blank" rel="noopener noreferrer">
         <Button.Icon as={RiBookOpenLine} />
-        {children}
+        {label}
       </a>
     </Button.Root>
   );

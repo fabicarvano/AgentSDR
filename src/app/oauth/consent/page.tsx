@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getOrgContext } from "@/lib/auth/context";
 import { ConsentForm } from "./ConsentForm";
 
-export const metadata = { title: "Connect an AI assistant" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.oauth.consent");
+  return { title: t("metaTitle") };
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function ConsentPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

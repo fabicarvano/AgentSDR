@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
+/**
+ * The page a lead reaches from the unsubscribe link in outreach email. The language follows the
+ * visitor's browser (src/i18n/request.ts), since a lead has no account and no saved choice.
+ * Moved here from src/components/outreach/ so the strings are translated with the rest of the auth pages.
+ */
 export default function UnsubscribeClient({ token }: { token: string | null }) {
+  const t = useTranslations("auth.unsubscribe");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,14 +25,15 @@ export default function UnsubscribeClient({ token }: { token: string | null }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong");
+        // data.error is an English message written by the API route: translated in a later batch.
+        setError(data.error ?? t("genericError"));
         setState("error");
         return;
       }
       setEmail(data.email);
       setState("done");
     } catch {
-      setError("Network error — please try again");
+      setError(t("networkError"));
       setState("error");
     }
   }
@@ -33,8 +41,8 @@ export default function UnsubscribeClient({ token }: { token: string | null }) {
   if (!token) {
     return (
       <div className="text-center">
-        <h1 className="text-lg font-bold text-text-strong-950">Invalid link</h1>
-        <p className="text-sm text-text-strong-950/50 mt-2">This unsubscribe link is missing its token.</p>
+        <h1 className="text-lg font-bold text-text-strong-950">{t("invalidTitle")}</h1>
+        <p className="text-sm text-text-strong-950/50 mt-2">{t("invalidBody")}</p>
       </div>
     );
   }
@@ -47,27 +55,23 @@ export default function UnsubscribeClient({ token }: { token: string | null }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-text-strong-950">You&apos;re unsubscribed</h1>
-        <p className="text-sm text-text-strong-950/50 mt-2">
-          {email} won&apos;t receive any further emails from us.
-        </p>
+        <h1 className="text-lg font-bold text-text-strong-950">{t("doneTitle")}</h1>
+        <p className="text-sm text-text-strong-950/50 mt-2">{t("doneBody", { email: email ?? "" })}</p>
       </div>
     );
   }
 
   return (
     <div className="text-center">
-      <h1 className="text-lg font-bold text-text-strong-950">Unsubscribe</h1>
-      <p className="text-sm text-text-strong-950/50 mt-2 mb-6">
-        Click below to stop receiving emails from this sender.
-      </p>
+      <h1 className="text-lg font-bold text-text-strong-950">{t("title")}</h1>
+      <p className="text-sm text-text-strong-950/50 mt-2 mb-6">{t("intro")}</p>
       {error && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2 mb-4">{error}</p>}
       <button
         onClick={handleUnsubscribe}
         disabled={state === "loading"}
         className="w-full h-10 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 transition-colors"
       >
-        {state === "loading" ? "Unsubscribing…" : "Unsubscribe me"}
+        {state === "loading" ? t("submitting") : t("submit")}
       </button>
     </div>
   );

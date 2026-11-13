@@ -2,11 +2,19 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, InfoCallout, SubmitButton, linkClass } from "@/components/auth/fields";
 
+/** Keep equal to emailAndPassword.minPasswordLength in src/lib/auth/server.ts. */
+const MIN_PASSWORD_LENGTH = 8;
+
 export function ResetPasswordForm({ token, invalid }: { token: string | null; invalid: boolean }) {
+  const t = useTranslations("auth.resetPassword");
+  const tc = useTranslations("auth.common");
+  const authError = useAuthError();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -16,42 +24,51 @@ export function ResetPasswordForm({ token, invalid }: { token: string | null; in
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (password.length < 8) return setError("Password must be at least 8 characters.");
-    if (password !== confirm) return setError("The passwords don't match.");
+    if (password.length < MIN_PASSWORD_LENGTH) return setError(tc("passwordTooShort", { count: MIN_PASSWORD_LENGTH }));
+    if (password !== confirm) return setError(t("mismatch"));
     if (!token) return;
     setLoading(true);
     const { error: err } = await authClient.resetPassword({ newPassword: password, token });
     setLoading(false);
-    if (err) setError(err.code === "INVALID_TOKEN" ? "This reset link is invalid or has expired." : err.message || "Something went wrong. Please try again.");
+    if (err) setError(err.code === "INVALID_TOKEN" ? t("linkInvalid") : authError(err, tc("genericError")));
     else setDone(true);
   }
 
   if (invalid) {
     return (
-      <AuthShell title="Link expired" subtitle="This password reset link is invalid or has expired.">
+      <AuthShell title={t("expiredTitle")} subtitle={t("expiredSubtitle")}>
         <Link href="/forgot-password" className={linkClass}>
-          Request a new link
+          {t("requestNew")}
         </Link>
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell title="Choose a new password">
+    <AuthShell title={t("title")}>
       {done ? (
         <div className="flex flex-col gap-3">
-          <InfoCallout>Your password has been updated.</InfoCallout>
+          <InfoCallout>{t("updated")}</InfoCallout>
           <Link href="/sign-in" className={linkClass}>
-            Continue to sign in
+            {t("continueToSignIn")}
           </Link>
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <Field label="New password" type="password" autoComplete="new-password" minLength={8} required hint="At least 8 characters." value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Field label="Confirm password" type="password" autoComplete="new-password" minLength={8} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+          <Field
+            label={t("newPassword")}
+            type="password"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+            hint={tc("passwordHint", { count: MIN_PASSWORD_LENGTH })}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Field label={t("confirmPassword")} type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           {error && <ErrorCallout>{error}</ErrorCallout>}
-          <SubmitButton loading={loading} loadingLabel="Saving...">
-            Update password
+          <SubmitButton loading={loading} loadingLabel={t("saving")}>
+            {t("submit")}
           </SubmitButton>
         </form>
       )}

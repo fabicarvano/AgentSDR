@@ -1,3 +1,108 @@
 {
-  "shell": {}
+  "shell": {
+    "nav": {
+      "analytics": "Analytics",
+      "actionRequired": "Action required",
+      "leads": "Leads",
+      "outreach": "Outreach",
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "whatsapp": "WhatsApp",
+      "campaigns": "Campaigns",
+      "inbox": "Inbox",
+      "messages": "Messages",
+      "search": "Search",
+      "messageCampaigns": "Message campaigns",
+      "callCampaigns": "Call campaigns",
+      "crm": "CRM",
+      "pipeline": "Pipeline",
+      "sequences": "Sequences",
+      "data": "Data",
+      "tables": "Tables",
+      "prospecting": "Prospecting",
+      "allDomains": "All domains",
+      "qualificationCampaigns": "Qualification campaigns",
+      "developers": "Developers",
+      "connections": "Connections",
+      "jobHistory": "Job history",
+      "linkedinWebhooks": "LinkedIn webhooks",
+      "settings": "Settings"
+    },
+    "help": {
+      "documentation": "Documentation",
+      "reportBug": "Report a bug",
+      "requestFeature": "Request a feature",
+      "askCommunity": "Ask the community",
+      "reportSecurity": "Report a security issue"
+    },
+    "sidebar": {
+      "home": "AgentSDR home",
+      "themeTooltip": "Light or dark",
+      "closeMenu": "Close menu",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "searchTooltip": "Search (⌘K)",
+      "searchLabel": "Search or jump to",
+      "searchPlaceholder": "Search or jump to…",
+      "main": "Main",
+      "badgeNeedsAttention": "{count, plural, one {# needs attention} other {# need attention}}",
+      "needsAttention": "Needs attention",
+      "help": "Help",
+      "workspaceMenu": "Workspace menu",
+      "noOrganization": "No organization",
+      "account": "Account",
+      "organizations": "Organizations",
+      "active": "Active",
+      "createOrganization": "Create organization",
+      "signOut": "Sign out",
+      "switchFailed": "Could not switch organization."
+    },
+    "commandPalette": {
+      "title": "Search or jump to",
+      "placeholder": "Search pages, settings, actions…",
+      "inputLabel": "Search pages, settings and actions",
+      "empty": "Nothing matches “{query}”.",
+      "groupPages": "Pages",
+      "groupSettings": "Settings",
+      "groupCreate": "Create",
+      "groupHelp": "Help",
+      "newEmailCampaign": "New email campaign",
+      "newLinkedinCampaign": "New LinkedIn campaign"
+    },
+    "appShell": {
+      "home": "AgentSDR home",
+      "openMenu": "Open menu",
+      "navigation": "Navigation"
+    },
+    "dialogs": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "save": "Save",
+      "ok": "OK"
+    },
+    "demo": {
+      "toastTitle": "This is a read-only demo",
+      "toastBody": "Look around as much as you like. Changes are not saved here. <link>Self-host AgentSDR</link> to use it for real.",
+      "dismiss": "Dismiss",
+      "bannerTitle": "Live demo",
+      "bannerDetail": "sample data: the people and conversations are made up, and nothing you change is saved",
+      "starOnGithub": "Star on GitHub",
+      "selfHost": "Self-host it free"
+    },
+    "select": {
+      "placeholder": "Select…"
+    },
+    "actionsMenu": {
+      "more": "More actions"
+    },
+    "skeleton": {
+      "loading": "Loading"
+    },
+    "tableLoadingOverlay": {
+      "loadingResults": "Loading results…"
+    },
+    "docsLink": {
+      "howToConnect": "How to connect"
+    }
+  }
 }

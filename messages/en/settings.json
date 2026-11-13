@@ -9,6 +9,47 @@
       "colourThemeDescription": "System follows your computer's light or dark setting and switches when it does.",
       "showing": "Showing {theme, select, light {light} dark {dark} other {{theme}}}, from your system setting",
       "footer": "Remembered on this browser only. Other browsers and devices keep their own choice, and nothing is saved to your workspace."
+    },
+    "nav": {
+      "groups": {
+        "organization": "Organization",
+        "channels": "Channels",
+        "ai": "AI",
+        "crm": "CRM & leads",
+        "preferences": "Preferences"
+      },
+      "items": {
+        "general": "General",
+        "members": "Members",
+        "teams": "Teams",
+        "apiKeys": "API keys",
+        "aiAssistants": "AI assistants",
+        "email": "Email",
+        "linkedin": "LinkedIn",
+        "whatsapp": "WhatsApp",
+        "mailboxes": "Mailboxes",
+        "connection": "Connection",
+        "sendingRules": "Sending rules",
+        "accounts": "Accounts",
+        "numbers": "Numbers",
+        "callingNumbers": "Calling numbers",
+        "integrations": "Integrations",
+        "instructions": "Instructions",
+        "knowledge": "Knowledge",
+        "aiProvider": "AI provider",
+        "leadCategories": "Lead categories",
+        "leadColumns": "Lead columns",
+        "appearance": "Appearance"
+      }
+    },
+    "shell": {
+      "title": "Settings",
+      "description": "Connected accounts, AI, CRM and your preferences.",
+      "sections": "Settings sections",
+      "sectionPages": "{section} pages",
+      "close": "Close settings",
+      "titleDefault": "Settings · AgentSDR",
+      "titleTemplate": "%s · Settings · AgentSDR"
     }
   }
 }

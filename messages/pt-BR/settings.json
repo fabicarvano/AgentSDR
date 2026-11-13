@@ -9,6 +9,47 @@
       "colourThemeDescription": "“Sistema” segue a configuração clara ou escura do seu computador e muda quando ela muda.",
       "showing": "Exibindo o tema {theme, select, light {claro} dark {escuro} other {{theme}}}, conforme a configuração do sistema",
       "footer": "Lembrado apenas neste navegador. Outros navegadores e dispositivos mantêm a própria escolha, e nada é salvo no seu espaço de trabalho."
+    },
+    "nav": {
+      "groups": {
+        "organization": "Organização",
+        "channels": "Canais",
+        "ai": "IA",
+        "crm": "CRM e leads",
+        "preferences": "Preferências"
+      },
+      "items": {
+        "general": "Geral",
+        "members": "Membros",
+        "teams": "Equipes",
+        "apiKeys": "Chaves de API",
+        "aiAssistants": "Assistentes de IA",
+        "email": "E-mail",
+        "linkedin": "LinkedIn",
+        "whatsapp": "WhatsApp",
+        "mailboxes": "Caixas de e-mail",
+        "connection": "Conexão",
+        "sendingRules": "Regras de envio",
+        "accounts": "Contas",
+        "numbers": "Números",
+        "callingNumbers": "Números de chamada",
+        "integrations": "Integrações",
+        "instructions": "Instruções",
+        "knowledge": "Conhecimento",
+        "aiProvider": "Provedor de IA",
+        "leadCategories": "Categorias de lead",
+        "leadColumns": "Colunas de lead",
+        "appearance": "Aparência"
+      }
+    },
+    "shell": {
+      "title": "Configurações",
+      "description": "Contas conectadas, IA, CRM e suas preferências.",
+      "sections": "Seções de configurações",
+      "sectionPages": "Páginas de {section}",
+      "close": "Fechar configurações",
+      "titleDefault": "Configurações · AgentSDR",
+      "titleTemplate": "%s · Configurações · AgentSDR"
     }
   }
 }

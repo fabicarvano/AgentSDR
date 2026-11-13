@@ -1,12 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { RiCloseLine, RiGithubFill, RiLockLine } from "@remixicon/react";
 
 import { DEMO_READ_ONLY_CODE } from "@/lib/demo/mode";
 
 const REPO = "https://github.com/Kandid-ai/AgentSDR";
 const SELF_HOST_DOCS = "https://docs.agentsdr.ai/self-hosting";
+
+/** A typographic separator, the same in every language. */
+const SEPARATOR = " · ";
 
 const DemoContext = React.createContext(false);
 
@@ -61,6 +65,14 @@ export function DemoProvider({ enabled, children }: { enabled: boolean; children
 }
 
 function ReadOnlyToast({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("shell.demo");
+  const body = t.rich("toastBody", {
+    link: (chunks) => (
+      <a href={SELF_HOST_DOCS} target="_blank" rel="noreferrer" className="text-static-white underline underline-offset-2">
+        {chunks}
+      </a>
+    ),
+  });
   React.useEffect(() => {
     const timer = window.setTimeout(onClose, 5000);
     return () => window.clearTimeout(timer);
@@ -76,16 +88,12 @@ function ReadOnlyToast({ onClose }: { onClose: () => void }) {
         <RiLockLine className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-label-sm">This is a read-only demo</p>
+        <p className="text-label-sm">{t("toastTitle")}</p>
         <p className="mt-0.5 text-paragraph-xs text-white/70">
-          Look around as much as you like. Changes are not saved here.{" "}
-          <a href={SELF_HOST_DOCS} target="_blank" rel="noreferrer" className="text-static-white underline underline-offset-2">
-            Self-host AgentSDR
-          </a>{" "}
-          to use it for real.
+          {body}
         </p>
       </div>
-      <button type="button" onClick={onClose} aria-label="Dismiss" className="rounded-md p-0.5 text-white/60 transition hover:text-static-white">
+      <button type="button" onClick={onClose} aria-label={t("dismiss")} className="rounded-md p-0.5 text-white/60 transition hover:text-static-white">
         <RiCloseLine className="size-4" />
       </button>
     </div>
@@ -94,6 +102,7 @@ function ReadOnlyToast({ onClose }: { onClose: () => void }) {
 
 /** The strip across the top of the demo: what this is, and where to get it. */
 export function DemoBanner() {
+  const t = useTranslations("shell.demo");
   const enabled = useDemoMode();
   if (!enabled) return null;
   return (
@@ -104,8 +113,8 @@ export function DemoBanner() {
           <span className="relative inline-flex size-2 rounded-full bg-success-base" />
         </span>
         <span className="truncate">
-          <span className="text-label-sm text-text-strong-950">Live demo</span>
-          <span className="hidden sm:inline"> · sample data: the people and conversations are made up, and nothing you change is saved</span>
+          <span className="text-label-sm text-text-strong-950">{t("bannerTitle")}</span>
+          <span className="hidden sm:inline">{SEPARATOR}{t("bannerDetail")}</span>
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-2">
@@ -116,7 +125,7 @@ export function DemoBanner() {
           className="hidden items-center gap-1.5 rounded-md px-2 py-1 text-label-xs text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-white-0 hover:text-text-strong-950 sm:flex"
         >
           <RiGithubFill className="size-3.5" />
-          Star on GitHub
+          {t("starOnGithub")}
         </a>
         <a
           href={SELF_HOST_DOCS}
@@ -124,7 +133,7 @@ export function DemoBanner() {
           rel="noreferrer"
           className="flex items-center gap-1.5 rounded-md bg-bg-strong-950 px-2.5 py-1 text-label-xs text-text-white-0 transition hover:opacity-90"
         >
-          Self-host it free
+          {t("selfHost")}
         </a>
       </span>
     </div>

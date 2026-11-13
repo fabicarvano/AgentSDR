@@ -25,6 +25,8 @@ function publicOrigin(request: NextRequest): string {
 }
 
 export async function GET(request: NextRequest) {
+  // The two plain-text answers below are HTTP responses, not interface: they stay in English
+  // (server-side text that does not go through the catalogs yet; see messages/CONVENTIONS.md).
   if (!isDemoMode()) return new NextResponse("Not found", { status: 404 });
 
   const target = new URL(safeFrom(request.nextUrl.searchParams.get("from")) ?? "/analytics", publicOrigin(request));

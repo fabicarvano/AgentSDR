@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import categoriesData from "@/data/categories.json";
 
 export const NULL_CATEGORY = "__null__";
+
+// A multiplication sign on the clear button: a symbol, not language.
+const CLEAR_SIGN = "×";
 
 type CountMap = Record<string, number>;
 
@@ -15,13 +19,15 @@ type Props = {
   onChange: (updates: Record<string, string>) => void;
 };
 
-function fmt(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
+/** Counts next to each option: 1.2M / 12K in English, 1,2 mi / 12 mil in Portuguese. */
+function fmt(format: ReturnType<typeof useFormatter>, n: number) {
+  if (n >= 1_000_000) return format.number(n, { notation: "compact", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (n >= 1_000) return format.number(n, { notation: "compact", maximumFractionDigits: 0 });
+  return format.number(n);
 }
 
 export default function CategoryFilter({ countryCode, c1, c2, c3, onChange }: Props) {
+  const t = useTranslations("shared.categoryFilter");
   const [c1Counts, setC1Counts] = useState<CountMap>({});
   const [c2Counts, setC2Counts] = useState<CountMap>({});
   const [c3Counts, setC3Counts] = useState<CountMap>({});
@@ -61,7 +67,7 @@ export default function CategoryFilter({ countryCode, c1, c2, c3, onChange }: Pr
   return (
     <div className="flex flex-col gap-2">
       <CategorySelect
-        placeholder="All Categories"
+        placeholder={t("allCategories")}
         value={c1}
         options={categoriesData.l1}
         counts={c1Counts}
@@ -72,7 +78,7 @@ export default function CategoryFilter({ countryCode, c1, c2, c3, onChange }: Pr
 
       {c1 && c1 !== NULL_CATEGORY && c2Options.length > 0 && (
         <CategorySelect
-          placeholder={`All ${c1}`}
+          placeholder={t("allIn", { name: c1 })}
           value={c2}
           options={c2Options}
           counts={c2Counts}
@@ -83,7 +89,7 @@ export default function CategoryFilter({ countryCode, c1, c2, c3, onChange }: Pr
 
       {c1 && c2 && c3Options.length > 0 && (
         <CategorySelect
-          placeholder={`All ${c2}`}
+          placeholder={t("allIn", { name: c2 })}
           value={c3}
           options={c3Options}
           counts={c3Counts}
@@ -106,6 +112,8 @@ type SelectProps = {
 };
 
 function CategorySelect({ placeholder, value, options, counts, showNull, onSelect, onClear }: SelectProps) {
+  const t = useTranslations("shared.categoryFilter");
+  const format = useFormatter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -118,7 +126,7 @@ function CategorySelect({ placeholder, value, options, counts, showNull, onSelec
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const displayLabel = value === NULL_CATEGORY ? "Uncategorized" : value;
+  const displayLabel = value === NULL_CATEGORY ? t("uncategorized") : value;
 
   return (
     <div ref={ref} className="relative w-full">
@@ -137,10 +145,11 @@ function CategorySelect({ placeholder, value, options, counts, showNull, onSelec
           {value && (
             <span
               role="button"
+              aria-label={t("clear")}
               onClick={(e) => { e.stopPropagation(); onClear(); setOpen(false); }}
               className="w-4 h-4 flex items-center justify-center rounded-full text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-500/25 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors text-xs"
             >
-              ×
+              {CLEAR_SIGN}
             </span>
           )}
           <svg className={`w-4 h-4 text-text-strong-950/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
@@ -177,7 +186,7 @@ function CategorySelect({ placeholder, value, options, counts, showNull, onSelec
                 <span className="truncate min-w-0 flex-1">{opt}</span>
                 {cnt !== undefined && (
                   <span className={`text-xs tabular-nums shrink-0 ${opt === value ? "text-indigo-400" : "text-text-strong-950/50"}`}>
-                    {fmt(cnt)}
+                    {fmt(format, cnt)}
                   </span>
                 )}
               </button>
@@ -195,7 +204,7 @@ function CategorySelect({ placeholder, value, options, counts, showNull, onSelec
                   value === NULL_CATEGORY ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-medium not-italic" : "text-text-strong-950/50 hover:bg-bg-weak-50"
                 }`}
               >
-                Uncategorized
+                {t("uncategorized")}
               </button>
             </>
           )}

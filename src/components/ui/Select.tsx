@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export type SelectOption = {
   value: string;
@@ -22,11 +23,12 @@ export default function Select({
   value,
   onChange,
   options,
-  placeholder = "Select…",
+  placeholder,
   className = "",
   size = "md",
   variant = "default",
 }: Props) {
+  const t = useTranslations("shell.select");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -62,7 +64,7 @@ export default function Select({
         `}
       >
         <span className={selected ? "" : "text-text-strong-950/50"}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : (placeholder ?? t("placeholder"))}
         </span>
         <svg
           className={`shrink-0 text-text-strong-950/50 transition-transform duration-200 ${open ? "rotate-180" : ""} ${isSm ? "w-3 h-3" : "w-4 h-4"}`}

@@ -2,11 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Field, InfoCallout, SubmitButton, linkClass } from "@/components/auth/fields";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("auth.forgotPassword");
+  const tc = useTranslations("auth.common");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -22,21 +25,21 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      title="Reset your password"
-      subtitle="We'll email you a link to choose a new one"
+      title={t("title")}
+      subtitle={t("subtitle")}
       footer={
         <Link href="/sign-in" className={linkClass}>
-          Back to sign in
+          {tc("backToSignIn")}
         </Link>
       }
     >
       {done ? (
-        <InfoCallout>If an account exists for {email}, we sent a link to reset your password.</InfoCallout>
+        <InfoCallout>{t("done", { email })}</InfoCallout>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <Field label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <SubmitButton loading={loading} loadingLabel="Sending...">
-            Send reset link
+          <Field label={t("email")} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <SubmitButton loading={loading} loadingLabel={t("sending")}>
+            {t("submit")}
           </SubmitButton>
         </form>
       )}

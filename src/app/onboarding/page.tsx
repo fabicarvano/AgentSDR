@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { authClient, useListOrganizations, useSession } from "@/lib/auth/client";
 import { slugify } from "@/lib/auth/slug";
+import { useAuthError } from "@/i18n/useAuthError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, SecondaryButton, SubmitButton } from "@/components/auth/fields";
 
 export default function OnboardingPage() {
+  const t = useTranslations("auth.onboarding");
+  const authError = useAuthError();
   const { data: session, isPending } = useSession();
   const { data: orgs } = useListOrganizations();
   const [name, setName] = useState("");
@@ -29,21 +33,21 @@ export default function OnboardingPage() {
     e.preventDefault();
     setError("");
     const finalSlug = slugify(slug);
-    if (!name.trim() || !finalSlug) return setError("Enter a name for your organization.");
+    if (!name.trim() || !finalSlug) return setError(t("nameRequired"));
     setLoading(true);
     const check = await authClient.organization.checkSlug({ slug: finalSlug });
     if (check.error || !check.data?.status) {
-      setError("That URL name is already taken. Try another.");
+      setError(t("slugTaken"));
       return setLoading(false);
     }
     const created = await authClient.organization.create({ name: name.trim(), slug: finalSlug });
     if (created.error || !created.data) {
-      setError(created.error?.message || "Could not create the organization.");
+      setError(authError(created.error, t("createFailed")));
       return setLoading(false);
     }
     const active = await authClient.organization.setActive({ organizationId: created.data.id });
     if (active.error) {
-      setError(active.error.message || "Created, but could not switch into it. Reload and try again.");
+      setError(authError(active.error, t("switchAfterCreateFailed")));
       return setLoading(false);
     }
     window.location.assign("/analytics");
@@ -54,7 +58,7 @@ export default function OnboardingPage() {
     setSwitching(id);
     const { error: err } = await authClient.organization.setActive({ organizationId: id });
     if (err) {
-      setError(err.message || "Could not switch organization.");
+      setError(authError(err, t("switchFailed")));
       return setSwitching(null);
     }
     window.location.assign("/analytics");
@@ -64,8 +68,8 @@ export default function OnboardingPage() {
 
   return (
     <AuthShell
-      title={hasOrgs ? "Choose an organization" : "Create your organization"}
-      subtitle={hasOrgs ? "Pick one to continue, or create another." : "Your workspace for leads, outreach and conversations."}
+      title={hasOrgs ? t("chooseTitle") : t("createTitle")}
+      subtitle={hasOrgs ? t("chooseSubtitle") : t("createSubtitle")}
     >
       <div className="flex flex-col gap-4">
         {hasOrgs && (
@@ -75,17 +79,17 @@ export default function OnboardingPage() {
                 {o.name}
               </SecondaryButton>
             ))}
-            <div className="mt-2 text-xs uppercase tracking-widest text-slate-600">Or create a new one</div>
+            <div className="mt-2 text-xs uppercase tracking-widest text-slate-600">{t("orCreateNew")}</div>
           </div>
         )}
         <form onSubmit={create} className="flex flex-col gap-4">
-          <Field label="Organization name" type="text" autoComplete="organization" required value={name} onChange={(e) => onName(e.target.value)} />
+          <Field label={t("organizationName")} type="text" autoComplete="organization" required value={name} onChange={(e) => onName(e.target.value)} />
           <Field
-            label="URL name"
+            label={t("slug")}
             type="text"
             autoComplete="off"
             required
-            hint="Lowercase letters, numbers and dashes."
+            hint={t("slugHint")}
             value={slug}
             onChange={(e) => {
               setSlugEdited(true);
@@ -93,8 +97,8 @@ export default function OnboardingPage() {
             }}
           />
           {error && <ErrorCallout>{error}</ErrorCallout>}
-          <SubmitButton loading={loading} loadingLabel="Creating..." disabled={!!switching}>
-            Create organization
+          <SubmitButton loading={loading} loadingLabel={t("submitting")} disabled={!!switching}>
+            {t("submit")}
           </SubmitButton>
         </form>
       </div>

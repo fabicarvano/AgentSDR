@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { PageContainer } from "./PageHeader";
 
@@ -81,9 +82,10 @@ export function TableSkeleton({ rows = 8, columns = 5, avatar = true }: { rows?:
 }
 
 export function ListPageSkeleton({ kpis = 0, rows = 8, columns = 5, avatar = true }: { kpis?: number; rows?: number; columns?: number; avatar?: boolean }) {
+  const t = useTranslations("shell.skeleton");
   return (
     <PageContainer>
-      <div aria-busy="true" aria-label="Loading" className="space-y-6">
+      <div aria-busy="true" aria-label={t("loading")} className="space-y-6">
         <PageHeaderSkeleton />
         {kpis > 0 && <KpiStripSkeleton cells={kpis} />}
         <TableSkeleton rows={rows} columns={columns} avatar={avatar} />
@@ -93,9 +95,10 @@ export function ListPageSkeleton({ kpis = 0, rows = 8, columns = 5, avatar = tru
 }
 
 export function DetailPageSkeleton({ stats = 4 }: { stats?: number }) {
+  const t = useTranslations("shell.skeleton");
   return (
     <PageContainer>
-      <div aria-busy="true" aria-label="Loading" className="space-y-6">
+      <div aria-busy="true" aria-label={t("loading")} className="space-y-6">
         <PageHeaderSkeleton back />
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-stroke-soft-200 ring-1 ring-inset ring-stroke-soft-200 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-fr">
           {Array.from({ length: stats }, (_, i) => (
@@ -123,8 +126,9 @@ export function DetailPageSkeleton({ stats = 4 }: { stats?: number }) {
 }
 
 export function SplitPaneSkeleton({ rows = 9 }: { rows?: number }) {
+  const t = useTranslations("shell.skeleton");
   return (
-    <div aria-busy="true" aria-label="Loading" className="flex h-full min-h-0 flex-col">
+    <div aria-busy="true" aria-label={t("loading")} className="flex h-full min-h-0 flex-col">
       <div className="px-4 pt-5 sm:px-6 lg:px-8">
         <PageHeaderSkeleton action={false} />
       </div>

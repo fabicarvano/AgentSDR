@@ -1,7 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { authClient, useSession } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, SecondaryButton, linkClass } from "@/components/auth/fields";
 import { Spinner } from "@/components/auth/fields";
@@ -19,6 +21,9 @@ type Invitation = {
 };
 
 export default function AcceptInvitationPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("auth.acceptInvitation");
+  const tc = useTranslations("auth.common");
+  const authError = useAuthError();
   const { id } = use(params);
   const { data: session, isPending } = useSession();
   const [invite, setInvite] = useState<Invitation | null>(null);
@@ -55,14 +60,14 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
     setBusy("accept");
     const res = await authClient.organization.acceptInvitation({ invitationId: id });
     if (res.error) {
-      setError(res.error.message || "Could not accept the invitation.");
+      setError(authError(res.error, t("acceptFailed")));
       return setBusy(null);
     }
     const organizationId = res.data?.invitation?.organizationId ?? invite?.organizationId;
     if (organizationId) {
       const active = await authClient.organization.setActive({ organizationId });
       if (active.error) {
-        setError(active.error.message || "Joined, but could not switch into the organization.");
+        setError(authError(active.error, t("switchFailed")));
         return setBusy(null);
       }
     }
@@ -74,13 +79,13 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
     setBusy("decline");
     const { error: err } = await authClient.organization.rejectInvitation({ invitationId: id });
     setBusy(null);
-    if (err) setError(err.message || "Could not decline the invitation.");
+    if (err) setError(authError(err, t("declineFailed")));
     else setDeclined(true);
   }
 
   if (state === "loading" || isPending) {
     return (
-      <AuthShell title="Loading invitation">
+      <AuthShell title={t("loadingTitle")}>
         <div className="flex justify-center text-slate-400">
           <Spinner />
         </div>
@@ -90,9 +95,9 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
 
   if (declined) {
     return (
-      <AuthShell title="Invitation declined" subtitle="You won't be added to this organization.">
+      <AuthShell title={t("declinedTitle")} subtitle={t("declinedSubtitle")}>
         <Link href="/" className={linkClass}>
-          Go to AgentSDR
+          {t("goHome")}
         </Link>
       </AuthShell>
     );
@@ -100,9 +105,9 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
 
   if (state === "wrong-email") {
     return (
-      <AuthShell title="Wrong account" subtitle="This invitation was sent to a different email address. Sign in with the invited address to accept it.">
+      <AuthShell title={t("wrongAccountTitle")} subtitle={t("wrongAccountSubtitle")}>
         <Link href={`/sign-in?from=${from}`} className={linkClass}>
-          Switch account
+          {t("switchAccount")}
         </Link>
       </AuthShell>
     );
@@ -111,27 +116,32 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
   if (state === "missing" || expired) {
     return (
       <AuthShell
-        title={expired ? "Invitation expired" : "Invitation not found"}
-        subtitle={expired ? "This invitation is no longer valid. Ask the person who invited you to send a new one." : "This link is invalid, was already used, or was sent to a different email address."}
+        title={expired ? t("expiredTitle") : t("notFoundTitle")}
+        subtitle={expired ? t("expiredSubtitle") : t("notFoundSubtitle")}
       >
         <Link href="/sign-in" className={linkClass}>
-          Back to sign in
+          {tc("backToSignIn")}
         </Link>
       </AuthShell>
     );
   }
 
-  const who = invite ? `${invite.inviterEmail} invited you to join ${invite.organizationName}.` : "You've been invited to join an organization.";
-
   if (!session) {
     return (
-      <AuthShell title="You're invited" subtitle={`${who} Sign in or create an account to accept.`}>
+      <AuthShell
+        title={t("invitedTitle")}
+        subtitle={
+          invite
+            ? t("signedOutSubtitle", { inviter: invite.inviterEmail, organization: invite.organizationName })
+            : t("signedOutSubtitleGeneric")
+        }
+      >
         <div className="flex flex-col gap-3">
           <Link href={`/sign-in?from=${from}`} className="w-full rounded-lg bg-indigo-600 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500">
-            Sign in to accept
+            {t("signInToAccept")}
           </Link>
           <Link href={`/sign-up?from=${from}`} className="w-full rounded-lg border border-slate-700 bg-slate-800 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-slate-700">
-            Create account
+            {t("createAccount")}
           </Link>
         </div>
       </AuthShell>
@@ -139,7 +149,10 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <AuthShell title="You're invited" subtitle={who}>
+    <AuthShell
+      title={t("invitedTitle")}
+      subtitle={invite ? t("invitedBy", { inviter: invite.inviterEmail, organization: invite.organizationName }) : t("invitedGeneric")}
+    >
       <div className="flex flex-col gap-3">
         {error && <ErrorCallout>{error}</ErrorCallout>}
         <button
@@ -149,10 +162,10 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {busy === "accept" && <Spinner />}
-          Accept
+          {t("accept")}
         </button>
         <SecondaryButton onClick={decline} loading={busy === "decline"} disabled={!!busy}>
-          Decline
+          {t("decline")}
         </SecondaryButton>
       </div>
     </AuthShell>

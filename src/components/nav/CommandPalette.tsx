@@ -1,11 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RiArrowRightSLine, RiCornerDownLeftLine, RiSearchLine } from "@remixicon/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { cn } from "@/utils/cn";
 import { paletteItems, type PaletteItem } from "./navConfig";
+
+/** The Esc key cap: printed on the keyboard, so it reads "Esc" in every language (like ⌘K). */
+const ESC_KEYCAP = "Esc";
+
+/** Lower case without accents, so "acao" finds "Ação necessária" (typing accents on every query is a chore). */
+const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 /**
  * "Search or jump to…": every page, settings screen and create shortcut,
@@ -14,17 +21,20 @@ import { paletteItems, type PaletteItem } from "./navConfig";
  */
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
+  const t = useTranslations("shell.commandPalette");
+  // The nav data holds message keys; the root translator turns them into this language's labels.
+  const tr = useTranslations();
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
-  const items = useMemo(() => paletteItems(), []);
+  const items = useMemo(() => paletteItems(tr), [tr]);
 
   const matches = useMemo(() => {
-    const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const terms = fold(query.trim()).split(/\s+/).filter(Boolean);
     if (terms.length === 0) return items;
     return items.filter((item) => {
-      const hay = `${item.label} ${item.group} ${item.keywords ?? ""}`.toLowerCase();
-      return terms.every((t) => hay.includes(t));
+      const hay = fold(`${item.label} ${item.group} ${item.keywords ?? ""}`);
+      return terms.every((term) => hay.includes(term));
     });
   }, [items, query]);
 
@@ -67,23 +77,23 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             if (e.key === "Enter") { e.preventDefault(); go(matches[index]); }
           }}
         >
-          <Dialog.Title className="sr-only">Search or jump to</Dialog.Title>
+          <Dialog.Title className="sr-only">{t("title")}</Dialog.Title>
           <div className="flex items-center gap-3 border-b border-stroke-soft-200 px-4">
             <RiSearchLine className="size-5 shrink-0 text-text-soft-400" aria-hidden="true" />
             <input
               autoFocus
               value={query}
               onChange={(e) => { setQuery(e.target.value); setIndex(0); }}
-              placeholder="Search pages, settings, actions…"
-              aria-label="Search pages, settings and actions"
+              placeholder={t("placeholder")}
+              aria-label={t("inputLabel")}
               aria-controls="command-palette-list"
               aria-activedescendant={matches[index] ? `cp-${index}` : undefined}
               className="h-12 min-w-0 flex-1 bg-transparent text-paragraph-md text-text-strong-950 outline-none placeholder:text-text-soft-400"
             />
-            <kbd className="rounded-md bg-bg-weak-50 px-1.5 py-0.5 text-label-xs text-text-soft-400 ring-1 ring-inset ring-stroke-soft-200">Esc</kbd>
+            <kbd className="rounded-md bg-bg-weak-50 px-1.5 py-0.5 text-label-xs text-text-soft-400 ring-1 ring-inset ring-stroke-soft-200">{ESC_KEYCAP}</kbd>
           </div>
           <ul ref={listRef} id="command-palette-list" role="listbox" className="flex-1 overflow-y-auto p-2">
-            {matches.length === 0 && <li className="px-3 py-10 text-center text-paragraph-sm text-text-sub-600">Nothing matches “{query}”.</li>}
+            {matches.length === 0 && <li className="px-3 py-10 text-center text-paragraph-sm text-text-sub-600">{t("empty", { query })}</li>}
             {groups.map(([group, groupItems]) => (
               <li key={group} role="presentation">
                 <p className="px-3 pb-1 pt-2 text-paragraph-xs text-text-soft-400">{group}</p>

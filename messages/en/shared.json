@@ -1,3 +1,74 @@
 {
-  "shared": {}
+  "shared": {
+    "filters": {
+      "country": "Country",
+      "category": "Category",
+      "app": "App",
+      "platform": "Platform",
+      "revenueRange": "Revenue Range ($)",
+      "min": "Min",
+      "max": "Max",
+      "sort": "Sort",
+      "perPage": "Per Page",
+      "reset": "Reset",
+      "allPlatforms": "All Platforms",
+      "sortBy": {
+        "annualSales": "Annual Sales",
+        "rank": "Rank",
+        "domain": "Default ⚡"
+      },
+      "direction": {
+        "desc": "↓ Desc",
+        "asc": "↑ Asc"
+      },
+      "rows": "{count, plural, one {# row} other {# rows}}"
+    },
+    "export": {
+      "title": "Export to CSV",
+      "matchCount": "{count, plural, one {<b>#</b> row matches your current filters} other {<b>#</b> rows match your current filters}}",
+      "howMany": "How many rows?",
+      "all": "All {count, number}",
+      "custom": "Custom:",
+      "maxRows": "Max {max, number} rows per export",
+      "columnsIncluded": "Columns included",
+      "cancel": "Cancel",
+      "exporting": "Exporting...",
+      "exportRows": "{count, plural, one {Export # row} other {Export # rows}}",
+      "errorTitle": "Export failed",
+      "errorDescription": "Something went wrong generating the file. Please try again."
+    },
+    "domainsTable": {
+      "showing": "Showing <b>{start, number}–{end, number}</b> of <b>{total, number}</b> {total, plural, one {company} other {companies}}",
+      "exportCsv": "Export CSV",
+      "columns": {
+        "company": "Company",
+        "domain": "Domain",
+        "category": "Category",
+        "country": "Country",
+        "annualRevenue": "Annual Revenue",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active"
+      },
+      "empty": "No results — try adjusting your filters.",
+      "previous": "Prev",
+      "next": "Next"
+    },
+    "appFilter": {
+      "allApps": "All Apps",
+      "searchPlaceholder": "Search apps...",
+      "noResults": "No apps found",
+      "clear": "Clear"
+    },
+    "categoryFilter": {
+      "allCategories": "All Categories",
+      "allIn": "All {name}",
+      "uncategorized": "Uncategorized",
+      "clear": "Clear"
+    },
+    "ui": {
+      "close": "Close"
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import UnsubscribeClient from "@/components/outreach/UnsubscribeClient";
+import UnsubscribeClient from "./UnsubscribeClient";
 
 export const dynamic = "force-dynamic";
 

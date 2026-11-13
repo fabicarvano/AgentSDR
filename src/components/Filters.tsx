@@ -1,56 +1,44 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useRef } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useMemo, useRef } from "react";
 import Select from "./ui/Select";
 import CategoryFilter from "./CategoryFilter";
 import AppFilter from "./AppFilter";
 import { useNavigation } from "./NavigationProvider";
 
-const COUNTRY_OPTIONS = [
-  { value: "US", label: "🇺🇸 United States" },
-  { value: "GB", label: "🇬🇧 United Kingdom" },
-  { value: "CA", label: "🇨🇦 Canada" },
-  { value: "AU", label: "🇦🇺 Australia" },
-  { value: "IN", label: "🇮🇳 India" },
-  { value: "DE", label: "🇩🇪 Germany" },
-  { value: "FR", label: "🇫🇷 France" },
-  { value: "NL", label: "🇳🇱 Netherlands" },
-  { value: "BR", label: "🇧🇷 Brazil" },
-  { value: "MX", label: "🇲🇽 Mexico" },
-  { value: "SG", label: "🇸🇬 Singapore" },
-  { value: "NZ", label: "🇳🇿 New Zealand" },
-  { value: "SE", label: "🇸🇪 Sweden" },
-  { value: "NO", label: "🇳🇴 Norway" },
-  { value: "DK", label: "🇩🇰 Denmark" },
+// Country names come from Intl.DisplayNames in the interface language; only the flag lives here.
+const COUNTRIES = [
+  { value: "US", flag: "🇺🇸" },
+  { value: "GB", flag: "🇬🇧" },
+  { value: "CA", flag: "🇨🇦" },
+  { value: "AU", flag: "🇦🇺" },
+  { value: "IN", flag: "🇮🇳" },
+  { value: "DE", flag: "🇩🇪" },
+  { value: "FR", flag: "🇫🇷" },
+  { value: "NL", flag: "🇳🇱" },
+  { value: "BR", flag: "🇧🇷" },
+  { value: "MX", flag: "🇲🇽" },
+  { value: "SG", flag: "🇸🇬" },
+  { value: "NZ", flag: "🇳🇿" },
+  { value: "SE", flag: "🇸🇪" },
+  { value: "NO", flag: "🇳🇴" },
+  { value: "DK", flag: "🇩🇰" },
 ];
 
-const PLATFORM_OPTIONS = [
-  { value: "", label: "All Platforms" },
-  { value: "Shopify", label: "Shopify" },
-  { value: "WooCommerce", label: "WooCommerce" },
-  { value: "BigCommerce", label: "BigCommerce" },
-  { value: "Magento", label: "Magento" },
-  { value: "Wix", label: "Wix" },
-  { value: "Squarespace", label: "Squarespace" },
-];
+// Shopify, WooCommerce, ... are product names: they stay as they are. The empty value is "All Platforms".
+const PLATFORM_VALUES = ["Shopify", "WooCommerce", "BigCommerce", "Magento", "Wix", "Squarespace"];
 
-const SORT_OPTIONS = [
-  { value: "annualSales", label: "Annual Sales" },
-  { value: "rank", label: "Rank" },
-  { value: "domain", label: "Default ⚡" },
-];
+// The values go into the URL and the query; only the label is translated.
+const SORT_VALUES = ["annualSales", "rank", "domain"] as const;
 
-const DIR_OPTIONS = [
-  { value: "desc", label: "↓ Desc" },
-  { value: "asc", label: "↑ Asc" },
-];
+const DIR_VALUES = ["desc", "asc"] as const;
 
-const PAGE_SIZE_OPTIONS = [
-  { value: "10", label: "10 rows" },
-  { value: "20", label: "20 rows" },
-  { value: "50", label: "50 rows" },
-];
+const PAGE_SIZES = [10, 20, 50];
+
+// The dash between the Min and Max inputs: a symbol, not language.
+const RANGE_DASH = "–";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -69,6 +57,8 @@ function Section({ children }: { children: React.ReactNode }) {
 }
 
 export default function Filters() {
+  const t = useTranslations("shared.filters");
+  const locale = useLocale();
   const { navigate, isPending } = useNavigation();
   const searchParams = useSearchParams();
   const minRef = useRef<HTMLInputElement>(null);
@@ -89,6 +79,18 @@ export default function Filters() {
     [navigate, searchParams]
   );
 
+  const countryOptions = useMemo(() => {
+    const names = new Intl.DisplayNames(locale, { type: "region" });
+    return COUNTRIES.map(({ value, flag }) => ({ value, label: `${flag} ${names.of(value) ?? value}` }));
+  }, [locale]);
+  const platformOptions = [
+    { value: "", label: t("allPlatforms") },
+    ...PLATFORM_VALUES.map((value) => ({ value, label: value })),
+  ];
+  const sortOptions = SORT_VALUES.map((value) => ({ value, label: t(`sortBy.${value}`) }));
+  const dirOptions = DIR_VALUES.map((value) => ({ value, label: t(`direction.${value}`) }));
+  const pageSizeOptions = PAGE_SIZES.map((n) => ({ value: String(n), label: t("rows", { count: n }) }));
+
   const handleTextInput = (key: string, ref: React.RefObject<HTMLInputElement | null>) =>
     (e: React.KeyboardEvent | React.FocusEvent) => {
       if ("key" in e && e.key !== "Enter") return;
@@ -99,11 +101,11 @@ export default function Filters() {
     <div className="flex flex-col gap-5 px-4 py-4">
 
       <Section>
-        <Label>Country</Label>
+        <Label>{t("country")}</Label>
         <Select
           value={get("countryCode", "US")}
           onChange={(v) => update({ countryCode: v })}
-          options={COUNTRY_OPTIONS}
+          options={countryOptions}
           variant="primary"
         />
       </Section>
@@ -111,7 +113,7 @@ export default function Filters() {
       <div className="h-px bg-bg-weak-50" />
 
       <Section>
-        <Label>Category</Label>
+        <Label>{t("category")}</Label>
         <CategoryFilter
           countryCode={get("countryCode", "US")}
           c1={get("c1")}
@@ -124,7 +126,7 @@ export default function Filters() {
       <div className="h-px bg-bg-weak-50" />
 
       <Section>
-        <Label>App</Label>
+        <Label>{t("app")}</Label>
         <AppFilter
           value={get("app")}
           onChange={(v) => update({ app: v })}
@@ -134,21 +136,21 @@ export default function Filters() {
       <div className="h-px bg-bg-weak-50" />
 
       <Section>
-        <Label>Platform</Label>
+        <Label>{t("platform")}</Label>
         <Select
           value={get("platform")}
           onChange={(v) => update({ platform: v })}
-          options={PLATFORM_OPTIONS}
+          options={platformOptions}
         />
       </Section>
 
       <Section>
-        <Label>Revenue Range ($)</Label>
+        <Label>{t("revenueRange")}</Label>
         <div className="flex items-center gap-1.5">
           <input
             ref={minRef}
             type="number"
-            placeholder="Min"
+            placeholder={t("min")}
             defaultValue={get("minRevenue")}
             // eslint-disable-next-line react-hooks/refs -- intentional: ref read/written during render to expose the latest value to event handlers
             onKeyDown={handleTextInput("minRevenue", minRef)}
@@ -156,11 +158,11 @@ export default function Filters() {
             onBlur={handleTextInput("minRevenue", minRef)}
             className="w-full h-10 border border-stroke-soft-200 rounded-lg px-3 text-sm text-text-strong-950 placeholder-text-soft-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
           />
-          <span className="text-text-strong-950/30 text-sm shrink-0">–</span>
+          <span className="text-text-strong-950/30 text-sm shrink-0">{RANGE_DASH}</span>
           <input
             ref={maxRef}
             type="number"
-            placeholder="Max"
+            placeholder={t("max")}
             defaultValue={get("maxRevenue")}
             // eslint-disable-next-line react-hooks/refs -- intentional: ref read/written during render to expose the latest value to event handlers
             onKeyDown={handleTextInput("maxRevenue", maxRef)}
@@ -174,25 +176,25 @@ export default function Filters() {
       <div className="h-px bg-bg-weak-50" />
 
       <Section>
-        <Label>Sort</Label>
+        <Label>{t("sort")}</Label>
         <Select
           value={get("sortBy", "annualSales")}
           onChange={(v) => update({ sortBy: v })}
-          options={SORT_OPTIONS}
+          options={sortOptions}
         />
         <Select
           value={get("sortDir", "desc")}
           onChange={(v) => update({ sortDir: v })}
-          options={DIR_OPTIONS}
+          options={dirOptions}
         />
       </Section>
 
       <Section>
-        <Label>Per Page</Label>
+        <Label>{t("perPage")}</Label>
         <Select
           value={get("pageSize", "20")}
           onChange={(v) => update({ pageSize: v })}
-          options={PAGE_SIZE_OPTIONS}
+          options={pageSizeOptions}
         />
       </Section>
 
@@ -201,7 +203,7 @@ export default function Filters() {
           onClick={() => navigate("?countryCode=US&sortBy=annualSales&sortDir=desc&pageSize=20")}
           className="flex-1 h-9 text-sm text-text-strong-950/70 border border-stroke-soft-200 rounded-lg hover:bg-bg-weak-50 hover:text-text-strong-950 transition-colors"
         >
-          Reset
+          {t("reset")}
         </button>
         {isPending && (
           <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0" />

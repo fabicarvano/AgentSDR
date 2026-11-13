@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 
+// Not translated on purpose: a marketing hero for the public website (which lives in its own
+// repository) that nothing in the app renders. If it is ever mounted, move its copy into messages/.
 interface NavLink {
   label: string;
   href: string;

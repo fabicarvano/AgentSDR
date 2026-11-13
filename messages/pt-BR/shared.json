@@ -1,3 +1,74 @@
 {
-  "shared": {}
+  "shared": {
+    "filters": {
+      "country": "País",
+      "category": "Categoria",
+      "app": "App",
+      "platform": "Plataforma",
+      "revenueRange": "Faixa de receita (US$)",
+      "min": "Mín.",
+      "max": "Máx.",
+      "sort": "Ordenar",
+      "perPage": "Por página",
+      "reset": "Redefinir",
+      "allPlatforms": "Todas as plataformas",
+      "sortBy": {
+        "annualSales": "Vendas anuais",
+        "rank": "Ranking",
+        "domain": "Padrão ⚡"
+      },
+      "direction": {
+        "desc": "↓ Decrescente",
+        "asc": "↑ Crescente"
+      },
+      "rows": "{count, plural, one {# linha} other {# linhas}}"
+    },
+    "export": {
+      "title": "Exportar para CSV",
+      "matchCount": "{count, plural, one {<b>#</b> linha corresponde} other {<b>#</b> linhas correspondem}} aos filtros atuais",
+      "howMany": "Quantas linhas?",
+      "all": "{count, plural, one {Tudo (#)} other {Todas as #}}",
+      "custom": "Personalizado:",
+      "maxRows": "Máximo de {max, number} linhas por exportação",
+      "columnsIncluded": "Colunas incluídas",
+      "cancel": "Cancelar",
+      "exporting": "Exportando…",
+      "exportRows": "{count, plural, one {Exportar # linha} other {Exportar # linhas}}",
+      "errorTitle": "Falha na exportação",
+      "errorDescription": "Algo deu errado ao gerar o arquivo. Tente novamente."
+    },
+    "domainsTable": {
+      "showing": "Mostrando <b>{start, number}–{end, number}</b> de <b>{total, number}</b> {total, plural, one {empresa} other {empresas}}",
+      "exportCsv": "Exportar CSV",
+      "columns": {
+        "company": "Empresa",
+        "domain": "Domínio",
+        "category": "Categoria",
+        "country": "País",
+        "annualRevenue": "Receita anual",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Ativo"
+      },
+      "empty": "Nenhum resultado. Tente ajustar os filtros.",
+      "previous": "Anterior",
+      "next": "Próxima"
+    },
+    "appFilter": {
+      "allApps": "Todos os apps",
+      "searchPlaceholder": "Buscar apps…",
+      "noResults": "Nenhum app encontrado",
+      "clear": "Limpar"
+    },
+    "categoryFilter": {
+      "allCategories": "Todas as categorias",
+      "allIn": "Tudo em {name}",
+      "uncategorized": "Sem categoria",
+      "clear": "Limpar"
+    },
+    "ui": {
+      "close": "Fechar"
+    }
+  }
 }

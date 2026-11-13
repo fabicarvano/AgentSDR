@@ -1,14 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, SecondaryButton } from "@/components/auth/fields";
 import { useOAuthClient } from "@/components/oauth/useOAuthClient";
-import { API_SCOPES, MCP_SCOPES, type ApiScope } from "@/lib/publicApi/scopes";
+import { MCP_SCOPES, type ApiScope } from "@/lib/publicApi/scopes";
 
 /** crm:read is what a connection is for; the others the person may withhold. */
 const REQUIRED_SCOPE: ApiScope = "crm:read";
+
+/**
+ * Message key of each scope's label and description (scope names hold a colon, which a key path cannot).
+ * Typed over every scope an MCP client can ask for, so one added to MCP_SCOPES fails tsc until it is translated here.
+ */
+const SCOPE_KEY = {
+  "crm:read": "crmRead",
+  "crm:write": "crmWrite",
+  "crm:send": "crmSend",
+} as const satisfies Record<(typeof MCP_SCOPES)[number], string>;
 
 export function ConsentForm({
   clientId,
@@ -27,10 +39,13 @@ export function ConsentForm({
   userEmail: string;
   organizationName: string;
 }) {
+  const t = useTranslations("auth.oauth.consent");
+  const authError = useAuthError();
   const client = useOAuthClient(clientId);
   const [pending, setPending] = useState<"allow" | "deny" | null>(null);
   const [error, setError] = useState("");
-  const appName = client.name ?? "An AI assistant";
+  const appName = client.name ?? t("assistantFallback");
+  const appNameInline = client.name ?? t("assistantFallbackInline");
   const requested = requestedScope.split(/\s+/).filter(Boolean);
   const offered = MCP_SCOPES.filter((scope) => requested.includes(scope));
   const [granted, setGranted] = useState<Set<ApiScope>>(() => new Set(offered));
@@ -50,7 +65,7 @@ export function ConsentForm({
     const { data, error: err } = await authClient.oauth2.consent(accept ? { accept, scope } : { accept });
     const next = data as { redirect?: boolean; url?: unknown } | null;
     if (err || !next || typeof next.url !== "string") {
-      setError(err?.message || "Something went wrong. Please try again.");
+      setError(authError(err, t("genericError")));
       setPending(null);
       return;
     }
@@ -58,7 +73,7 @@ export function ConsentForm({
   }
 
   return (
-    <AuthShell title={`${appName} wants to connect to AgentSDR`}>
+    <AuthShell title={t("title", { appName })}>
       <div className="flex flex-col gap-5">
         {client.logo && (
           // eslint-disable-next-line @next/next/no-img-element -- a third party's logo, arbitrary host
@@ -66,24 +81,24 @@ export function ConsentForm({
         )}
         <dl className="rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-sm">
           <div className="flex justify-between gap-4 py-1">
-            <dt className="text-zinc-400">Signed in as</dt>
+            <dt className="text-zinc-400">{t("signedInAs")}</dt>
             <dd className="min-w-0 truncate text-right text-zinc-100">{userName || userEmail}</dd>
           </div>
           <div className="flex justify-between gap-4 py-1">
-            <dt className="text-zinc-400">Organization</dt>
+            <dt className="text-zinc-400">{t("organization")}</dt>
             <dd className="min-w-0 truncate text-right text-zinc-100">{organizationName}</dd>
           </div>
           {returnsTo && (
             <div className="flex justify-between gap-4 py-1">
-              <dt className="text-zinc-400">Returns to</dt>
+              <dt className="text-zinc-400">{t("returnsTo")}</dt>
               <dd className="min-w-0 truncate text-right font-mono text-xs leading-5 text-zinc-100">{returnsTo}</dd>
             </div>
           )}
         </dl>
         <div>
-          <p className="text-sm font-medium text-zinc-100">It will be able to:</p>
+          <p className="text-sm font-medium text-zinc-100">{t("willBeAbleTo")}</p>
           {offered.length === 0 ? (
-            <p className="mt-2 text-sm text-zinc-300">Only see who you are — it did not ask for access to AgentSDR data.</p>
+            <p className="mt-2 text-sm text-zinc-300">{t("identityOnly")}</p>
           ) : (
             <ul className="mt-2 flex flex-col gap-2">
               {offered.map((scope) => {
@@ -100,10 +115,10 @@ export function ConsentForm({
                       />
                       <span className="min-w-0">
                         <span className="block text-sm text-zinc-100">
-                          {API_SCOPES[scope].label}
-                          {required && <span className="ml-1.5 text-xs text-zinc-500">required</span>}
+                          {t(`scopes.${SCOPE_KEY[scope]}.label`)}
+                          {required && <span className="ml-1.5 text-xs text-zinc-500">{t("required")}</span>}
                         </span>
-                        <span className="block text-xs text-zinc-400">{API_SCOPES[scope].description}</span>
+                        <span className="block text-xs text-zinc-400">{t(`scopes.${SCOPE_KEY[scope]}.description`)}</span>
                       </span>
                     </label>
                   </li>
@@ -112,9 +127,7 @@ export function ConsentForm({
             </ul>
           )}
           <p className="mt-3 text-xs text-zinc-400">
-            Only allow this if you started connecting {appName} yourself just now.{" "}
-            Every action is recorded in the CRM timeline as {userName || userEmail} via AI assistant. You can disconnect it
-            anytime in Settings → AI assistants.
+            {t("warning", { appName: appNameInline, user: userName || userEmail })}
           </p>
         </div>
         {error && <ErrorCallout>{error}</ErrorCallout>}
@@ -125,10 +138,10 @@ export function ConsentForm({
             disabled={pending !== null}
             className="h-11 w-full rounded-lg bg-zinc-100 text-sm font-medium text-zinc-950 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#335cff]/60 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pending === "allow" ? "Connecting..." : "Allow"}
+            {pending === "allow" ? t("connecting") : t("allow")}
           </button>
           <SecondaryButton onClick={() => void answer(false)} disabled={pending !== null} loading={pending === "deny"}>
-            Cancel
+            {t("cancel")}
           </SecondaryButton>
         </div>
       </div>

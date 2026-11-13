@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { useDialogs } from "@/components/DialogProvider";
 
 type Props = {
@@ -11,8 +12,20 @@ type Props = {
 
 const PRESETS = [100, 500, 1000, 5000, 10000, 25000, 50000];
 
+// The header names /api/export writes into the CSV. The file is English on the server, and this
+// line only tells the person which columns to expect, so it stays English to match the file.
+const CSV_COLUMNS =
+  "Domain, Merchant Name, Platform, Rank, Country, Annual Sales, Categories, L1, L2, L3, Installed Apps, Emails, Phones";
+
 export default function ExportModal({ total, onClose }: Props) {
+  const t = useTranslations("shared.export");
+  const tu = useTranslations("shared.ui");
   const dialogs = useDialogs();
+  const format = useFormatter();
+  const matchCount = t.rich("matchCount", {
+    count: total,
+    b: (chunks) => <span className="font-semibold text-text-strong-950">{chunks}</span>,
+  });
   const searchParams = useSearchParams();
   const [limit, setLimit] = useState(() => Math.min(1000, total));
   const [loading, setLoading] = useState(false);
@@ -42,7 +55,7 @@ export default function ExportModal({ total, onClose }: Props) {
       URL.revokeObjectURL(a.href);
       onClose();
     } catch {
-      void dialogs.alert({ title: "Export failed", description: "Something went wrong generating the file. Please try again.", variant: "error" });
+      void dialogs.alert({ title: t("errorTitle"), description: t("errorDescription"), variant: "error" });
     } finally {
       setLoading(false);
     }
@@ -58,13 +71,14 @@ export default function ExportModal({ total, onClose }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-base font-bold text-text-strong-950">Export to CSV</h2>
+            <h2 className="text-base font-bold text-text-strong-950">{t("title")}</h2>
             <p className="text-sm text-text-strong-950/60 mt-0.5">
-              <span className="font-semibold text-text-strong-950">{total.toLocaleString()}</span> rows match your current filters
+              {matchCount}
             </p>
           </div>
           <button
             onClick={onClose}
+            aria-label={tu("close")}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-text-strong-950/50 hover:bg-bg-weak-50 hover:text-text-strong-950/70 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +90,7 @@ export default function ExportModal({ total, onClose }: Props) {
         {/* Row count selector */}
         <div className="mb-6">
           <label className="block text-xs font-bold text-text-strong-950 uppercase tracking-widest mb-3">
-            How many rows?
+            {t("howMany")}
           </label>
 
           {/* Preset chips */}
@@ -92,14 +106,14 @@ export default function ExportModal({ total, onClose }: Props) {
                     : "bg-bg-white-0 text-text-strong-950/70 border-stroke-soft-200 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400"
                 }`}
               >
-                {p === total ? `All ${p.toLocaleString()}` : p.toLocaleString()}
+                {p === total ? t("all", { count: p }) : format.number(p)}
               </button>
             ))}
           </div>
 
           {/* Custom input */}
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-strong-950 font-medium shrink-0">Custom:</label>
+            <label className="text-xs text-text-strong-950 font-medium shrink-0">{t("custom")}</label>
             <input
               type="number"
               min={1}
@@ -113,15 +127,15 @@ export default function ExportModal({ total, onClose }: Props) {
             />
           </div>
           {total > 50000 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">Max 50,000 rows per export</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">{t("maxRows", { max: 50000 })}</p>
           )}
         </div>
 
         {/* Columns preview */}
         <div className="mb-6 p-3 bg-bg-weak-50 rounded-lg">
-          <p className="text-xs font-bold text-text-strong-950 uppercase tracking-widest mb-2">Columns included</p>
+          <p className="text-xs font-bold text-text-strong-950 uppercase tracking-widest mb-2">{t("columnsIncluded")}</p>
           <p className="text-xs text-text-strong-950/70 leading-relaxed">
-            Domain, Merchant Name, Platform, Rank, Country, Annual Sales, Categories, L1, L2, L3, Installed Apps, Emails, Phones
+            {CSV_COLUMNS}
           </p>
         </div>
 
@@ -131,7 +145,7 @@ export default function ExportModal({ total, onClose }: Props) {
             onClick={onClose}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-text-strong-950/70 border border-stroke-soft-200 rounded-lg hover:bg-bg-weak-50 transition-colors"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={handleExport}
@@ -144,14 +158,14 @@ export default function ExportModal({ total, onClose }: Props) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Exporting...
+                {t("exporting")}
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Export {limit.toLocaleString()} rows
+                {t("exportRows", { count: limit })}
               </>
             )}
           </button>

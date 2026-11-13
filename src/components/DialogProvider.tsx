@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { RiAlertLine, RiErrorWarningLine, RiInformationLine, RiLoader4Line } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -63,6 +64,7 @@ export function useDialogs(): DialogApi {
 }
 
 export default function DialogProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("shell.dialogs");
   const [request, setRequest] = React.useState<Request | null>(null);
   const [value, setValue] = React.useState("");
 
@@ -176,8 +178,8 @@ export default function DialogProvider({ children }: { children: React.ReactNode
                   onClick={() => settle("dismiss")}
                 >
                   {request.kind === "confirm"
-                    ? (request.options.cancelLabel ?? "Cancel")
-                    : "Cancel"}
+                    ? (request.options.cancelLabel ?? t("cancel"))
+                    : t("cancel")}
                 </Button.Root>
               )}
               <Button.Root
@@ -189,10 +191,10 @@ export default function DialogProvider({ children }: { children: React.ReactNode
                 onClick={() => settle("confirm")}
               >
                 {request.kind === "confirm"
-                  ? (request.options.confirmLabel ?? "Confirm")
+                  ? (request.options.confirmLabel ?? t("confirm"))
                   : request.kind === "prompt"
-                    ? (request.options.confirmLabel ?? "Save")
-                    : (request.options.closeLabel ?? "OK")}
+                    ? (request.options.confirmLabel ?? t("save"))
+                    : (request.options.closeLabel ?? t("ok"))}
               </Button.Root>
             </Modal.Footer>
           </Modal.Content>

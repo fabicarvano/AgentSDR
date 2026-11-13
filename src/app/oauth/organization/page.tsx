@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth/server";
 import { OrganizationPicker } from "./OrganizationPicker";
 
-export const metadata = { title: "Choose an organization" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.oauth.organization");
+  return { title: t("metaTitle") };
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function OrganizationPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

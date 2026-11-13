@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { useTranslations } from 'next-intl';
 
 import { cn } from '@/utils/cn';
 
@@ -60,18 +61,24 @@ const Content = React.forwardRef<
       {...rest}
     >
       {children}
-      {!hideClose && (
-        <DialogPrimitive.Close
-          aria-label="Close"
-          className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full text-text-soft-400 outline-none transition duration-200 ease-out hover:bg-bg-weak-50 hover:text-text-sub-600 focus-visible:ring-2 focus-visible:ring-stroke-strong-950"
-        >
-          <CloseIcon />
-        </DialogPrimitive.Close>
-      )}
+      {!hideClose && <CloseButton />}
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>
 ));
 Content.displayName = 'ModalContent';
+
+/** The corner close button shared by Content and SideContent. */
+function CloseButton() {
+  const t = useTranslations('shared.ui');
+  return (
+    <DialogPrimitive.Close
+      aria-label={t('close')}
+      className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full text-text-soft-400 outline-none transition duration-200 ease-out hover:bg-bg-weak-50 hover:text-text-sub-600 focus-visible:ring-2 focus-visible:ring-stroke-strong-950"
+    >
+      <CloseIcon />
+    </DialogPrimitive.Close>
+  );
+}
 
 function CloseIcon() {
   return (
@@ -178,14 +185,7 @@ const SideContent = React.forwardRef<
       {...rest}
     >
       {children}
-      {!hideClose && (
-        <DialogPrimitive.Close
-          aria-label="Close"
-          className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full text-text-soft-400 outline-none transition duration-200 ease-out hover:bg-bg-weak-50 hover:text-text-sub-600 focus-visible:ring-2 focus-visible:ring-stroke-strong-950"
-        >
-          <CloseIcon />
-        </DialogPrimitive.Close>
-      )}
+      {!hideClose && <CloseButton />}
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>
 ));
