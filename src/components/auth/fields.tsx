@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 
 /*
@@ -31,6 +32,7 @@ export function Field({
   type,
   ...props
 }: { label: string; labelAside?: React.ReactNode; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const t = useTranslations("auth.common");
   const id = useId();
   const [revealed, setRevealed] = useState(false);
   const isPassword = type === "password";
@@ -58,7 +60,7 @@ export function Field({
           <button
             type="button"
             onClick={() => setRevealed((v) => !v)}
-            aria-label={revealed ? "Hide password" : "Show password"}
+            aria-label={revealed ? t("hidePassword") : t("showPassword")}
             aria-pressed={revealed}
             className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-zinc-400 transition-colors hover:text-zinc-100 focus-visible:text-zinc-100 focus-visible:outline-none"
           >

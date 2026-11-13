@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Instrument_Serif, Inter as FontSans } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import AppShell from "@/components/AppShell";
 import DialogProvider from "@/components/DialogProvider";
 import { RemoteRepCallBar } from "@/components/calls/RemoteRepCallBar";
@@ -21,14 +23,17 @@ const fontSerif = Instrument_Serif({
   variable: "--font-instrument-serif-next",
 });
 
-export const metadata: Metadata = {
-  title: "AgentSDR",
-  // A private workspace behind sign-in: keep every page out of search.
-  robots: { index: false, follow: false },
-  description: "Outreach, qualification and CRM for GTM teams",
-  // The favicon is src/app/icon.svg and apple-icon.png (Next's file convention):
-  // the brand tile, which reads on light and dark tabs alike.
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata");
+  return {
+    title: "AgentSDR",
+    // A private workspace behind sign-in: keep every page out of search.
+    robots: { index: false, follow: false },
+    description: t("description"),
+    // The favicon is src/app/icon.svg and apple-icon.png (Next's file convention):
+    // the brand tile, which reads on light and dark tabs alike.
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -43,6 +48,11 @@ export default async function RootLayout({
   await connection();
   const demo = isDemoMode();
 
+  // The interface language of this browser (cookie, then Accept-Language, then
+  // English): src/i18n/request.ts. It also sets <html lang>, which screen
+  // readers and the browser's own translate prompt rely on.
+  const locale = await getLocale();
+
   // Theme: data-theme="light" is the server default. THEME_INIT_SCRIPT runs
   // before paint and switches <html> to the stored choice (light, dark, or the
   // OS preference) — the `.dark` token block in globals.css does the rest —
@@ -55,7 +65,7 @@ export default async function RootLayout({
   // It covers this element's own attributes only, not its children.
   return (
     <html
-      lang="en"
+      lang={locale}
       data-theme="light"
       suppressHydrationWarning
       className={`${fontSans.variable} ${fontSerif.variable} ${brandDisplay.variable} h-full antialiased`}
@@ -64,16 +74,18 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-bg-white-0 text-text-strong-950">
-        <ThemeProvider>
-          <DialogProvider>
-            <DemoProvider enabled={demo}>
-              <AppShell>{children}</AppShell>
-              {modal}
-              {/* A call the rep talks on through a calling number: survives navigation. */}
-              <RemoteRepCallBar />
-            </DemoProvider>
-          </DialogProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider>
+          <ThemeProvider>
+            <DialogProvider>
+              <DemoProvider enabled={demo}>
+                <AppShell>{children}</AppShell>
+                {modal}
+                {/* A call the rep talks on through a calling number: survives navigation. */}
+                <RemoteRepCallBar />
+              </DemoProvider>
+            </DialogProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

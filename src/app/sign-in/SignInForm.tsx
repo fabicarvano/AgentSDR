@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, InfoCallout, SecondaryButton, SubmitButton, linkClass, quietLinkClass } from "@/components/auth/fields";
@@ -9,7 +10,10 @@ import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
 
 const ACCESS_REQUEST_TO = "pulkit@kandid.ai";
 
-/** A mailto asking for an account on AgentSDR Managed, carrying the email typed into the form when there is one. */
+/**
+ * A mailto asking for an account on AgentSDR Managed, carrying the email typed into the form when there is one.
+ * Deliberately left in English: it is written to the AgentSDR team, who read English, not shown to the person signing in.
+ */
 function accessRequestHref(email: string) {
   const body = [
     "Hi Pulkit,",
@@ -32,6 +36,8 @@ export function SignInForm({
   /** False on an invite-only instance: accounts come from invitations, so "Create one" is not offered. */
   signupAvailable?: boolean;
 }) {
+  const t = useTranslations("auth.signIn");
+  const tc = useTranslations("auth.common");
   const target = from || "/analytics";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,8 +61,9 @@ export function SignInForm({
       return;
     }
     if (err.code === "EMAIL_NOT_VERIFIED") setUnverified(true);
-    else if (err.code === "INVALID_EMAIL_OR_PASSWORD") setError("Incorrect email or password.");
-    else setError(err.message || "Something went wrong. Please try again.");
+    else if (err.code === "INVALID_EMAIL_OR_PASSWORD") setError(t("errors.invalidCredentials"));
+    // err.message comes from Better Auth on the server, in English; only the fallback is translated.
+    else setError(err.message || t("errors.generic"));
     setLoading(false);
   }
 
@@ -64,7 +71,7 @@ export function SignInForm({
     setResending(true);
     const { error: err } = await authClient.sendVerificationEmail({ email, callbackURL: target });
     setResending(false);
-    if (err) setError(err.message || "Could not send the email. Please try again.");
+    if (err) setError(err.message || t("errors.resendFailed"));
     else setResent(true);
   }
 
@@ -72,45 +79,45 @@ export function SignInForm({
 
   return (
     <AuthShell
-      title="Sign in to AgentSDR"
+      title={t("title")}
       footer={
-        signupAvailable ? (
-          <>
-            Don&apos;t have an account?{" "}
-            <Link href={`/sign-up${q}`} className={linkClass}>
-              Create one
-            </Link>
-          </>
-        ) : (
-          <>
-            Need access?{" "}
-            <a href={accessRequestHref(email)} className={linkClass}>
-              Ask your admin for an invite
-            </a>
-          </>
-        )
+        signupAvailable
+          ? t.rich("noAccount", {
+              link: (chunks) => (
+                <Link href={`/sign-up${q}`} className={linkClass}>
+                  {chunks}
+                </Link>
+              ),
+            })
+          : t.rich("needAccess", {
+              link: (chunks) => (
+                <a href={accessRequestHref(email)} className={linkClass}>
+                  {chunks}
+                </a>
+              ),
+            })
       }
     >
       <form onSubmit={submit} className="flex flex-col gap-5">
         <Field
-          label="Work email"
+          label={t("email")}
           type="email"
           autoComplete="email"
-          placeholder="name@company.com"
+          placeholder={t("emailPlaceholder")}
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Field
-          label="Password"
+          label={t("password")}
           labelAside={
             <Link href="/forgot-password" className={quietLinkClass}>
-              Forgot password?
+              {t("forgotPassword")}
             </Link>
           }
           type="password"
           autoComplete="current-password"
-          placeholder="Enter your password"
+          placeholder={t("passwordPlaceholder")}
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -118,26 +125,26 @@ export function SignInForm({
         {error && <ErrorCallout>{error}</ErrorCallout>}
         {unverified && (
           <div className="flex flex-col gap-3">
-            <ErrorCallout>Your email address isn&apos;t verified yet. Check your inbox for the confirmation link.</ErrorCallout>
+            <ErrorCallout>{t("unverified")}</ErrorCallout>
             {resent ? (
-              <InfoCallout>Verification email sent. It can take a minute to arrive.</InfoCallout>
+              <InfoCallout>{t("verificationSent")}</InfoCallout>
             ) : (
               <SecondaryButton onClick={resend} loading={resending} disabled={!email}>
-                Resend verification email
+                {t("resendVerification")}
               </SecondaryButton>
             )}
           </div>
         )}
         <div className="pt-1">
-          <SubmitButton loading={loading} loadingLabel="Signing in...">
-            Sign in
+          <SubmitButton loading={loading} loadingLabel={t("signingIn")}>
+            {t("submit")}
           </SubmitButton>
         </div>
       </form>
       {googleEnabled && (
         <>
-          <OrDivider label="Or continue with" />
-          <GoogleButton callbackURL={target} onError={setError} label="Google" />
+          <OrDivider label={tc("orContinueWith")} />
+          <GoogleButton callbackURL={target} onError={setError} label={tc("google")} />
         </>
       )}
     </AuthShell>

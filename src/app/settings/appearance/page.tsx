@@ -1,11 +1,16 @@
+import { getTranslations } from "next-intl/server";
 import AppearanceSettings from "@/components/settings/AppearanceSettings";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 
-export const metadata = { title: "Appearance" };
+export async function generateMetadata() {
+  const t = await getTranslations("settings.appearance");
+  return { title: t("pageTitle") };
+}
 
-export default function AppearancePage() {
+export default async function AppearancePage() {
+  const t = await getTranslations("settings.appearance");
   return (
-    <SettingsPage title="Appearance" description="Light, dark, or matched to your system." width="narrow">
+    <SettingsPage title={t("pageTitle")} description={t("pageDescription")} width="narrow">
       <AppearanceSettings />
     </SettingsPage>
   );

@@ -1,4 +1,5 @@
 import { AppIcon } from "@/components/brand/Logo";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { AuthShowcase } from "./AuthShowcase";
 
 /**
@@ -20,7 +21,11 @@ export function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen bg-[#0b0b0d] text-zinc-100 scheme-dark">
-      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+        {/* Before signing in there is no settings page to pick a language on. */}
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-5">
+          <LanguageSwitcher variant="auth" />
+        </div>
         <div className="w-full max-w-100">
           <div className="group mb-7 flex justify-center">
             <AppIcon className="size-12" walk="bounce" walkOn="hover" />

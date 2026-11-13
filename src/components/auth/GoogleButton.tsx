@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
 import { SecondaryButton } from "./fields";
 
@@ -18,19 +19,20 @@ function GoogleG() {
 export function GoogleButton({
   callbackURL,
   onError,
-  label = "Continue with Google",
+  label,
 }: {
   callbackURL: string;
   onError: (message: string) => void;
   label?: string;
 }) {
+  const t = useTranslations("auth.common");
   const [loading, setLoading] = useState(false);
 
   async function go() {
     setLoading(true);
     const { error } = await authClient.signIn.social({ provider: "google", callbackURL });
     if (error) {
-      onError(error.message || "Google sign-in failed. Please try again.");
+      onError(error.message || t("googleFailed"));
       setLoading(false);
     }
   }
@@ -38,16 +40,17 @@ export function GoogleButton({
   return (
     <SecondaryButton onClick={go} loading={loading}>
       {!loading && <GoogleG />}
-      {label}
+      {label ?? t("continueWithGoogle")}
     </SecondaryButton>
   );
 }
 
-export function OrDivider({ label = "or" }: { label?: string }) {
+export function OrDivider({ label }: { label?: string }) {
+  const t = useTranslations("auth.common");
   return (
     <div className="my-6 flex items-center gap-3 text-xs text-zinc-500">
       <span className="h-px flex-1 bg-white/10" />
-      {label}
+      {label ?? t("or")}
       <span className="h-px flex-1 bg-white/10" />
     </div>
   );
