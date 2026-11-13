@@ -1,15 +1,25 @@
 import { describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
+import { DOMAINS } from "./catalog";
 import { DEFAULT_LOCALE, LOCALES, isLocale, matchLocale, type Locale } from "./config";
-import en from "../../messages/en.json";
-import ptBR from "../../messages/pt-BR.json";
 
 /**
  * English is the source of truth (src/i18n/global.d.ts types every key from
  * it). These tests hold each other language to the same keys and the same
  * placeholders, so a translation can never ship half-done or lose a {name}.
  */
-const CATALOGS: Record<Locale, unknown> = { en, "pt-BR": ptBR };
+const DIR = join(import.meta.dir, "../../messages");
+
+/** Strings that are legitimately the same in every language (names, loanwords). Say why. */
+const IDENTICAL_OK = new Set<string>([
+  "auth.common.google", // brand name
+]);
+
+function readDomain(locale: Locale, domain: string): Record<string, unknown> {
+  return JSON.parse(readFileSync(join(DIR, locale, `${domain}.json`), "utf8"));
+}
 
 /** { a: { b: "x" } } → { "a.b": "x" } */
 function flatten(node: unknown, prefix = "", out: Record<string, string> = {}): Record<string, string> {
@@ -19,6 +29,12 @@ function flatten(node: unknown, prefix = "", out: Record<string, string> = {}): 
     else if (value && typeof value === "object") flatten(value, path, out);
     else throw new Error(`messages: ${path} must be a string or an object`);
   }
+  return out;
+}
+
+function catalog(locale: Locale): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const domain of DOMAINS) flatten(readDomain(locale, domain), "", out);
   return out;
 }
 
@@ -50,41 +66,67 @@ function placeholders(message: string): string[] {
   return [...found].sort();
 }
 
-const source = flatten(en);
+const source = catalog(DEFAULT_LOCALE);
 
-describe("message catalogs", () => {
-  test("every supported locale has a catalog", () => {
-    expect(Object.keys(CATALOGS).sort()).toEqual([...LOCALES].sort());
+describe("message catalog layout", () => {
+  for (const locale of LOCALES) {
+    test(`${locale}: has exactly one JSON file per domain, no orphans`, () => {
+      const files = readdirSync(join(DIR, locale)).filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, "")).sort();
+      expect(files).toEqual([...DOMAINS].sort());
+    });
+  }
+
+  test("a top-level namespace is owned by exactly one domain file", () => {
+    const owners = new Map<string, string>();
+    const duplicates: string[] = [];
+    for (const domain of DOMAINS) {
+      for (const namespace of Object.keys(readDomain(DEFAULT_LOCALE, domain))) {
+        const other = owners.get(namespace);
+        if (other) duplicates.push(`${namespace}: ${other} and ${domain}`);
+        owners.set(namespace, domain);
+      }
+    }
+    expect(duplicates).toEqual([]);
   });
 
+  test("every English message is valid ICU", () => {
+    for (const message of Object.values(source)) expect(() => parse(message)).not.toThrow();
+  });
+});
+
+describe("translations", () => {
   for (const locale of LOCALES) {
     if (locale === DEFAULT_LOCALE) continue;
-    const catalog = flatten(CATALOGS[locale]);
+    const translated = catalog(locale);
 
     describe(locale, () => {
       test("has exactly the keys English has", () => {
-        const missing = Object.keys(source).filter((key) => !(key in catalog));
-        const extra = Object.keys(catalog).filter((key) => !(key in source));
+        const missing = Object.keys(source).filter((key) => !(key in translated));
+        const extra = Object.keys(translated).filter((key) => !(key in source));
         expect({ missing, extra }).toEqual({ missing: [], extra: [] });
       });
 
       test("keeps every placeholder and tag of the English message", () => {
         const mismatched = Object.keys(source)
-          .filter((key) => key in catalog)
-          .filter((key) => placeholders(source[key]).join() !== placeholders(catalog[key]).join())
-          .map((key) => `${key}: en uses [${placeholders(source[key])}], ${locale} uses [${placeholders(catalog[key])}]`);
+          .filter((key) => key in translated)
+          .filter((key) => placeholders(source[key]).join() !== placeholders(translated[key]).join())
+          .map((key) => `${key}: en uses [${placeholders(source[key])}], ${locale} uses [${placeholders(translated[key])}]`);
         expect(mismatched).toEqual([]);
       });
 
-      test("has no empty messages", () => {
-        expect(Object.keys(catalog).filter((key) => catalog[key].trim() === "")).toEqual([]);
+      test("has no empty messages and every message is valid ICU", () => {
+        expect(Object.keys(translated).filter((key) => translated[key].trim() === "")).toEqual([]);
+        for (const message of Object.values(translated)) expect(() => parse(message)).not.toThrow();
+      });
+
+      test("has no message left in English (identical to the English text, more than two words)", () => {
+        const untranslated = Object.keys(source).filter(
+          (key) => key in translated && translated[key] === source[key] && source[key].trim().split(/\s+/).length > 2 && !IDENTICAL_OK.has(key),
+        );
+        expect(untranslated).toEqual([]);
       });
     });
   }
-
-  test("every English message is valid ICU", () => {
-    for (const message of Object.values(source)) expect(() => parse(message)).not.toThrow();
-  });
 });
 
 describe("matchLocale", () => {

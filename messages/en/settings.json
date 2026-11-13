@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "appearance": {
+      "pageTitle": "Appearance",
+      "pageDescription": "Light, dark or matched to your system, and the language AgentSDR is shown in.",
+      "themeTitle": "Theme",
+      "themeDescription": "How AgentSDR looks on this browser.",
+      "colourTheme": "Colour theme",
+      "colourThemeDescription": "System follows your computer's light or dark setting and switches when it does.",
+      "showing": "Showing {theme, select, light {light} dark {dark} other {{theme}}}, from your system setting",
+      "footer": "Remembered on this browser only. Other browsers and devices keep their own choice, and nothing is saved to your workspace."
+    }
+  }
+}

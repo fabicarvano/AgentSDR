@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "appearance": {
+      "pageTitle": "Aparência",
+      "pageDescription": "Claro, escuro ou igual ao seu sistema, e o idioma em que o AgentSDR é exibido.",
+      "themeTitle": "Tema",
+      "themeDescription": "Como o AgentSDR aparece neste navegador.",
+      "colourTheme": "Tema de cores",
+      "colourThemeDescription": "“Sistema” segue a configuração clara ou escura do seu computador e muda quando ela muda.",
+      "showing": "Exibindo o tema {theme, select, light {claro} dark {escuro} other {{theme}}}, conforme a configuração do sistema",
+      "footer": "Lembrado apenas neste navegador. Outros navegadores e dispositivos mantêm a própria escolha, e nada é salvo no seu espaço de trabalho."
+    }
+  }
+}

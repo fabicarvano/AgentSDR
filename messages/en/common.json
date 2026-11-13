@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "description": "Outreach, qualification and CRM for GTM teams"
+  },
+  "language": {
+    "switcherLabel": "Language",
+    "title": "Language",
+    "description": "The language AgentSDR is shown in on this browser.",
+    "fieldLabel": "Interface language",
+    "fieldDescription": "Changes the interface only. Messages to leads, AI drafts and anything you write keep the language they were written in.",
+    "footer": "Remembered on this browser only, like the theme. Nothing is saved to your workspace."
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  }
+}

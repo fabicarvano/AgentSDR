@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "description": "Prospecção, qualificação e CRM para times de GTM"
+  },
+  "language": {
+    "switcherLabel": "Idioma",
+    "title": "Idioma",
+    "description": "O idioma em que o AgentSDR é exibido neste navegador.",
+    "fieldLabel": "Idioma da interface",
+    "fieldDescription": "Altera apenas a interface. Mensagens para leads, rascunhos de IA e tudo o que você escreve continuam no idioma em que foram escritos.",
+    "footer": "Lembrado apenas neste navegador, como o tema. Nada é salvo no seu espaço de trabalho."
+  },
+  "theme": {
+    "label": "Tema",
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema",
+    "switchToLight": "Mudar para o modo claro",
+    "switchToDark": "Mudar para o modo escuro"
+  }
+}
