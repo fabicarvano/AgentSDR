@@ -7,21 +7,31 @@ files, including one-off tooling — a throwaway script tends not to stay
 throwaway, and untyped code that touches the database is where schema drift
 hides.
 
-This applies to `scripts/` too. The existing files there are plain `.js` for
-historical reasons; new migrations should be `.ts`, run with `bun run`.
+This applies to `scripts/` too. A few older files there are plain `.js` for
+historical reasons; every new script is `.ts`, run with `bun run`.
 
 `npx tsc --noEmit` must pass before anything is committed.
 
 ## `scripts/` is database migration history
 
-`scripts/*.js` are **not** application logic and nothing in `src/` imports them.
-They are one-shot migrations, run by hand (`node scripts/<name>.js`) against the
-live Postgres, each loading `.env.local` and connecting via `DATABASE_URL`.
+`scripts/*` are **not** application logic and nothing in `src/` imports them.
+They are one-shot migrations, run by hand against the live Postgres
+(`bun run scripts/<name>.ts`; the few older `.js` ones with
+`node scripts/<name>.js`), each loading `.env.local` and connecting via
+`DATABASE_URL`.
 
-They matter more than their "scratch script" appearance suggests: `drizzle.config.ts`
-declares `out: "./drizzle"`, but **no `drizzle/` directory exists** — no generated
-migrations have ever been committed. So these files are the only written record of
-how the schema was built, and the only reproducible path to a fresh database.
+**There is no `drizzle/` directory.** `drizzle.config.ts` declares
+`out: "./drizzle"`, but no generated migrations have ever been committed. A
+schema change is therefore a hand-written `.ts` script in `scripts/` **plus** a
+manual edit of the matching Drizzle definition in `src/lib/**/schema.ts`; then
+run `bun run db:schema:dump` and commit the regenerated `db/schema.sql` with
+them (the PR template checks for it).
+
+`db/schema.sql` (generated, never edited by hand) and `db/seed.sql` are what a
+fresh install starts from (`bun run db:setup`, empty database only); an
+existing install moves forward with the scripts here. They matter more than
+their "scratch script" appearance suggests: they are the only written record of
+how the schema was built.
 
 Do not delete them as dead code. Conventions:
 
@@ -150,8 +160,9 @@ cron secrets and tuning knobs. Two deliberate exceptions:
   `GRID_HTTP_ALLOW_PRIVATE=true`; see `src/lib/grid/runners/http.ts`.
 
 `scripts/migrate-env-to-integrations.ts` copied an existing env setup into
-the store once (verifying each; Langfuse's old `LANGFUSE_*` keys too); keep
-it as the record of that move.
+the store once (verifying each; Langfuse's old `LANGFUSE_*` keys too). It is
+history, not a tool to maintain: **do not edit it**; keep it as the record of
+that move.
 
 ## The public API: API keys, not sessions
 
@@ -441,16 +452,17 @@ what lands.
 
 ## Tests run under bun, both halves of them
 
-`npm test` is `bun test --conditions=react-server` — about 560 tests across 76 files.
+`bun run test` is `bun test --conditions=react-server` — about 140 test files.
 
-The suite is split between two runners by history: roughly half the files
-import `bun:test` and half import `node:test`. Bun runs both, so this is not
-worth converting. `node --test` is not an option — it dies on the first
+The suite is split between two runners by history: most files import
+`bun:test` (about 110) and about 30 import `node:test`. Bun runs both, so this
+is not worth converting. `node --test` is not an option — it dies on the first
 `bun:test` import with `ERR_UNSUPPORTED_ESM_URL_SCHEME`.
 
-`--conditions=react-server` is required, not decorative: nine files reach a
-module that imports `server-only`, which throws outside that condition. The
-`scripts/` entries above pass the same flag for the same reason.
+`--conditions=react-server` is required, not decorative: a bare `bun test`
+fails, because many files reach a module that imports `server-only`, which
+throws outside that condition. The `scripts/` entries above pass the same flag
+for the same reason.
 
 ## WhatsApp calling and the recorder extension
 
