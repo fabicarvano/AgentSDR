@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { RiExternalLinkLine, RiFileCopyLine, RiMore2Line, RiPhoneLine, RiUserSearchLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Dropdown from "@/components/alignui/dropdown";
@@ -32,15 +33,16 @@ function SkeletonRow({ index }: { index: number }) {
 }
 
 function PersonTableRow({ row }: { row: PersonRow }) {
+  const t = useTranslations("leads.peopleTable");
   const router = useRouter();
   const { person, company, campaigns, crm } = row;
   const href = crm ? `/crm/records/${crm.recordId}` : null;
-  const name = person.fullName || "Unnamed person";
+  const name = person.fullName || t("unnamed");
   const companyName = company ? company.name || company.domain : null;
   return (
     <Table.Row
       tabIndex={href ? 0 : undefined}
-      aria-label={href ? `Open ${name}` : undefined}
+      aria-label={href ? t("openRow", { name }) : undefined}
       onClick={href ? () => router.push(href) : undefined}
       onKeyDown={href ? (event) => { if (event.target === event.currentTarget && event.key === "Enter") router.push(href); } : undefined}
       className={cn("outline-none focus-visible:[&>td]:bg-bg-weak-50", href && "cursor-pointer")}
@@ -61,7 +63,7 @@ function PersonTableRow({ row }: { row: PersonRow }) {
             <CompanyFavicon domain={company.domain} className="size-7" />
             <TwoLine primary={companyName} primaryTitle={companyName ?? undefined} secondary={company.name && company.name !== company.domain ? company.domain : null} />
           </div>
-        ) : <Empty label="No company" />}
+        ) : <Empty label={t("noCompany")} />}
       </Table.Cell>
       <Table.Cell className={rowCell}><ReachIcons person={person} /></Table.Cell>
       <Table.Cell className={rowCell}><CampaignSummary campaigns={campaigns} /></Table.Cell>
@@ -70,14 +72,14 @@ function PersonTableRow({ row }: { row: PersonRow }) {
         <div className="flex justify-end">
           <Dropdown.Root>
             <Dropdown.Trigger asChild>
-              <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={`More actions for ${name}`}><Button.Icon as={RiMore2Line} /></Button.Root>
+              <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={t("moreActions", { name })}><Button.Icon as={RiMore2Line} /></Button.Root>
             </Dropdown.Trigger>
             <Dropdown.Content>
-              {href && <Dropdown.Item onSelect={() => router.push(href)}><Dropdown.ItemIcon as={RiUserSearchLine} />Open CRM record</Dropdown.Item>}
-              {person.linkedinUrl && <Dropdown.Item onSelect={() => window.open(linkedInPersonHref(person.linkedinUrl as string), "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiExternalLinkLine} />Open LinkedIn profile</Dropdown.Item>}
-              {person.email && <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(person.email as string)}><Dropdown.ItemIcon as={RiFileCopyLine} />Copy email</Dropdown.Item>}
-              {person.phone && <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(person.phone as string)}><Dropdown.ItemIcon as={RiPhoneLine} />Copy phone</Dropdown.Item>}
-              {!href && !person.linkedinUrl && !person.email && !person.phone && <div className="p-2 text-paragraph-sm text-text-soft-400">No actions available</div>}
+              {href && <Dropdown.Item onSelect={() => router.push(href)}><Dropdown.ItemIcon as={RiUserSearchLine} />{t("openCrm")}</Dropdown.Item>}
+              {person.linkedinUrl && <Dropdown.Item onSelect={() => window.open(linkedInPersonHref(person.linkedinUrl as string), "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiExternalLinkLine} />{t("openLinkedin")}</Dropdown.Item>}
+              {person.email && <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(person.email as string)}><Dropdown.ItemIcon as={RiFileCopyLine} />{t("copyEmail")}</Dropdown.Item>}
+              {person.phone && <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(person.phone as string)}><Dropdown.ItemIcon as={RiPhoneLine} />{t("copyPhone")}</Dropdown.Item>}
+              {!href && !person.linkedinUrl && !person.email && !person.phone && <div className="p-2 text-paragraph-sm text-text-soft-400">{t("noActions")}</div>}
             </Dropdown.Content>
           </Dropdown.Root>
         </div>
@@ -93,18 +95,19 @@ export function PeopleTable({ rows, sort, direction, onSort, loading }: {
   onSort: (key: string) => void;
   loading: boolean;
 }) {
+  const t = useTranslations("leads.peopleTable");
   const head = { activeSort: sort, direction, onSort };
   return (
     <Tooltip.Provider delayDuration={250} skipDelayDuration={300} disableHoverableContent>
       <Table.Root style={fixedTableStyle}>
         <Table.Header>
           <tr>
-            <SortableHead label="Name" sortKey="name" className="w-[21%]" {...head} />
-            <SortableHead label="Company" sortKey="company" className="w-[18%]" {...head} />
-            <SortableHead label="Reach" className="w-28" />
-            <SortableHead label="Outreach" className="w-[18%]" />
-            <SortableHead label="CRM" />
-            <SortableHead label={<span className="sr-only">Actions</span>} className="w-12" />
+            <SortableHead label={t("columns.name")} sortKey="name" className="w-[21%]" {...head} />
+            <SortableHead label={t("columns.company")} sortKey="company" className="w-[18%]" {...head} />
+            <SortableHead label={t("columns.reach")} className="w-28" />
+            <SortableHead label={t("columns.outreach")} className="w-[18%]" />
+            <SortableHead label={t("columns.crm")} />
+            <SortableHead label={<span className="sr-only">{t("columns.actions")}</span>} className="w-12" />
           </tr>
         </Table.Header>
         <Table.Body spacing={4} className={cn("transition-opacity", loading && rows && "opacity-60")} aria-busy={loading}>

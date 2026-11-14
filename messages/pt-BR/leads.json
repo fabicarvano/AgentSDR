@@ -1,3 +1,390 @@
 {
-  "leads": {}
+  "leads": {
+    "page": {
+      "title": "Leads"
+    },
+    "sort": {
+      "updated": "Última atualização",
+      "created": "Data de adição",
+      "name": "Nome",
+      "company": "Empresa",
+      "title": "Cargo",
+      "email": "E-mail",
+      "domain": "Domínio",
+      "people": "Pessoas"
+    },
+    "crm": {
+      "category": {
+        "customer": "Cliente",
+        "interested": "Interessado",
+        "notInterested": "Não interessado",
+        "other": "Outro",
+        "unclassified": "Não classificado"
+      },
+      "state": {
+        "unclassified": "Não classificado",
+        "classifying": "Classificando",
+        "actionRequired": "Ação necessária",
+        "waiting": "Aguardando",
+        "idle": "Parado",
+        "paused": "Pausado",
+        "closed": "Encerrado",
+        "error": "Erro"
+      }
+    },
+    "client": {
+      "title": "Leads",
+      "description": "Todas as pessoas e empresas que você pode alcançar, com o estado de abordagem e do CRM.",
+      "importPeople": "Importar pessoas",
+      "tabsLabel": "Tipo de lead",
+      "tabs": {
+        "people": "Pessoas",
+        "companies": "Empresas"
+      },
+      "count": {
+        "people": "{count, plural, =0 {0 pessoas} one {# pessoa} other {# pessoas}}",
+        "companies": "{count, plural, =0 {0 empresas} one {# empresa} other {# empresas}}"
+      },
+      "matchCount": {
+        "people": "{count, plural, =0 {0 pessoas correspondem} one {# pessoa corresponde} other {# pessoas correspondem}}",
+        "companies": "{count, plural, =0 {0 empresas correspondem} one {# empresa corresponde} other {# empresas correspondem}}"
+      },
+      "loading": {
+        "people": "Carregando pessoas…",
+        "companies": "Carregando empresas…"
+      },
+      "loadFailed": "{tab, select, people {Não foi possível carregar as pessoas} other {Não foi possível carregar as empresas}}",
+      "search": {
+        "people": {
+          "label": "Buscar pessoas",
+          "placeholder": "Buscar pessoas…"
+        },
+        "companies": {
+          "label": "Buscar empresas",
+          "placeholder": "Buscar empresas…"
+        }
+      },
+      "moreOptions": "Mais opções",
+      "manageColumns": "Gerenciar colunas de lead",
+      "downloadTemplate": "Baixar modelo de importação",
+      "sortBy": "Ordenar por",
+      "ascending": "crescente",
+      "descending": "decrescente",
+      "empty": {
+        "noMatchFilters": {
+          "people": "Nenhuma pessoa corresponde a estes filtros",
+          "companies": "Nenhuma empresa corresponde a estes filtros"
+        },
+        "noMatchSearch": {
+          "people": "Nenhuma pessoa corresponde a esta busca",
+          "companies": "Nenhuma empresa corresponde a esta busca"
+        },
+        "none": {
+          "people": "Nenhuma pessoa ainda",
+          "companies": "Nenhuma empresa ainda"
+        },
+        "broaden": "Tente ampliar a busca ou alterar um filtro.",
+        "hint": {
+          "people": "Importe uma planilha para adicionar pessoas.",
+          "companies": "As empresas aparecem conforme as pessoas são importadas."
+        },
+        "clearFilters": "Limpar filtros",
+        "clearSearch": "Limpar busca"
+      },
+      "pagination": {
+        "label": "Paginação",
+        "range": "{from, number}–{to, number} de {total, number}",
+        "previous": "Página anterior",
+        "next": "Próxima página"
+      }
+    },
+    "filter": {
+      "trigger": "Filtrar",
+      "title": "Filtros",
+      "clearAll": "Limpar tudo",
+      "campaign": {
+        "label": "Campanha",
+        "aria": "Filtro de campanha",
+        "all": "Todas as campanhas",
+        "email": "Campanhas de e-mail",
+        "linkedin": "Campanhas do LinkedIn",
+        "unassigned": "Sem campanha"
+      },
+      "category": {
+        "label": "Categoria no CRM",
+        "aria": "Filtro de categoria do CRM",
+        "all": "Todas as categorias do CRM"
+      },
+      "subcategory": {
+        "label": "Subcategoria",
+        "aria": "Filtro de subcategoria do CRM",
+        "all": "Todas as subcategorias"
+      },
+      "state": {
+        "label": "Estado no CRM",
+        "aria": "Filtro de fluxo do CRM",
+        "all": "Todos os estados do CRM"
+      },
+      "hasEmail": "Tem e-mail",
+      "hasLinkedin": "Tem LinkedIn",
+      "aiChanged": "Alterado pela IA"
+    },
+    "peopleTable": {
+      "unnamed": "Pessoa sem nome",
+      "openRow": "Abrir {name}",
+      "noCompany": "Sem empresa",
+      "moreActions": "Mais ações para {name}",
+      "openCrm": "Abrir registro no CRM",
+      "openLinkedin": "Abrir perfil no LinkedIn",
+      "copyEmail": "Copiar e-mail",
+      "copyPhone": "Copiar telefone",
+      "noActions": "Nenhuma ação disponível",
+      "columns": {
+        "name": "Nome",
+        "company": "Empresa",
+        "reach": "Canais",
+        "outreach": "Abordagem",
+        "crm": "CRM",
+        "actions": "Ações"
+      }
+    },
+    "companiesTable": {
+      "showPeopleAt": "Ver pessoas de {name}",
+      "moreActions": "Mais ações para {name}",
+      "showPeople": "Ver pessoas",
+      "openWebsite": "Abrir site",
+      "openLinkedin": "Abrir página do LinkedIn",
+      "copyDomain": "Copiar domínio",
+      "columns": {
+        "company": "Empresa",
+        "people": "Pessoas",
+        "outreach": "Abordagem",
+        "links": "Links",
+        "updated": "Atualizado",
+        "actions": "Ações"
+      }
+    },
+    "cells": {
+      "reach": {
+        "copied": "Copiado",
+        "clickToCopy": "{value} · clique para copiar",
+        "noEmail": "Sem e-mail",
+        "noLinkedin": "Sem LinkedIn",
+        "noPhone": "Sem telefone",
+        "copyEmail": "Copiar e-mail {value}",
+        "copyPhone": "Copiar telefone {value}",
+        "openLinkedin": "Abrir perfil no LinkedIn"
+      },
+      "links": {
+        "open": {
+          "website": "Abrir site",
+          "linkedinPage": "Abrir página do LinkedIn"
+        },
+        "none": {
+          "website": "Sem site",
+          "linkedinPage": "Sem página do LinkedIn"
+        }
+      },
+      "campaign": {
+        "none": "Sem campanha",
+        "count": "{count, plural, one {# campanha} other {# campanhas}}",
+        "status": {
+          "draft": "Rascunho",
+          "active": "Ativa",
+          "paused": "Pausada",
+          "completed": "Concluída"
+        }
+      },
+      "crm": {
+        "none": "Sem registro no CRM",
+        "nextAction": "Próxima ação {date}",
+        "due": "Prazo {date}",
+        "aiChange": "Alteração da IA",
+        "aiChangeHint": "A IA alterou esta classificação; revise-a no registro"
+      }
+    },
+    "importModal": {
+      "title": "Importar pessoas",
+      "description": "Cria ou atualiza apenas o cadastro principal de Pessoas. Os registros de CRM só começam depois de uma resposta.",
+      "downloadTemplate": "Baixar modelo do Excel",
+      "chooseFilePrompt": "Escolha um arquivo .xlsx ou .csv",
+      "chooseFile": "Escolha um arquivo primeiro",
+      "failed": "Falha na importação",
+      "summary": "{total, number} processados · {created, number} criados · {updated, number} atualizados · {failed, number} com falha",
+      "failureRow": "Linha {row} ({identity}): {error}",
+      "done": "Concluir",
+      "cancel": "Cancelar",
+      "importing": "Importando…",
+      "import": "Importar"
+    },
+    "addToCampaign": {
+      "title": "Adicionar de Pessoas",
+      "description": "Só é possível selecionar pessoas com {channel, select, email {e-mail válido} whatsapp {número de telefone} other {perfil do LinkedIn}}.",
+      "searchLabel": "Buscar pessoas",
+      "searchPlaceholder": "Buscar nome, e-mail, empresa, domínio ou LinkedIn…",
+      "loading": "Carregando…",
+      "empty": "Nenhuma pessoa elegível encontrada.",
+      "cancel": "Cancelar",
+      "adding": "Adicionando…",
+      "add": "Adicionar pessoas",
+      "addPeople": "{count, plural, one {Adicionar # pessoa} other {Adicionar # pessoas}}",
+      "loadFailed": "Não foi possível carregar as pessoas",
+      "addFailed": "Não foi possível adicionar as pessoas"
+    },
+    "csvMapping": {
+      "title": "Mapear colunas da campanha",
+      "description": "Associe as colunas de {file} aos campos usados nesta campanha de {channel, select, email {e-mail} linkedin {LinkedIn} other {WhatsApp}}.",
+      "previewFailed": "Não foi possível gerar a prévia do arquivo",
+      "importFailed": "Falha na importação",
+      "reading": {
+        "title": "Lendo a planilha",
+        "hint": "Preparando colunas e valores de exemplo…"
+      },
+      "badges": {
+        "rows": "{count, plural, =0 {0 linhas} one {# linha} other {# linhas}}",
+        "mapped": "{count, plural, one {# mapeado} other {# mapeados}}",
+        "variables": "{count, plural, one {# mantida como variável} other {# mantidas como variáveis}}",
+        "onlyOnce": "Cada campo da plataforma só pode ser mapeado uma vez."
+      },
+      "importingRows": "{count, plural, one {Importando # linha…} other {Importando # linhas…}}",
+      "importingHint": "Salvando leads e verificando duplicados. Mantenha esta janela aberta. Tempo decorrido: {elapsed}.",
+      "importingLong": "Importações grandes podem levar vários minutos; não inicie a importação novamente.",
+      "requiredMissing": "Mapeie <b>{field}</b> antes de importar para que cada linha tenha a identidade obrigatória da campanha.",
+      "requiredMapped": "Coluna de identidade obrigatória mapeada. Revise os campos opcionais antes de importar.",
+      "columns": {
+        "source": "Coluna do CSV de origem",
+        "example": "Exemplo",
+        "field": "Campo da plataforma",
+        "exampleInline": "Exemplo:"
+      },
+      "example": {
+        "choose": "Escolha uma coluna de origem",
+        "unavailable": "Coluna indisponível",
+        "none": "Sem valor de exemplo"
+      },
+      "keepAsVariable": "Manter como variável (não mapear)",
+      "option": "{label}{required, select, yes { — obrigatório} other {}}{used, select, yes { — já mapeado} other {}}",
+      "linkedinSourceNote": "<b>O tipo de origem do LinkedIn não é um ID de perfil.</b> Mapeie-o apenas quando uma coluna do CSV contiver <code>sales_navigator</code> ou <code>recruiter</code>. Para URLs comuns de perfil do LinkedIn, deixe-o sem mapear.",
+      "note": "Os campos de perfil mapeados atualizam Pessoas e Empresa. As colunas do CSV sem mapeamento ficam preservadas nos dados brutos de Pessoas e continuam disponíveis como variáveis de modelo.",
+      "noteMerge": "{suppressed, select, yes {Identidades duplicadas são mescladas e destinatários suprimidos são ignorados.} other {Identidades duplicadas são mescladas.}}",
+      "footer": {
+        "processing": "Processando {count, plural, one {# linha} other {# linhas}} · tempo decorrido: {elapsed}",
+        "mapped": "{mapped, number} de {total, plural, one {# coluna de origem mapeada} other {# colunas de origem mapeadas}}",
+        "preparing": "Preparando prévia"
+      },
+      "cancel": "Cancelar",
+      "import": "Importar",
+      "importRows": "{count, plural, one {Importar # linha} other {Importar # linhas}}",
+      "elapsed": "{minutes, plural, =0 {{seconds, number}s} other {{minutes, number} min {seconds, number}s}}",
+      "errors": {
+        "chooseColumn": "Escolha uma coluna de origem para {field}.",
+        "duplicateColumn": "Cada coluna de origem só pode ser mapeada para um campo de destino."
+      },
+      "fields": {
+        "email": "E-mail",
+        "linkedinUrl": "URL do LinkedIn",
+        "linkedinUrlOrId": "URL ou ID do LinkedIn",
+        "linkedinSourceType": "Tipo de origem do LinkedIn",
+        "firstName": "Nome",
+        "lastName": "Sobrenome",
+        "fullName": "Nome completo",
+        "jobTitle": "Cargo",
+        "jobTitleHeadline": "Cargo / título do perfil",
+        "companyName": "Nome da empresa",
+        "companyDomain": "Domínio da empresa",
+        "companyWebsite": "Site da empresa",
+        "companyLinkedin": "LinkedIn da empresa",
+        "location": "Localização",
+        "profilePictureUrl": "URL da foto de perfil",
+        "phone": "Telefone"
+      }
+    },
+    "columnSettings": {
+      "entity": {
+        "person": "Pessoas",
+        "company": "Empresas"
+      },
+      "fieldsHeading": "{entity, select, person {Campos de pessoas} other {Campos de empresas}}",
+      "fieldsHint": "Renomeie qualquer campo. Os campos nativos mantêm o tipo.",
+      "add": {
+        "nameAria": "{entity, select, person {Nome do novo campo de pessoa} other {Nome do novo campo de empresa}}",
+        "namePlaceholder": "{entity, select, person {Novo campo de pessoa…} other {Novo campo de empresa…}}",
+        "typeAria": "Tipo de campo",
+        "adding": "Adicionando…",
+        "submit": "Adicionar campo"
+      },
+      "storedAs": "Armazenado como {pgType}",
+      "types": {
+        "text": "Texto",
+        "url": "URL",
+        "email": "E-mail",
+        "image": "Imagem de URL",
+        "select": "Seleção",
+        "number": "Número",
+        "currency": "Moeda",
+        "boolean": "Caixa de seleção",
+        "date": "Data",
+        "multiselect": "Seleção múltipla",
+        "json": "JSON"
+      },
+      "empty": {
+        "title": "Nenhum campo ainda",
+        "description": "Adicione um acima; ele aparece em todos os registros e nas importações."
+      },
+      "budget": "{entity, select, person {Colunas do Postgres usadas em Pessoas} other {Colunas do Postgres usadas em Empresas}}",
+      "budgetWarning": "As colunas removidas continuam contando até a tabela ser reconstruída; exclua em definitivo as que não usa para liberar espaço.",
+      "removed": {
+        "title": "Campos removidos ({count, number})",
+        "hint": "Ocultos nas importações e nas visualizações, mas os dados continuam intactos e eles ainda ocupam um espaço de coluna.",
+        "restore": "Restaurar",
+        "delete": "Excluir em definitivo"
+      },
+      "row": {
+        "renameAria": "Renomear {name}",
+        "renameHint": "Clique para renomear",
+        "builtIn": "Nativo · {type}",
+        "typeAria": "Tipo de {name}",
+        "removeAria": "Remover {name}",
+        "removeHint": "Remover (mantém os dados)",
+        "remove": "Remover"
+      },
+      "retype": {
+        "title": "Alterar “{name}” para {type}?",
+        "lossy": "<b>{incompatible, number} de {populated, number}</b> {populated, plural, one {valor não pode ser convertido e será apagado em definitivo.} other {valores não podem ser convertidos e serão apagados em definitivo.}} Esta ação não pode ser desfeita.",
+        "clean": "{populated, plural, =0 {Não há valores a converter.} one {# valor é convertido sem perdas.} other {Todos os # valores são convertidos sem perdas.}}",
+        "confirm": "Alterar tipo"
+      },
+      "delete": {
+        "title": "Excluir “{name}” em definitivo?",
+        "description": "A coluna e todos os valores armazenados nela serão destruídos. Esta ação não pode ser desfeita, e restaurá-la depois não recupera os dados.",
+        "confirm": "Excluir em definitivo"
+      },
+      "errors": {
+        "generic": "Algo deu errado",
+        "network": "Não foi possível conectar ao servidor",
+        "conversionUnsupported": "Essa conversão não é suportada"
+      },
+      "core": {
+        "person": {
+          "email": "E-mail",
+          "linkedinUrl": "URL do LinkedIn",
+          "firstName": "Nome",
+          "lastName": "Sobrenome",
+          "fullName": "Nome completo",
+          "title": "Cargo",
+          "profilePicture": "Foto de perfil",
+          "phone": "Telefone"
+        },
+        "company": {
+          "domain": "Domínio",
+          "name": "Nome da empresa",
+          "linkedinUrl": "LinkedIn da empresa"
+        }
+      }
+    },
+    "domains": {
+      "title": "Todos os domínios",
+      "subtitle": "Mais de 2,5 milhões de lojas ativas"
+    }
+  }
 }

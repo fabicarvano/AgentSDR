@@ -1,6 +1,7 @@
 "use client";
 
 import { RiInformationLine } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import * as Tooltip from "@/components/alignui/tooltip";
 import { cn } from "@/utils/cn";
 import { DeltaPill } from "./DeltaPill";
@@ -62,9 +63,10 @@ export function KpiCell({
   selected?: boolean;
   onSelect?: () => void;
 }) {
+  const t = useTranslations("analytics.kit.kpi");
   return (
     <div className={cn("relative flex flex-col gap-3 bg-bg-white-0 p-4 sm:p-5", selected && "bg-bg-weak-50")}>
-      {onSelect && <button type="button" onClick={onSelect} aria-pressed={Boolean(selected)} aria-label={`Show ${label}`} className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-base" />}
+      {onSelect && <button type="button" onClick={onSelect} aria-pressed={Boolean(selected)} aria-label={t("show", { label })} className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-base" />}
       <div className="flex items-center justify-between gap-2">
         {Icon ? (
           <span className="flex size-8 items-center justify-center rounded-lg bg-bg-weak-50 ring-1 ring-inset ring-stroke-soft-200">
@@ -83,7 +85,7 @@ export function KpiCell({
             <Tooltip.Provider delayDuration={150}>
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
-                  <button type="button" aria-label={`What is “${label}”?`} className="relative z-10 rounded text-text-soft-400 outline-none hover:text-text-sub-600 focus-visible:ring-2 focus-visible:ring-primary-base">
+                  <button type="button" aria-label={t("whatIs", { label })} className="relative z-10 rounded text-text-soft-400 outline-none hover:text-text-sub-600 focus-visible:ring-2 focus-visible:ring-primary-base">
                     <RiInformationLine className="size-3.5" aria-hidden="true" />
                   </button>
                 </Tooltip.Trigger>

@@ -80,51 +80,69 @@ export function ordinalRamp(count: number): string[] {
 }
 
 // ------------------------------------------------------------- formatters
+//
+// Pure functions, so they take the interface language as an optional trailing
+// argument. It defaults to English: screens that have not been translated yet
+// keep calling `formatCompact(n)` and get what they always got. Components in
+// the analytics folder get them bound to the language from `useAnalyticsFormat()`.
 
-/** 1,284 stays whole; from 10,000 it compacts: 12.9K, 1.2M. */
-export function formatCompact(value: number | null | undefined): string {
+const numberFormats = new Map<string, Intl.NumberFormat>();
+function numberFormat(locale: string, options: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let format = numberFormats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, options);
+    numberFormats.set(key, format);
+  }
+  return format;
+}
+
+/** A whole number with the language's digit grouping: 1,284 / 1.284. */
+export function formatNumber(value: number, locale = "en"): string {
+  return numberFormat(locale).format(value);
+}
+
+/** 1,284 stays whole; from 10,000 it compacts: 12.9K, 1.2M (pt-BR: 12,9 mil, 1,2 mi). */
+export function formatCompact(value: number | null | undefined, locale = "en"): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  const abs = Math.abs(value);
-  if (abs < 10_000) return Math.round(value).toLocaleString("en-US");
-  const trim = (n: number) => n.toFixed(1).replace(/\.0$/, "");
-  if (abs < 1_000_000) return `${trim(value / 1_000)}K`;
-  if (abs < 1_000_000_000) return `${trim(value / 1_000_000)}M`;
-  return `${trim(value / 1_000_000_000)}B`;
+  if (Math.abs(value) < 10_000) return numberFormat(locale).format(Math.round(value));
+  return numberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
 /** A 0..1 rate as "18%" (one decimal under 10%: "4.6%"); null renders "—". */
-export function formatPercent(value: number | null | undefined, digits?: number): string {
+export function formatPercent(value: number | null | undefined, digits?: number, locale = "en"): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   const pct = value * 100;
   const d = digits ?? (Math.abs(pct) < 10 && pct !== 0 ? 1 : 0);
-  return `${pct.toFixed(d).replace(/\.0$/, "")}%`;
+  return numberFormat(locale, { style: "percent", minimumFractionDigits: 0, maximumFractionDigits: d }).format(value);
 }
 
 /** Signed change as "+12%" / "−8%". */
-export function formatChange(value: number): string {
+export function formatChange(value: number, locale = "en"): string {
   const pct = Math.abs(value * 100);
-  const text = pct < 10 ? pct.toFixed(1).replace(/\.0$/, "") : Math.round(pct).toLocaleString("en-US");
+  const text = numberFormat(locale, { maximumFractionDigits: pct < 10 ? 1 : 0 }).format(pct);
   return `${value < 0 ? "−" : "+"}${text}%`;
 }
 
-/** Milliseconds as "45s", "3h 12m", "2d 4h". null renders "—". */
-export function formatDuration(ms: number | null | undefined): string {
+/** Milliseconds as "45s", "3h 12m", "2d 4h" (pt-BR: "45 s", "3 h 12 min"). null renders "—". */
+export function formatDuration(ms: number | null | undefined, locale = "en"): string {
   if (ms === null || ms === undefined || Number.isNaN(ms)) return "—";
+  const unit = (n: number, name: "second" | "minute" | "hour" | "day") => numberFormat(locale, { style: "unit", unit: name, unitDisplay: "narrow", maximumFractionDigits: 0 }).format(n);
   const totalSeconds = Math.round(ms / 1000);
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) return unit(totalSeconds, "second");
   const totalMinutes = Math.floor(totalSeconds / 60);
-  if (totalMinutes < 60) return `${totalMinutes}m`;
+  if (totalMinutes < 60) return unit(totalMinutes, "minute");
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (hours < 24) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+  if (hours < 24) return minutes ? `${unit(hours, "hour")} ${unit(minutes, "minute")}` : unit(hours, "hour");
   const days = Math.floor(hours / 24);
   const restHours = hours % 24;
-  return restHours ? `${days}d ${restHours}h` : `${days}d`;
+  return restHours ? `${unit(days, "day")} ${unit(restHours, "hour")}` : unit(days, "day");
 }
 
 /** Minutes as a duration: 192 -> "3h 12m". */
-export function formatMinutes(minutes: number | null | undefined): string {
-  return minutes === null || minutes === undefined ? "—" : formatDuration(minutes * 60_000);
+export function formatMinutes(minutes: number | null | undefined, locale = "en"): string {
+  return minutes === null || minutes === undefined ? "—" : formatDuration(minutes * 60_000, locale);
 }
 
 export type DeltaTone = "good" | "bad" | "neutral";
@@ -135,21 +153,27 @@ export function deltaTone(change: number | null, upIsGood = true): DeltaTone {
   return change > 0 === upIsGood ? "good" : "bad";
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dayFormats = new Map<string, Intl.DateTimeFormat>();
 
-/** "2026-09-01" -> "1 Sep". */
-export function formatDay(date: string): string {
-  const [, m, d] = date.split("-");
-  return `${Number(d)} ${MONTHS[Number(m) - 1] ?? ""}`;
+/** "2026-09-01" -> "1 Sep" (pt-BR: "1 set"). Day first in both languages, so axis labels stay short. */
+export function formatDay(date: string, locale = "en"): string {
+  let format = dayFormats.get(locale);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+    dayFormats.set(locale, format);
+  }
+  try {
+    // Composed from the parts instead of format(): pt-BR would add "de" and a dot ("1 de set.").
+    const parts = format.formatToParts(new Date(`${date}T00:00:00Z`));
+    const day = parts.find((p) => p.type === "day")?.value ?? "";
+    const month = (parts.find((p) => p.type === "month")?.value ?? "").replace(/\.$/, "");
+    return `${day} ${month}`;
+  } catch {
+    return date;
+  }
 }
 
 /** "2026-09-01" -> "1 Sep 2026". */
-export function formatDayLong(date: string): string {
-  return `${formatDay(date)} ${date.slice(0, 4)}`;
-}
-
-/** Bucket start as an axis label ("1 Sep") or, with `long`, a tooltip/table label ("Week of 1 Sep"). */
-export function formatBucket(date: string, bucket: "day" | "week", long = false): string {
-  if (bucket === "week") return long ? `Week of ${formatDay(date)}` : formatDay(date);
-  return long ? formatDayLong(date) : formatDay(date);
+export function formatDayLong(date: string, locale = "en"): string {
+  return `${formatDay(date, locale)} ${date.slice(0, 4)}`;
 }

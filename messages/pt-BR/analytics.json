@@ -1,3 +1,459 @@
 {
-  "analytics": {}
+  "analytics": {
+    "page": {
+      "title": "Analytics"
+    },
+    "loading": {
+      "label": "Carregando o Analytics"
+    },
+    "channels": {
+      "email": "E-mail",
+      "linkedin": "LinkedIn",
+      "whatsapp": "WhatsApp"
+    },
+    "common": {
+      "vsPrevious": "vs. {value} no período anterior",
+      "regardlessOfRange": "Neste momento, independentemente do período.",
+      "campaign": "Campanha",
+      "leads": "Leads",
+      "replied": "Responderam",
+      "replyRate": "Taxa de resposta",
+      "open": "Abrir",
+      "connected": "Conectada",
+      "disconnected": "Desconectada",
+      "campaignStatus": {
+        "active": "Ativa",
+        "paused": "Pausada",
+        "draft": "Rascunho",
+        "completed": "Concluída"
+      }
+    },
+    "format": {
+      "weekOf": "Semana de {date}"
+    },
+    "client": {
+      "title": "Analytics",
+      "description": "Como as conversas viram reuniões e clientes, e quais canais as trazem.",
+      "refresh": "Atualizar",
+      "viewsLabel": "Seções do Analytics",
+      "overviewTab": "Visão geral",
+      "updatedNow": "Atualizado agora",
+      "updatedAgo": "Atualizado {time}",
+      "refreshFailed": "Não foi possível atualizar: {error}. Mostrando os últimos dados carregados.",
+      "requestFailed": "A solicitação falhou ({status})",
+      "loadFailed": "Não foi possível carregar o Analytics"
+    },
+    "range": {
+      "custom": "Período personalizado",
+      "apply": "Aplicar período",
+      "startDate": "Data inicial",
+      "endDate": "Data final",
+      "startAfterEnd": "A data inicial deve ser anterior à final.",
+      "tooLong": "{count, plural, one {Escolha no máximo # dia.} other {Escolha no máximo # dias.}}",
+      "presets": {
+        "last7": "Últimos 7 dias",
+        "last30": "Últimos 30 dias",
+        "last90": "Últimos 90 dias",
+        "thisMonth": "Este mês",
+        "lastMonth": "Mês passado"
+      }
+    },
+    "kit": {
+      "total": "Total",
+      "chartCard": {
+        "showChart": "Mostrar gráfico",
+        "showTable": "Mostrar como tabela"
+      },
+      "delta": {
+        "new": "Novo",
+        "nothingBefore": "Nada no período anterior",
+        "noBase": "Sem dados do período anterior para comparar",
+        "change": "{tone, select, good {melhorou} bad {piorou} other {ficou igual}} em relação ao período anterior"
+      },
+      "donut": {
+        "other": "Outros ({count})",
+        "empty": "Nada neste período."
+      },
+      "empty": {
+        "title": "Sem dados neste período",
+        "description": "Nada aconteceu neste intervalo de datas. Tente um intervalo maior."
+      },
+      "errorState": {
+        "title": "Algo deu errado",
+        "message": "Não foi possível carregar o Analytics.",
+        "retry": "Tentar novamente"
+      },
+      "funnel": {
+        "stepOfPrevious": "{value}<suffix> do anterior</suffix>"
+      },
+      "kpi": {
+        "show": "Mostrar {label}",
+        "whatIs": "O que é “{label}”?"
+      },
+      "list": {
+        "empty": "Nada para mostrar."
+      },
+      "limit": {
+        "within": "Dentro do limite",
+        "near": "Perto do limite",
+        "at": "No limite"
+      },
+      "capacity": {
+        "usage": "Uso de {label}"
+      },
+      "tickMeter": {
+        "caption": "{used, number} de {limit, number}"
+      },
+      "timeSeries": {
+        "dateColumn": "Data",
+        "weekColumn": "Semana de"
+      }
+    },
+    "overview": {
+      "kpi": {
+        "replies": "Respostas",
+        "positive": "Positivos",
+        "meetings": "Reuniões",
+        "customers": "Clientes",
+        "medianResponse": "Mediana da 1ª resposta"
+      },
+      "hint": {
+        "replies": "Mensagens recebidas em conversas do CRM neste período, em qualquer canal.",
+        "positive": "Registros do CRM distintos que passaram para Com interesse ou Cliente neste período.",
+        "meetings": "Registros do CRM distintos que passaram para uma subcategoria de reunião ou demo neste período. Faltas (no-shows) não são contadas.",
+        "customers": "Registros do CRM distintos que passaram para Cliente neste período.",
+        "response": "Tempo mediano entre a mensagem de um lead e a sua próxima resposta na mesma conversa."
+      },
+      "fromPeople": "de {value} {count, plural, one {pessoa} other {pessoas}}",
+      "positiveShare": "{value} das pessoas que responderam",
+      "outreach": {
+        "title": "Abordagem",
+        "description": "De onde vieram essas conversas. Abra um canal para ver os detalhes."
+      },
+      "funnel": {
+        "title": "Funil de conversão",
+        "description": "Do primeiro contato ao cliente.",
+        "footer": "Contagens do período, não uma única coorte acompanhada até o fim."
+      },
+      "funnelStage": {
+        "reached": "Alcançados",
+        "replied": "Responderam",
+        "positive": "Positivos",
+        "meeting": "Reunião",
+        "customer": "Cliente"
+      },
+      "channels": {
+        "title": "Canais",
+        "description": "Desempenho de cada canal neste período. Selecione uma linha para abri-la.",
+        "caption": "Comparação de canais",
+        "channel": "Canal",
+        "reached": "Alcançados",
+        "positive": "Positivos"
+      },
+      "attention": {
+        "title": "Precisa de atenção",
+        "allClear": "Tudo em ordem",
+        "allClearDescription": "Nenhuma resposta aguardando, nenhuma conta com falha.",
+        "items": {
+          "actionRequired": {
+            "label": "Ação necessária",
+            "hint": "Conversas aguardando você"
+          },
+          "overdue": {
+            "label": "Follow-ups vencidos",
+            "hint": "Follow-ups com rascunho ou fora do prazo"
+          },
+          "draftsAwaitingReview": {
+            "label": "Rascunhos para revisar",
+            "hint": "Respostas da IA aguardando aprovação"
+          },
+          "mailboxesFailing": {
+            "label": "Caixas de e-mail com falha",
+            "hint": "Contas de e-mail que não conseguem enviar"
+          },
+          "linkedinDisconnected": {
+            "label": "LinkedIn desconectado",
+            "hint": "Contas que precisam ser reconectadas"
+          },
+          "whatsappDisconnected": {
+            "label": "WhatsApp desconectado",
+            "hint": "Números que precisam ser vinculados de novo"
+          }
+        }
+      }
+    },
+    "crm": {
+      "category": {
+        "interested": "Com interesse",
+        "customer": "Cliente",
+        "notInterested": "Sem interesse",
+        "other": "Outros",
+        "unclassified": "Sem classificação"
+      },
+      "sentiment": {
+        "title": "Respostas por sentimento",
+        "description": "Respostas recebidas por {bucket, select, week {semana} other {dia}}, pela categoria em que foram classificadas."
+      },
+      "pipeline": {
+        "title": "Pipeline agora",
+        "description": "Registros abertos por categoria, neste momento, e até onde avançaram no funil.",
+        "centerLabel": "registros abertos",
+        "emptyLabel": "Nenhum registro aberto",
+        "emptyDescription": "Não há nada aberto no CRM neste momento.",
+        "stages": "Etapas do funil · mais escuras conforme avançam"
+      },
+      "stageMoves": {
+        "title": "Mudanças de etapa no período",
+        "description": "Registros que passaram para uma nova etapa, pela categoria de destino.",
+        "centerLabel": "mudanças",
+        "emptyLabel": "Nenhuma mudança de etapa",
+        "top": "Principais etapas"
+      },
+      "workflow": {
+        "title": "Workflow",
+        "description": "Todos os registros por estado do workflow, neste momento.",
+        "centerLabel": "registros",
+        "emptyLabel": "Nenhum registro ainda",
+        "emptyDescription": "Os registros aparecem quando um lead responde.",
+        "state": {
+          "paused": "Pausado",
+          "actionRequired": "Ação necessária",
+          "error": "Erro",
+          "waiting": "Aguardando",
+          "closed": "Encerrado",
+          "unclassified": "Sem classificação",
+          "classifying": "Classificando",
+          "idle": "Inativo"
+        }
+      },
+      "ai": {
+        "title": "Assistente de IA",
+        "description": "{count, plural, one {# rascunho gerado neste período.} other {# rascunhos gerados neste período.}}",
+        "awaitingReview": "{count, number} aguardando revisão",
+        "draftsSent": "Rascunhos enviados",
+        "draftsSentNote": "Rascunhos da IA que foram enviados",
+        "classified": "Classificadas",
+        "classifiedNote": "Respostas que a IA classificou",
+        "overrideRate": "Taxa de alteração",
+        "overrideRateNote": "Classificações alteradas por uma pessoa",
+        "sentAsIs": "Enviados sem edição",
+        "sentEdited": "Enviados com edição",
+        "discarded": "Descartados",
+        "emptyTitle": "Nenhum rascunho resolvido",
+        "emptyDescription": "Nada foi enviado nem descartado neste período.",
+        "unedited": "<strong>{percent}</strong> dos rascunhos enviados saíram sem edição<muted> ({asIs, number} de {sent, number})</muted>"
+      }
+    },
+    "email": {
+      "kpi": {
+        "sent": "E-mails enviados",
+        "contacted": "Leads contactados",
+        "replied": "Responderam",
+        "replyRate": "Taxa de resposta",
+        "bounced": "Bounces",
+        "unsubscribed": "Descadastrados"
+      },
+      "hint": {
+        "sent": "E-mails enviados neste período, entre primeiros contatos e follow-ups.",
+        "contacted": "Leads distintos que receberam o primeiro e-mail neste período.",
+        "replied": "Pessoas distintas em uma campanha de e-mail que responderam por e-mail neste período.",
+        "replyRate": "Respostas divididas pelos leads contactados, no mesmo período.",
+        "bounced": "Endereços adicionados à lista de supressão por bounce neste período.",
+        "unsubscribed": "Endereços adicionados à lista de supressão por descadastro neste período."
+      },
+      "ofContacted": "de {value} contactados",
+      "sending": {
+        "title": "Atividade de envio",
+        "description": "E-mails enviados por {bucket, select, week {semana} other {dia}}: primeiros contatos e follow-ups.",
+        "firstTouch": "Primeiro contato",
+        "followUp": "Follow-ups",
+        "caption": "E-mails enviados por tipo",
+        "failed": "{count, plural, one {# envio falhou neste período} other {# envios falharam neste período}}"
+      },
+      "mailbox": {
+        "title": "Capacidade das caixas hoje",
+        "empty": "Nenhuma caixa de e-mail conectada ainda.",
+        "sentToday": "Enviados hoje",
+        "sentTodayCaption": "{used, number} de {limit, number} enviados hoje",
+        "connected": "{count, plural, one {# conectada} other {# conectadas}}",
+        "failing": "{count, number} com falha",
+        "manage": "Gerenciar caixas de e-mail"
+      },
+      "replies": {
+        "title": "Respostas",
+        "description": "Respostas recebidas por e-mail por {bucket, select, week {semana} other {dia}}.",
+        "caption": "Respostas por e-mail"
+      },
+      "notTracked": {
+        "title": "Não rastreado",
+        "body": "Aberturas e cliques não são registrados, então não há taxas de abertura ou de clique aqui. A taxa de resposta é a métrica de engajamento a acompanhar."
+      },
+      "campaigns": {
+        "title": "Campanhas",
+        "description": "Os envios são do período; leads, respostas e bounces são do total acumulado. Ordenado por envios.",
+        "empty": "Nenhuma campanha de e-mail ainda.",
+        "caption": "Campanhas de e-mail",
+        "contacted": "Contactados",
+        "sent": "Enviados",
+        "bounced": "Bounces"
+      }
+    },
+    "linkedin": {
+      "kpi": {
+        "invites": "Convites enviados",
+        "accepted": "Aceitos",
+        "acceptanceRate": "Taxa de aceite",
+        "messages": "Mensagens enviadas",
+        "replied": "Responderam",
+        "replyRate": "Taxa de resposta"
+      },
+      "hint": {
+        "invites": "Convites de conexão enviados neste período.",
+        "accepted": "Conexões aceitas neste período. Contadas quando o aceite é registrado, o que pode ocorrer para um convite enviado antes.",
+        "acceptanceRate": "Aceitos divididos pelos convites enviados, no mesmo período.",
+        "messages": "Mensagens enviadas após a conexão: a mensagem de aceite, os follow-ups 1 a 3 e mensagens personalizadas.",
+        "replied": "Leads distintos que responderam neste período.",
+        "replyRate": "Responderam divididos pelas conexões aceitas, não pelos convites enviados."
+      },
+      "ofAccepted": "de {value} aceitos",
+      "replyRateContext": "responderam / aceitos",
+      "replyRateContextBefore": "responderam / aceitos, vs. {value} antes",
+      "activity": {
+        "title": "Convites, aceites e respostas",
+        "description": "Atividade no LinkedIn por {bucket, select, week {semana} other {dia}}.",
+        "invites": "Convites",
+        "accepted": "Aceitos",
+        "replied": "Responderam",
+        "caption": "Convites, aceites e respostas no LinkedIn"
+      },
+      "funnel": {
+        "title": "Funil do LinkedIn",
+        "description": "Convidados → aceitos → responderam.",
+        "footer": "Contagens do período, não uma única coorte acompanhada até o fim.",
+        "stage": {
+          "invited": "Convidados",
+          "accepted": "Aceitos",
+          "messaged": "Com mensagem",
+          "replied": "Responderam"
+        }
+      },
+      "accounts": {
+        "title": "Contas",
+        "description": "Neste momento, independentemente do período. Contas desconectadas primeiro.",
+        "empty": "Nenhuma conta do LinkedIn conectada ainda.",
+        "caption": "Contas do LinkedIn",
+        "account": "Conta",
+        "status": "Status",
+        "invitesToday": "Convites hoje",
+        "pending": "Fila pendente",
+        "premium": "Premium",
+        "pausedUntilReconnected": "Pausada até reconectar",
+        "manage": "Gerenciar contas do LinkedIn"
+      },
+      "capacity": {
+        "title": "Capacidade diária de convites",
+        "description": "Contas conectadas, hoje.",
+        "empty": "Nenhuma conta conectada para enviar.",
+        "sentToday": "Convites enviados hoje",
+        "sentTodayCaption": "{used, number} de {limit, number} convites enviados hoje",
+        "atCap": "{count, plural, one {# conta atingiu o limite diário} other {# contas atingiram o limite diário}}"
+      },
+      "campaigns": {
+        "title": "Campanhas",
+        "description": "Convidados é do período; as demais contagens são por campanha. A taxa de resposta é responderam / aceitos.",
+        "empty": "Nenhuma campanha do LinkedIn ainda.",
+        "caption": "Campanhas do LinkedIn",
+        "invited": "Convidados",
+        "accepted": "Aceitos",
+        "acceptanceRate": "Taxa de aceite"
+      }
+    },
+    "whatsapp": {
+      "calls": {
+        "title": "Chamadas",
+        "description": "Chamadas de voz feitas pelo AgentSDR e registradas no WhatsApp Web."
+      },
+      "kpi": {
+        "calls": "Chamadas feitas",
+        "connected": "Atendidas",
+        "connectRate": "Taxa de atendimento",
+        "talkTime": "Tempo de conversa",
+        "avgCall": "Duração média",
+        "messagesSent": "Mensagens enviadas",
+        "messagesReceived": "Mensagens recebidas",
+        "chatReplyRate": "Taxa de resposta dos chats",
+        "newChats": "Novos chats"
+      },
+      "hint": {
+        "calls": "Chamadas de WhatsApp feitas pelo AgentSDR neste período, qualquer que seja o resultado.",
+        "connected": "Chamadas que o lead atendeu.",
+        "connectRate": "Chamadas atendidas divididas pelas chamadas feitas.",
+        "talk": "Tempo total em chamadas atendidas.",
+        "avg": "Tempo de conversa dividido pelas chamadas atendidas.",
+        "sent": "Mensagens enviadas: pelo AgentSDR ou digitadas no celular ou no WhatsApp Web.",
+        "received": "Mensagens recebidas de leads.",
+        "replyRate": "Dos chats em que você enviou uma mensagem neste período, a parcela que recebeu depois uma resposta do lead.",
+        "newChats": "Chats iniciados pelo AgentSDR neste período (a primeira mensagem foi enviada pelo AgentSDR)."
+      },
+      "ofCalls": "de {value} chamadas",
+      "perConnectedCall": "por chamada atendida",
+      "ofChats": "dos chats em que você escreveu",
+      "callsChart": {
+        "title": "Chamadas",
+        "description": "Chamadas feitas por {bucket, select, week {semana} other {dia}}, atendidas ou não.",
+        "connected": "Atendidas",
+        "notConnected": "Não atendidas",
+        "footer": "As chamadas ainda não são atribuídas a um vendedor ou número.",
+        "caption": "Chamadas por resultado"
+      },
+      "outcomes": {
+        "title": "Resultados das chamadas",
+        "description": "Como cada chamada terminou, neste período.",
+        "centerLabel": "chamadas",
+        "emptyLabel": "Nenhuma chamada neste período",
+        "connected": "Atendida",
+        "didNotPickUp": "Não atendeu",
+        "notOnWhatsApp": "Não está no WhatsApp",
+        "failed": "Falhou",
+        "inProgress": "Em andamento"
+      },
+      "campaigns": {
+        "title": "Campanhas de chamadas",
+        "description": "Chamadas do período por campanha. “Para hoje” é uma contagem em tempo real.",
+        "empty": "Nenhuma campanha de chamadas ainda.",
+        "caption": "Campanhas de chamadas",
+        "calls": "Chamadas",
+        "trend": "Tendência",
+        "connected": "Atendidas",
+        "connectRate": "Taxa de atendimento",
+        "dueToday": "Para hoje"
+      },
+      "messages": {
+        "title": "Mensagens",
+        "description": "Chats de texto nos números vinculados, por direção."
+      },
+      "messagesChart": {
+        "title": "Mensagens",
+        "description": "Mensagens por {bucket, select, week {semana} other {dia}}, enviadas e recebidas.",
+        "sent": "Enviadas",
+        "received": "Recebidas",
+        "caption": "Mensagens enviadas e recebidas"
+      },
+      "numbers": {
+        "title": "Números",
+        "description": "Números de WhatsApp vinculados, neste momento.",
+        "emptyTitle": "Nenhum número vinculado",
+        "emptyDescription": "Vincule um no Unipile e depois sincronize.",
+        "newChats": "Novos chats, últimas 24 h",
+        "warmingUp": "Em aquecimento até {time}",
+        "manage": "Gerenciar números",
+        "status": {
+          "connected": "Conectado",
+          "disconnected": "Desconectado",
+          "credentials": "Credenciais",
+          "error": "Erro"
+        }
+      }
+    }
+  }
 }

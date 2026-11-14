@@ -1,14 +1,16 @@
 import { addDays, ANALYTICS_VIEWS, type AnalyticsView } from "@/lib/analytics/contract";
+import type { Messages } from "@/i18n/catalog";
 
 /** Date-range and view URL helpers. Pure (no "use client") so the server page can use them too. */
 
+/** `key` goes in the URL (?range=7d); `labelKey` is the message under `analytics.range.presets`. */
 export const RANGE_PRESETS = [
-  { key: "7d", label: "Last 7 days" },
-  { key: "30d", label: "Last 30 days" },
-  { key: "90d", label: "Last 90 days" },
-  { key: "this-month", label: "This month" },
-  { key: "last-month", label: "Last month" },
-] as const;
+  { key: "7d", labelKey: "last7" },
+  { key: "30d", labelKey: "last30" },
+  { key: "90d", labelKey: "last90" },
+  { key: "this-month", labelKey: "thisMonth" },
+  { key: "last-month", labelKey: "lastMonth" },
+] as const satisfies ReadonlyArray<{ key: string; labelKey: keyof Messages["analytics"]["range"]["presets"] }>;
 export type PresetKey = (typeof RANGE_PRESETS)[number]["key"];
 export type RangeSelection = { kind: "preset"; key: PresetKey } | { kind: "custom"; from: string; to: string };
 

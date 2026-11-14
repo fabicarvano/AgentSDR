@@ -1,6 +1,8 @@
 import { RiAlertLine, RiCheckLine, RiErrorWarningLine } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { ACCENT, STATUS } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Segmented meter for used / limit (daily send caps, warm-up limits). The fill
@@ -19,6 +21,8 @@ const TONES = {
 } as const;
 
 export function CapacityMeter({ label, used, limit, segments = 20, detail }: { label: string; used: number; limit: number; segments?: number; detail?: string }) {
+  const t = useTranslations("analytics.kit");
+  const fmt = useAnalyticsFormat();
   const fraction = limit > 0 ? used / limit : 0;
   const state = fraction >= 1 ? "critical" : fraction >= 0.8 ? "warning" : "ok";
   const tone = TONES[state];
@@ -31,10 +35,10 @@ export function CapacityMeter({ label, used, limit, segments = 20, detail }: { l
           {detail && <p className="truncate text-paragraph-xs text-text-soft-400">{detail}</p>}
         </div>
         <p className="shrink-0 text-label-sm text-text-strong-950">
-          {used.toLocaleString("en-US")} <span className="text-text-soft-400">/ {limit.toLocaleString("en-US")}</span>
+          {fmt.number(used)} <span className="text-text-soft-400">/ {fmt.number(limit)}</span>
         </p>
       </div>
-      <div role="meter" aria-label={`${label} usage`} aria-valuemin={0} aria-valuemax={limit} aria-valuenow={used} className="mt-2 flex h-2 gap-0.5">
+      <div role="meter" aria-label={t("capacity.usage", { label })} aria-valuemin={0} aria-valuemax={limit} aria-valuenow={used} className="mt-2 flex h-2 gap-0.5">
         {Array.from({ length: segments }, (_, i) => (
           <span key={i} className={cn("h-full flex-1 rounded-[2px]", i >= filled && tone.track)} style={i < filled ? { backgroundColor: tone.fill } : undefined} />
         ))}
@@ -43,7 +47,7 @@ export function CapacityMeter({ label, used, limit, segments = 20, detail }: { l
         {state === "ok" && <RiCheckLine className="size-3.5" aria-hidden="true" />}
         {state === "warning" && <RiAlertLine className="size-3.5" aria-hidden="true" style={{ color: tone.fill }} />}
         {state === "critical" && <RiErrorWarningLine className="size-3.5" aria-hidden="true" style={{ color: tone.fill }} />}
-        {state === "ok" ? "Within limit" : state === "warning" ? "Near limit" : "At limit"}
+        {state === "ok" ? t("limit.within") : state === "warning" ? t("limit.near") : t("limit.at")}
       </p>
     </div>
   );

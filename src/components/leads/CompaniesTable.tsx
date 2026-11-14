@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { RiExternalLinkLine, RiFileCopyLine, RiGlobalLine, RiLinkedinBoxFill, RiMore2Line, RiTeamLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Dropdown from "@/components/alignui/dropdown";
@@ -28,6 +29,8 @@ function SkeletonRow({ index }: { index: number }) {
 }
 
 function CompanyTableRow({ row, onOpen }: { row: CompanyRow; onOpen: (row: CompanyRow) => void }) {
+  const t = useTranslations("leads.companiesTable");
+  const format = useFormatter();
   const { company, peopleCount, campaigns } = row;
   const name = company.name || company.domain;
   const linkedin = company.linkedinUrl ? linkedInCompanyHref(company.linkedinUrl) : null;
@@ -35,7 +38,7 @@ function CompanyTableRow({ row, onOpen }: { row: CompanyRow; onOpen: (row: Compa
   return (
     <Table.Row
       tabIndex={0}
-      aria-label={`Show people at ${name}`}
+      aria-label={t("showPeopleAt", { name })}
       onClick={open}
       onKeyDown={(event) => { if (event.target === event.currentTarget && event.key === "Enter") open(); }}
       className="cursor-pointer outline-none focus-visible:[&>td]:bg-bg-weak-50"
@@ -46,26 +49,26 @@ function CompanyTableRow({ row, onOpen }: { row: CompanyRow; onOpen: (row: Compa
           <TwoLine primary={name} primaryTitle={name} secondary={company.name && company.name !== company.domain ? company.domain : null} />
         </div>
       </Table.Cell>
-      <Table.Cell className={cn(rowCell, "text-right text-paragraph-sm tabular-nums", peopleCount ? "text-text-strong-950" : "text-text-soft-400")}>{peopleCount.toLocaleString("en-US")}</Table.Cell>
+      <Table.Cell className={cn(rowCell, "text-right text-paragraph-sm tabular-nums", peopleCount ? "text-text-strong-950" : "text-text-soft-400")}>{format.number(peopleCount)}</Table.Cell>
       <Table.Cell className={rowCell}><CampaignSummary campaigns={campaigns} /></Table.Cell>
       <Table.Cell className={rowCell}>
         <div className="-ml-1.5 flex items-center gap-0.5">
-          <LinkIcon href={`https://${company.domain}`} label="website" icon={RiGlobalLine} />
-          <LinkIcon href={linkedin} label="LinkedIn page" icon={RiLinkedinBoxFill} color={CHANNEL_META.linkedin.color} />
+          <LinkIcon href={`https://${company.domain}`} kind="website" icon={RiGlobalLine} />
+          <LinkIcon href={linkedin} kind="linkedinPage" icon={RiLinkedinBoxFill} color={CHANNEL_META.linkedin.color} />
         </div>
       </Table.Cell>
-      <Table.Cell className={cn(rowCell, "whitespace-nowrap text-paragraph-sm tabular-nums text-text-sub-600")}>{shortDate(company.updatedAt)}</Table.Cell>
+      <Table.Cell className={cn(rowCell, "whitespace-nowrap text-paragraph-sm tabular-nums text-text-sub-600")}>{shortDate(format, company.updatedAt)}</Table.Cell>
       <Table.Cell className={cn(rowCell, "pl-0 pr-2")} onClick={stop} onKeyDown={stop}>
         <div className="flex justify-end">
           <Dropdown.Root>
             <Dropdown.Trigger asChild>
-              <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={`More actions for ${name}`}><Button.Icon as={RiMore2Line} /></Button.Root>
+              <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={t("moreActions", { name })}><Button.Icon as={RiMore2Line} /></Button.Root>
             </Dropdown.Trigger>
             <Dropdown.Content>
-              <Dropdown.Item onSelect={open}><Dropdown.ItemIcon as={RiTeamLine} />Show people</Dropdown.Item>
-              <Dropdown.Item onSelect={() => window.open(`https://${company.domain}`, "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiExternalLinkLine} />Open website</Dropdown.Item>
-              {linkedin && <Dropdown.Item onSelect={() => window.open(linkedin, "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiLinkedinBoxFill} />Open LinkedIn page</Dropdown.Item>}
-              <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(company.domain)}><Dropdown.ItemIcon as={RiFileCopyLine} />Copy domain</Dropdown.Item>
+              <Dropdown.Item onSelect={open}><Dropdown.ItemIcon as={RiTeamLine} />{t("showPeople")}</Dropdown.Item>
+              <Dropdown.Item onSelect={() => window.open(`https://${company.domain}`, "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiExternalLinkLine} />{t("openWebsite")}</Dropdown.Item>
+              {linkedin && <Dropdown.Item onSelect={() => window.open(linkedin, "_blank", "noopener,noreferrer")}><Dropdown.ItemIcon as={RiLinkedinBoxFill} />{t("openLinkedin")}</Dropdown.Item>}
+              <Dropdown.Item onSelect={() => void navigator.clipboard?.writeText(company.domain)}><Dropdown.ItemIcon as={RiFileCopyLine} />{t("copyDomain")}</Dropdown.Item>
             </Dropdown.Content>
           </Dropdown.Root>
         </div>
@@ -83,18 +86,19 @@ export function CompaniesTable({ rows, sort, direction, onSort, loading, onOpen 
   /** A row click: the People tab, searched to this company. */
   onOpen: (row: CompanyRow) => void;
 }) {
+  const t = useTranslations("leads.companiesTable");
   const head = { activeSort: sort, direction, onSort };
   return (
     <Tooltip.Provider delayDuration={250} skipDelayDuration={300} disableHoverableContent>
       <Table.Root style={fixedTableStyle}>
         <Table.Header>
           <tr>
-            <SortableHead label="Company" sortKey="name" className="w-[26%]" {...head} />
-            <SortableHead label="People" sortKey="people" className="w-24 text-right" {...head} />
-            <SortableHead label="Outreach" />
-            <SortableHead label="Links" className="w-28" />
-            <SortableHead label="Updated" sortKey="updated" className="w-32" {...head} />
-            <SortableHead label={<span className="sr-only">Actions</span>} className="w-12" />
+            <SortableHead label={t("columns.company")} sortKey="name" className="w-[26%]" {...head} />
+            <SortableHead label={t("columns.people")} sortKey="people" className="w-24 text-right" {...head} />
+            <SortableHead label={t("columns.outreach")} />
+            <SortableHead label={t("columns.links")} className="w-28" />
+            <SortableHead label={t("columns.updated")} sortKey="updated" className="w-32" {...head} />
+            <SortableHead label={<span className="sr-only">{t("columns.actions")}</span>} className="w-12" />
           </tr>
         </Table.Header>
         <Table.Body spacing={4} className={cn("transition-opacity", loading && rows && "opacity-60")} aria-busy={loading}>

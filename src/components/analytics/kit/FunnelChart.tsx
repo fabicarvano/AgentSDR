@@ -1,5 +1,7 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
-import { formatCompact, formatPercent, ordinalRamp } from "../theme";
+import { ordinalRamp } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Conversion funnel over ordered stages, coloured on the ordinal blue ramp
@@ -11,19 +13,26 @@ import { formatCompact, formatPercent, ordinalRamp } from "../theme";
  * - layout "rows" (default; vertical stack, fits a 4-col card) or "tiles"
  *   (a row of stage cells with a coloured left border, then bars — use in a
  *   wide card)
- * - valueFormat (default formatCompact)
+ * - valueFormat (default: the compact number in the interface language)
  */
 export type FunnelStage = { key: string; label: string; value: number; stepLabel?: string };
 
+/** A decorative glyph before the step percentage, not language. */
+const STEP_ARROW = "↳";
+
 function StepChip({ step }: { step: number | null }) {
+  const t = useTranslations("analytics.kit.funnel");
+  const fmt = useAnalyticsFormat();
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-bg-weak-50 px-1.5 py-0.5 text-paragraph-xs text-text-sub-600">
-      <span aria-hidden="true">↳</span> {formatPercent(step, 1)}<span className="hidden sm:inline"> of previous</span>
+      <span aria-hidden="true">{STEP_ARROW}</span> {t.rich("stepOfPrevious", { value: fmt.percent(step, 1), suffix: (chunks) => <span className="hidden sm:inline">{chunks}</span> })}
     </span>
   );
 }
 
-export function FunnelChart({ stages, layout = "rows", valueFormat = formatCompact }: { stages: FunnelStage[]; layout?: "rows" | "tiles"; valueFormat?: (value: number) => string }) {
+export function FunnelChart({ stages, layout = "rows", valueFormat: valueFormatProp }: { stages: FunnelStage[]; layout?: "rows" | "tiles"; valueFormat?: (value: number) => string }) {
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.compact;
   const colors = ordinalRamp(stages.length);
   const top = stages[0]?.value ?? 0;
   const stepOf = (i: number) => (i > 0 && stages[i - 1].value > 0 ? stages[i].value / stages[i - 1].value : null);

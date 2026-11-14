@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import Filters from "@/components/Filters";
 import DomainsTable from "@/components/DomainsTable";
 import TableSkeleton from "@/components/TableSkeleton";
@@ -45,6 +46,7 @@ export default async function DomainsPage({ searchParams }: { searchParams: Sear
   // must be a member of an organization.
   await requirePageOrgContext();
   const params = await searchParams;
+  const t = await getTranslations("leads.domains");
 
   return (
     <NavigationProvider>
@@ -52,8 +54,8 @@ export default async function DomainsPage({ searchParams }: { searchParams: Sear
         <div className="flex min-w-0 flex-1 overflow-hidden">
           <aside className="w-64 shrink-0 overflow-y-auto border-r border-stroke-soft-200 bg-bg-white-0">
             <div className="border-b border-stroke-soft-200 px-4 py-4">
-              <h1 className="text-sm font-bold text-text-strong-950">All Domains</h1>
-              <p className="mt-0.5 text-xs text-text-strong-950/60">2.5M+ active stores</p>
+              <h1 className="text-sm font-bold text-text-strong-950">{t("title")}</h1>
+              <p className="mt-0.5 text-xs text-text-strong-950/60">{t("subtitle")}</p>
             </div>
             <Suspense>
               <Filters />

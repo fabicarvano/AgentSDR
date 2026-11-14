@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/utils/cn";
 import { STATUS } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Rows with a status dot, label, value, a muted subline and — when `progress`
@@ -24,6 +25,8 @@ export type ProgressItem = {
   href?: string;
 };
 
+const DEFAULT_TONE: ProgressTone = "neutral";
+
 const TONE_COLOR: Record<ProgressTone, string> = {
   neutral: "var(--chart-muted)",
   good: STATUS.good,
@@ -34,17 +37,18 @@ const TONE_COLOR: Record<ProgressTone, string> = {
 };
 
 export function ProgressList({ items }: { items: ProgressItem[] }) {
+  const fmt = useAnalyticsFormat();
   return (
     <ul className="flex flex-col gap-1">
       {items.map((item) => {
-        const color = TONE_COLOR[item.tone ?? "neutral"];
+        const color = TONE_COLOR[item.tone ?? DEFAULT_TONE];
         const Icon = item.icon;
         const body = (
           <>
             <div className="flex items-center gap-2.5">
               {Icon ? <Icon className="size-[18px] shrink-0" style={{ color }} aria-hidden="true" /> : <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
               <span className="min-w-0 flex-1 truncate text-label-sm text-text-strong-950">{item.label}</span>
-              <span className="text-label-sm tabular-nums text-text-strong-950">{typeof item.value === "number" ? item.value.toLocaleString("en-US") : item.value}</span>
+              <span className="text-label-sm tabular-nums text-text-strong-950">{typeof item.value === "number" ? fmt.number(item.value) : item.value}</span>
             </div>
             {item.subline && <p className="ml-7 mt-0.5 truncate text-paragraph-xs text-text-sub-600">{item.subline}</p>}
             {item.progress !== undefined && (
@@ -52,7 +56,7 @@ export function ProgressList({ items }: { items: ProgressItem[] }) {
                 <div className="h-1.5 flex-1 rounded-full bg-bg-weak-50">
                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, item.progress * 100))}%`, backgroundColor: color }} />
                 </div>
-                <span className="w-9 text-right text-paragraph-xs tabular-nums text-text-sub-600">{Math.round(item.progress * 100)}%</span>
+                <span className="w-9 text-right text-paragraph-xs tabular-nums text-text-sub-600">{fmt.percent(item.progress, 0)}</span>
               </div>
             )}
           </>

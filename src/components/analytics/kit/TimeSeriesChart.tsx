@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { AnalyticsRange, TimeSeries } from "@/lib/analytics/contract";
-import { AXIS_TEXT, formatBucket, formatCompact, GRID_STROKE, MUTED, SURFACE } from "../theme";
+import { AXIS_TEXT, GRID_STROKE, MUTED, SURFACE } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 import { DataTableView, type TableColumn } from "./DataTableView";
 import { EmptyChart } from "./EmptyChart";
 
@@ -18,7 +20,7 @@ import { EmptyChart } from "./EmptyChart";
  * - series: TimeSeries<K> from the contract
  * - keys: { [key]: { label, color } } — which series to draw, in stack order
  * - type: "line" | "area" | "stackedBar" | "bar"
- * - valueFormat: number -> string for tooltip and table (default formatCompact)
+ * - valueFormat: number -> string for tooltip (default: compact number in the interface language) and table (default: full number)
  * - bucket: "day" | "week" for x labels ("1 Sep" / tooltip "Week of 1 Sep")
  * - height: plot height px including the x-axis band (default 260)
  * - showYAxis: compact y ticks on the left (default true); omit them when the
@@ -35,11 +37,13 @@ type TooltipItem = { dataKey?: unknown; value?: unknown };
 type TooltipArgs = { active?: boolean; payload?: readonly TooltipItem[]; label?: unknown };
 
 function ChartTooltip<K extends string>({ active, payload, label, keys, order, bucket, valueFormat, showTotal }: TooltipArgs & { keys: SeriesKeys<K>; order: K[]; bucket: "day" | "week"; valueFormat: (n: number) => string; showTotal: boolean }) {
+  const t = useTranslations("analytics.kit");
+  const fmt = useAnalyticsFormat();
   if (!active || !payload?.length) return null;
   const byKey = new Map(payload.map((p) => [String(p.dataKey), Number(p.value ?? 0)]));
   return (
     <div className="min-w-44 rounded-lg bg-bg-white-0 p-3 shadow-regular-md ring-1 ring-inset ring-stroke-soft-200">
-      <p className="mb-2 text-paragraph-xs text-text-sub-600">{formatBucket(String(label), bucket, true)}</p>
+      <p className="mb-2 text-paragraph-xs text-text-sub-600">{fmt.bucket(String(label), bucket, true)}</p>
       <ul className="space-y-1.5">
         {order.map((key) => (
           <li key={key} className="flex items-center gap-2">
@@ -51,7 +55,7 @@ function ChartTooltip<K extends string>({ active, payload, label, keys, order, b
       </ul>
       {showTotal && (
         <div className="mt-2 flex items-center justify-between gap-4 border-t border-stroke-soft-200 pt-2">
-          <span className="text-paragraph-xs text-text-sub-600">Total</span>
+          <span className="text-paragraph-xs text-text-sub-600">{t("total")}</span>
           <span className="text-label-sm tabular-nums text-text-strong-950">{valueFormat(order.reduce((sum, k) => sum + (byKey.get(k) ?? 0), 0))}</span>
         </div>
       )}
@@ -73,7 +77,7 @@ export function TimeSeriesChart<K extends string>({
   series,
   keys,
   type,
-  valueFormat = formatCompact,
+  valueFormat: valueFormatProp,
   bucket,
   height = 260,
   showYAxis = true,
@@ -91,6 +95,8 @@ export function TimeSeriesChart<K extends string>({
   barSize?: number;
 }) {
   const gradientId = useId().replace(/:/g, "");
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.compact;
   const order = (Object.keys(keys) as K[]).filter((k) => series.keys.includes(k));
   const hasData = series.points.some((p) => order.some((k) => p[k] > 0));
   if (!hasData) return <EmptyChart height={height} />;
@@ -99,8 +105,8 @@ export function TimeSeriesChart<K extends string>({
   const axes = (
     <>
       <CartesianGrid vertical={false} stroke={GRID_STROKE} strokeWidth={1} />
-      <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} minTickGap={44} interval="preserveStartEnd" tick={{ fill: AXIS_TEXT, fontSize: 12 }} tickFormatter={(v: string) => formatBucket(v, bucket)} />
-      {showYAxis ? <YAxis width={40} tickLine={false} axisLine={false} tickCount={4} allowDecimals={false} tick={{ fill: AXIS_TEXT, fontSize: 12 }} tickFormatter={(v: number) => formatCompact(v)} /> : <YAxis hide />}
+      <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} minTickGap={44} interval="preserveStartEnd" tick={{ fill: AXIS_TEXT, fontSize: 12 }} tickFormatter={(v: string) => fmt.bucket(v, bucket)} />
+      {showYAxis ? <YAxis width={40} tickLine={false} axisLine={false} tickCount={4} allowDecimals={false} tick={{ fill: AXIS_TEXT, fontSize: 12 }} tickFormatter={(v: number) => fmt.compact(v)} /> : <YAxis hide />}
     </>
   );
   const tooltip = (cursor: object) => (
@@ -170,15 +176,18 @@ export function TimeSeriesChart<K extends string>({
 }
 
 /** The table twin of a TimeSeriesChart: one row per bucket, one column per key (plus Total when stacked/multi). */
-export function TimeSeriesTable<K extends string>({ series, keys, bucket, valueFormat = (n) => n.toLocaleString("en-US"), caption }: { series: TimeSeries<K>; keys: SeriesKeys<K>; bucket: AnalyticsRange["bucket"]; valueFormat?: (value: number) => string; caption: string }) {
+export function TimeSeriesTable<K extends string>({ series, keys, bucket, valueFormat: valueFormatProp, caption }: { series: TimeSeries<K>; keys: SeriesKeys<K>; bucket: AnalyticsRange["bucket"]; valueFormat?: (value: number) => string; caption: string }) {
+  const t = useTranslations("analytics.kit");
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.number;
   const order = (Object.keys(keys) as K[]).filter((k) => series.keys.includes(k));
   const columns: TableColumn[] = [
-    { key: "date", label: bucket === "week" ? "Week of" : "Date" },
+    { key: "date", label: bucket === "week" ? t("timeSeries.weekColumn") : t("timeSeries.dateColumn") },
     ...order.map((k) => ({ key: k, label: keys[k].label, align: "right" as const, swatch: keys[k].color, format: (v: string | number | null) => valueFormat(Number(v ?? 0)) })),
   ];
-  if (order.length > 1) columns.push({ key: "total", label: "Total", align: "right", format: (v) => valueFormat(Number(v ?? 0)) });
+  if (order.length > 1) columns.push({ key: "total", label: t("total"), align: "right", format: (v) => valueFormat(Number(v ?? 0)) });
   const rows = series.points.map((point) => ({
-    date: formatBucket(point.date, bucket, true),
+    date: fmt.bucket(point.date, bucket, true),
     ...Object.fromEntries(order.map((k) => [k, point[k]])),
     total: order.reduce((sum, k) => sum + point[k], 0),
   }));

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { ACCENT } from "../theme";
 import { DeltaPill } from "./DeltaPill";
@@ -25,8 +26,9 @@ export type RankedItem = {
   href?: string;
 };
 
-export function RankedList({ items, emptyLabel = "Nothing to show." }: { items: RankedItem[]; emptyLabel?: string }) {
-  if (items.length === 0) return <p className="rounded-xl bg-bg-weak-50 px-4 py-6 text-center text-paragraph-sm text-text-sub-600">{emptyLabel}</p>;
+export function RankedList({ items, emptyLabel }: { items: RankedItem[]; emptyLabel?: string }) {
+  const t = useTranslations("analytics.kit.list");
+  if (items.length === 0) return <p className="rounded-xl bg-bg-weak-50 px-4 py-6 text-center text-paragraph-sm text-text-sub-600">{emptyLabel ?? t("empty")}</p>;
   return (
     <ul className="divide-y divide-stroke-soft-200">
       {items.map((item) => {

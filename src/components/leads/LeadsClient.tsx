@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiArrowDownLine, RiArrowLeftSLine, RiArrowRightSLine, RiArrowUpLine, RiDownloadLine, RiMore2Line, RiSearchLine, RiTable2, RiUpload2Line, RiUserSearchLine, RiBuilding2Line, RiUserLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Dropdown from "@/components/alignui/dropdown";
@@ -60,6 +61,9 @@ function pageItems(current: number, pages: number): Array<number | "gap-start" |
 }
 
 export default function LeadsClient({ initialTab, initialRows, initialTotal }: Props) {
+  const t = useTranslations("leads.client");
+  const ts = useTranslations("leads.sort");
+  const format = useFormatter();
   const pathname = usePathname();
   const [tab, setTab] = useState<LeadsTab>(initialTab);
   const [peopleState, setPeopleState] = useState(freshPeople);
@@ -93,12 +97,12 @@ export default function LeadsClient({ initialTab, initialRows, initialTotal }: P
       setLoading(true); setError("");
       try {
         const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error(`Unable to load ${tab}`);
+        if (!response.ok) throw new Error(t("loadFailed", { tab }));
         const body = await response.json() as { people?: PersonRow[]; companies?: CompanyRow[]; total: number };
         if (tab === "people") setPeopleData({ rows: body.people ?? [], total: body.total });
         else setCompaniesData({ rows: body.companies ?? [], total: body.total });
       } catch (cause) {
-        if (!(cause instanceof DOMException && cause.name === "AbortError")) setError(cause instanceof Error ? cause.message : `Unable to load ${tab}`);
+        if (!(cause instanceof DOMException && cause.name === "AbortError")) setError(cause instanceof Error ? cause.message : t("loadFailed", { tab }));
       } finally { if (!controller.signal.aborted) setLoading(false); }
     }, state.query ? 250 : 0);
     return () => { controller.abort(); window.clearTimeout(timer); };
@@ -139,7 +143,6 @@ export default function LeadsClient({ initialTab, initialRows, initialTotal }: P
   };
 
   const total = data?.total ?? 0;
-  const noun = isPeople ? "people" : "companies";
   const rowCount = data?.rows.length ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtersOn = isPeople ? activeFilterCount(peopleState.filters) : 0;
@@ -154,31 +157,33 @@ export default function LeadsClient({ initialTab, initialRows, initialTotal }: P
     : <CompaniesTable rows={error ? [] : companiesData?.rows ?? null} sort={state.sort} direction={state.direction} onSort={onSort} loading={loading} onOpen={openCompany} />;
 
   const tabs = [
-    { value: "people" as const, label: "People", icon: RiUserLine },
-    { value: "companies" as const, label: "Companies", icon: RiBuilding2Line },
+    { value: "people" as const, label: t("tabs.people"), icon: RiUserLine },
+    { value: "companies" as const, label: t("tabs.companies"), icon: RiBuilding2Line },
   ];
+  const matching = filtersOn > 0 || searching;
+  const countLabel = (count: number) => t(`${matching ? "matchCount" : "count"}.${tab}`, { count });
 
   return (
     <main className="h-full w-full overflow-y-auto bg-bg-white-0">
       <PageContainer>
         <PageHeader
-          title="Leads"
-          description="Every person and company you can reach, with their outreach and CRM state."
-          actions={isPeople && <Button.Root variant="primary" mode="filled" size="small" onClick={() => setShowImport(true)}><Button.Icon as={RiUpload2Line} />Import people</Button.Root>}
+          title={t("title")}
+          description={t("description")}
+          actions={isPeople && <Button.Root variant="primary" mode="filled" size="small" onClick={() => setShowImport(true)}><Button.Icon as={RiUpload2Line} />{t("importPeople")}</Button.Root>}
         />
 
-        <PageTabs className="mt-6" label="Lead type" tabs={tabs} value={tab} onChange={switchTab} />
+        <PageTabs className="mt-6" label={t("tabsLabel")} tabs={tabs} value={tab} onChange={switchTab} />
 
         <Frame className="mt-5">
           <FrameHeader
-            title={isPeople ? "People" : "Companies"}
-            description={<span aria-live="polite">{data ? `${total.toLocaleString("en-US")} ${total === 1 ? (isPeople ? "person" : "company") : noun}${filtersOn || searching ? " match" : ""}` : `Loading ${noun}…`}</span>}
+            title={t(`tabs.${tab}`)}
+            description={<span aria-live="polite">{data ? countLabel(total) : t(`loading.${tab}`)}</span>}
             actions={
               <>
                 <Input.Root size="small" className="w-40 sm:w-72">
                   <Input.Wrapper>
                     <Input.Icon as={RiSearchLine} />
-                    <Input.Input type="search" aria-label={`Search ${noun}`} placeholder={isPeople ? "Search people…" : "Search companies…"} value={state.query} onChange={(event) => patch({ query: event.target.value })} />
+                    <Input.Input type="search" aria-label={t(`search.${tab}.label`)} placeholder={t(`search.${tab}.placeholder`)} value={state.query} onChange={(event) => patch({ query: event.target.value })} />
                   </Input.Wrapper>
                 </Input.Root>
                 {isPeople && (
@@ -191,19 +196,19 @@ export default function LeadsClient({ initialTab, initialRows, initialTotal }: P
                 )}
                 <Dropdown.Root>
                   <Dropdown.Trigger asChild>
-                    <Button.Root variant="neutral" mode="stroke" size="small" aria-label="More options"><Button.Icon as={RiMore2Line} /></Button.Root>
+                    <Button.Root variant="neutral" mode="stroke" size="small" aria-label={t("moreOptions")}><Button.Icon as={RiMore2Line} /></Button.Root>
                   </Dropdown.Trigger>
                   <Dropdown.Content align="end">
-                    <Dropdown.Item asChild><Link href="/settings/columns"><Dropdown.ItemIcon as={RiTable2} />Manage lead columns</Link></Dropdown.Item>
-                    {isPeople && <Dropdown.Item asChild><a href="/api/leads/people/import/template"><Dropdown.ItemIcon as={RiDownloadLine} />Download import template</a></Dropdown.Item>}
+                    <Dropdown.Item asChild><Link href="/settings/columns"><Dropdown.ItemIcon as={RiTable2} />{t("manageColumns")}</Link></Dropdown.Item>
+                    {isPeople && <Dropdown.Item asChild><a href="/api/leads/people/import/template"><Dropdown.ItemIcon as={RiDownloadLine} />{t("downloadTemplate")}</a></Dropdown.Item>}
                     <Dropdown.Separator />
-                    <p className="px-2 pb-1 pt-1.5 text-label-xs text-text-soft-400">Sort by</p>
+                    <p className="px-2 pb-1 pt-1.5 text-label-xs text-text-soft-400">{t("sortBy")}</p>
                     {SORTS[tab].map((option) => {
                       const active = state.sort === option.key;
                       return (
                         <Dropdown.Item key={option.key} onSelect={() => onSort(option.key)} className={cn(active && "text-text-strong-950")}>
-                          <span className="flex-1">{option.label}</span>
-                          {active && <Dropdown.ItemIcon as={state.direction === "asc" ? RiArrowUpLine : RiArrowDownLine} aria-label={state.direction === "asc" ? "ascending" : "descending"} className="size-4" />}
+                          <span className="flex-1">{ts(option.labelKey)}</span>
+                          {active && <Dropdown.ItemIcon as={state.direction === "asc" ? RiArrowUpLine : RiArrowDownLine} aria-label={state.direction === "asc" ? t("ascending") : t("descending")} className="size-4" />}
                         </Dropdown.Item>
                       );
                     })}
@@ -217,29 +222,29 @@ export default function LeadsClient({ initialTab, initialRows, initialTotal }: P
             {showEmpty ? (
               <EmptyState
                 icon={isPeople ? RiUserSearchLine : RiBuilding2Line}
-                title={filtersOn || searching ? `No ${noun} match ${filtersOn ? "these filters" : "this search"}` : `No ${noun} yet`}
-                description={filtersOn || searching ? "Try broadening your search or changing a filter." : isPeople ? "Import a spreadsheet to add people." : "Companies appear as people are imported."}
+                title={matching ? t(`empty.${filtersOn ? "noMatchFilters" : "noMatchSearch"}.${tab}`) : t(`empty.none.${tab}`)}
+                description={matching ? t("empty.broaden") : t(`empty.hint.${tab}`)}
                 action={
                   filtersOn > 0 || searching
-                    ? <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => patch({ query: "", ...(isPeople ? { filters: EMPTY_FILTERS } : {}) })}>Clear {filtersOn ? "filters" : "search"}</Button.Root>
-                    : isPeople && <Button.Root variant="primary" mode="filled" size="small" onClick={() => setShowImport(true)}><Button.Icon as={RiUpload2Line} />Import people</Button.Root>
+                    ? <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => patch({ query: "", ...(isPeople ? { filters: EMPTY_FILTERS } : {}) })}>{filtersOn ? t("empty.clearFilters") : t("empty.clearSearch")}</Button.Root>
+                    : isPeople && <Button.Root variant="primary" mode="filled" size="small" onClick={() => setShowImport(true)}><Button.Icon as={RiUpload2Line} />{t("importPeople")}</Button.Root>
                 }
               />
             ) : table}
           </FramePanel>
           {(rowCount > 0 || pages > 1) && (
-            <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 pb-1 pt-2.5">
-              <p className="text-paragraph-sm tabular-nums text-text-sub-600">{rowCount ? `${from.toLocaleString("en-US")}–${to.toLocaleString("en-US")} of ${total.toLocaleString("en-US")}` : `0 ${noun}`}</p>
+            <nav aria-label={t("pagination.label")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 pb-1 pt-2.5">
+              <p className="text-paragraph-sm tabular-nums text-text-sub-600">{rowCount ? t("pagination.range", { from, to, total }) : t(`count.${tab}`, { count: 0 })}</p>
               {pages > 1 && (
                 <Pagination.Root variant="basic" className="gap-1">
-                  <Pagination.NavButton aria-label="Previous page" disabled={state.page === 0} onClick={() => patch({ page: state.page - 1 })} className="hover:bg-bg-white-0 disabled:text-text-disabled-300 disabled:hover:bg-transparent"><Pagination.NavIcon as={RiArrowLeftSLine} /></Pagination.NavButton>
+                  <Pagination.NavButton aria-label={t("pagination.previous")} disabled={state.page === 0} onClick={() => patch({ page: state.page - 1 })} className="hover:bg-bg-white-0 disabled:text-text-disabled-300 disabled:hover:bg-transparent"><Pagination.NavIcon as={RiArrowLeftSLine} /></Pagination.NavButton>
                   <span className="hidden items-center gap-1 sm:flex">
                     {pageItems(state.page, pages).map((item) => typeof item === "number"
-                      ? <Pagination.Item key={item} current={item === state.page} aria-current={item === state.page ? "page" : undefined} onClick={() => patch({ page: item })} className={cn("tabular-nums ring-0 hover:bg-bg-white-0", item === state.page && "bg-bg-white-0 shadow-regular-xs ring-1 ring-stroke-soft-200")}>{(item + 1).toLocaleString("en-US")}</Pagination.Item>
+                      ? <Pagination.Item key={item} current={item === state.page} aria-current={item === state.page ? "page" : undefined} onClick={() => patch({ page: item })} className={cn("tabular-nums ring-0 hover:bg-bg-white-0", item === state.page && "bg-bg-white-0 shadow-regular-xs ring-1 ring-stroke-soft-200")}>{format.number(item + 1)}</Pagination.Item>
                       : <span key={item} className="px-1 text-label-sm text-text-soft-400">…</span>)}
                   </span>
                   <span className="px-2 text-paragraph-sm tabular-nums text-text-sub-600 sm:hidden">{state.page + 1} / {pages}</span>
-                  <Pagination.NavButton aria-label="Next page" disabled={state.page >= pages - 1} onClick={() => patch({ page: state.page + 1 })} className="hover:bg-bg-white-0 disabled:text-text-disabled-300 disabled:hover:bg-transparent"><Pagination.NavIcon as={RiArrowRightSLine} /></Pagination.NavButton>
+                  <Pagination.NavButton aria-label={t("pagination.next")} disabled={state.page >= pages - 1} onClick={() => patch({ page: state.page + 1 })} className="hover:bg-bg-white-0 disabled:text-text-disabled-300 disabled:hover:bg-transparent"><Pagination.NavIcon as={RiArrowRightSLine} /></Pagination.NavButton>
                 </Pagination.Root>
               )}
             </nav>

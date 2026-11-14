@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
-import { ACCENT, formatCompact } from "../theme";
+import { ACCENT } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Ranked horizontal bars for breakdowns (pipeline, stage entries). One hue
@@ -14,8 +16,11 @@ import { ACCENT, formatCompact } from "../theme";
  */
 export type BarListItem = { key: string; label: string; value: number; color?: string; href?: string };
 
-export function BarList({ items, valueFormat = formatCompact, max, emptyLabel = "Nothing to show." }: { items: BarListItem[]; valueFormat?: (value: number) => string; max?: number; emptyLabel?: string }) {
-  if (items.length === 0) return <p className="rounded-xl bg-bg-weak-50 px-4 py-6 text-center text-paragraph-sm text-text-sub-600">{emptyLabel}</p>;
+export function BarList({ items, valueFormat: valueFormatProp, max, emptyLabel }: { items: BarListItem[]; valueFormat?: (value: number) => string; max?: number; emptyLabel?: string }) {
+  const t = useTranslations("analytics.kit.list");
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.compact;
+  if (items.length === 0) return <p className="rounded-xl bg-bg-weak-50 px-4 py-6 text-center text-paragraph-sm text-text-sub-600">{emptyLabel ?? t("empty")}</p>;
   const scale = max ?? Math.max(...items.map((i) => i.value), 1);
   return (
     <ul className="flex flex-col gap-3">

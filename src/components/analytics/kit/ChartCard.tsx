@@ -1,6 +1,7 @@
 "use client";
 
 import { RiBarChartBoxLine, RiTable2 } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import { Frame, FrameFooter, FrameHeader, FramePanel } from "./Frame";
@@ -42,14 +43,15 @@ export function ChartCard({
   className?: string;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("analytics.kit.chartCard");
   const [showTable, setShowTable] = useState(false);
   const toggle = table ? (
     <button
       type="button"
       onClick={() => setShowTable((v) => !v)}
       aria-pressed={showTable}
-      aria-label={showTable ? "Show chart" : "Show as table"}
-      title={showTable ? "Show chart" : "Show as table"}
+      aria-label={showTable ? t("showChart") : t("showTable")}
+      title={showTable ? t("showChart") : t("showTable")}
       className={cn("flex size-8 items-center justify-center rounded-lg bg-bg-white-0 text-text-sub-600 shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base", showTable && "text-text-strong-950")}
     >
       {showTable ? <RiBarChartBoxLine className="size-4" aria-hidden="true" /> : <RiTable2 className="size-4" aria-hidden="true" />}

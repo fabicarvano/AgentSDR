@@ -1,5 +1,5 @@
 import { cn } from "@/utils/cn";
-import { formatCompact } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Legend rendered outside the plot, in ChartCard's `legend` slot. Always used
@@ -12,6 +12,7 @@ import { formatCompact } from "../theme";
 export type LegendItem = { label: string; color: string; value?: number };
 
 export function ChartLegend({ items, shape = "swatch", className }: { items: LegendItem[]; shape?: "swatch" | "line"; className?: string }) {
+  const fmt = useAnalyticsFormat();
   return (
     <ul className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5", className)}>
       {items.map((item) => (
@@ -22,7 +23,7 @@ export function ChartLegend({ items, shape = "swatch", className }: { items: Leg
             style={{ backgroundColor: item.color }}
           />
           <span>{item.label}</span>
-          {item.value !== undefined && <span className="text-label-xs text-text-strong-950">{formatCompact(item.value)}</span>}
+          {item.value !== undefined && <span className="text-label-xs text-text-strong-950">{fmt.compact(item.value)}</span>}
         </li>
       ))}
     </ul>

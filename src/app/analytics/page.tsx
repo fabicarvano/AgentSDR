@@ -1,8 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import AnalyticsClient from "@/components/analytics/AnalyticsClient";
 import { DEFAULT_RANGE, parseView, serializeRange } from "@/components/analytics/range";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Analytics" };
+
+export async function generateMetadata() {
+  const t = await getTranslations("analytics.page");
+  return { title: t("title") };
+}
 
 type Search = Promise<{ view?: string | string[]; range?: string | string[] }>;
 

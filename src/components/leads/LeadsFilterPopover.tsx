@@ -1,16 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { RiFilter3Line } from "@remixicon/react";
 import * as Badge from "@/components/alignui/badge";
 import * as Button from "@/components/alignui/button";
 import * as Checkbox from "@/components/alignui/checkbox";
 import * as Popover from "@/components/alignui/popover";
 import * as Select from "@/components/alignui/select";
-import { activeFilterCount, type PeopleFilters } from "./leadTypes";
+import { activeFilterCount, CRM_CATEGORIES, CRM_STATES, type PeopleFilters } from "./leadTypes";
 
 export type Subcategory = { id: string; name: string; categoryKey: string };
-
-const STATES = ["unclassified", "classifying", "action_required", "waiting", "idle", "paused", "closed", "error"];
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><span className="block text-label-xs text-text-sub-600">{label}</span>{children}</div>;
@@ -31,6 +30,8 @@ export function LeadsFilterPopover({ filters, subcategories, onChange, onClear }
   onChange: (patch: Partial<PeopleFilters>) => void;
   onClear: () => void;
 }) {
+  const t = useTranslations("leads.filter");
+  const tc = useTranslations("leads.crm");
   const count = activeFilterCount(filters);
   const visibleSubcategories = subcategories.filter((item) => !filters.crmCategory || item.categoryKey === filters.crmCategory);
   return (
@@ -38,61 +39,59 @@ export function LeadsFilterPopover({ filters, subcategories, onChange, onClear }
       <Popover.Trigger asChild>
         <Button.Root variant="neutral" mode="stroke" size="small">
           <Button.Icon as={RiFilter3Line} />
-          Filter
+          {t("trigger")}
           {count > 0 && <Badge.Root size="medium" variant="filled" color="blue" square>{count}</Badge.Root>}
         </Button.Root>
       </Popover.Trigger>
       <Popover.Content align="end" showArrow={false} sideOffset={8} className="w-[min(22rem,calc(100vw-2rem))]">
         <div className="flex items-center justify-between">
-          <h2 className="text-label-md text-text-strong-950">Filters</h2>
-          <button type="button" onClick={onClear} disabled={!count} className="text-label-sm text-primary-base outline-none hover:underline focus-visible:underline disabled:pointer-events-none disabled:text-text-disabled-300">Clear all</button>
+          <h2 className="text-label-md text-text-strong-950">{t("title")}</h2>
+          <button type="button" onClick={onClear} disabled={!count} className="text-label-sm text-primary-base outline-none hover:underline focus-visible:underline disabled:pointer-events-none disabled:text-text-disabled-300">{t("clearAll")}</button>
         </div>
         <div className="mt-4 space-y-4">
-          <Field label="Campaign">
+          <Field label={t("campaign.label")}>
             <Select.Root size="small" value={filters.campaignChannel} onValueChange={(value) => onChange({ campaignChannel: value })}>
-              <Select.Trigger aria-label="Campaign filter"><Select.Value placeholder="All campaigns" /></Select.Trigger>
+              <Select.Trigger aria-label={t("campaign.aria")}><Select.Value placeholder={t("campaign.all")} /></Select.Trigger>
               <Select.Content>
-                <Select.Item value="">All campaigns</Select.Item>
-                <Select.Item value="email">Email campaigns</Select.Item>
-                <Select.Item value="linkedin">LinkedIn campaigns</Select.Item>
-                <Select.Item value="unassigned">Not in campaign</Select.Item>
+                <Select.Item value="">{t("campaign.all")}</Select.Item>
+                <Select.Item value="email">{t("campaign.email")}</Select.Item>
+                <Select.Item value="linkedin">{t("campaign.linkedin")}</Select.Item>
+                <Select.Item value="unassigned">{t("campaign.unassigned")}</Select.Item>
               </Select.Content>
             </Select.Root>
           </Field>
-          <Field label="CRM category">
+          <Field label={t("category.label")}>
             <Select.Root size="small" value={filters.crmCategory} onValueChange={(value) => onChange({ crmCategory: value, crmSubcategoryId: "" })}>
-              <Select.Trigger aria-label="CRM category filter"><Select.Value placeholder="All CRM categories" /></Select.Trigger>
+              <Select.Trigger aria-label={t("category.aria")}><Select.Value placeholder={t("category.all")} /></Select.Trigger>
               <Select.Content>
-                <Select.Item value="">All CRM categories</Select.Item>
-                <Select.Item value="customer">Customer</Select.Item>
-                <Select.Item value="interested">Interested</Select.Item>
-                <Select.Item value="not_interested">Not interested</Select.Item>
-                <Select.Item value="other">Other</Select.Item>
+                <Select.Item value="">{t("category.all")}</Select.Item>
+                {CRM_CATEGORIES.map((category) => <Select.Item key={category.value} value={category.value}>{tc(`category.${category.labelKey}`)}</Select.Item>)}
               </Select.Content>
             </Select.Root>
           </Field>
-          <Field label="Subcategory">
+          <Field label={t("subcategory.label")}>
             <Select.Root size="small" value={filters.crmSubcategoryId} onValueChange={(value) => onChange({ crmSubcategoryId: value })} disabled={!visibleSubcategories.length}>
-              <Select.Trigger aria-label="CRM subcategory filter"><Select.Value placeholder="All subcategories" /></Select.Trigger>
+              <Select.Trigger aria-label={t("subcategory.aria")}><Select.Value placeholder={t("subcategory.all")} /></Select.Trigger>
               <Select.Content>
-                <Select.Item value="">All subcategories</Select.Item>
+                <Select.Item value="">{t("subcategory.all")}</Select.Item>
                 {visibleSubcategories.map((item) => <Select.Item key={item.id} value={item.id}>{item.name}</Select.Item>)}
               </Select.Content>
             </Select.Root>
           </Field>
-          <Field label="CRM state">
+          <Field label={t("state.label")}>
             <Select.Root size="small" value={filters.crmWorkflowState} onValueChange={(value) => onChange({ crmWorkflowState: value })}>
-              <Select.Trigger aria-label="CRM workflow filter"><Select.Value placeholder="All CRM states" /></Select.Trigger>
+              <Select.Trigger aria-label={t("state.aria")}><Select.Value placeholder={t("state.all")} /></Select.Trigger>
               <Select.Content>
-                <Select.Item value="">All CRM states</Select.Item>
-                {STATES.map((state) => <Select.Item key={state} value={state} className="capitalize">{state.replaceAll("_", " ")}</Select.Item>)}
+                <Select.Item value="">{t("state.all")}</Select.Item>
+                {/* No `capitalize` class any more: the label arrives already cased for its language. */}
+                {CRM_STATES.map((state) => <Select.Item key={state.value} value={state.value}>{tc(`state.${state.labelKey}`)}</Select.Item>)}
               </Select.Content>
             </Select.Root>
           </Field>
           <div className="space-y-3 border-t border-stroke-soft-200 pt-4">
-            <Check id="lead-filter-has-email" label="Has email" checked={filters.hasEmail} onChange={(hasEmail) => onChange({ hasEmail })} />
-            <Check id="lead-filter-has-linkedin" label="Has LinkedIn" checked={filters.hasLinkedin} onChange={(hasLinkedin) => onChange({ hasLinkedin })} />
-            <Check id="lead-filter-ai-change" label="AI changed" checked={filters.crmAiChange} onChange={(crmAiChange) => onChange({ crmAiChange })} />
+            <Check id="lead-filter-has-email" label={t("hasEmail")} checked={filters.hasEmail} onChange={(hasEmail) => onChange({ hasEmail })} />
+            <Check id="lead-filter-has-linkedin" label={t("hasLinkedin")} checked={filters.hasLinkedin} onChange={(hasLinkedin) => onChange({ hasLinkedin })} />
+            <Check id="lead-filter-ai-change" label={t("aiChanged")} checked={filters.crmAiChange} onChange={(crmAiChange) => onChange({ crmAiChange })} />
           </div>
         </div>
       </Popover.Content>

@@ -1,5 +1,7 @@
 import { RiAlertLine, RiErrorWarningLine } from "@remixicon/react";
-import { ACCENT, formatPercent, STATUS } from "../theme";
+import { useTranslations } from "next-intl";
+import { ACCENT, STATUS } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 import { DeltaPill } from "./DeltaPill";
 
 /**
@@ -9,10 +11,12 @@ import { DeltaPill } from "./DeltaPill";
  * written out with an icon and label. Use for account-level capacity ("120 of
  * 3,000 sent today"); use CapacityMeter for the compact per-row version.
  *
- * Props: `label`, `used`, `limit`, `caption` (default "used of limit"), `ticks`
+ * Props: `label`, `used`, `limit`, `caption` (default "used of limit", translated), `ticks`
  * (default 48), `delta` { value, previous } (optional).
  */
 export function TickMeter({ label, used, limit, caption, ticks = 48, delta }: { label: string; used: number; limit: number; caption?: string; ticks?: number; delta?: { value: number | null; previous: number | null } }) {
+  const t = useTranslations("analytics.kit");
+  const fmt = useAnalyticsFormat();
   const fraction = limit > 0 ? used / limit : 0;
   const state = fraction >= 1 ? "critical" : fraction >= 0.8 ? "warning" : "ok";
   const color = state === "critical" ? STATUS.critical : state === "warning" ? STATUS.warning : ACCENT;
@@ -21,12 +25,12 @@ export function TickMeter({ label, used, limit, caption, ticks = 48, delta }: { 
     <div>
       <p className="text-paragraph-sm text-text-sub-600">{label}</p>
       <div className="mt-1 flex items-center gap-2">
-        <span className="text-title-h4 font-semibold leading-none tracking-tight text-text-strong-950">{formatPercent(fraction, 0)}</span>
+        <span className="text-title-h4 font-semibold leading-none tracking-tight text-text-strong-950">{fmt.percent(fraction, 0)}</span>
         {delta && <DeltaPill metric={delta} />}
         {state !== "ok" && (
           <span className="flex items-center gap-1 text-label-xs text-text-sub-600">
             {state === "critical" ? <RiErrorWarningLine className="size-4" style={{ color }} aria-hidden="true" /> : <RiAlertLine className="size-4" style={{ color }} aria-hidden="true" />}
-            {state === "critical" ? "At limit" : "Near limit"}
+            {state === "critical" ? t("limit.at") : t("limit.near")}
           </span>
         )}
       </div>
@@ -35,7 +39,7 @@ export function TickMeter({ label, used, limit, caption, ticks = 48, delta }: { 
           <span key={i} className="h-full min-w-0 flex-1 rounded-full" style={{ backgroundColor: i < filled ? color : "var(--color-bg-soft-200)", maxWidth: 3 }} />
         ))}
       </div>
-      <p className="mt-2 text-paragraph-xs text-text-sub-600">{caption ?? `${used.toLocaleString("en-US")} of ${limit.toLocaleString("en-US")}`}</p>
+      <p className="mt-2 text-paragraph-xs text-text-sub-600">{caption ?? t("tickMeter.caption", { used, limit })}</p>
     </div>
   );
 }

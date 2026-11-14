@@ -56,6 +56,11 @@ const TRANSLATED = [
   "src/app/loading.tsx",
   "src/app/settings/layout.tsx",
   "src/components/settings/SettingsShell.tsx",
+  "src/components/leads/**/*.tsx",
+  "src/app/leads/**/*.tsx",
+  "src/app/domains/**/*.tsx",
+  "src/app/analytics/**/*.tsx",
+  "src/components/analytics/**/*.tsx",
 ];
 
 /**

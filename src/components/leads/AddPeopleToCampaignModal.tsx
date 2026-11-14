@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiSearchLine, RiUserAddLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Checkbox from "@/components/alignui/checkbox";
@@ -12,6 +13,11 @@ type PersonRow = {
   person: { id: string; email: string | null; linkedinUrl: string | null; phone?: string | null; fullName: string | null; title: string | null };
   company: { name: string | null; domain: string } | null;
 };
+
+/** Text the server (or a thrown error) supplied is shown as it came; otherwise the catalog says what failed, when it renders. */
+type LoadError = { message: string } | { fallback: "loadFailed" | "addFailed" };
+const failure = (cause: unknown, fallback: "loadFailed" | "addFailed"): LoadError =>
+  cause instanceof Error && cause.message ? { message: cause.message } : { fallback };
 
 export default function AddPeopleToCampaignModal({
   campaignId,
@@ -28,12 +34,13 @@ export default function AddPeopleToCampaignModal({
   /** The WhatsApp route reports skippedMissingPhone instead of the identity/suppressed counts. */
   onAdded: (result: { requested: number; added: number; skippedMissingIdentity: number; skippedDuplicate: number; skippedSuppressed: number }) => void;
 }) {
+  const t = useTranslations("leads.addToCampaign");
   const [rows, setRows] = useState<PersonRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoadError | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -47,10 +54,10 @@ export default function AddPeopleToCampaignModal({
         params.set(channel === "email" ? "hasEmail" : channel === "whatsapp" ? "hasPhone" : "hasLinkedin", "true");
         const response = await fetch(`/api/leads/people?${params}`, { signal: controller.signal });
         const body = await response.json();
-        if (!response.ok) throw new Error(body.error ?? "Could not load people");
+        if (!response.ok) throw new Error(body.error);
         setRows(body.people ?? []);
       } catch (cause) {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load people");
+        if (!controller.signal.aborted) setError(failure(cause, "loadFailed"));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -74,7 +81,7 @@ export default function AddPeopleToCampaignModal({
         body: JSON.stringify({ personIds: [...selected] }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? "Could not add people");
+      if (!response.ok) throw new Error(body.error);
       onAdded(
         channel === "whatsapp"
           ? {
@@ -88,7 +95,7 @@ export default function AddPeopleToCampaignModal({
       );
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not add people");
+      setError(failure(cause, "addFailed"));
     } finally {
       setSaving(false);
     }
@@ -107,10 +114,8 @@ export default function AddPeopleToCampaignModal({
     <Modal.Root open onOpenChange={(next) => { if (!next && !saving) onClose(); }}>
       <Modal.Content size="max-w-2xl" className="max-h-[80vh]">
         <Modal.Header icon={RiUserAddLine}>
-          <Modal.Title>Add from People</Modal.Title>
-          <Modal.Description>
-            Only people with a {channel === "email" ? "valid email" : channel === "whatsapp" ? "phone number" : "LinkedIn profile"} can be selected.
-          </Modal.Description>
+          <Modal.Title>{t("title")}</Modal.Title>
+          <Modal.Description>{t("description", { channel })}</Modal.Description>
         </Modal.Header>
         <div className="border-b border-stroke-soft-200 px-5 pb-4">
           <Input.Root size="small">
@@ -118,8 +123,8 @@ export default function AddPeopleToCampaignModal({
               <Input.Icon as={RiSearchLine} />
               <Input.Input
                 type="search"
-                aria-label="Search people"
-                placeholder="Search name, email, company, domain, or LinkedIn…"
+                aria-label={t("searchLabel")}
+                placeholder={t("searchPlaceholder")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
@@ -128,9 +133,9 @@ export default function AddPeopleToCampaignModal({
         </div>
         <Modal.Body className="min-h-48 p-2">
           {loading ? (
-            <p className="p-3 text-paragraph-sm text-text-sub-600">Loading…</p>
+            <p className="p-3 text-paragraph-sm text-text-sub-600">{t("loading")}</p>
           ) : eligible.length === 0 ? (
-            <p className="p-3 text-paragraph-sm text-text-sub-600">No eligible people found.</p>
+            <p className="p-3 text-paragraph-sm text-text-sub-600">{t("empty")}</p>
           ) : (
             eligible.map(({ person, company }) => (
               <label key={person.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-weak-50">
@@ -143,13 +148,13 @@ export default function AddPeopleToCampaignModal({
             ))
           )}
         </Modal.Body>
-        {error && <FormError className="mx-5 mb-3">{error}</FormError>}
+        {error && <FormError className="mx-5 mb-3">{"message" in error ? error.message : t(error.fallback)}</FormError>}
         <Modal.Footer>
           <Modal.Close asChild>
-            <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>Cancel</Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>{t("cancel")}</Button.Root>
           </Modal.Close>
           <Button.Root variant="primary" mode="filled" size="small" disabled={!selected.size || saving} onClick={() => void submit()}>
-            {saving ? "Adding…" : `Add ${selected.size || ""} ${selected.size === 1 ? "person" : "people"}`}
+            {saving ? t("adding") : selected.size ? t("addPeople", { count: selected.size }) : t("add")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

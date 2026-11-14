@@ -1,7 +1,7 @@
 "use client";
 
 import * as Tooltip from "@/components/alignui/tooltip";
-import { formatCompact, formatPercent } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 
 /**
  * Part-to-whole horizontal bar: 2px gaps between segments, rounded ends, and a
@@ -13,7 +13,9 @@ import { formatCompact, formatPercent } from "../theme";
  */
 export type SegmentItem = { key: string; label: string; value: number; color: string };
 
-export function SegmentedBar({ items, valueFormat = formatCompact, hideLegend = false }: { items: SegmentItem[]; valueFormat?: (value: number) => string; hideLegend?: boolean }) {
+export function SegmentedBar({ items, valueFormat: valueFormatProp, hideLegend = false }: { items: SegmentItem[]; valueFormat?: (value: number) => string; hideLegend?: boolean }) {
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.compact;
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const share = (value: number) => (total > 0 ? value / total : null);
   return (
@@ -28,7 +30,7 @@ export function SegmentedBar({ items, valueFormat = formatCompact, hideLegend = 
                   <span tabIndex={0} className="h-full min-w-1 outline-none transition-opacity first:rounded-l-full last:rounded-r-full hover:opacity-80 focus-visible:opacity-80" style={{ flexGrow: item.value, backgroundColor: item.color }} />
                 </Tooltip.Trigger>
                 <Tooltip.Content side="top">
-                  {valueFormat(item.value)} · {item.label} · {formatPercent(share(item.value))}
+                  {valueFormat(item.value)} · {item.label} · {fmt.percent(share(item.value))}
                 </Tooltip.Content>
               </Tooltip.Root>
             ))}
@@ -42,7 +44,7 @@ export function SegmentedBar({ items, valueFormat = formatCompact, hideLegend = 
                 <span className="truncate">{item.label}</span>
               </div>
               <p className="mt-0.5 text-label-md text-text-strong-950">
-                {valueFormat(item.value)} <span className="text-paragraph-xs text-text-soft-400">{formatPercent(share(item.value))}</span>
+                {valueFormat(item.value)} <span className="text-paragraph-xs text-text-soft-400">{fmt.percent(share(item.value))}</span>
               </p>
             </li>
           ))}

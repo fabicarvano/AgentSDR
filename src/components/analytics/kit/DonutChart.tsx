@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ComponentType, CSSProperties } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "@/utils/cn";
-import { formatCompact, formatPercent, MUTED, SURFACE } from "../theme";
+import { MUTED, SURFACE } from "../theme";
+import { useAnalyticsFormat } from "../useAnalyticsFormat";
 import { EmptyChart } from "./EmptyChart";
 
 /**
@@ -23,6 +25,7 @@ import { EmptyChart } from "./EmptyChart";
  * legend dot — required when the colour is a status colour), `centerLabel`
  * (caption under the total), `valueFormat`, `size` (px, default 164),
  * `maxSlices`, `emptyLabel` / `emptyDescription` (the empty state's two lines).
+ * `valueFormat` and `emptyLabel` default to the interface language's compact number and "Nothing in this period."
  */
 export type DonutItem = {
   key: string;
@@ -32,14 +35,14 @@ export type DonutItem = {
   icon?: ComponentType<{ className?: string; style?: CSSProperties }>;
 };
 
-function fold(items: DonutItem[], maxSlices: number): DonutItem[] {
+function fold(items: DonutItem[], maxSlices: number, otherLabel: (count: number) => string): DonutItem[] {
   const nonZero = items.filter((i) => i.value > 0);
   if (nonZero.length <= maxSlices) return nonZero;
   const keep = new Set([...nonZero].sort((a, b) => b.value - a.value).slice(0, maxSlices - 1).map((i) => i.key));
   const rest = nonZero.filter((i) => !keep.has(i.key));
   return [
     ...nonZero.filter((i) => keep.has(i.key)),
-    { key: "__other", label: `Other (${rest.length})`, value: rest.reduce((s, i) => s + i.value, 0), color: MUTED },
+    { key: "__other", label: otherLabel(rest.length), value: rest.reduce((s, i) => s + i.value, 0), color: MUTED },
   ];
 }
 
@@ -48,10 +51,10 @@ type SliceTooltipArgs = { active?: boolean; payload?: ReadonlyArray<{ payload?: 
 export function DonutChart({
   items,
   centerLabel,
-  valueFormat = formatCompact,
+  valueFormat: valueFormatProp,
   size = 164,
   maxSlices = 6,
-  emptyLabel = "Nothing in this period.",
+  emptyLabel,
   emptyDescription,
   className,
 }: {
@@ -64,10 +67,13 @@ export function DonutChart({
   emptyDescription?: string;
   className?: string;
 }) {
-  const slices = fold(items, maxSlices);
+  const t = useTranslations("analytics.kit");
+  const fmt = useAnalyticsFormat();
+  const valueFormat = valueFormatProp ?? fmt.compact;
+  const slices = fold(items, maxSlices, (count) => t("donut.other", { count }));
   const total = slices.reduce((s, i) => s + i.value, 0);
-  if (total === 0) return <EmptyChart height={size} title={emptyLabel} description={emptyDescription} />;
-  const share = (value: number) => formatPercent(value / total);
+  if (total === 0) return <EmptyChart height={size} title={emptyLabel ?? t("donut.empty")} description={emptyDescription} />;
+  const share = (value: number) => fmt.percent(value / total);
 
   const tooltip = ({ active, payload }: SliceTooltipArgs) => {
     const item = active ? payload?.[0]?.payload : undefined;
@@ -91,7 +97,8 @@ export function DonutChart({
     <div className="flex flex-col items-center gap-5 @sm:flex-row @sm:gap-6">
       <div
         role="img"
-        aria-label={`${centerLabel ?? "Total"} ${valueFormat(total)}: ${slices.map((s) => `${s.label} ${valueFormat(s.value)} (${share(s.value)})`).join(", ")}`}
+        // Only the caption and the data labels are words; the "Total 12: A 3 (25%), B 9 (75%)" frame is punctuation, so no message.
+        aria-label={`${centerLabel ?? t("total")} ${valueFormat(total)}: ${slices.map((s) => `${s.label} ${valueFormat(s.value)} (${share(s.value)})`).join(", ")}`}
         className="relative shrink-0"
         style={{ width: size, height: size }}
       >

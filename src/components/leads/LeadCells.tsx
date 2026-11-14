@@ -2,12 +2,13 @@
 /* eslint-disable @next/next/no-img-element -- remote company favicons are domain-derived and intentionally unoptimized */
 
 import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiGlobalLine, RiLinkedinBoxFill, RiMailFill, RiPhoneFill, RiSparkling2Fill } from "@remixicon/react";
 import * as Tooltip from "@/components/alignui/tooltip";
 import { CHANNEL_META, CRM_CATEGORY_COLOR, HUE } from "@/components/analytics/theme";
 import { categoryColor } from "@/components/crm/crm-utils";
 import { cn } from "@/utils/cn";
-import { isFuture, linkedInPersonHref, shortDate, type Campaign, type PersonRow } from "./leadTypes";
+import { CRM_CATEGORIES, CRM_STATES, isFuture, linkedInPersonHref, shortDate, type Campaign, type PersonRow } from "./leadTypes";
 
 /** Stops a click on a control inside a clickable row from also opening the row. */
 export const stop = (event: MouseEvent | KeyboardEvent) => event.stopPropagation();
@@ -36,7 +37,8 @@ export function TwoLine({ primary, secondary, primaryTitle }: { primary: ReactNo
 
 // ------------------------------------------------------------ reachability
 
-type Reach = { key: string; label: string; icon: ComponentType<{ className?: string }>; color: string; value: string | null; href?: string; copy?: boolean };
+/** `missing` and `action` arrive already translated (ReachIcons builds them): the phrasing differs per channel. */
+type Reach = { key: string; missing: string; action: string; icon: ComponentType<{ className?: string }>; color: string; value: string | null; href?: string; copy?: boolean };
 
 /**
  * One icon per channel, always in the same slot so they line up down the
@@ -44,6 +46,7 @@ type Reach = { key: string; label: string; icon: ComponentType<{ className?: str
  * phone) or opens (LinkedIn). Absent: a faint icon that says so on hover.
  */
 function ReachIcon({ item }: { item: Reach }) {
+  const t = useTranslations("leads.cells.reach");
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
@@ -51,18 +54,18 @@ function ReachIcon({ item }: { item: Reach }) {
   const Icon = item.icon;
   const present = Boolean(item.value);
   const base = "flex size-7 items-center justify-center rounded-md outline-none transition focus-visible:ring-2 focus-visible:ring-stroke-strong-950";
-  const tip = !present ? `No ${item.label.toLowerCase()}` : copied ? "Copied" : item.copy ? `${item.value} · click to copy` : `Open ${item.label} profile`;
+  const tip = !present ? item.missing : copied ? t("copied") : item.copy ? t("clickToCopy", { value: item.value ?? "" }) : item.action;
 
   const trigger = !present ? (
     <span tabIndex={0} aria-label={tip} className={cn(base, "text-text-disabled-300")} onClick={stop}><Icon className="size-4" /></span>
   ) : item.href ? (
-    <a href={item.href} target="_blank" rel="noreferrer" aria-label={`Open ${item.label} profile`} onClick={stop} onKeyDown={stop} className={cn(base, "hover:bg-bg-soft-200")} style={{ color: item.color }}>
+    <a href={item.href} target="_blank" rel="noreferrer" aria-label={item.action} onClick={stop} onKeyDown={stop} className={cn(base, "hover:bg-bg-soft-200")} style={{ color: item.color }}>
       <Icon className="size-4" />
     </a>
   ) : (
     <button
       type="button"
-      aria-label={`Copy ${item.label.toLowerCase()} ${item.value}`}
+      aria-label={item.action}
       onKeyDown={stop}
       onClick={(event) => {
         event.stopPropagation();
@@ -90,26 +93,29 @@ function ReachIcon({ item }: { item: Reach }) {
 }
 
 export function ReachIcons({ person }: { person: PersonRow["person"] }) {
+  const t = useTranslations("leads.cells.reach");
   const items: Reach[] = [
-    { key: "email", label: "Email", icon: RiMailFill, color: CHANNEL_META.email.color, value: person.email, copy: true },
-    { key: "linkedin", label: "LinkedIn", icon: RiLinkedinBoxFill, color: CHANNEL_META.linkedin.color, value: person.linkedinUrl, href: person.linkedinUrl ? linkedInPersonHref(person.linkedinUrl) : undefined },
+    { key: "email", missing: t("noEmail"), action: t("copyEmail", { value: person.email ?? "" }), icon: RiMailFill, color: CHANNEL_META.email.color, value: person.email, copy: true },
+    { key: "linkedin", missing: t("noLinkedin"), action: t("openLinkedin"), icon: RiLinkedinBoxFill, color: CHANNEL_META.linkedin.color, value: person.linkedinUrl, href: person.linkedinUrl ? linkedInPersonHref(person.linkedinUrl) : undefined },
     // The number WhatsApp calls and messages go to, hence WhatsApp's colour.
-    { key: "phone", label: "Phone", icon: RiPhoneFill, color: CHANNEL_META.whatsapp.color, value: person.phone ?? null, copy: true },
+    { key: "phone", missing: t("noPhone"), action: t("copyPhone", { value: person.phone ?? "" }), icon: RiPhoneFill, color: CHANNEL_META.whatsapp.color, value: person.phone ?? null, copy: true },
   ];
   return <div className="-ml-1.5 flex items-center gap-0.5">{items.map((item) => <ReachIcon key={item.key} item={item} />)}</div>;
 }
 
-/** Links for a company row: website and LinkedIn page, same slots as ReachIcons. */
-export function LinkIcon({ href, label, icon: Icon, color }: { href: string | null; label: string; icon: ComponentType<{ className?: string; style?: React.CSSProperties }>; color?: string }) {
+/** Links for a company row: website and LinkedIn page, same slots as ReachIcons. `kind` picks the wording in leads.cells.links. */
+export function LinkIcon({ href, kind, icon: Icon, color }: { href: string | null; kind: "website" | "linkedinPage"; icon: ComponentType<{ className?: string; style?: React.CSSProperties }>; color?: string }) {
+  const t = useTranslations("leads.cells.links");
+  const label = href ? t(`open.${kind}`) : t(`none.${kind}`);
   const base = "flex size-7 items-center justify-center rounded-md outline-none transition focus-visible:ring-2 focus-visible:ring-stroke-strong-950";
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         {href
-          ? <a href={href} target="_blank" rel="noreferrer" aria-label={`Open ${label}`} onClick={stop} onKeyDown={stop} className={cn(base, "text-text-sub-600 hover:bg-bg-soft-200 hover:text-text-strong-950")}><Icon className="size-4" style={color ? { color } : undefined} /></a>
-          : <span tabIndex={0} aria-label={`No ${label}`} onClick={stop} className={cn(base, "text-text-disabled-300")}><Icon className="size-4" /></span>}
+          ? <a href={href} target="_blank" rel="noreferrer" aria-label={label} onClick={stop} onKeyDown={stop} className={cn(base, "text-text-sub-600 hover:bg-bg-soft-200 hover:text-text-strong-950")}><Icon className="size-4" style={color ? { color } : undefined} /></a>
+          : <span tabIndex={0} aria-label={label} onClick={stop} className={cn(base, "text-text-disabled-300")}><Icon className="size-4" /></span>}
       </Tooltip.Trigger>
-      <Tooltip.Content size="xsmall">{href ? `Open ${label}` : `No ${label}`}</Tooltip.Content>
+      <Tooltip.Content size="xsmall">{label}</Tooltip.Content>
     </Tooltip.Root>
   );
 }
@@ -117,14 +123,24 @@ export function LinkIcon({ href, label, icon: Icon, color }: { href: string | nu
 // ---------------------------------------------------------------- outreach
 
 const isActive = (campaign: Campaign) => (campaign.status ?? "").toLowerCase() === "active";
-const statusLabel = (status?: string) => (status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "");
+
+/** Campaign statuses that have a translated label (leads.cells.campaign.status), by their lower-cased stored value. */
+const KNOWN_CAMPAIGN_STATUSES = ["draft", "active", "paused", "completed"] as const;
+
+/** Any status the table does not know yet is shown as stored, capitalised. */
+const capitalise = (status: string) => status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 
 /**
  * One line: the channel icon and one campaign's name (an active one when
  * there is one), plus "+N" for the rest. The full list is in the tooltip.
  */
 export function CampaignSummary({ campaigns }: { campaigns: Campaign[] }) {
-  if (!campaigns.length) return <Empty label="Not in a campaign" />;
+  const t = useTranslations("leads.cells.campaign");
+  if (!campaigns.length) return <Empty label={t("none")} />;
+  const statusLabel = (status: string) => {
+    const known = KNOWN_CAMPAIGN_STATUSES.find((item) => item === status.toLowerCase());
+    return known ? t(`status.${known}`) : capitalise(status);
+  };
   const lead = campaigns.find(isActive) ?? campaigns[0];
   const rest = campaigns.length - 1;
   const channels = [...new Set(campaigns.map((campaign) => campaign.channel))];
@@ -143,7 +159,7 @@ export function CampaignSummary({ campaigns }: { campaigns: Campaign[] }) {
         </span>
       </Tooltip.Trigger>
       <Tooltip.Content size="medium" variant="light" side="bottom" align="start" className="w-72 p-2">
-        <p className="px-1.5 pb-1.5 text-label-xs text-text-sub-600">{campaigns.length === 1 ? "1 campaign" : `${campaigns.length} campaigns`}</p>
+        <p className="px-1.5 pb-1.5 text-label-xs text-text-sub-600">{t("count", { count: campaigns.length })}</p>
         <ul className="space-y-0.5">
           {campaigns.map((campaign) => {
             const ChannelIcon = CHANNEL_META[campaign.channel].icon;
@@ -174,23 +190,29 @@ const humanize = (value: string) => {
 };
 
 /** Workflow states worth a word in the row; the rest (waiting, idle…) are the normal case. */
-const NOTABLE_STATE: Record<string, string> = { action_required: "Action required", paused: "Paused", error: "Error", classifying: "Classifying" };
+const NOTABLE_STATES: ReadonlySet<string> = new Set(["action_required", "paused", "error", "classifying"]);
 
 /**
  * One chip in the category's colour carrying the stage (sub-category) when
  * there is one, and a muted line only when it says something actionable.
  */
 export function CrmSummary({ crm }: { crm: PersonRow["crm"] }) {
-  if (!crm) return <Empty label="No CRM record" />;
+  const t = useTranslations("leads.cells.crm");
+  const tc = useTranslations("leads.crm");
+  const format = useFormatter();
+  if (!crm) return <Empty label={t("none")} />;
   const key = crm.categoryKey ?? "unclassified";
-  const category = crm.categoryKey ? humanize(crm.categoryKey) : "Unclassified";
+  const knownCategory = CRM_CATEGORIES.find((item) => item.value === crm.categoryKey);
+  // A category this table does not know is shown as stored (humanised); the four standard ones are translated.
+  const category = !crm.categoryKey ? tc("category.unclassified") : knownCategory ? tc(`category.${knownCategory.labelKey}`) : humanize(crm.categoryKey);
   const dot = CRM_CATEGORY_COLOR[key as keyof typeof CRM_CATEGORY_COLOR] ?? CRM_CATEGORY_COLOR.unclassified;
   const chip = crm.subcategory ? `${category} · ${crm.subcategory}` : category;
-  const state = NOTABLE_STATE[crm.workflowState];
+  const knownState = NOTABLE_STATES.has(crm.workflowState) ? CRM_STATES.find((item) => item.value === crm.workflowState) : undefined;
+  const state = knownState ? tc(`state.${knownState.labelKey}`) : undefined;
   // A future next action is news; a past one is already "Action required",
   // and otherwise reads as due.
   const due = crm.nextActionAt ? new Date(crm.nextActionAt) : null;
-  const next = !due ? null : isFuture(due) ? `Next action ${shortDate(due)}` : state ? null : `Due ${shortDate(due)}`;
+  const next = !due ? null : isFuture(due) ? t("nextAction", { date: shortDate(format, due) }) : state ? null : t("due", { date: shortDate(format, due) });
   const facts = [state, next].filter(Boolean).join(" · ");
   return (
     <div className="min-w-0">
@@ -201,8 +223,8 @@ export function CrmSummary({ crm }: { crm: PersonRow["crm"] }) {
       {(facts || crm.unacknowledgedAiChange) && (
         <p className="mt-1 flex min-w-0 items-center gap-1 text-paragraph-xs text-text-sub-600">
           {crm.unacknowledgedAiChange && (
-            <span className="flex shrink-0 items-center gap-0.5 text-warning-base" title="The AI changed this classification; review it on the record">
-              <RiSparkling2Fill className="size-3" aria-hidden="true" />AI change{facts ? " ·" : ""}
+            <span className="flex shrink-0 items-center gap-0.5 text-warning-base" title={t("aiChangeHint")}>
+              <RiSparkling2Fill className="size-3" aria-hidden="true" />{t("aiChange")}{facts ? " ·" : ""}
             </span>
           )}
           {facts && <span className="truncate">{facts}</span>}

@@ -1,3 +1,459 @@
 {
-  "analytics": {}
+  "analytics": {
+    "page": {
+      "title": "Analytics"
+    },
+    "loading": {
+      "label": "Loading analytics"
+    },
+    "channels": {
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "whatsapp": "WhatsApp"
+    },
+    "common": {
+      "vsPrevious": "vs {value} previous period",
+      "regardlessOfRange": "Right now, regardless of the date range.",
+      "campaign": "Campaign",
+      "leads": "Leads",
+      "replied": "Replied",
+      "replyRate": "Reply rate",
+      "open": "Open",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "campaignStatus": {
+        "active": "Active",
+        "paused": "Paused",
+        "draft": "Draft",
+        "completed": "Completed"
+      }
+    },
+    "format": {
+      "weekOf": "Week of {date}"
+    },
+    "client": {
+      "title": "Analytics",
+      "description": "How conversations turn into meetings and customers, and which channels bring them in.",
+      "refresh": "Refresh",
+      "viewsLabel": "Analytics views",
+      "overviewTab": "Overview",
+      "updatedNow": "Updated just now",
+      "updatedAgo": "Updated {time}",
+      "refreshFailed": "Couldn't refresh: {error}. Showing the last loaded data.",
+      "requestFailed": "Request failed ({status})",
+      "loadFailed": "Could not load analytics"
+    },
+    "range": {
+      "custom": "Custom range",
+      "apply": "Apply range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "startAfterEnd": "Start must be before the end.",
+      "tooLong": "{count, plural, one {Pick at most # day.} other {Pick at most # days.}}",
+      "presets": {
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "last90": "Last 90 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month"
+      }
+    },
+    "kit": {
+      "total": "Total",
+      "chartCard": {
+        "showChart": "Show chart",
+        "showTable": "Show as table"
+      },
+      "delta": {
+        "new": "New",
+        "nothingBefore": "Nothing in the previous period",
+        "noBase": "No previous-period data to compare",
+        "change": "{tone, select, good {improved} bad {worsened} other {unchanged}} versus the previous period"
+      },
+      "donut": {
+        "other": "Other ({count})",
+        "empty": "Nothing in this period."
+      },
+      "empty": {
+        "title": "No data for this period",
+        "description": "Nothing happened in this date range. Try a wider range."
+      },
+      "errorState": {
+        "title": "Something went wrong",
+        "message": "Could not load analytics.",
+        "retry": "Retry"
+      },
+      "funnel": {
+        "stepOfPrevious": "{value}<suffix> of previous</suffix>"
+      },
+      "kpi": {
+        "show": "Show {label}",
+        "whatIs": "What is “{label}”?"
+      },
+      "list": {
+        "empty": "Nothing to show."
+      },
+      "limit": {
+        "within": "Within limit",
+        "near": "Near limit",
+        "at": "At limit"
+      },
+      "capacity": {
+        "usage": "{label} usage"
+      },
+      "tickMeter": {
+        "caption": "{used, number} of {limit, number}"
+      },
+      "timeSeries": {
+        "dateColumn": "Date",
+        "weekColumn": "Week of"
+      }
+    },
+    "overview": {
+      "kpi": {
+        "replies": "Replies",
+        "positive": "Positive",
+        "meetings": "Meetings",
+        "customers": "Customers",
+        "medianResponse": "Median first response"
+      },
+      "hint": {
+        "replies": "Inbound messages received in CRM conversations in this period, on any channel.",
+        "positive": "Distinct CRM records moved into Interested or Customer in this period.",
+        "meetings": "Distinct CRM records moved into a meeting or demo subcategory in this period. No-shows are not counted.",
+        "customers": "Distinct CRM records moved into Customer in this period.",
+        "response": "Median time from a lead's message to your next reply in that conversation."
+      },
+      "fromPeople": "from {value} {count, plural, one {person} other {people}}",
+      "positiveShare": "{value} of people who replied",
+      "outreach": {
+        "title": "Outreach",
+        "description": "Where these conversations came from. Open a channel for its detail."
+      },
+      "funnel": {
+        "title": "Conversion funnel",
+        "description": "From first touch to customer.",
+        "footer": "Counts for this period — not one cohort followed through."
+      },
+      "funnelStage": {
+        "reached": "Reached",
+        "replied": "Replied",
+        "positive": "Positive",
+        "meeting": "Meeting",
+        "customer": "Customer"
+      },
+      "channels": {
+        "title": "Channels",
+        "description": "How each channel performed in this period. Select a row to open it.",
+        "caption": "Channel comparison",
+        "channel": "Channel",
+        "reached": "Reached",
+        "positive": "Positive"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "allClear": "All clear",
+        "allClearDescription": "No replies waiting, no failing accounts.",
+        "items": {
+          "actionRequired": {
+            "label": "Action required",
+            "hint": "Conversations waiting on you"
+          },
+          "overdue": {
+            "label": "Follow-ups due",
+            "hint": "Follow-ups drafted or past their time"
+          },
+          "draftsAwaitingReview": {
+            "label": "Drafts to review",
+            "hint": "AI replies waiting for approval"
+          },
+          "mailboxesFailing": {
+            "label": "Failing mailboxes",
+            "hint": "Email accounts that can't send"
+          },
+          "linkedinDisconnected": {
+            "label": "LinkedIn disconnected",
+            "hint": "Accounts that need reconnecting"
+          },
+          "whatsappDisconnected": {
+            "label": "WhatsApp disconnected",
+            "hint": "Numbers that need relinking"
+          }
+        }
+      }
+    },
+    "crm": {
+      "category": {
+        "interested": "Interested",
+        "customer": "Customer",
+        "notInterested": "Not interested",
+        "other": "Other",
+        "unclassified": "Unclassified"
+      },
+      "sentiment": {
+        "title": "Replies by sentiment",
+        "description": "Inbound replies each {bucket, select, week {week} other {day}}, by the category they were classified into."
+      },
+      "pipeline": {
+        "title": "Pipeline now",
+        "description": "Open records by category, right now, and how far along the funnel they are.",
+        "centerLabel": "open records",
+        "emptyLabel": "No open records",
+        "emptyDescription": "Nothing is open in the CRM right now.",
+        "stages": "Funnel stages · darker as they advance"
+      },
+      "stageMoves": {
+        "title": "Stage moves this period",
+        "description": "Records moved into a new stage, by the category they moved into.",
+        "centerLabel": "moves",
+        "emptyLabel": "No stage moves",
+        "top": "Top stages"
+      },
+      "workflow": {
+        "title": "Workflow",
+        "description": "Every record by workflow state, right now.",
+        "centerLabel": "records",
+        "emptyLabel": "No records yet",
+        "emptyDescription": "Records appear once a lead replies.",
+        "state": {
+          "paused": "Paused",
+          "actionRequired": "Action required",
+          "error": "Error",
+          "waiting": "Waiting",
+          "closed": "Closed",
+          "unclassified": "Unclassified",
+          "classifying": "Classifying",
+          "idle": "Idle"
+        }
+      },
+      "ai": {
+        "title": "AI assistant",
+        "description": "{count, plural, one {# draft generated in this period.} other {# drafts generated in this period.}}",
+        "awaitingReview": "{count, number} awaiting review",
+        "draftsSent": "Drafts sent",
+        "draftsSentNote": "AI drafts that went out",
+        "classified": "Classified",
+        "classifiedNote": "Replies the AI labelled",
+        "overrideRate": "Override rate",
+        "overrideRateNote": "Labels a person changed",
+        "sentAsIs": "Sent as-is",
+        "sentEdited": "Sent edited",
+        "discarded": "Discarded",
+        "emptyTitle": "No drafts resolved",
+        "emptyDescription": "Nothing was sent or discarded in this period.",
+        "unedited": "<strong>{percent}</strong> of sent drafts went out unedited<muted> ({asIs, number} of {sent, number})</muted>"
+      }
+    },
+    "email": {
+      "kpi": {
+        "sent": "Emails sent",
+        "contacted": "Leads contacted",
+        "replied": "Replied",
+        "replyRate": "Reply rate",
+        "bounced": "Bounced",
+        "unsubscribed": "Unsubscribed"
+      },
+      "hint": {
+        "sent": "Emails sent in this period, first touches and follow-ups both.",
+        "contacted": "Distinct leads who were sent their first email in this period.",
+        "replied": "Distinct people in an email campaign who sent an inbound email reply in this period.",
+        "replyRate": "Replied divided by leads contacted, for the same period.",
+        "bounced": "Addresses added to the suppression list as bounced in this period.",
+        "unsubscribed": "Addresses added to the suppression list as unsubscribed in this period."
+      },
+      "ofContacted": "of {value} contacted",
+      "sending": {
+        "title": "Sending activity",
+        "description": "Emails sent each {bucket, select, week {week} other {day}}: first touches and follow-ups.",
+        "firstTouch": "First touch",
+        "followUp": "Follow-ups",
+        "caption": "Emails sent by type",
+        "failed": "{count, plural, one {# send failed in this period} other {# sends failed in this period}}"
+      },
+      "mailbox": {
+        "title": "Mailbox capacity today",
+        "empty": "No mailboxes connected yet.",
+        "sentToday": "Sent today",
+        "sentTodayCaption": "{used, number} of {limit, number} sent today",
+        "connected": "{count, number} connected",
+        "failing": "{count, number} failing",
+        "manage": "Manage mailboxes"
+      },
+      "replies": {
+        "title": "Replies",
+        "description": "Inbound email replies each {bucket, select, week {week} other {day}}.",
+        "caption": "Email replies"
+      },
+      "notTracked": {
+        "title": "Not tracked",
+        "body": "Opens and clicks aren't recorded, so there are no open or click rates here. Reply rate is the engagement metric to watch."
+      },
+      "campaigns": {
+        "title": "Campaigns",
+        "description": "Sends are for this period; leads, replies and bounces are all time. Sorted by sends.",
+        "empty": "No email campaigns yet.",
+        "caption": "Email campaigns",
+        "contacted": "Contacted",
+        "sent": "Sent",
+        "bounced": "Bounced"
+      }
+    },
+    "linkedin": {
+      "kpi": {
+        "invites": "Invites sent",
+        "accepted": "Accepted",
+        "acceptanceRate": "Acceptance rate",
+        "messages": "Messages sent",
+        "replied": "Replied",
+        "replyRate": "Reply rate"
+      },
+      "hint": {
+        "invites": "Connection invitations sent in this period.",
+        "accepted": "Connections accepted in this period. Counted when the accept is recorded, which can be for an invite sent earlier.",
+        "acceptanceRate": "Accepted divided by invites sent, for the same period.",
+        "messages": "Messages sent after a connection: the acceptance message, follow-ups 1 to 3 and custom messages.",
+        "replied": "Distinct leads who sent a reply in this period.",
+        "replyRate": "Replied divided by accepted connections, not by invites sent."
+      },
+      "ofAccepted": "of {value} accepted",
+      "replyRateContext": "replied / accepted",
+      "replyRateContextBefore": "replied / accepted, vs {value} before",
+      "activity": {
+        "title": "Invites, accepts and replies",
+        "description": "LinkedIn activity each {bucket, select, week {week} other {day}}.",
+        "invites": "Invites",
+        "accepted": "Accepted",
+        "replied": "Replied",
+        "caption": "LinkedIn invites, accepts and replies"
+      },
+      "funnel": {
+        "title": "LinkedIn funnel",
+        "description": "Invited → accepted → replied.",
+        "footer": "Counts for this period, not one cohort followed through.",
+        "stage": {
+          "invited": "Invited",
+          "accepted": "Accepted",
+          "messaged": "Messaged",
+          "replied": "Replied"
+        }
+      },
+      "accounts": {
+        "title": "Accounts",
+        "description": "Right now, regardless of the date range. Disconnected accounts first.",
+        "empty": "No LinkedIn accounts connected yet.",
+        "caption": "LinkedIn accounts",
+        "account": "Account",
+        "status": "Status",
+        "invitesToday": "Invites today",
+        "pending": "Pending queue",
+        "premium": "Premium",
+        "pausedUntilReconnected": "Paused until reconnected",
+        "manage": "Manage LinkedIn accounts"
+      },
+      "capacity": {
+        "title": "Daily invite capacity",
+        "description": "Connected accounts, today.",
+        "empty": "No connected accounts to send from.",
+        "sentToday": "Invites sent today",
+        "sentTodayCaption": "{used, number} of {limit, number} invites sent today",
+        "atCap": "{count, plural, one {# account is at its daily cap} other {# accounts are at their daily cap}}"
+      },
+      "campaigns": {
+        "title": "Campaigns",
+        "description": "Invited is for this period; the other counts are per campaign. Reply rate is replied / accepted.",
+        "empty": "No LinkedIn campaigns yet.",
+        "caption": "LinkedIn campaigns",
+        "invited": "Invited",
+        "accepted": "Accepted",
+        "acceptanceRate": "Acceptance rate"
+      }
+    },
+    "whatsapp": {
+      "calls": {
+        "title": "Calls",
+        "description": "Voice calls placed from AgentSDR and recorded in WhatsApp Web."
+      },
+      "kpi": {
+        "calls": "Calls placed",
+        "connected": "Connected",
+        "connectRate": "Connect rate",
+        "talkTime": "Talk time",
+        "avgCall": "Avg call",
+        "messagesSent": "Messages sent",
+        "messagesReceived": "Messages received",
+        "chatReplyRate": "Chat reply rate",
+        "newChats": "New chats"
+      },
+      "hint": {
+        "calls": "WhatsApp calls placed from AgentSDR in this period, whatever the outcome.",
+        "connected": "Calls the lead picked up.",
+        "connectRate": "Connected calls divided by calls placed.",
+        "talk": "Total time on connected calls.",
+        "avg": "Talk time divided by connected calls.",
+        "sent": "Outbound messages: sent by AgentSDR, or typed on the phone or in WhatsApp Web.",
+        "received": "Inbound messages from leads.",
+        "replyRate": "Of chats where you sent a message in this period, the share that got a later reply from the lead.",
+        "newChats": "Chats AgentSDR started in this period (the first message was sent from AgentSDR)."
+      },
+      "ofCalls": "of {value} calls",
+      "perConnectedCall": "per connected call",
+      "ofChats": "of chats you wrote in",
+      "callsChart": {
+        "title": "Calls",
+        "description": "Calls placed each {bucket, select, week {week} other {day}}, connected or not.",
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "footer": "Calls aren't attributed to a rep or number yet.",
+        "caption": "Calls by outcome"
+      },
+      "outcomes": {
+        "title": "Call outcomes",
+        "description": "How each call ended, in this period.",
+        "centerLabel": "calls",
+        "emptyLabel": "No calls in this period",
+        "connected": "Connected",
+        "didNotPickUp": "Did not pick up",
+        "notOnWhatsApp": "Not on WhatsApp",
+        "failed": "Failed",
+        "inProgress": "In progress"
+      },
+      "campaigns": {
+        "title": "Call campaigns",
+        "description": "Calls in this period per campaign. Due today is a live count.",
+        "empty": "No call campaigns yet.",
+        "caption": "Call campaigns",
+        "calls": "Calls",
+        "trend": "Trend",
+        "connected": "Connected",
+        "connectRate": "Connect rate",
+        "dueToday": "Due today"
+      },
+      "messages": {
+        "title": "Messages",
+        "description": "Text chats on linked numbers, by direction."
+      },
+      "messagesChart": {
+        "title": "Messages",
+        "description": "Messages each {bucket, select, week {week} other {day}}, sent and received.",
+        "sent": "Sent",
+        "received": "Received",
+        "caption": "Messages sent and received"
+      },
+      "numbers": {
+        "title": "Numbers",
+        "description": "Linked WhatsApp numbers, right now.",
+        "emptyTitle": "No numbers linked",
+        "emptyDescription": "Link one in Unipile, then sync it.",
+        "newChats": "New chats, last 24 h",
+        "warmingUp": "Warming up until {time}",
+        "manage": "Manage numbers",
+        "status": {
+          "connected": "Connected",
+          "disconnected": "Disconnected",
+          "credentials": "Credentials",
+          "error": "Error"
+        }
+      }
+    }
+  }
 }

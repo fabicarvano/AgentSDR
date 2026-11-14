@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -23,7 +24,8 @@ import { EmptyState } from "@/components/page/EmptyState";
 import { Callout, Meter } from "@/components/settings/SettingsKit";
 import { useDialogs } from "@/components/DialogProvider";
 import { columnTypeMeta } from "@/components/grid/columnTypes";
-import { PG_TYPE_FOR_COLUMN_TYPE, type LeadColumn, type LeadColumnType, type LeadEntity } from "@/lib/leads/types";
+import type { Messages } from "@/i18n/catalog";
+import { CORE_COLUMN_DEFS, PG_TYPE_FOR_COLUMN_TYPE, type LeadColumn, type LeadColumnType, type LeadEntity } from "@/lib/leads/types";
 import { cn } from "@/utils/cn";
 
 /**
@@ -42,7 +44,32 @@ const BOOKKEEPING_COLUMNS: Record<LeadEntity, number> = {
   company: 5,
 };
 
-const ENTITY_LABEL: Record<LeadEntity, string> = { person: "People", company: "Companies" };
+/** The two tabs, in order. */
+const ENTITY_TABS = ["person", "company"] as const satisfies readonly LeadEntity[];
+
+type CoreLabels = Messages["leads"]["columnSettings"]["core"];
+
+/**
+ * Core columns are registry rows whose stored label is English. Their `key` is stable, so the key picks
+ * the translated label (leads.columnSettings.core.*). Keys not listed here show the stored label.
+ */
+const CORE_LABEL_KEYS: { [E in LeadEntity]: ReadonlyMap<string, keyof CoreLabels[E]> } = {
+  person: new Map([
+    ["email", "email"],
+    ["linkedin_url", "linkedinUrl"],
+    ["first_name", "firstName"],
+    ["last_name", "lastName"],
+    ["full_name", "fullName"],
+    ["title", "title"],
+    ["profile_picture_url", "profilePicture"],
+    ["phone", "phone"],
+  ]),
+  company: new Map([
+    ["domain", "domain"],
+    ["name", "name"],
+    ["linkedin_url", "linkedinUrl"],
+  ]),
+};
 
 /**
  * The type picker offers exactly what the API accepts.
@@ -52,17 +79,41 @@ const ENTITY_LABEL: Record<LeadEntity, string> = { person: "People", company: "C
  * cannot leak in — a lead column never executes anything — and so there is no
  * second list to keep in sync with the backend.
  */
-const TYPE_OPTIONS: { value: LeadColumnType; label: string; description: string }[] = (Object.keys(PG_TYPE_FOR_COLUMN_TYPE) as LeadColumnType[]).map(
-  (type) => ({
-    value: type,
-    label: columnTypeMeta(type).label,
-    description: `Stored as ${PG_TYPE_FOR_COLUMN_TYPE[type]}`,
-  }),
-);
+const TYPES = Object.keys(PG_TYPE_FOR_COLUMN_TYPE) as LeadColumnType[];
 
 type Props = { columns: LeadColumn[] };
 
+/**
+ * What a column is called on screen. A core column still carrying the label the product shipped
+ * (CORE_COLUMN_DEFS) is shown in the interface language, picked by its stable key; a column the
+ * person renamed, one they created, or one whose key is unknown shows its stored name as it is.
+ */
+function useColumnLabel() {
+  const t = useTranslations("leads.columnSettings.core");
+  return (column: LeadColumn): string => {
+    if (!column.isCore) return column.name;
+    const shipped = CORE_COLUMN_DEFS.find((def) => def.entity === column.entity && def.key === column.key)?.name;
+    if (column.name !== shipped) return column.name;
+    if (column.entity === "person") {
+      const key = CORE_LABEL_KEYS.person.get(column.key);
+      return key ? t(`person.${key}`) : column.name;
+    }
+    const key = CORE_LABEL_KEYS.company.get(column.key);
+    return key ? t(`company.${key}`) : column.name;
+  };
+}
+
+/** The label of a column type; a type this screen has no label for (a stale stored value) is shown as stored. */
+function useTypeLabel() {
+  const t = useTranslations("leads.columnSettings.types");
+  return (type: LeadColumnType): string => (TYPES.includes(type) ? t(type) : type);
+}
+
 export default function ColumnSettings({ columns }: Props) {
+  const t = useTranslations("leads.columnSettings");
+  const format = useFormatter();
+  const columnLabel = useColumnLabel();
+  const typeLabel = useTypeLabel();
   const router = useRouter();
   const dialogs = useDialogs();
   const [pending, startTransition] = useTransition();
@@ -95,13 +146,13 @@ export default function ColumnSettings({ columns }: Props) {
       const res = await run();
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error ?? "Something went wrong");
+        setError(body.error ?? t("errors.generic"));
         return false;
       }
       startTransition(() => router.refresh());
       return true;
     } catch {
-      setError("Could not reach the server");
+      setError(t("errors.network"));
       return false;
     } finally {
       setBusyId(null);
@@ -151,32 +202,24 @@ export default function ColumnSettings({ columns }: Props) {
       const body = await res.json();
       if (!res.ok) {
         // The conversion is not offered at all — say so and stop.
-        setError(body.error ?? "That conversion is not supported");
+        setError(body.error ?? t("errors.conversionUnsupported"));
         return;
       }
       preview = body;
     } catch {
-      setError("Could not reach the server");
+      setError(t("errors.network"));
       return;
     } finally {
       setBusyId(null);
     }
 
-    const label = columnTypeMeta(nextType).label;
     const confirmed = await dialogs.confirm({
-      title: `Change "${column.name}" to ${label}?`,
+      title: t("retype.title", { name: columnLabel(column), type: typeLabel(nextType) }),
       description:
-        preview.incompatible > 0 ? (
-          <>
-            <strong>
-              {preview.incompatible.toLocaleString()} of {preview.populated.toLocaleString()}
-            </strong>{" "}
-            values cannot be converted and will be permanently cleared. This cannot be undone.
-          </>
-        ) : (
-          `All ${preview.populated.toLocaleString()} values convert cleanly.`
-        ),
-      confirmLabel: "Change type",
+        preview.incompatible > 0
+          ? t.rich("retype.lossy", { incompatible: preview.incompatible, populated: preview.populated, b: (chunks) => <strong>{chunks}</strong> })
+          : t("retype.clean", { populated: preview.populated }),
+      confirmLabel: t("retype.confirm"),
       variant: preview.incompatible > 0 ? "error" : "primary",
     });
     if (!confirmed) return;
@@ -204,11 +247,9 @@ export default function ColumnSettings({ columns }: Props) {
   /** Hard: drops the physical column. Irreversible, so it asks plainly. */
   async function handleDelete(column: LeadColumn) {
     const confirmed = await dialogs.confirm({
-      title: `Permanently delete "${column.name}"?`,
-      description:
-        "The column and every value stored in it will be destroyed. This cannot be undone, " +
-        "and restoring it later will not bring the data back.",
-      confirmLabel: "Delete permanently",
+      title: t("delete.title", { name: columnLabel(column) }),
+      description: t("delete.description"),
+      confirmLabel: t("delete.confirm"),
       variant: "error",
     });
     if (!confirmed) return;
@@ -232,15 +273,15 @@ export default function ColumnSettings({ columns }: Props) {
       <Frame>
         <header className="flex flex-col gap-3 px-4 pb-3 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h3 className="text-label-sm text-text-strong-950">{ENTITY_LABEL[entity]} fields</h3>
-            <p className="mt-0.5 text-paragraph-xs text-text-sub-600">Rename any field. Built-in fields keep their type.</p>
+            <h3 className="text-label-sm text-text-strong-950">{t("fieldsHeading", { entity })}</h3>
+            <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{t("fieldsHint")}</p>
           </div>
           <SegmentedControl.Root value={entity} onValueChange={(v) => setEntity(v as LeadEntity)}>
             <SegmentedControl.List className="w-auto auto-cols-auto">
-              {(["person", "company"] as const).map((e) => (
+              {ENTITY_TABS.map((e) => (
                 <SegmentedControl.Trigger key={e} value={e} className="gap-1.5 px-3">
-                  {ENTITY_LABEL[e]}
-                  <span className="tabular-nums text-text-soft-400">{counts[e]}</span>
+                  {t(`entity.${e}`)}
+                  <span className="tabular-nums text-text-soft-400">{format.number(counts[e])}</span>
                 </SegmentedControl.Trigger>
               ))}
             </SegmentedControl.List>
@@ -261,8 +302,8 @@ export default function ColumnSettings({ columns }: Props) {
                 <Input.Wrapper>
                   <Input.Icon as={RiAddLine} />
                   <Input.Input
-                    aria-label={`New ${entity === "person" ? "person" : "company"} field name`}
-                    placeholder={`New ${entity === "person" ? "person" : "company"} field…`}
+                    aria-label={t("add.nameAria", { entity })}
+                    placeholder={t("add.namePlaceholder", { entity })}
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                   />
@@ -272,18 +313,18 @@ export default function ColumnSettings({ columns }: Props) {
             <div className="flex gap-2">
               <div className="min-w-0 flex-1 sm:w-44 sm:flex-none">
                 <Select.Root size="small" value={newType} onValueChange={(v) => setNewType(v as LeadColumnType)}>
-                  <Select.Trigger aria-label="Field type" title={TYPE_OPTIONS.find((o) => o.value === newType)?.description}>
+                  <Select.Trigger aria-label={t("add.typeAria")} title={t("storedAs", { pgType: PG_TYPE_FOR_COLUMN_TYPE[newType] })}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
-                    {TYPE_OPTIONS.map((o) => (
-                      <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
+                    {TYPES.map((type) => (
+                      <Select.Item key={type} value={type}>{typeLabel(type)}</Select.Item>
                     ))}
                   </Select.Content>
                 </Select.Root>
               </div>
               <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={!newName.trim() || busyId === "new"}>
-                {busyId === "new" ? "Adding…" : "Add field"}
+                {busyId === "new" ? t("add.adding") : t("add.submit")}
               </Button.Root>
             </div>
           </form>
@@ -295,15 +336,16 @@ export default function ColumnSettings({ columns }: Props) {
                 <ColumnRow
                   key={column.id}
                   column={column}
+                  label={columnLabel(column)}
                   busy={busy(column.id)}
                   onRename={(name) => handleRename(column, name)}
-                  onRetype={(t) => handleRetype(column, t)}
+                  onRetype={(type) => handleRetype(column, type)}
                   onArchive={() => handleArchive(column, true)}
                 />
               ))}
             </ul>
           ) : (
-            <EmptyState compact icon={RiLayoutColumnLine} title="No fields yet" description="Add one above; it appears on every record and in imports." />
+            <EmptyState compact icon={RiLayoutColumnLine} title={t("empty.title")} description={t("empty.description")} />
           )}
         </FramePanel>
 
@@ -311,13 +353,13 @@ export default function ColumnSettings({ columns }: Props) {
         <div className="px-4 pb-2 pt-2.5">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
             <p className={cn("text-paragraph-xs", nearLimit ? "text-warning-dark" : "text-text-sub-600")}>
-              Postgres columns used on {ENTITY_LABEL[entity]}
+              {t("budget", { entity })}
             </p>
-            <Meter value={used} max={PG_MAX_COLUMNS} color={nearLimit ? STATUS.warning : MUTED_STRONG} label={`Postgres columns used on ${ENTITY_LABEL[entity]}`} className="w-full sm:w-64" />
+            <Meter value={used} max={PG_MAX_COLUMNS} color={nearLimit ? STATUS.warning : MUTED_STRONG} label={t("budget", { entity })} className="w-full sm:w-64" />
           </div>
           {nearLimit && (
             <p className="mt-1 text-paragraph-xs text-warning-dark">
-              Removed columns still count until the table is rebuilt — delete unused ones permanently to reclaim slots.
+              {t("budgetWarning")}
             </p>
           )}
         </div>
@@ -334,9 +376,9 @@ export default function ColumnSettings({ columns }: Props) {
           >
             <RiArrowDownSLine className={cn("mt-0.5 size-5 shrink-0 text-text-soft-400 transition-transform duration-200", !showRemoved && "-rotate-90")} aria-hidden="true" />
             <span className="min-w-0">
-              <span className="block text-label-sm text-text-strong-950">Removed fields ({archived.length})</span>
+              <span className="block text-label-sm text-text-strong-950">{t("removed.title", { count: archived.length })}</span>
               <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">
-                Hidden from imports and views, but their data is intact and they still occupy a column slot.
+                {t("removed.hint")}
               </span>
             </span>
           </button>
@@ -348,7 +390,7 @@ export default function ColumnSettings({ columns }: Props) {
                   <li key={column.id} className={cn("flex flex-wrap items-center gap-3 px-4 py-3", busy(column.id) && "opacity-60")}>
                     <RiEyeOffLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-label-sm text-text-sub-600">{column.name}</p>
+                      <p className="truncate text-label-sm text-text-sub-600">{columnLabel(column)}</p>
                       <p className="truncate font-mono text-paragraph-xs text-text-soft-400">
                         {column.key} · {column.pgType}
                       </p>
@@ -356,11 +398,11 @@ export default function ColumnSettings({ columns }: Props) {
                     <div className="flex items-center gap-1.5">
                       <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => handleArchive(column, false)} disabled={busy(column.id)}>
                         <Button.Icon as={RiRefreshLine} />
-                        Restore
+                        {t("removed.restore")}
                       </Button.Root>
                       <Button.Root variant="error" mode="ghost" size="xsmall" onClick={() => handleDelete(column)} disabled={busy(column.id)}>
                         <Button.Icon as={RiDeleteBinLine} />
-                        Delete permanently
+                        {t("removed.delete")}
                       </Button.Root>
                     </div>
                   </li>
@@ -384,18 +426,24 @@ export default function ColumnSettings({ columns }: Props) {
  */
 function ColumnRow({
   column,
+  label,
   busy,
   onRename,
   onRetype,
   onArchive,
 }: {
   column: LeadColumn;
+  /** The name to show (see useColumnLabel). */
+  label: string;
   busy: boolean;
   onRename: (name: string) => void;
   onRetype: (type: LeadColumnType) => void;
   onArchive: () => void;
 }) {
-  const [draft, setDraft] = useState(column.name);
+  const t = useTranslations("leads.columnSettings");
+  const typeLabel = useTypeLabel();
+  // null = untouched: the input follows the label, so a language switch cannot leave a stale draft that a blur would save as the name.
+  const [draft, setDraft] = useState<string | null>(null);
   const Icon = columnTypeMeta(column.type).icon;
 
   return (
@@ -406,16 +454,17 @@ function ColumnRow({
 
       <div className="min-w-36 flex-1 sm:min-w-0">
         <input
-          value={draft}
+          value={draft ?? label}
           disabled={busy}
-          aria-label={`Rename ${column.name}`}
-          title="Click to rename"
+          aria-label={t("row.renameAria", { name: label })}
+          title={t("row.renameHint")}
           onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => onRename(draft)}
+          // Only a change is saved: the label may be a translation, and blurring an untouched field must not write it as the name.
+          onBlur={() => { if (draft !== null && draft.trim() !== label) onRename(draft); }}
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
             if (e.key === "Escape") {
-              setDraft(column.name);
+              setDraft(null);
               e.currentTarget.blur();
             }
           }}
@@ -428,25 +477,25 @@ function ColumnRow({
         {column.isCore ? (
           <Badge.Root variant="lighter" color="gray" size="medium">
             <Badge.Icon as={RiLockLine} />
-            Built-in · {columnTypeMeta(column.type).label}
+            {t("row.builtIn", { type: typeLabel(column.type) })}
           </Badge.Root>
         ) : (
           <>
             <div className="w-40">
               <Select.Root size="xsmall" value={column.type} disabled={busy} onValueChange={(v) => onRetype(v as LeadColumnType)}>
-                <Select.Trigger aria-label={`Type of ${column.name}`}>
+                <Select.Trigger aria-label={t("row.typeAria", { name: label })}>
                   <Select.Value />
                 </Select.Trigger>
                 <Select.Content>
-                  {TYPE_OPTIONS.map((o) => (
-                    <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
+                  {TYPES.map((type) => (
+                    <Select.Item key={type} value={type}>{typeLabel(type)}</Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
             </div>
-            <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={onArchive} disabled={busy} aria-label={`Remove ${column.name}`} title="Remove (keeps the data)">
+            <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={onArchive} disabled={busy} aria-label={t("row.removeAria", { name: label })} title={t("row.removeHint")}>
               <Button.Icon as={RiEyeOffLine} />
-              <span className="hidden sm:inline">Remove</span>
+              <span className="hidden sm:inline">{t("row.remove")}</span>
             </Button.Root>
           </>
         )}
