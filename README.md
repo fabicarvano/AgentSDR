@@ -1,17 +1,11 @@
 <div align="center">
 
-<a href="https://agentsdr.ai">
   <img src="docs/assets/social-preview.png" alt="AgentSDR: SDR com IA. Outreach por e-mail, LinkedIn e WhatsApp, com um CRM que lê cada resposta e redige a seguinte." width="100%">
-</a>
 
 <h3>Encontre leads, alcance-os por e-mail, LinkedIn e WhatsApp,<br>e deixe a IA trabalhar cada resposta — tudo num workspace que você hospeda.</h3>
 
 <p>
-  <a href="https://agentsdr.ai"><b>Site</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://docs.agentsdr.ai"><b>Docs</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://docs.agentsdr.ai/self-hosting/docker-compose"><b>Self-host</b></a>
+  
   &nbsp;·&nbsp;
   <a href="https://github.com/fabicarvano/AgentSDR/discussions"><b>Discussões</b></a>
   &nbsp;·&nbsp;
@@ -53,52 +47,52 @@ Outbound normalmente significa juntar banco de leads, ferramenta de enriquecimen
 <table>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/concepts"><img src="docs/assets/readme/three-channels.png" alt="E-mail, LinkedIn e WhatsApp alimentando um workspace AgentSDR"></a>
-      <p><b>Três canais, um registro de lead.</b> E-mail das suas próprias caixas de entrada, convites e mensagens do LinkedIn, chats e chamadas do WhatsApp. <a href="https://docs.agentsdr.ai/concepts">Como se encaixa →</a></p>
+      <img src="docs/assets/readme/three-channels.png" alt="E-mail, LinkedIn e WhatsApp alimentando um workspace AgentSDR">
+      <p><b>Três canais, um registro de lead.</b> E-mail das suas próprias caixas de entrada, convites e mensagens do LinkedIn, chats e chamadas do WhatsApp. Como se encaixa →</p>
     </td>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/tables/overview"><img src="docs/assets/readme/enrichment.png" alt="Tabelas enriquecendo uma lista com 15 provedores"></a>
-      <p><b>Enriquecimento integrado.</b> Tabelas executam 15 provedores (Apollo, Hunter, Lusha e mais), colunas de IA e chamadas HTTP, linha por linha. <a href="https://docs.agentsdr.ai/tables/overview">Tabelas →</a></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/email/campaigns"><img src="docs/assets/readme/email.png" alt="Uma sequência de e-mail enviada das suas próprias caixas de entrada"></a>
-      <p><b>Sequências de e-mail das suas caixas de entrada.</b> Google Workspace, campos de mesclagem, janelas de envio e limites diários que mantêm as caixas saudáveis. <a href="https://docs.agentsdr.ai/email/campaigns">E-mail →</a></p>
-    </td>
-    <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/linkedin/campaigns"><img src="docs/assets/readme/linkedin.png" alt="Um convite do LinkedIn com nota, depois a conversa"></a>
-      <p><b>Convites e mensagens no LinkedIn.</b> Pedidos de conexão com notas, follow-ups após aceite, dentro de limites diários conservadores. <a href="https://docs.agentsdr.ai/linkedin/campaigns">LinkedIn →</a></p>
+      <img src="docs/assets/readme/enrichment.png" alt="Tabelas enriquecendo uma lista com 15 provedores">
+      <p><b>Enriquecimento integrado.</b> Tabelas executam 15 provedores (Apollo, Hunter, Lusha e mais), colunas de IA e chamadas HTTP, linha por linha. Tabelas →</p>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/whatsapp/calling"><img src="docs/assets/readme/whatsapp.png" alt="Uma chamada WhatsApp gravada e resumida no registro do lead"></a>
-      <p><b>Chats e chamadas gravadas no WhatsApp.</b> Campanhas de mensagem e chamadas feitas pelo AgentSDR, gravadas no seu bucket e transcritas. <a href="https://docs.agentsdr.ai/whatsapp/calling">WhatsApp →</a></p>
+      <img src="docs/assets/readme/email.png" alt="Uma sequência de e-mail enviada das suas próprias caixas de entrada">
+      <p><b>Sequências de e-mail das suas caixas de entrada.</b> Google Workspace, campos de mesclagem, janelas de envio e limites diários que mantêm as caixas saudáveis. E-mail →</p>
     </td>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/crm/action-required"><img src="docs/assets/readme/ai-replies.png" alt="Ação necessária: cada resposta classificada com um rascunho pronto"></a>
-      <p><b>A IA lê cada resposta.</b> Interessado, reunião solicitada, agora não, fora do escritório: classificado com o motivo mostrado e um rascunho pronto. <a href="https://docs.agentsdr.ai/crm/action-required">CRM com IA →</a></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/crm/action-required"><img src="docs/assets/readme/one-click.png" alt="Aprovando uma resposta redigida e enviando"></a>
-      <p><b>Aprove e envie com um clique.</b> Edite o rascunho se quiser; ele sai pelo canal em que o lead escreveu. Nada é enviado sozinho. <a href="https://docs.agentsdr.ai/crm/action-required">Rascunhos →</a></p>
-    </td>
-    <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/crm/pipeline"><img src="docs/assets/readme/pipeline.png" alt="O quadro de pipeline: precisa de ação, aguardando resposta, follow-ups esgotados"></a>
-      <p><b>Um pipeline que se mantém atualizado.</b> Cada lead fica onde está e as sequências de follow-up são agendadas automaticamente. <a href="https://docs.agentsdr.ai/crm/pipeline">Pipeline →</a></p>
+      <img src="docs/assets/readme/linkedin.png" alt="Um convite do LinkedIn com nota, depois a conversa">
+      <p><b>Convites e mensagens no LinkedIn.</b> Pedidos de conexão com notas, follow-ups após aceite, dentro de limites diários conservadores. LinkedIn →</p>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/analytics"><img src="docs/assets/readme/analytics.png" alt="Analytics: respostas, respostas positivas, reuniões e clientes por canal"></a>
-      <p><b>Veja o que se transforma em reuniões.</b> Respostas, respostas positivas, reuniões e clientes, por canal e ao longo do tempo. <a href="https://docs.agentsdr.ai/analytics">Analytics →</a></p>
+      <img src="docs/assets/readme/whatsapp.png" alt="Uma chamada WhatsApp gravada e resumida no registro do lead">
+      <p><b>Chats e chamadas gravadas no WhatsApp.</b> Campanhas de mensagem e chamadas feitas pelo AgentSDR, gravadas no seu bucket e transcritas. WhatsApp →</p>
     </td>
     <td width="50%" valign="top">
-      <a href="https://docs.agentsdr.ai/self-hosting/docker-compose"><img src="docs/assets/readme/self-host.png" alt="Self-hosting do AgentSDR com Docker Compose"></a>
-      <p><b>Self-host em minutos.</b> Baixe um arquivo, configure alguns secrets, <code>docker compose up -d</code>. Sem Redis, sem servidor de fila. <a href="https://docs.agentsdr.ai/self-hosting/docker-compose">Self-hosting →</a></p>
+      <img src="docs/assets/readme/ai-replies.png" alt="Ação necessária: cada resposta classificada com um rascunho pronto">
+      <p><b>A IA lê cada resposta.</b> Interessado, reunião solicitada, agora não, fora do escritório: classificado com o motivo mostrado e um rascunho pronto. CRM com IA →</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/assets/readme/one-click.png" alt="Aprovando uma resposta redigida e enviando">
+      <p><b>Aprove e envie com um clique.</b> Edite o rascunho se quiser; ele sai pelo canal em que o lead escreveu. Nada é enviado sozinho. Rascunhos →</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/assets/readme/pipeline.png" alt="O quadro de pipeline: precisa de ação, aguardando resposta, follow-ups esgotados">
+      <p><b>Um pipeline que se mantém atualizado.</b> Cada lead fica onde está e as sequências de follow-up são agendadas automaticamente. Pipeline →</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/assets/readme/analytics.png" alt="Analytics: respostas, respostas positivas, reuniões e clientes por canal">
+      <p><b>Veja o que se transforma em reuniões.</b> Respostas, respostas positivas, reuniões e clientes, por canal e ao longo do tempo. Analytics →</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/assets/readme/self-host.png" alt="Self-hosting do AgentSDR com Docker Compose">
+      <p><b>Self-host em minutos.</b> Baixe um arquivo, configure alguns secrets, <code>docker compose up -d</code>. Sem Redis, sem servidor de fila. Self-hosting →</p>
     </td>
   </tr>
 </table>
@@ -122,16 +116,16 @@ Também inclui: banco de leads com campos customizados, importação CSV e XLSX 
   <img src="docs/assets/readme/logos/zerobounce.net.png" alt="ZeroBounce" title="ZeroBounce" height="32">
 </p>
 
-<p align="center"><sub>Cada organização conecta suas próprias contas em Configurações, com setup guiado para cada campo. <a href="https://docs.agentsdr.ai/integrations">Todas as integrações →</a></sub></p>
+<p align="center"><sub>Cada organização conecta suas próprias contas em Configurações, com setup guiado para cada campo. Todas as integrações →</sub></p>
 
 | Serviço | Função | Guia de setup |
 |---|---|---|
-| Google Workspace | Envio e leitura do Gmail via service account | [Google Workspace](https://docs.agentsdr.ai/integrations/google-workspace) |
-| [Unipile](https://www.unipile.com) | Contas LinkedIn e WhatsApp, mensagens e chamadas | [Unipile](https://docs.agentsdr.ai/integrations/unipile) |
-| [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) | Gravações de chamadas e fotos de contato | [Cloudflare R2](https://docs.agentsdr.ai/integrations/cloudflare-r2) |
-| [OpenRouter](https://openrouter.ai) | Todos os recursos de IA, com sua chave e qualquer modelo | [OpenRouter](https://docs.agentsdr.ai/integrations/openrouter) |
-| 15 provedores de enriquecimento | Colunas de tabelas | [Provedores de enriquecimento](https://docs.agentsdr.ai/integrations/enrichment-providers) |
-| [Resend](https://resend.com) | E-mail de cadastro, redefinição de senha e convite | [Resend](https://docs.agentsdr.ai/integrations/resend) |
+| Google Workspace | Envio e leitura do Gmail via service account | Google Workspace |
+| [Unipile](https://www.unipile.com) | Contas LinkedIn e WhatsApp, mensagens e chamadas | Unipile |
+| [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) | Gravações de chamadas e fotos de contato | Cloudflare R2 |
+| [OpenRouter](https://openrouter.ai) | Todos os recursos de IA, com sua chave e qualquer modelo | OpenRouter |
+| 15 provedores de enriquecimento | Colunas de tabelas | Provedores de enriquecimento |
+| [Resend](https://resend.com) | E-mail de cadastro, redefinição de senha e convite | Resend |
 
 <a id="quick-start"></a>
 
@@ -147,7 +141,7 @@ docker compose up -d          # PostgreSQL, app na porta :3000
 
 Abra http://localhost:3000: a página de setup cria sua conta admin e organização. Depois conecte seus serviços em **Configurações**. Para um servidor, substitua os valores `# CHANGEME` no `docker-compose.yml` primeiro; `openssl rand -hex 32` gera um secret.
 
-O [guia Docker Compose](https://docs.agentsdr.ai/self-hosting/docker-compose) explica cada configuração e cada serviço. Há também guias para [rodar do código-fonte](https://docs.agentsdr.ai/self-hosting/from-source) e [deploy em produção](https://docs.agentsdr.ai/self-hosting/production).
+O guia Docker Compose explica cada configuração e cada serviço. Há também guias para rodar do código-fonte e deploy em produção.
 
 <details>
 <summary><b>Rodar do código-fonte</b></summary>
@@ -268,7 +262,7 @@ docs/                    Documentação
 
 ## Uso responsável
 
-O AgentSDR contata pessoas em seu nome, então como ele é usado é sua responsabilidade. Os termos do LinkedIn não permitem automação e contas podem ser restritas; o WhatsApp bane números que enviam mensagens em massa não solicitadas; o e-mail frio é regulamentado por leis como CAN-SPAM, GDPR e LGPD; e muitos lugares exigem consentimento antes de gravar uma chamada. Leia [Uso responsável](https://docs.agentsdr.ai/responsible-use) antes de começar.
+O AgentSDR contata pessoas em seu nome, então como ele é usado é sua responsabilidade. Os termos do LinkedIn não permitem automação e contas podem ser restritas; o WhatsApp bane números que enviam mensagens em massa não solicitadas; o e-mail frio é regulamentado por leis como CAN-SPAM, GDPR e LGPD; e muitos lugares exigem consentimento antes de gravar uma chamada. Leia Uso responsável antes de começar.
 
 ## Perguntas frequentes
 
@@ -318,14 +312,9 @@ Sim. Convide colegas em Configurações → Membros com o papel de proprietário
 
 | Onde | Melhor para |
 |---|---|
-| [Docs](https://docs.agentsdr.ai) | Guias de setup, cada funcionalidade, troubleshooting |
 | [GitHub Discussions](https://github.com/fabicarvano/AgentSDR/discussions) | Perguntas, ideias e mostrar o que você construiu |
 | [GitHub Issues](https://github.com/fabicarvano/AgentSDR/issues/new/choose) | Bugs e pedidos de funcionalidade |
 | [Security advisories](https://github.com/fabicarvano/AgentSDR/security/advisories/new) | Vulnerabilidades, reportadas privadamente |
-
-## Contribuindo
-
-Contribuições são bem-vindas: relatórios de bugs, correções, provedores de enriquecimento, docs. Veja [CONTRIBUTING.md](CONTRIBUTING.md) para o setup de desenvolvimento e as convenções de commit.
 
 ## Licença
 
@@ -343,7 +332,7 @@ Base original: [`Kandid-ai/AgentSDR`](https://github.com/Kandid-ai/AgentSDR) (MI
 
 <div align="center">
 <br>
-<a href="https://agentsdr.ai"><img src="docs/assets/logo.svg" alt="AgentSDR" width="48" height="48"></a>
+<img src="docs/assets/logo.svg" alt="AgentSDR" width="48" height="48">
 <br>
 <sub>Desenvolvido por <a href="https://github.com/fabicarvano">Fabio Carvano</a> · Se o AgentSDR for útil para você, uma ⭐ ajuda outros a encontrar.</sub>
 </div>
