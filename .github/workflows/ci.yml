@@ -116,7 +116,7 @@ jobs:
       - name: The file names this release's image (not latest)
         run: |
           version="$(jq -r .version package.json)"
-          grep -qF "ghcr.io/kandid-ai/agentsdr:\${AGENTSDR_VERSION:-$version}" docker-compose.yml \
+          grep -qF "ghcr.io/fabicarvano/agentsdr:\${AGENTSDR_VERSION:-$version}" docker-compose.yml \
             || { echo "docker-compose.yml must default to the image tag $version (package.json)"; exit 1; }
       - name: Your own PostgreSQL (docker-compose.external-db.yml)
         run: |

@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. **Security problems go to [SECURITY.md](https://github.com/Kandid-ai/AgentSDR/blob/main/SECURITY.md), not here.**
+        Thanks for reporting. **Security problems go to [SECURITY.md](https://github.com/fabicarvano/AgentSDR/blob/main/SECURITY.md), not here.**
         Please remove personal data (real names, emails, phone numbers, API keys) from logs and screenshots.
   - type: checkboxes
     id: checks

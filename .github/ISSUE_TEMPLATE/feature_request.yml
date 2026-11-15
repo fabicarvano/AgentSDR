@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Describe the **problem** first — the solution is easier to agree on once the problem is clear.
-        Big or open-ended ideas fit better in [Discussions](https://github.com/Kandid-ai/AgentSDR/discussions).
+        Big or open-ended ideas fit better in [Discussions](https://github.com/fabicarvano/AgentSDR/discussions).
   - type: textarea
     id: problem
     attributes:
