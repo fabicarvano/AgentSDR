@@ -1,3 +1,171 @@
 {
-  "settingsStations": {}
+  "settingsStations": {
+    "page": {
+      "title": "Calling numbers"
+    },
+    "callingStations": {
+      "title": "Calling numbers",
+      "description": "WhatsApp numbers the AI agent calls from, with WhatsApp Web running in a remote browser instead of a rep's laptop.",
+      "addNumber": "Add number",
+      "loadingAria": "Loading calling numbers",
+      "howItWorks": {
+        "title": "How cloud calling works",
+        "body": "A calling number is a WhatsApp number linked to a browser profile that a call worker opens for each call. It needs a call worker running and, for GoLogin profiles, the GoLogin integration connected in <link>Settings → WhatsApp → Integrations</link>. <docs>What you need</docs>"
+      },
+      "empty": {
+        "title": "No calling numbers yet",
+        "description": "Add a WhatsApp number and its browser profile, then link it to WhatsApp Web from here."
+      },
+      "errors": {
+        "generic": "Something went wrong. Please try again."
+      },
+      "ips": {
+        "title": "IPs",
+        "description": "Each number goes out from its own IP. Static Indian ISP proxies; one number per IP.",
+        "add": "Add IP",
+        "empty": "No IPs yet. Numbers without one use the worker's own IP."
+      },
+      "launchers": {
+        "cloak": "CloakBrowser",
+        "local": "Local Chromium",
+        "gologinSdk": "GoLogin (this server)",
+        "gologinCloud": "GoLogin Cloud"
+      },
+      "status": {
+        "onboarding": "Not linked yet",
+        "active": "Active",
+        "paused": "Paused",
+        "loggedOut": "Logged out",
+        "banned": "Banned"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "form": {
+        "addTitle": "Add a calling number",
+        "editTitle": "Edit calling number",
+        "addDescription": "After adding it, use Link WhatsApp to sign the number into WhatsApp Web.",
+        "editDescription": "{phone} can't be changed here; delete and add it again for a different number.",
+        "editDescriptionNoPhone": "The number can't be changed here; delete and add it again for a different number.",
+        "name": "Name",
+        "namePlaceholder": "Sales line 1",
+        "whatsappNumber": "WhatsApp number",
+        "browser": "Browser",
+        "ip": "IP",
+        "ipNone": "None (worker's own IP)",
+        "gologinProfileId": "GoLogin profile ID",
+        "gologinProfilePlaceholder": "The profile's ID from GoLogin",
+        "aiCampaigns": "AI campaigns",
+        "callsPerDay": "AI calls a day",
+        "callsPerDayPlaceholderRule": "Blank: the organization's rule ({calls})",
+        "callsPerDayPlaceholder": "Blank: the organization's rule",
+        "callingHours": "Calling hours",
+        "useOrgHours": "Use the organization's hours",
+        "setOwnHours": "Set hours for this number",
+        "orgHours": "The organization's hours: {summary}",
+        "orgHoursFallback": "The organization's calling hours (Settings → WhatsApp → Sending rules).",
+        "callsPerDayInvalid": "AI calls a day must be a whole number from 1 to 100, or blank to use the organization's rule.",
+        "callingHoursInvalid": "Calling hours need at least one day and an end after the start."
+      },
+      "proxyForm": {
+        "addTitle": "Add an IP",
+        "editTitle": "Edit IP",
+        "description": "A proxy a calling number's browser goes out through. It can be assigned to one number.",
+        "label": "Label",
+        "protocol": "Protocol",
+        "host": "Host",
+        "port": "Port",
+        "username": "Username",
+        "password": "Password",
+        "passwordSaved": "Saved — leave blank to keep",
+        "country": "Country",
+        "timeZone": "Time zone",
+        "provider": "Provider",
+        "notes": "Notes",
+        "hostRequired": "Host is required.",
+        "portInvalid": "Port must be a number from 1 to 65535."
+      },
+      "deleteProxy": {
+        "title": "Delete {label}?",
+        "description": "The IP is removed from this list. The proxy itself is not cancelled with your provider."
+      },
+      "wrongAccount": {
+        "title": "Linked to a different WhatsApp number",
+        "description": "{name}'s WhatsApp Web is logged in as {linkedPhone}, not {phone}. Calls go out from the logged-in number, so this number won't call until you choose.",
+        "useBody": "<b>Use {linkedPhone}</b> — keep this login and make it this calling number's number.",
+        "linkBody": "<b>Link {phone} instead</b> — discard this login (the number keeps its browser fingerprint) and link again from the phone with {phone}. Afterwards, remove the extra device from {linkedPhone}'s WhatsApp → Linked devices.",
+        "decideLater": "Decide later",
+        "linkInstead": "Link {phone} instead",
+        "use": "Use {linkedPhone}"
+      },
+      "deleteStation": {
+        "title": "Delete {name}?",
+        "description": "{phone} stops being available for AI agent calls. Its recordings and call history stay. The browser profile itself is not deleted."
+      },
+      "card": {
+        "onCall": "On a call",
+        "ready": "Ready on {worker}",
+        "readyTitle": "WhatsApp Web is kept open on {worker}, so calls start right away",
+        "justNow": "just now",
+        "workerSeen": "Worker seen {time}",
+        "workerNone": "No worker has opened it yet",
+        "lastCall": "last call {time}",
+        "proxy": "IP: {label}",
+        "proxyOwn": "Own IP",
+        "aiLine": "AI campaigns: {calls} · {hours}",
+        "aiCallsOwn": "{count, plural, one {# call a day} other {# calls a day}}",
+        "aiCallsRule": "{count, plural, one {# call a day (rule)} other {# calls a day (rule)}}",
+        "aiHoursOrg": "organization's calling hours",
+        "linkedAs": "WhatsApp: logged in as {phone}",
+        "linkedAsMismatch": "WhatsApp: logged in as {phone} — not this number, so it won't call",
+        "useLinkedPhone": "Use {phone} as this number",
+        "profileSaved": "Profile: saved {time} · v{version}",
+        "profileSavedSized": "Profile: saved {time} · {size} MB · v{version}",
+        "profileNone": "Profile: not saved yet",
+        "cancelLink": "Cancel linking",
+        "link": "Link WhatsApp",
+        "relink": "Relink WhatsApp",
+        "resume": "Resume",
+        "pause": "Pause"
+      },
+      "proxyCard": {
+        "usedBy": "Used by {name}",
+        "usedByUnnamed": "Used by a number",
+        "unassigned": "Unassigned",
+        "unassignFirst": "Unassign it from its number first"
+      },
+      "linkPanel": {
+        "title": "Link this number to WhatsApp Web",
+        "codeAria": "Linking code {code}",
+        "waitingForCode": "Waiting for a code. If WhatsApp Web shows a QR instead, scan it.",
+        "waitingForWorker": "Waiting for a call worker to open WhatsApp Web…",
+        "phoneSteps": "On the phone: WhatsApp → Settings → Linked devices → Link a device → Link with phone number instead, then type this code.",
+        "openFullAria": "Open WhatsApp Web's login screen full size",
+        "screenshotAlt": "WhatsApp Web's login screen in the cloud browser",
+        "screenshotHint": "The screenshot refreshes every few seconds. Click it to open it full size.",
+        "zoomTitle": "WhatsApp Web login screen",
+        "zoomedAlt": "WhatsApp Web's login screen in the cloud browser, full size"
+      }
+    },
+    "stationHours": {
+      "timeZone": "Time zone",
+      "daysLabel": "Days",
+      "dayNames": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "start": "Start",
+      "end": "End",
+      "to": "to",
+      "invalid": "Pick at least one day, and an end after the start."
+    }
+  }
 }

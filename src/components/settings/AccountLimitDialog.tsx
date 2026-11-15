@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiDashboard3Line, RiLoader4Line } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
 import * as Modal from "@/components/alignui/modal";
 import { Callout, Field } from "@/components/settings/SettingsKit";
-import { ruleError, ruleWarning, type NumberRule } from "@/lib/channels/rules";
+import { useRuleProblemText, useRuleText } from "@/components/settings/ChannelRulesForm";
+import { ruleWarning, type Channel, type NumberRule } from "@/lib/channels/rules";
 
 /**
  * One account's override of an organization rule (a LinkedIn account's
@@ -17,6 +19,7 @@ import { ruleError, ruleWarning, type NumberRule } from "@/lib/channels/rules";
 export function AccountLimitDialog({
   title,
   accountLabel,
+  channel,
   rule,
   organizationValue,
   value,
@@ -25,19 +28,24 @@ export function AccountLimitDialog({
 }: {
   title: string;
   accountLabel: string;
+  /** The channel the rule belongs to: its texts live under settingsChannels.rules.<channel>.<rule key>. */
+  channel: Channel;
   rule: NumberRule;
   organizationValue: number;
   value: number | null;
   onClose: () => void;
   onSave: (value: number | null) => Promise<void>;
 }) {
+  const t = useTranslations("settingsAccounts.limitDialog");
+  const ruleText = useRuleText();
+  const problemText = useRuleProblemText();
   const [text, setText] = useState(value === null ? "" : String(value));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const parsed = text.trim() === "" ? null : Number(text);
-  const invalid = parsed === null ? null : ruleError(rule, parsed);
-  const warning = parsed === null || invalid ? null : ruleWarning(rule, parsed);
+  const invalid = parsed === null ? null : problemText(channel, rule, parsed);
+  const warning = parsed === null || invalid || !ruleWarning(rule, parsed) ? null : ruleText(channel, rule, "warning");
   const id = `limit-${rule.key}`;
 
   const save = async () => {
@@ -47,7 +55,7 @@ export function AccountLimitDialog({
       await onSave(parsed);
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save the limit.");
+      setError(cause instanceof Error ? cause.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -58,10 +66,10 @@ export function AccountLimitDialog({
       <Modal.Content size="max-w-md">
         <Modal.Header icon={RiDashboard3Line}>
           <Modal.Title>{title}</Modal.Title>
-          <Modal.Description>For {accountLabel}. Leave it empty to follow the organization&apos;s sending rules.</Modal.Description>
+          <Modal.Description>{t("description", { account: accountLabel })}</Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-4">
-          <Field label={rule.label} htmlFor={id} error={invalid ?? undefined} description={`Organization: ${organizationValue} ${rule.unit}. Allowed: ${rule.min}–${rule.max}.`}>
+          <Field label={ruleText(channel, rule, "label")} htmlFor={id} error={invalid ?? undefined} description={t("limits", { value: organizationValue, unit: ruleText(channel, rule, "unit"), min: rule.min, max: rule.max })}>
             <div className="flex items-center gap-2">
               <Input.Root size="small" className="w-28" hasError={Boolean(invalid)}>
                 <Input.Wrapper>
@@ -76,7 +84,7 @@ export function AccountLimitDialog({
                   />
                 </Input.Wrapper>
               </Input.Root>
-              <span className="text-paragraph-xs text-text-sub-600">{rule.unit}</span>
+              <span className="text-paragraph-xs text-text-sub-600">{ruleText(channel, rule, "unit")}</span>
             </div>
           </Field>
           {warning && <Callout tone="warning">{warning}</Callout>}
@@ -85,15 +93,15 @@ export function AccountLimitDialog({
         <Modal.Footer>
           {value !== null && (
             <Button.Root variant="neutral" mode="ghost" size="small" className="mr-auto" disabled={saving} onClick={() => setText("")}>
-              Use organization limit
+              {t("useOrganization")}
             </Button.Root>
           )}
           <Button.Root variant="neutral" mode="stroke" size="small" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button.Root>
           <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || Boolean(invalid)}>
             {saving && <Button.Icon as={RiLoader4Line} className="animate-spin" />}
-            {saving ? "Saving…" : "Save limit"}
+            {saving ? t("saving") : t("save")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

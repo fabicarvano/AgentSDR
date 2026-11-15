@@ -2,7 +2,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 import { RiAddLine, RiCloudLine, RiGlobalLine, RiLinkM, RiLoader4Line, RiPauseCircleLine, RiPencilLine, RiPlayCircleLine, RiDeleteBinLine } from "@remixicon/react";
 import * as Badge from "@/components/alignui/badge";
 import * as Button from "@/components/alignui/button";
@@ -10,7 +11,6 @@ import * as Modal from "@/components/alignui/modal";
 import * as Select from "@/components/alignui/select";
 import { Frame, FramePanel } from "@/components/analytics/kit/Frame";
 import { FormError, TextField } from "@/components/calls/fields";
-import { errorMessage, timeAgo } from "@/components/crm/crm-utils";
 import { EmptyState } from "@/components/page/EmptyState";
 import { Callout } from "@/components/settings/SettingsKit";
 import { SettingsPage } from "@/components/settings/SettingsPage";
@@ -37,25 +37,33 @@ import {
   type StationLauncher,
   type StationStatus,
 } from "@/lib/calls/stationContract";
-import { hoursInvalid, hoursSummary, StationHoursEditor } from "@/components/calling/ai/StationHoursEditor";
+import { hoursInvalid, StationHoursEditor, useHoursSummary } from "@/components/calling/ai/StationHoursEditor";
 import type { StationAiSettings, StationAiSettingsResponse } from "@/lib/calls/aiCampaigns/api";
 import { listStationAiSettings, updateStationAiSettings } from "@/lib/calls/aiCampaigns/client";
+import type { Messages } from "@/i18n/catalog";
 import type { WeeklyHours } from "@/lib/channels/rules";
 import { cn } from "@/utils/cn";
 
-const LAUNCHER_LABEL: Record<StationLauncher, string> = {
-  cloak: "CloakBrowser",
-  local: "Local Chromium",
-  gologin_sdk: "GoLogin (this server)",
-  gologin_cloud: "GoLogin Cloud",
+// An example phone number, not words: shown as it is in every language.
+const PHONE_PLACEHOLDER = "+91 98765 43210";
+
+type CallingMessages = Messages["settingsStations"]["callingStations"];
+
+/** The label of each launcher: settingsStations.callingStations.launchers.<key> (product names inside stay as they are). */
+const LAUNCHER_KEY: Record<StationLauncher, keyof CallingMessages["launchers"]> = {
+  cloak: "cloak",
+  local: "local",
+  gologin_sdk: "gologinSdk",
+  gologin_cloud: "gologinCloud",
 };
 
-const STATUS_LABEL: Record<StationStatus, string> = {
-  onboarding: "Not linked yet",
-  active: "Active",
-  paused: "Paused",
-  logged_out: "Logged out",
-  banned: "Banned",
+/** The label of each status: settingsStations.callingStations.status.<key>. */
+const STATUS_KEY: Record<StationStatus, keyof CallingMessages["status"]> = {
+  onboarding: "onboarding",
+  active: "active",
+  paused: "paused",
+  logged_out: "loggedOut",
+  banned: "banned",
 };
 const STATUS_COLOR: Record<StationStatus, React.ComponentProps<typeof Badge.Root>["color"]> = {
   onboarding: "gray",
@@ -65,6 +73,48 @@ const STATUS_COLOR: Record<StationStatus, React.ComponentProps<typeof Badge.Root
   banned: "red",
 };
 
+/** An Error's own message (it comes from the API, already worded there) or the given fallback. */
+const messageOf = (cause: unknown, fallback: string): string => (cause instanceof Error ? cause.message : fallback);
+
+type Elapsed =
+  | { kind: "none" }
+  | { kind: "now" }
+  | { kind: "ago"; date: Date; now: number; unit: "minute" | "hour" | "day" }
+  | { kind: "date"; date: Date };
+
+/** How long ago `value` was, in the steps crm-utils' timeAgo uses (it is English only, so the wording is done by useTimeAgo). */
+function elapsedSince(value: unknown): Elapsed {
+  const date = new Date(String(value));
+  if (!value || Number.isNaN(date.getTime())) return { kind: "none" };
+  const now = Date.now();
+  const minutes = Math.round((now - date.getTime()) / 60000);
+  if (minutes < 1) return { kind: "now" };
+  if (minutes < 60) return { kind: "ago", date, now, unit: "minute" };
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return { kind: "ago", date, now, unit: "hour" };
+  const days = Math.round(hours / 24);
+  if (days < 30) return { kind: "ago", date, now, unit: "day" };
+  return { kind: "date", date };
+}
+
+/** "just now" / "5 min ago" / "2 hr ago" / "3 days ago", then a date, in the interface language. */
+function useTimeAgo(): (value: unknown) => string {
+  const t = useTranslations("settingsStations.callingStations");
+  const format = useFormatter();
+  return (value) => {
+    const elapsed = elapsedSince(value);
+    switch (elapsed.kind) {
+      case "none":
+        return "—";
+      case "now":
+        return t("card.justNow");
+      case "ago":
+        return format.relativeTime(elapsed.date, { now: elapsed.now, unit: elapsed.unit, style: "narrow" });
+      default:
+        return format.dateTime(elapsed.date, { dateStyle: "medium", timeStyle: "short" });
+    }
+  };
+}
 
 /** Fast while something is happening (a link code to show, a call to follow), slow otherwise. */
 const POLL_BUSY_MS = 3000;
@@ -85,6 +135,9 @@ type Draft = {
   callingHours: WeeklyHours | null;
 };
 const EMPTY_DRAFT: Draft = { name: "", phone: "", launcher: "cloak", gologinProfileId: "", proxyId: NO_PROXY, callsPerDay: "", callingHours: null };
+// Example values shown in the empty fields (this name and time zone, and the +91 number, address, port and country code in the forms): typed as they are, not translated.
+const EXAMPLE_PROXY_LABEL = "Mumbai ISP 1";
+const EXAMPLE_TIMEZONE = "Asia/Kolkata";
 const FALLBACK_HOURS: WeeklyHours = { timezone: "Asia/Kolkata", days: [1, 2, 3, 4, 5, 6], start: "12:00", end: "19:00" };
 
 type ProxyDraft = {
@@ -113,6 +166,10 @@ const EMPTY_PROXY_DRAFT: ProxyDraft = {
 };
 
 export function CallingStationsSettings() {
+  const t = useTranslations("settingsStations.callingStations");
+  const tLauncher = useTranslations("settingsStations.callingStations.launchers");
+  const hoursSummary = useHoursSummary();
+  const genericError = t("errors.generic");
   const [stations, setStations] = useState<CallingStation[] | null>(null);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -146,9 +203,9 @@ export function CallingStationsSettings() {
       if (ai) setAiSettings(ai);
       setError("");
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(messageOf(cause, genericError));
     }
-  }, []);
+  }, [genericError]);
 
   const hot = stations?.some((station) => station.link !== null || station.busyCallId !== null) ?? false;
   useEffect(() => {
@@ -165,7 +222,7 @@ export function CallingStationsSettings() {
       const { station: next } = await run();
       setStations((current) => (current ?? []).map((item) => (item.id === next.id ? next : item)));
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(messageOf(cause, genericError));
     } finally {
       setBusyId(null);
     }
@@ -204,11 +261,11 @@ export function CallingStationsSettings() {
     const callsPerDay = draft.callsPerDay.trim() === "" ? null : Number(draft.callsPerDay);
     if (callsPerDay !== null && (!Number.isInteger(callsPerDay) || callsPerDay < 1 || callsPerDay > 100)) {
       setSaving(false);
-      return setFormError("AI calls a day must be a whole number from 1 to 100, or blank to use the organization's rule.");
+      return setFormError(t("form.callsPerDayInvalid"));
     }
     if (draft.callingHours && hoursInvalid(draft.callingHours)) {
       setSaving(false);
-      return setFormError("Calling hours need at least one day and an end after the start.");
+      return setFormError(t("form.callingHoursInvalid"));
     }
     try {
       let savedId = formFor;
@@ -234,7 +291,7 @@ export function CallingStationsSettings() {
       setFormFor(null);
       void load();
     } catch (cause) {
-      setFormError(errorMessage(cause));
+      setFormError(messageOf(cause, genericError));
     } finally {
       setSaving(false);
     }
@@ -264,8 +321,8 @@ export function CallingStationsSettings() {
 
   const saveProxy = async () => {
     const port = Number(proxyDraft.port);
-    if (!proxyDraft.host.trim()) return setProxyFormError("Host is required.");
-    if (!Number.isInteger(port) || port < 1 || port > 65535) return setProxyFormError("Port must be a number from 1 to 65535.");
+    if (!proxyDraft.host.trim()) return setProxyFormError(t("proxyForm.hostRequired"));
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return setProxyFormError(t("proxyForm.portInvalid"));
     setSaving(true);
     setProxyFormError("");
     const request = {
@@ -287,7 +344,7 @@ export function CallingStationsSettings() {
       setProxyFormFor(null);
       await load();
     } catch (cause) {
-      setProxyFormError(errorMessage(cause));
+      setProxyFormError(messageOf(cause, genericError));
     } finally {
       setSaving(false);
     }
@@ -301,7 +358,7 @@ export function CallingStationsSettings() {
       setDeletingProxy(null);
       await load();
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(messageOf(cause, genericError));
       setDeletingProxy(null);
     } finally {
       setSaving(false);
@@ -317,7 +374,7 @@ export function CallingStationsSettings() {
       setDeleting(null);
       void load();
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(messageOf(cause, genericError));
       setDeleting(null);
     } finally {
       setSaving(false);
@@ -327,7 +384,7 @@ export function CallingStationsSettings() {
   const addButton = (
     <Button.Root variant="primary" mode="filled" size="small" onClick={openAdd}>
       <Button.Icon as={RiAddLine} />
-      Add number
+      {t("addNumber")}
     </Button.Root>
   );
 
@@ -340,22 +397,22 @@ export function CallingStationsSettings() {
 
   return (
     <SettingsPage
-      title="Calling numbers"
-      description="WhatsApp numbers the AI agent calls from, with WhatsApp Web running in a remote browser instead of a rep's laptop."
+      title={t("title")}
+      description={t("description")}
       actions={addButton}
     >
       <div className="space-y-5">
-        <Callout tone="info" title="How cloud calling works">
-          A calling number is a WhatsApp number linked to a browser profile that a call worker opens for each call. It needs a call worker running
-          {" "}and, for GoLogin profiles, the GoLogin integration connected in{" "}
-          <Link href="/settings/whatsapp-connection" className="underline">Settings → WhatsApp → Integrations</Link>.{" "}
-          <DocsLink page="whatsapp/calling#what-you-need">What you need</DocsLink>
+        <Callout tone="info" title={t("howItWorks.title")}>
+          {t.rich("howItWorks.body", {
+            link: (chunks) => <Link href="/settings/whatsapp-connection" className="underline">{chunks}</Link>,
+            docs: (chunks) => <DocsLink page="whatsapp/calling#what-you-need">{chunks}</DocsLink>,
+          })}
         </Callout>
         {error && <Callout tone="error">{error}</Callout>}
 
         {stations === null ? (
           !error && (
-            <div className="flex justify-center py-12" aria-busy="true" aria-label="Loading calling numbers">
+            <div className="flex justify-center py-12" aria-busy="true" aria-label={t("loadingAria")}>
               <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-hidden="true" />
             </div>
           )
@@ -364,8 +421,8 @@ export function CallingStationsSettings() {
             <FramePanel>
               <EmptyState
                 icon={RiCloudLine}
-                title="No calling numbers yet"
-                description="Add a WhatsApp number and its browser profile, then link it to WhatsApp Web from here."
+                title={t("empty.title")}
+                description={t("empty.description")}
                 action={addButton}
               />
             </FramePanel>
@@ -395,16 +452,16 @@ export function CallingStationsSettings() {
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5">
-                <h2 className="text-label-md text-text-strong-950">IPs</h2>
-                <p className="text-paragraph-sm text-text-sub-600">Each number goes out from its own IP. Static Indian ISP proxies; one number per IP.</p>
+                <h2 className="text-label-md text-text-strong-950">{t("ips.title")}</h2>
+                <p className="text-paragraph-sm text-text-sub-600">{t("ips.description")}</p>
               </div>
               <Button.Root variant="neutral" mode="stroke" size="small" onClick={openAddProxy}>
                 <Button.Icon as={RiAddLine} />
-                Add IP
+                {t("ips.add")}
               </Button.Root>
             </div>
             {proxies.length === 0 ? (
-              <p className="text-paragraph-sm text-text-soft-400">No IPs yet. Numbers without one use the worker&apos;s own IP.</p>
+              <p className="text-paragraph-sm text-text-soft-400">{t("ips.empty")}</p>
             ) : (
               <div className="space-y-3">
                 {proxies.map((proxy) => (
@@ -419,36 +476,38 @@ export function CallingStationsSettings() {
       <Modal.Root open={formFor !== null} onOpenChange={(open) => { if (!open && !saving) setFormFor(null); }}>
         <Modal.Content>
           <Modal.Header icon={RiCloudLine}>
-            <Modal.Title>{formFor === "new" ? "Add a calling number" : "Edit calling number"}</Modal.Title>
+            <Modal.Title>{formFor === "new" ? t("form.addTitle") : t("form.editTitle")}</Modal.Title>
             <Modal.Description>
               {formFor === "new"
-                ? "After adding it, use Link WhatsApp to sign the number into WhatsApp Web."
-                : `${editing?.phone ?? "The number"} can't be changed here; delete and add it again for a different number.`}
+                ? t("form.addDescription")
+                : editing?.phone
+                  ? t("form.editDescription", { phone: editing.phone })
+                  : t("form.editDescriptionNoPhone")}
             </Modal.Description>
           </Modal.Header>
           <Modal.Body className="space-y-3">
             {formError && <FormError>{formError}</FormError>}
-            <TextField label="Name" autoFocus value={draft.name} onChange={(name) => setDraft((d) => ({ ...d, name }))} placeholder="Sales line 1" disabled={saving} />
+            <TextField label={t("form.name")} autoFocus value={draft.name} onChange={(name) => setDraft((d) => ({ ...d, name }))} placeholder={t("form.namePlaceholder")} disabled={saving} />
             {formFor === "new" && (
-              <TextField label="WhatsApp number" value={draft.phone} onChange={(phone) => setDraft((d) => ({ ...d, phone }))} placeholder="+91 98765 43210" disabled={saving} />
+              <TextField label={t("form.whatsappNumber")} value={draft.phone} onChange={(phone) => setDraft((d) => ({ ...d, phone }))} placeholder={PHONE_PLACEHOLDER} disabled={saving} />
             )}
             <div>
-              <label className="mb-1.5 block text-label-sm text-text-strong-950">Browser</label>
+              <label className="mb-1.5 block text-label-sm text-text-strong-950">{t("form.browser")}</label>
               <Select.Root size="small" value={draft.launcher} onValueChange={(launcher) => setDraft((d) => ({ ...d, launcher: launcher as StationLauncher }))} disabled={saving}>
                 <Select.Trigger><Select.Value /></Select.Trigger>
                 <Select.Content>
                   {STATION_LAUNCHERS.map((launcher) => (
-                    <Select.Item key={launcher} value={launcher}>{LAUNCHER_LABEL[launcher]}</Select.Item>
+                    <Select.Item key={launcher} value={launcher}>{tLauncher(LAUNCHER_KEY[launcher])}</Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
             </div>
             <div>
-              <label className="mb-1.5 block text-label-sm text-text-strong-950">IP</label>
+              <label className="mb-1.5 block text-label-sm text-text-strong-950">{t("form.ip")}</label>
               <Select.Root size="small" value={draft.proxyId} onValueChange={(proxyId) => setDraft((d) => ({ ...d, proxyId }))} disabled={saving}>
                 <Select.Trigger><Select.Value /></Select.Trigger>
                 <Select.Content>
-                  <Select.Item value={NO_PROXY}>None (worker&apos;s own IP)</Select.Item>
+                  <Select.Item value={NO_PROXY}>{t("form.ipNone")}</Select.Item>
                   {proxyChoices.map((proxy) => (
                     <Select.Item key={proxy.id} value={proxy.id}>{proxy.label} · {proxy.host}</Select.Item>
                   ))}
@@ -457,51 +516,51 @@ export function CallingStationsSettings() {
             </div>
             {usesGoLogin(draft.launcher) && (
               <TextField
-                label="GoLogin profile ID"
+                label={t("form.gologinProfileId")}
                 value={draft.gologinProfileId}
                 onChange={(gologinProfileId) => setDraft((d) => ({ ...d, gologinProfileId }))}
-                placeholder="The profile's ID from GoLogin"
+                placeholder={t("form.gologinProfilePlaceholder")}
                 disabled={saving}
               />
             )}
             <div className="border-t border-stroke-soft-200 pt-3">
-              <p className="mb-2 text-label-sm text-text-strong-950">AI campaigns</p>
+              <p className="mb-2 text-label-sm text-text-strong-950">{t("form.aiCampaigns")}</p>
               <TextField
-                label="AI calls a day"
+                label={t("form.callsPerDay")}
                 inputMode="numeric"
                 value={draft.callsPerDay}
                 onChange={(callsPerDay) => setDraft((d) => ({ ...d, callsPerDay }))}
-                placeholder={aiSettings ? `Blank: the organization's rule (${aiSettings.rules.callsPerDay})` : "Blank: the organization's rule"}
+                placeholder={aiSettings ? t("form.callsPerDayPlaceholderRule", { calls: aiSettings.rules.callsPerDay }) : t("form.callsPerDayPlaceholder")}
                 disabled={saving}
               />
               <div className="mt-3">
                 <div className="mb-1.5 flex items-center justify-between gap-3">
-                  <label className="text-label-sm text-text-strong-950">Calling hours</label>
+                  <label className="text-label-sm text-text-strong-950">{t("form.callingHours")}</label>
                   {draft.callingHours ? (
                     <button type="button" disabled={saving} onClick={() => setDraft((d) => ({ ...d, callingHours: null }))} className="text-paragraph-xs text-text-sub-600 underline-offset-2 hover:underline disabled:opacity-50">
-                      Use the organization&apos;s hours
+                      {t("form.useOrgHours")}
                     </button>
                   ) : (
                     <button type="button" disabled={saving} onClick={() => setDraft((d) => ({ ...d, callingHours: aiSettings?.rules.callingHours ?? FALLBACK_HOURS }))} className="text-paragraph-xs text-text-sub-600 underline-offset-2 hover:underline disabled:opacity-50">
-                      Set hours for this number
+                      {t("form.setOwnHours")}
                     </button>
                   )}
                 </div>
                 {draft.callingHours ? (
                   <StationHoursEditor value={draft.callingHours} onChange={(callingHours) => setDraft((d) => ({ ...d, callingHours }))} disabled={saving} />
                 ) : (
-                  <p className="text-paragraph-xs text-text-sub-600">{aiSettings ? `The organization's hours: ${hoursSummary(aiSettings.rules.callingHours)}` : "The organization's calling hours (Settings → WhatsApp → Sending rules)."}</p>
+                  <p className="text-paragraph-xs text-text-sub-600">{aiSettings ? t("form.orgHours", { summary: hoursSummary(aiSettings.rules.callingHours) }) : t("form.orgHoursFallback")}</p>
                 )}
               </div>
             </div>
           </Modal.Body>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>{t("actions.cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root variant="primary" mode="filled" size="small" disabled={saving || !canSave} onClick={() => void save()}>
               {saving && <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />}
-              {formFor === "new" ? "Add number" : "Save"}
+              {formFor === "new" ? t("addNumber") : t("actions.save")}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -510,15 +569,15 @@ export function CallingStationsSettings() {
       <Modal.Root open={proxyFormFor !== null} onOpenChange={(open) => { if (!open && !saving) setProxyFormFor(null); }}>
         <Modal.Content>
           <Modal.Header icon={RiGlobalLine}>
-            <Modal.Title>{proxyFormFor === "new" ? "Add an IP" : "Edit IP"}</Modal.Title>
-            <Modal.Description>A proxy a calling number&apos;s browser goes out through. It can be assigned to one number.</Modal.Description>
+            <Modal.Title>{proxyFormFor === "new" ? t("proxyForm.addTitle") : t("proxyForm.editTitle")}</Modal.Title>
+            <Modal.Description>{t("proxyForm.description")}</Modal.Description>
           </Modal.Header>
           <Modal.Body className="space-y-3">
             {proxyFormError && <FormError>{proxyFormError}</FormError>}
-            <TextField label="Label" autoFocus value={proxyDraft.label} onChange={(label) => setProxyDraft((d) => ({ ...d, label }))} placeholder="Mumbai ISP 1" disabled={saving} />
+            <TextField label={t("proxyForm.label")} autoFocus value={proxyDraft.label} onChange={(label) => setProxyDraft((d) => ({ ...d, label }))} placeholder={EXAMPLE_PROXY_LABEL} disabled={saving} />
             <div className="grid grid-cols-[8rem_1fr_6rem] gap-3">
               <div>
-                <label className="mb-1.5 block text-label-sm text-text-strong-950">Protocol</label>
+                <label className="mb-1.5 block text-label-sm text-text-strong-950">{t("proxyForm.protocol")}</label>
                 <Select.Root size="small" value={proxyDraft.protocol} onValueChange={(protocol) => setProxyDraft((d) => ({ ...d, protocol: protocol as ProxyProtocol }))} disabled={saving}>
                   <Select.Trigger><Select.Value /></Select.Trigger>
                   <Select.Content>
@@ -528,36 +587,36 @@ export function CallingStationsSettings() {
                   </Select.Content>
                 </Select.Root>
               </div>
-              <TextField label="Host" value={proxyDraft.host} onChange={(host) => setProxyDraft((d) => ({ ...d, host }))} placeholder="203.0.113.10" disabled={saving} />
-              <TextField label="Port" inputMode="numeric" value={proxyDraft.port} onChange={(port) => setProxyDraft((d) => ({ ...d, port }))} placeholder="1080" disabled={saving} />
+              <TextField label={t("proxyForm.host")} value={proxyDraft.host} onChange={(host) => setProxyDraft((d) => ({ ...d, host }))} placeholder="203.0.113.10" disabled={saving} />
+              <TextField label={t("proxyForm.port")} inputMode="numeric" value={proxyDraft.port} onChange={(port) => setProxyDraft((d) => ({ ...d, port }))} placeholder="1080" disabled={saving} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="Username" autoComplete="off" value={proxyDraft.username} onChange={(username) => setProxyDraft((d) => ({ ...d, username }))} disabled={saving} />
+              <TextField label={t("proxyForm.username")} autoComplete="off" value={proxyDraft.username} onChange={(username) => setProxyDraft((d) => ({ ...d, username }))} disabled={saving} />
               <TextField
-                label="Password"
+                label={t("proxyForm.password")}
                 type="password"
                 autoComplete="new-password"
                 value={proxyDraft.password}
                 onChange={(password) => setProxyDraft((d) => ({ ...d, password }))}
-                placeholder={editingProxy?.hasPassword ? "Saved — leave blank to keep" : ""}
+                placeholder={editingProxy?.hasPassword ? t("proxyForm.passwordSaved") : ""}
                 disabled={saving}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="Country" value={proxyDraft.country} onChange={(country) => setProxyDraft((d) => ({ ...d, country }))} placeholder="IN" disabled={saving} />
-              <TextField label="Time zone" value={proxyDraft.timezone} onChange={(timezone) => setProxyDraft((d) => ({ ...d, timezone }))} placeholder="Asia/Kolkata" disabled={saving} />
+              <TextField label={t("proxyForm.country")} value={proxyDraft.country} onChange={(country) => setProxyDraft((d) => ({ ...d, country }))} placeholder="IN" disabled={saving} />
+              <TextField label={t("proxyForm.timeZone")} value={proxyDraft.timezone} onChange={(timezone) => setProxyDraft((d) => ({ ...d, timezone }))} placeholder={EXAMPLE_TIMEZONE} disabled={saving} />
             </div>
-            <TextField label="Provider" value={proxyDraft.provider} onChange={(provider) => setProxyDraft((d) => ({ ...d, provider }))} disabled={saving} />
-            <TextField label="Notes" value={proxyDraft.notes} onChange={(notes) => setProxyDraft((d) => ({ ...d, notes }))} disabled={saving} />
+            <TextField label={t("proxyForm.provider")} value={proxyDraft.provider} onChange={(provider) => setProxyDraft((d) => ({ ...d, provider }))} disabled={saving} />
+            <TextField label={t("proxyForm.notes")} value={proxyDraft.notes} onChange={(notes) => setProxyDraft((d) => ({ ...d, notes }))} disabled={saving} />
           </Modal.Body>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>{t("actions.cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root variant="primary" mode="filled" size="small" disabled={saving || !canSaveProxy} onClick={() => void saveProxy()}>
               {saving && <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />}
-              {proxyFormFor === "new" ? "Add IP" : "Save"}
+              {proxyFormFor === "new" ? t("ips.add") : t("actions.save")}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -566,16 +625,16 @@ export function CallingStationsSettings() {
       <Modal.Root open={deletingProxy !== null} onOpenChange={(open) => { if (!open && !saving) setDeletingProxy(null); }}>
         <Modal.Content>
           <Modal.Header icon={RiDeleteBinLine}>
-            <Modal.Title>Delete {deletingProxy?.label}?</Modal.Title>
-            <Modal.Description>The IP is removed from this list. The proxy itself is not cancelled with your provider.</Modal.Description>
+            <Modal.Title>{t("deleteProxy.title", { label: deletingProxy?.label ?? "" })}</Modal.Title>
+            <Modal.Description>{t("deleteProxy.description")}</Modal.Description>
           </Modal.Header>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>{t("actions.cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root variant="error" mode="filled" size="small" disabled={saving} onClick={() => void confirmDeleteProxy()}>
               {saving && <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />}
-              Delete
+              {t("actions.delete")}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -584,20 +643,27 @@ export function CallingStationsSettings() {
       <Modal.Root open={wrongAccount !== null} onOpenChange={(open) => { if (!open && wrongAccount) setPutOff((current) => new Set(current).add(wrongAccount.id)); }}>
         <Modal.Content>
           <Modal.Header icon={RiLinkM}>
-            <Modal.Title>Linked to a different WhatsApp number</Modal.Title>
+            <Modal.Title>{t("wrongAccount.title")}</Modal.Title>
             <Modal.Description>
               {wrongAccount
-                ? `${wrongAccount.name}'s WhatsApp Web is logged in as ${wrongAccount.linkedPhone}, not ${wrongAccount.phone}. Calls go out from the logged-in number, so this number won't call until you choose.`
+                ? t("wrongAccount.description", { name: wrongAccount.name, linkedPhone: wrongAccount.linkedPhone ?? "", phone: wrongAccount.phone })
                 : ""}
             </Modal.Description>
           </Modal.Header>
           {wrongAccount && (
             <Modal.Body className="space-y-2 text-paragraph-sm text-text-sub-600">
               <p>
-                <span className="text-label-sm text-text-strong-950">Use {wrongAccount.linkedPhone}</span> — keep this login and make it this calling number&apos;s number.
+                {t.rich("wrongAccount.useBody", {
+                  linkedPhone: wrongAccount.linkedPhone ?? "",
+                  b: (chunks) => <span className="text-label-sm text-text-strong-950">{chunks}</span>,
+                })}
               </p>
               <p>
-                <span className="text-label-sm text-text-strong-950">Link {wrongAccount.phone} instead</span> — discard this login (the number keeps its browser fingerprint) and link again from the phone with {wrongAccount.phone}. Afterwards, remove the extra device from {wrongAccount.linkedPhone}&apos;s WhatsApp → Linked devices.
+                {t.rich("wrongAccount.linkBody", {
+                  phone: wrongAccount.phone,
+                  linkedPhone: wrongAccount.linkedPhone ?? "",
+                  b: (chunks) => <span className="text-label-sm text-text-strong-950">{chunks}</span>,
+                })}
               </p>
             </Modal.Body>
           )}
@@ -609,7 +675,7 @@ export function CallingStationsSettings() {
               disabled={wrongAccount !== null && busyId === wrongAccount.id}
               onClick={() => wrongAccount && setPutOff((current) => new Set(current).add(wrongAccount.id))}
             >
-              Decide later
+              {t("wrongAccount.decideLater")}
             </Button.Root>
             <Button.Root
               variant="neutral"
@@ -618,7 +684,7 @@ export function CallingStationsSettings() {
               disabled={wrongAccount !== null && busyId === wrongAccount.id}
               onClick={() => wrongAccount && void act(wrongAccount, () => startStationLink(wrongAccount.id, { fresh: true }))}
             >
-              Link {wrongAccount?.phone} instead
+              {t("wrongAccount.linkInstead", { phone: wrongAccount?.phone ?? "" })}
             </Button.Root>
             <Button.Root
               variant="primary"
@@ -627,7 +693,7 @@ export function CallingStationsSettings() {
               disabled={wrongAccount !== null && busyId === wrongAccount.id}
               onClick={() => wrongAccount && void act(wrongAccount, () => updateCallingStation(wrongAccount.id, { phone: wrongAccount.linkedPhone! }))}
             >
-              Use {wrongAccount?.linkedPhone}
+              {t("wrongAccount.use", { linkedPhone: wrongAccount?.linkedPhone ?? "" })}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -636,18 +702,16 @@ export function CallingStationsSettings() {
       <Modal.Root open={deleting !== null} onOpenChange={(open) => { if (!open && !saving) setDeleting(null); }}>
         <Modal.Content>
           <Modal.Header icon={RiDeleteBinLine}>
-            <Modal.Title>Delete {deleting?.name}?</Modal.Title>
-            <Modal.Description>
-              {deleting?.phone} stops being available for AI agent calls. Its recordings and call history stay. The browser profile itself is not deleted.
-            </Modal.Description>
+            <Modal.Title>{t("deleteStation.title", { name: deleting?.name ?? "" })}</Modal.Title>
+            <Modal.Description>{t("deleteStation.description", { phone: deleting?.phone ?? "" })}</Modal.Description>
           </Modal.Header>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={saving}>{t("actions.cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root variant="error" mode="filled" size="small" disabled={saving} onClick={() => void confirmDelete()}>
               {saving && <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />}
-              Delete
+              {t("actions.delete")}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -670,6 +734,12 @@ function StationCard({ station, ai, rules, busy, onLink, onCancelLink, onToggle,
   /** Renumber the card to the account WhatsApp Web is logged in as. */
   onUseLinkedPhone: () => void;
 }) {
+  const t = useTranslations("settingsStations.callingStations");
+  const tStatus = useTranslations("settingsStations.callingStations.status");
+  const tLauncher = useTranslations("settingsStations.callingStations.launchers");
+  const format = useFormatter();
+  const timeAgo = useTimeAgo();
+  const hoursSummary = useHoursSummary();
   const linking = station.link !== null;
   // Calls go out from the logged-in account, so a mismatch blocks calling until fixed.
   const wrongAccount = station.linkedPhone !== null && station.linkedPhone !== station.phone;
@@ -681,78 +751,85 @@ function StationCard({ station, ai, rules, busy, onLink, onCancelLink, onToggle,
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="truncate text-label-md text-text-strong-950">{station.name}</h3>
-              <Badge.Root variant="light" size="medium" color={STATUS_COLOR[station.status]}>{STATUS_LABEL[station.status]}</Badge.Root>
+              <Badge.Root variant="light" size="medium" color={STATUS_COLOR[station.status]}>{tStatus(STATUS_KEY[station.status])}</Badge.Root>
               {station.busyCallId && (
                 <Badge.Root variant="light" size="medium" color="blue">
                   <RiLoader4Line className="size-3 animate-spin" aria-hidden="true" />
-                  On a call
+                  {t("card.onCall")}
                 </Badge.Root>
               )}
               {station.openOn && !station.busyCallId && (
-                <Badge.Root variant="light" size="medium" color="green" title={`WhatsApp Web is kept open on ${station.openOn}, so calls start right away`}>
-                  Ready on {station.openOn}
+                <Badge.Root variant="light" size="medium" color="green" title={t("card.readyTitle", { worker: station.openOn })}>
+                  {t("card.ready", { worker: station.openOn })}
                 </Badge.Root>
               )}
             </div>
             <p className="text-paragraph-sm tabular-nums text-text-sub-600">
-              {station.phone} · {LAUNCHER_LABEL[station.launcher]}
+              {station.phone} · {tLauncher(LAUNCHER_KEY[station.launcher])}
               {station.gologinProfileId ? ` · ${station.gologinProfileId}` : ""}
             </p>
             <p className="text-paragraph-xs text-text-soft-400">
-              {station.lastSeenAt ? `Worker seen ${timeAgo(station.lastSeenAt)}` : "No worker has opened it yet"}
-              {station.lastCallAt ? ` · last call ${timeAgo(station.lastCallAt)}` : ""}
+              {station.lastSeenAt ? t("card.workerSeen", { time: timeAgo(station.lastSeenAt) }) : t("card.workerNone")}
+              {station.lastCallAt ? ` · ${t("card.lastCall", { time: timeAgo(station.lastCallAt) })}` : ""}
             </p>
-            <p className="text-paragraph-xs text-text-sub-600">{station.proxyLabel ? `IP: ${station.proxyLabel}` : "Own IP"}</p>
+            <p className="text-paragraph-xs text-text-sub-600">{station.proxyLabel ? t("card.proxy", { label: station.proxyLabel }) : t("card.proxyOwn")}</p>
             {rules && (
               <p className="text-paragraph-xs text-text-sub-600">
-                AI campaigns: {ai?.callsPerDay != null ? `${ai.callsPerDay} calls a day` : `${rules.callsPerDay} calls a day (rule)`} ·{" "}
-                {ai?.callingHours ? hoursSummary(ai.callingHours) : "organization's calling hours"}
+                {t("card.aiLine", {
+                  calls: ai?.callsPerDay != null ? t("card.aiCallsOwn", { count: ai.callsPerDay }) : t("card.aiCallsRule", { count: rules.callsPerDay }),
+                  hours: ai?.callingHours ? hoursSummary(ai.callingHours) : t("card.aiHoursOrg"),
+                })}
               </p>
             )}
             {station.linkedPhone && (
               <p className={cn("text-paragraph-xs tabular-nums", wrongAccount ? "text-error-base" : "text-text-sub-600")}>
-                WhatsApp: logged in as {station.linkedPhone}
-                {wrongAccount ? " — not this number, so it won't call" : ""}
+                {wrongAccount ? t("card.linkedAsMismatch", { phone: station.linkedPhone }) : t("card.linkedAs", { phone: station.linkedPhone })}
               </p>
             )}
             {wrongAccount && (
               <div>
                 <Button.Root variant="neutral" mode="stroke" size="xxsmall" disabled={busy} onClick={onUseLinkedPhone}>
-                  Use {station.linkedPhone} as this number
+                  {t("card.useLinkedPhone", { phone: station.linkedPhone ?? "" })}
                 </Button.Root>
               </div>
             )}
             {station.launcher === "cloak" && (
               <p className="text-paragraph-xs text-text-soft-400">
                 {station.profile.savedAt
-                  ? `Profile: saved ${timeAgo(station.profile.savedAt)}${station.profile.bytes !== null ? ` · ${(station.profile.bytes / 1_000_000).toFixed(1)} MB` : ""} · v${station.profile.version}`
-                  : "Profile: not saved yet"}
+                  ? station.profile.bytes !== null
+                    ? t("card.profileSavedSized", {
+                        time: timeAgo(station.profile.savedAt),
+                        size: format.number(station.profile.bytes / 1_000_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                        version: station.profile.version,
+                      })
+                    : t("card.profileSaved", { time: timeAgo(station.profile.savedAt), version: station.profile.version })
+                  : t("card.profileNone")}
               </p>
             )}
             {station.lastError && <p className="text-paragraph-xs text-error-base">{station.lastError}</p>}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             {linking ? (
-              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy} onClick={onCancelLink}>Cancel linking</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy} onClick={onCancelLink}>{t("card.cancelLink")}</Button.Root>
             ) : (
               <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy || station.busyCallId !== null} onClick={onLink}>
                 <Button.Icon as={RiLinkM} />
-                {station.status === "onboarding" ? "Link WhatsApp" : "Relink WhatsApp"}
+                {station.status === "onboarding" ? t("card.link") : t("card.relink")}
               </Button.Root>
             )}
             {pausable && (
               <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy} onClick={onToggle}>
                 <Button.Icon as={station.status === "paused" ? RiPlayCircleLine : RiPauseCircleLine} />
-                {station.status === "paused" ? "Resume" : "Pause"}
+                {station.status === "paused" ? t("card.resume") : t("card.pause")}
               </Button.Root>
             )}
             <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy} onClick={onEdit}>
               <Button.Icon as={RiPencilLine} />
-              Edit
+              {t("actions.edit")}
             </Button.Root>
             <Button.Root variant="error" mode="stroke" size="xsmall" disabled={busy} onClick={onDelete}>
               <Button.Icon as={RiDeleteBinLine} />
-              Delete
+              {t("actions.delete")}
             </Button.Root>
           </div>
         </div>
@@ -763,6 +840,7 @@ function StationCard({ station, ai, rules, busy, onLink, onCancelLink, onToggle,
 }
 
 function ProxyCard({ proxy, onEdit, onDelete }: { proxy: CallingProxy; onEdit: () => void; onDelete: () => void }) {
+  const t = useTranslations("settingsStations.callingStations");
   const details = [proxy.country, proxy.timezone, proxy.provider].filter(Boolean).join(" · ");
   const assigned = proxy.stationId !== null;
   return (
@@ -773,7 +851,7 @@ function ProxyCard({ proxy, onEdit, onDelete }: { proxy: CallingProxy; onEdit: (
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="truncate text-label-md text-text-strong-950">{proxy.label}</h3>
               <Badge.Root variant="light" size="medium" color={assigned ? "blue" : "gray"}>
-                {assigned ? `Used by ${proxy.stationName ?? "a number"}` : "Unassigned"}
+                {assigned ? (proxy.stationName ? t("proxyCard.usedBy", { name: proxy.stationName }) : t("proxyCard.usedByUnnamed")) : t("proxyCard.unassigned")}
               </Badge.Root>
             </div>
             <p className="font-mono text-paragraph-sm text-text-sub-600">{proxy.protocol}://{proxy.host}:{proxy.port}</p>
@@ -782,18 +860,18 @@ function ProxyCard({ proxy, onEdit, onDelete }: { proxy: CallingProxy; onEdit: (
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={onEdit}>
               <Button.Icon as={RiPencilLine} />
-              Edit
+              {t("actions.edit")}
             </Button.Root>
             <Button.Root
               variant="error"
               mode="stroke"
               size="xsmall"
               disabled={assigned}
-              title={assigned ? "Unassign it from its number first" : undefined}
+              title={assigned ? t("proxyCard.unassignFirst") : undefined}
               onClick={onDelete}
             >
               <Button.Icon as={RiDeleteBinLine} />
-              Delete
+              {t("actions.delete")}
             </Button.Root>
           </div>
         </div>
@@ -803,14 +881,15 @@ function ProxyCard({ proxy, onEdit, onDelete }: { proxy: CallingProxy; onEdit: (
 }
 
 function LinkPanel({ link }: { link: NonNullable<CallingStation["link"]> }) {
+  const t = useTranslations("settingsStations.callingStations");
   const [zoomed, setZoomed] = useState(false);
   return (
     <div className="space-y-4 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
       <div className="space-y-3">
-        <p className="text-label-sm text-text-strong-950">Link this number to WhatsApp Web</p>
+        <p className="text-label-sm text-text-strong-950">{t("linkPanel.title")}</p>
         {link.code ? (
           <p
-            aria-label={`Linking code ${link.code.split("").join(" ")}`}
+            aria-label={t("linkPanel.codeAria", { code: link.code.split("").join(" ") })}
             className="w-fit rounded-lg bg-bg-white-0 px-4 py-2 font-mono text-title-h4 tracking-[0.25em] text-text-strong-950 ring-1 ring-inset ring-stroke-soft-200"
           >
             {link.code}
@@ -818,11 +897,11 @@ function LinkPanel({ link }: { link: NonNullable<CallingStation["link"]> }) {
         ) : (
           <p className="flex items-center gap-2 text-paragraph-sm text-text-sub-600">
             <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />
-            {link.screenshot ? "Waiting for a code. If WhatsApp Web shows a QR instead, scan it." : "Waiting for a call worker to open WhatsApp Web…"}
+            {link.screenshot ? t("linkPanel.waitingForCode") : t("linkPanel.waitingForWorker")}
           </p>
         )}
         <p className="text-paragraph-sm text-text-sub-600">
-          On the phone: WhatsApp → Settings → Linked devices → Link a device → Link with phone number instead, then type this code.
+          {t("linkPanel.phoneSteps")}
         </p>
       </div>
       {link.screenshot && (
@@ -831,21 +910,21 @@ function LinkPanel({ link }: { link: NonNullable<CallingStation["link"]> }) {
           <button
             type="button"
             onClick={() => setZoomed(true)}
-            aria-label="Open WhatsApp Web's login screen full size"
+            aria-label={t("linkPanel.openFullAria")}
             className="block w-full cursor-zoom-in overflow-hidden rounded-lg bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- a data: URL screenshot from the worker */}
-            <img src={link.screenshot} alt="WhatsApp Web's login screen in the cloud browser" className="block w-full" />
+            <img src={link.screenshot} alt={t("linkPanel.screenshotAlt")} className="block w-full" />
           </button>
-          <p className="text-paragraph-xs text-text-soft-400">The screenshot refreshes every few seconds. Click it to open it full size.</p>
+          <p className="text-paragraph-xs text-text-soft-400">{t("linkPanel.screenshotHint")}</p>
           <Modal.Root open={zoomed} onOpenChange={setZoomed}>
             <Modal.Content className="max-w-[min(96vw,1400px)]">
               <Modal.Header>
-                <Modal.Title>WhatsApp Web login screen</Modal.Title>
+                <Modal.Title>{t("linkPanel.zoomTitle")}</Modal.Title>
               </Modal.Header>
               <Modal.Body>
                 {/* eslint-disable-next-line @next/next/no-img-element -- a data: URL screenshot from the worker */}
-                <img src={link.screenshot} alt="WhatsApp Web's login screen in the cloud browser, full size" className="block w-full rounded-lg" />
+                <img src={link.screenshot} alt={t("linkPanel.zoomedAlt")} className="block w-full rounded-lg" />
               </Modal.Body>
             </Modal.Content>
           </Modal.Root>

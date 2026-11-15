@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiTimeLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -11,16 +12,10 @@ import { Callout, Field } from "@/components/settings/SettingsKit";
 import type { WorkingHours } from "@/lib/outreach/schema";
 import { cn } from "@/utils/cn";
 
-const DAYS: { key: keyof WorkingHours["days"]; label: string }[] = [
-  { key: "monday", label: "Monday" },
-  { key: "tuesday", label: "Tuesday" },
-  { key: "wednesday", label: "Wednesday" },
-  { key: "thursday", label: "Thursday" },
-  { key: "friday", label: "Friday" },
-  { key: "saturday", label: "Saturday" },
-  { key: "sunday", label: "Sunday" },
-];
+/** Monday first; the label of each comes from `settingsChannels.workingHours.days.<key>`. */
+const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const satisfies readonly (keyof WorkingHours["days"])[];
 
+// IANA zone identifiers: shown as they are in every language.
 // Asia/Kolkata first — it matches DEFAULT_WORKING_HOURS in schema.ts and is
 // where sending actually happens, so it should be the pre-selected option.
 const COMMON_TIMEZONES = [
@@ -51,6 +46,8 @@ export default function WorkingHoursModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("settingsChannels.workingHours");
+  const format = useFormatter();
   const [value, setValue] = useState<WorkingHours>(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +56,9 @@ export default function WorkingHoursModal({
     setValue((prev) => ({ ...prev, days: { ...prev.days, [key]: { ...prev.days[key], ...patch } } }));
   }
 
-  const enabledCount = DAYS.filter(({ key }) => value.days[key].enabled).length;
-  const inverted = DAYS.filter(({ key }) => value.days[key].enabled && value.days[key].from >= value.days[key].to);
+  const days = DAY_KEYS.map((key) => ({ key, label: t(`days.${key}`) }));
+  const enabledCount = days.filter(({ key }) => value.days[key].enabled).length;
+  const inverted = days.filter(({ key }) => value.days[key].enabled && value.days[key].from >= value.days[key].to);
   const timezones = COMMON_TIMEZONES.includes(value.timezone) ? COMMON_TIMEZONES : [value.timezone, ...COMMON_TIMEZONES];
 
   async function handleSave() {
@@ -73,13 +71,13 @@ export default function WorkingHoursModal({
         body: JSON.stringify({ workingHours: value }),
       });
       if (!res.ok) {
-        setError("The sending hours were not saved. Please try again.");
+        setError(t("saveError"));
         return;
       }
       onSaved();
       onClose();
     } catch {
-      setError("Could not reach the server. Please try again.");
+      setError(t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -89,15 +87,15 @@ export default function WorkingHoursModal({
     <Modal.Root open onOpenChange={(open) => !open && onClose()}>
       <Modal.Content size="max-w-lg">
         <Modal.Header icon={RiTimeLine}>
-          <Modal.Title>Sending hours</Modal.Title>
+          <Modal.Title>{t("title")}</Modal.Title>
           <Modal.Description>
-            {mailboxAddress ? `${mailboxAddress} only sends` : "This mailbox only sends"} inside this window. Emails due outside it wait for the next open slot.
+            {mailboxAddress ? t("descriptionNamed", { address: mailboxAddress }) : t("description")}
           </Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-5">
-          <Field label="Timezone" description="The days and times below are in this timezone.">
+          <Field label={t("timezone")} description={t("timezoneHint")}>
             <Select.Root size="small" value={value.timezone} onValueChange={(tz) => setValue((prev) => ({ ...prev, timezone: tz }))}>
-              <Select.Trigger aria-label="Timezone">
+              <Select.Trigger aria-label={t("timezone")}>
                 <Select.Value />
               </Select.Trigger>
               <Select.Content>
@@ -111,12 +109,10 @@ export default function WorkingHoursModal({
           </Field>
 
           <fieldset>
-            <legend className="text-label-sm text-text-strong-950">Days</legend>
-            <p className="mt-0.5 text-paragraph-xs text-text-sub-600">
-              {enabledCount === 0 ? "No days are on — this mailbox will not send." : `Sends on ${enabledCount} ${enabledCount === 1 ? "day" : "days"} a week.`}
-            </p>
+            <legend className="text-label-sm text-text-strong-950">{t("daysLegend")}</legend>
+            <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{t("daysSummary", { count: enabledCount })}</p>
             <ul className="mt-3 divide-y divide-stroke-soft-200 rounded-xl ring-1 ring-inset ring-stroke-soft-200">
-              {DAYS.map(({ key, label }) => {
+              {days.map(({ key, label }) => {
                 const day = value.days[key];
                 const bad = day.enabled && day.from >= day.to;
                 return (
@@ -129,22 +125,22 @@ export default function WorkingHoursModal({
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <input
                           type="time"
-                          aria-label={`${label} start`}
+                          aria-label={t("dayStart", { day: label })}
                           value={day.from}
                           onChange={(e) => updateDay(key, { from: e.target.value })}
                           className={cn(timeInputClass, bad && "ring-error-base")}
                         />
-                        <span className="shrink-0 text-paragraph-xs text-text-soft-400">to</span>
+                        <span className="shrink-0 text-paragraph-xs text-text-soft-400">{t("to")}</span>
                         <input
                           type="time"
-                          aria-label={`${label} end`}
+                          aria-label={t("dayEnd", { day: label })}
                           value={day.to}
                           onChange={(e) => updateDay(key, { to: e.target.value })}
                           className={cn(timeInputClass, bad && "ring-error-base")}
                         />
                       </div>
                     ) : (
-                      <span className="flex-1 text-paragraph-sm text-text-soft-400">Not sending</span>
+                      <span className="flex-1 text-paragraph-sm text-text-soft-400">{t("notSending")}</span>
                     )}
                   </li>
                 );
@@ -154,17 +150,17 @@ export default function WorkingHoursModal({
 
           {inverted.length > 0 && (
             <Callout tone="warning">
-              {inverted.map((d) => d.label).join(", ")} {inverted.length === 1 ? "ends" : "end"} before {inverted.length === 1 ? "it starts" : "they start"}, so nothing will send then.
+              {t("inverted", { count: inverted.length, days: format.list(inverted.map((d) => d.label), { type: "conjunction" }) })}
             </Callout>
           )}
           {error && <Callout tone="error">{error}</Callout>}
         </Modal.Body>
         <Modal.Footer>
           <Button.Root variant="neutral" mode="stroke" size="small" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button.Root>
           <Button.Root variant="primary" mode="filled" size="small" disabled={saving} onClick={handleSave}>
-            {saving ? "Saving…" : "Save hours"}
+            {saving ? t("saving") : t("save")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

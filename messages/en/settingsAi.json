@@ -1,3 +1,193 @@
 {
-  "settingsAi": {}
+  "settingsAi": {
+    "page": {
+      "title": "AI provider",
+      "description": "The OpenRouter connection and models every AI feature uses, and where its prompts and traces live.",
+      "tracingTitle": "Prompts and tracing (Langfuse)",
+      "tracingDescription": "Optional, and saved on its own. Connect a Langfuse project to edit the AI's prompts there and see every AI call it makes. Without it, AI features use the prompts built into AgentSDR and nothing is traced."
+    },
+    "assistantsPage": {
+      "title": "AI assistants",
+      "description": "Connect Claude to work your Action required queue: read threads, edit and send replies, change stages."
+    },
+    "byok": {
+      "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "load": "Could not load AI settings.",
+        "refresh": "Could not refresh BYOK providers.",
+        "keysRequired": "Enter both the inference API key and management API key.",
+        "noConnectionRecord": "The account was created without a connection record.",
+        "connect": "Could not connect OpenRouter.",
+        "save": "Could not save AI settings.",
+        "needConnection": "Connect an OpenRouter account before saving.",
+        "needProvider": "Select at least one BYOK provider.",
+        "needModel": "Select at least one model.",
+        "needDefaultModel": "Choose a default model.",
+        "needSharedCapacityConfirmation": "Confirm that OpenRouter shared capacity fallback is set to Never use shared capacity."
+      },
+      "success": {
+        "refreshed": "BYOK providers refreshed.",
+        "connected": "OpenRouter account connected and verified.",
+        "saved": "AI settings saved."
+      },
+      "picker": {
+        "noPrioritized": "This provider only has fallback-section credentials. Move or add a key in OpenRouter's prioritized BYOK section.",
+        "restricted": "This key is restricted to {count, plural, one {# model} other {# models}}, but none could be resolved to a selectable OpenRouter text or image model.",
+        "azureHint": "For Azure deployments, set <code>model_slug</code> and <b>This key applies to</b> to the canonical ID (for example, <code>openai/gpt-4o</code>), not the Azure deployment name.",
+        "noModels": "OpenRouter returned no text or image models for this provider. Refresh after checking the provider configuration.",
+        "enableAria": "Enable {name}",
+        "credentials": "<code>{slug}</code> · {prioritized, plural, one {# prioritized credential} other {# prioritized credentials}}",
+        "credentialsWithFallback": "<code>{slug}</code> · {prioritized, plural, one {# prioritized credential} other {# prioritized credentials}} · {fallback} fallback-only",
+        "selectedBadge": "{count} selected",
+        "reviewSettings": "Review {name} BYOK settings",
+        "modelsSelected": "{count, plural, one {# model selected} other {# models selected}}",
+        "selectModels": "Select {name} models",
+        "searchAria": "Search {name} models",
+        "searchPlaceholder": "Search {name} models…",
+        "clearShown": "Clear shown",
+        "selectShown": "Select shown",
+        "modalityImage": "Image",
+        "modalityText": "Text",
+        "context": "{amount} context",
+        "priceInput": "Input {price}",
+        "priceOutput": "Output {price}",
+        "pricePerMillion": "{amount} / 1M",
+        "noMatch": "No models match this search."
+      },
+      "step": {
+        "label": "Step {step}",
+        "done": "Step {step}, done"
+      },
+      "account": {
+        "title": "OpenRouter account",
+        "description": "Your inference and management keys are encrypted before they are stored.",
+        "inferenceKeys": "Inference keys",
+        "managementKeys": "Management keys",
+        "groupAria": "OpenRouter account",
+        "verificationRequired": "Verification required",
+        "verified": "Verified and ready to use",
+        "connectAnother": "Connect another account",
+        "connect": "Connect OpenRouter",
+        "connectHint": "Connect an account to choose providers and models.",
+        "formTitle": "Connect OpenRouter",
+        "formDescription": "Create or copy both keys from the OpenRouter dashboard. They are verified before they are saved.",
+        "openDashboard": "Open dashboard",
+        "nameLabel": "Account name",
+        "namePlaceholder": "OpenRouter production",
+        "apiKeyLabel": "Inference API key",
+        "managementKeyLabel": "Management API key",
+        "cancel": "Cancel",
+        "verifying": "Verifying…",
+        "verifyAndConnect": "Verify & connect"
+      },
+      "providers": {
+        "title": "Providers and models",
+        "description": "The providers OpenRouter may route requests to. Only the models you select are available in AI columns.",
+        "refreshing": "Refreshing…",
+        "refresh": "Refresh providers",
+        "searchAria": "Search providers",
+        "searchPlaceholder": "Search providers…",
+        "noMatchTitle": "No providers match",
+        "noneTitle": "No BYOK providers found",
+        "tryAnotherSearch": "Try another search.",
+        "addKeyThenRefresh": "Add a key in OpenRouter's BYOK settings, then refresh.",
+        "connectFirst": "Connect an OpenRouter account first."
+      },
+      "defaultModel": {
+        "title": "Default model",
+        "description": "Every internal AI task uses this text model, and new compatible AI columns select it automatically.",
+        "fieldLabel": "Provider and model",
+        "fieldDescription": "Only selected text models that support structured output are listed.",
+        "fieldDescriptionEmpty": "Select at least one text model with structured-output support above to choose a default.",
+        "aria": "Default model",
+        "placeholder": "Select a default model",
+        "transcriptionLabel": "Call transcription model",
+        "transcriptionDescription": "Used to transcribe WhatsApp call recordings. Pick a model that accepts audio (e.g. a Gemini model).",
+        "transcriptionOff": "Off"
+      },
+      "sharedCapacity": {
+        "title": "Shared capacity",
+        "description": "AgentSDR only sends requests on your own provider keys.",
+        "checkboxLabel": "Never use shared capacity",
+        "explanation": "In every enabled provider's OpenRouter BYOK settings, set Shared capacity fallback to <b>Never use shared capacity on this provider</b>. OpenRouter does not expose this setting through its public API, so this confirmation is required before AgentSDR will send requests.",
+        "reviewLink": "Review OpenRouter BYOK settings"
+      },
+      "footer": {
+        "using": "Using <account>{name}</account> · {done} of 4 steps done",
+        "connectToContinue": "Connect an OpenRouter account to continue",
+        "saving": "Saving…",
+        "save": "Save AI settings"
+      }
+    },
+    "assistants": {
+      "relative": {
+        "never": "never",
+        "justNow": "just now",
+        "minutes": "{count} min ago",
+        "hours": "{count} h ago",
+        "yesterday": "yesterday",
+        "days": "{count, plural, one {# day ago} other {# days ago}}"
+      },
+      "copy": "Copy",
+      "copied": "Copied",
+      "tabs": {
+        "claude": "Claude (web & desktop)",
+        "code": "Claude Code",
+        "other": "Other clients"
+      },
+      "prompts": {
+        "title": "Things to ask",
+        "queue": "“Summarise my Action required queue”",
+        "pricing": "“Draft replies for everyone who asked for pricing — show me before sending”",
+        "priya": "“Find Priya from Acme and tell me where the deal stands”",
+        "notNow": "“Mark the leads who said 'not now' to follow up next month”"
+      },
+      "errors": {
+        "load": "Could not load your connections.",
+        "disconnect": "Could not disconnect.",
+        "network": "Network error. Try again."
+      },
+      "disconnect": {
+        "title": "{named, select, yes {Disconnect {name}?} other {Disconnect this assistant?}}",
+        "description": "It stops working at once. You can connect it again whenever you like.",
+        "confirm": "Disconnect",
+        "busy": "Disconnecting…"
+      },
+      "connections": {
+        "title": "Your connections",
+        "description": "Assistants that can work in this organization as you.",
+        "loading": "Loading…",
+        "empty": "No assistants connected yet.",
+        "unnamed": "AI assistant",
+        "meta": "{connected, select, date {Connected {date}} other {Connected earlier}} · Last active {lastActive}"
+      },
+      "serverUrl": {
+        "title": "Server URL",
+        "description": "Paste this into Claude, ChatGPT or any MCP client to connect.",
+        "aria": "MCP server URL"
+      },
+      "howTo": {
+        "title": "How to connect",
+        "description": "Pick the app you use. Each takes about a minute.",
+        "claude": {
+          "step1": "Open Claude and go to <b>Customize → Connectors</b> (also reachable from Settings).",
+          "step2": "Choose <b>Add → Add custom connector</b>. Name it <b>AgentSDR</b>, paste the server URL above, and choose <b>Continue</b>.",
+          "step3": "Once Claude has checked the server, choose <b>Add</b>, then <b>Connect</b>.",
+          "step4": "Sign in to AgentSDR if asked, check the organization, and choose <b>Allow</b>.",
+          "step5": "In a chat, switch AgentSDR on from the tools menu and ask, for example, “What's in my Action required queue?”",
+          "teamNote": "On Claude Team and Enterprise plans, an owner must first add the connector under organization settings before members can connect it."
+        },
+        "code": {
+          "step1": "Run this in your terminal:",
+          "step2": "Start Claude Code and run <code>/mcp</code>.",
+          "step3": "Select <b>agentsdr</b>, choose <b>Authenticate</b>, and your browser opens.",
+          "step4": "Sign in to AgentSDR if asked and choose <b>Allow</b>."
+        },
+        "other": {
+          "clients": "Any client that supports remote MCP over Streamable HTTP with OAuth works with the same server URL, including ChatGPT (add AgentSDR as a custom app in its settings), Cursor and other editors.",
+          "apiKey": "For a setup with no browser, an owner or admin can create an API key under <b>Settings → API keys</b> and send it as <code>Authorization: Bearer asdr_…</code>. A key acts as the whole organization, not as one person."
+        }
+      }
+    }
+  }
 }

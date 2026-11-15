@@ -1,20 +1,26 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ConnectionSettingsPage } from "@/components/settings/ChannelSettingsPages";
 import { RecorderExtensionCard } from "@/components/settings/RecorderExtensionCard";
 
-export const metadata = { title: "WhatsApp integrations" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsChannels.whatsappConnection");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function Page() {
+export default async function Page() {
+  const t = await getTranslations("settingsChannels.whatsappConnection");
   return (
     <ConnectionSettingsPage
       platforms={[
-        { platform: "unipile", note: "The same Unipile connection also powers LinkedIn; changing it here changes it there too." },
+        { platform: "unipile", note: t("unipileNote") },
         { platform: "r2" },
-        { platform: "gologin", note: "Only needed for cloud calling numbers (Settings → WhatsApp → Calling numbers)." },
-        { platform: "calcom", note: "Only needed for AI calling campaigns that book meetings: tells them when a lead books.", webhookUrl: true },
+        { platform: "gologin", note: t("gologinNote") },
+        { platform: "calcom", note: t("calcomNote"), webhookUrl: true },
       ]}
-      title="WhatsApp integrations"
-      description="Unipile connects your WhatsApp numbers for messaging and calling. Calls placed from AgentSDR are recorded by the Call Recorder extension and stored in your Cloudflare R2 bucket, along with contact photos. Transcription uses the model chosen in AI provider."
+      title={t("title")}
+      description={t("description")}
     >
       <RecorderExtensionCard />
     </ConnectionSettingsPage>

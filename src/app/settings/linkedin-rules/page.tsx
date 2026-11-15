@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { RulesSettingsPage } from "@/components/settings/ChannelSettingsPages";
 
-export const metadata = { title: "LinkedIn sending rules" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsChannels.linkedinRules");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <RulesSettingsPage channel="linkedin" title="LinkedIn sending rules" description="How many invitations and messages each account sends, how fast, and when. LinkedIn restricts accounts that move too fast, so the defaults are conservative." />;
+export default async function Page() {
+  const t = await getTranslations("settingsChannels.linkedinRules");
+  return <RulesSettingsPage channel="linkedin" title={t("title")} description={t("description")} />;
 }

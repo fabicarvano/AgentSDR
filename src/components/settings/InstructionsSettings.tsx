@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import * as Button from "@/components/alignui/button";
 import * as SegmentedControl from "@/components/alignui/segmented-control";
 import { Callout } from "./SettingsKit";
@@ -30,6 +31,7 @@ function parseBlocks(value: unknown): AiInstructionBlock[] {
 const FIELDS = Object.keys(INSTRUCTION_SECTIONS) as InstructionField[];
 
 export default function InstructionsSettings() {
+  const t = useTranslations("settingsKnowledge.instructions");
   const [pipelineId, setPipelineId] = useState("");
   const [saved, setSaved] = useState<Saved | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,14 +65,14 @@ export default function InstructionsSettings() {
     return (
       <Callout
         tone="error"
-        title="Could not load the instructions"
-        action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => void load()}>Try again</Button.Root>}
+        title={t("load.errorTitle")}
+        action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => void load()}>{t("load.retry")}</Button.Root>}
       >
         {error}
       </Callout>
     );
   if (!saved) return null;
-  if (!pipelineId) return <Callout tone="warning" title="No CRM pipeline yet">Instructions belong to the default CRM pipeline, and none is configured yet.</Callout>;
+  if (!pipelineId) return <Callout tone="warning" title={t("noPipeline.title")}>{t("noPipeline.body")}</Callout>;
 
   return (
     // Both panels stay mounted (forceMount + hidden when inactive) so unsaved
@@ -79,7 +81,7 @@ export default function InstructionsSettings() {
       <SegmentedControl.List className="w-full auto-cols-fr sm:w-fit sm:auto-cols-auto">
         {FIELDS.map((field) => (
           <SegmentedControl.Trigger key={field} value={field} className="gap-1.5 px-3">
-            {INSTRUCTION_SECTIONS[field].title}
+            {t(`sections.${field}.title`)}
             <span className="tabular-nums text-text-soft-400">{saved[field].length}</span>
           </SegmentedControl.Trigger>
         ))}

@@ -1,3 +1,165 @@
 {
-  "settingsOrg": {}
+  "settingsOrg": {
+    "organizationPage": {
+      "title": "Organization",
+      "description": "Your organization's name, URL and your role in it.",
+      "defaultsTitle": "Defaults",
+      "defaultsDescription": "Used across every channel."
+    },
+    "membersPage": {
+      "title": "Members",
+      "description": "Invite people and manage what each can do."
+    },
+    "teamsPage": {
+      "title": "Teams",
+      "description": "Group members into teams."
+    },
+    "apiKeysPage": {
+      "title": "API keys",
+      "description": "Let another application add leads to your email campaigns and stop their sequences.",
+      "adminOnly": "Only owners and admins can manage API keys."
+    },
+    "columnsPage": {
+      "title": "Lead columns",
+      "description": "The fields on People and Companies, including ones you add."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "state": {
+      "loading": "Loading…",
+      "noActiveOrganization": "No active organization."
+    },
+    "kit": {
+      "optional": "(optional)"
+    },
+    "general": {
+      "title": "Organization",
+      "yourRole": "Your role: {role}",
+      "nameLabel": "Name",
+      "slugLabel": "URL name",
+      "slugDescription": "Lowercase letters, numbers and dashes.",
+      "logoLabel": "Logo URL",
+      "nameAndSlugRequired": "A name and a URL name are required.",
+      "slugTaken": "That URL name is already taken. Try another.",
+      "saved": "Saved.",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "ownersOnly": "Only owners and admins can change these details.",
+      "footer": "Everyone in an organization sees the same leads, campaigns and conversations.",
+      "leaveOrganization": "Leave organization",
+      "leaveDescription": "Remove yourself from this organization.",
+      "leaveHint": "You can be invited back at any time.",
+      "leaving": "Leaving…",
+      "leaveConfirmTitle": "Leave {name}?",
+      "leaveConfirmDescription": "You will lose access to its leads, campaigns and conversations until someone invites you again."
+    },
+    "members": {
+      "inviteTitle": "Invite someone",
+      "inviteDescription": "They get an email with a link to join this organization.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@company.com",
+      "roleLabel": "Role",
+      "sending": "Sending…",
+      "sendInvite": "Send invite",
+      "pendingTitle": "Pending invitations",
+      "pendingDescription": "Where no email service is set up, copy the link and send it yourself.",
+      "invitationMeta": "{role} · expires {date}",
+      "copyLink": "Copy invite link",
+      "copied": "Copied",
+      "cancel": "Cancel",
+      "membersTitle": "Members",
+      "membersCount": "{count} in {org}",
+      "you": "(you)",
+      "memberMeta": "{email} · joined {date}",
+      "roleFor": "Role for {email}",
+      "remove": "Remove",
+      "copyFailed": "Could not copy. Select the link manually: /accept-invitation/{id}",
+      "removeTitle": "Remove {name}?",
+      "removeDescription": "They lose access to {org} immediately.",
+      "removeConfirm": "Remove"
+    },
+    "teams": {
+      "loadFailed": "Could not load teams.",
+      "note": "Teams group people; everyone in the organization sees the same data.",
+      "createTitle": "Create a team",
+      "teamName": "Team name",
+      "creating": "Creating…",
+      "create": "Create team",
+      "empty": "No teams yet.",
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "rename": "Rename",
+      "delete": "Delete",
+      "newTeamName": "New team name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "noMembers": "No one is on this team yet.",
+      "remove": "Remove",
+      "addMemberLabel": "Add a member to {name}",
+      "addMemberPlaceholder": "Add a member…",
+      "add": "Add",
+      "deleteTitle": "Delete {name}?",
+      "deleteDescription": "People stay in the organization; only the team is removed.",
+      "deleteConfirm": "Delete team"
+    },
+    "apiKeys": {
+      "never": "Never",
+      "createFailed": "Could not create the key.",
+      "networkError": "Network error. Try again.",
+      "revokeTitle": "Revoke {name}?",
+      "revokeDescription": "Anything using this key stops working at once. This cannot be undone.",
+      "revokeConfirm": "Revoke key",
+      "revokeFailed": "Could not revoke the key.",
+      "copyFailed": "Could not copy. Select the key and copy it by hand.",
+      "intro": "A key acts for the whole organization, limited to what you tick when you create it. Send it as <code>{header}</code> to <code>/api/v1/</code>, or use it to connect an AI assistant to <code>/api/mcp</code> without signing in (Settings → AI assistants).",
+      "createdTitle": "Copy the key for {name} now",
+      "done": "Done",
+      "createdBody": "It is shown only once. Store it in the other application's settings.",
+      "copied": "Copied",
+      "copy": "Copy",
+      "createTitle": "Create a key",
+      "createDescription": "Name it after what will use it, for example the app's name.",
+      "keyName": "Key name",
+      "creating": "Creating…",
+      "create": "Create key",
+      "scopesLegend": "What the key may do",
+      "scopes": {
+        "crmRead": {
+          "label": "Read the CRM",
+          "description": "See the Action required queue and lead records: conversations, details and calls."
+        },
+        "crmWrite": {
+          "label": "Work the CRM",
+          "description": "Edit and rewrite drafts, change stages, snooze or close records, and mark leads Do Not Contact."
+        },
+        "crmSend": {
+          "label": "Send messages",
+          "description": "Send replies to leads by email, LinkedIn or WhatsApp as you."
+        },
+        "campaignsRead": {
+          "label": "Read campaigns",
+          "description": "List email campaigns."
+        },
+        "campaignsWrite": {
+          "label": "Manage campaign leads",
+          "description": "Add leads to email campaigns and stop their sequences."
+        }
+      },
+      "keysTitle": "Keys",
+      "keysActive": "{count, plural, one {# active} other {# active}}",
+      "empty": "No keys yet.",
+      "revoked": "Revoked",
+      "keyMeta": "<code>{prefix}…</code> · Created {created} · Last used {lastUsed}",
+      "fullAccess": "Full access",
+      "noAccess": "No access",
+      "revoke": "Revoke"
+    },
+    "access": {
+      "loadFailed": "Could not load the organization.",
+      "generic": "Something went wrong.",
+      "network": "Network error. Try again."
+    }
+  }
 }

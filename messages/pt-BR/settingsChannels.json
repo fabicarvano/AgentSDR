@@ -1,3 +1,538 @@
 {
-  "settingsChannels": {}
+  "settingsChannels": {
+    "platformConnection": {
+      "comingSoon": "Em breve",
+      "willPower": "Vai habilitar: {features}",
+      "connected": "Conectado",
+      "notConnected": "Não conectado",
+      "powers": "Habilita: {features}",
+      "setupGuideLink": "Guia de configuração",
+      "disconnect": "Desconectar",
+      "edit": "Editar",
+      "connect": "Conectar",
+      "lastVerified": "Última verificação",
+      "webhookUrl": "URL do webhook",
+      "webhookUrlHint": "Cole no campo Subscriber URL de um webhook do {name}. Ela identifica a sua organização, então use uma por organização.",
+      "webhookUrlMissing": "Defina BETTER_AUTH_URL com o endereço público desta instalação para obter a URL do webhook.",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "showSecret": "Mostrar segredo",
+      "hideSecret": "Ocultar segredo",
+      "disconnectDialog": {
+        "title": "Desconectar {name}?",
+        "description": "Os recursos a seguir deixarão de funcionar até a conexão ser refeita: {features}.",
+        "errorTitle": "Não foi possível desconectar {name}",
+        "errorDescription": "Algo deu errado. Tente novamente."
+      },
+      "langfuse": {
+        "title": "Prompts",
+        "uploaded": "No Langfuse",
+        "failed": "Falha no envio",
+        "notUploaded": "Ainda não enviados",
+        "uploadedDescription": "Em {when}, o AgentSDR enviou {created, plural, one {# prompt} other {# prompts}} para este projeto, com o rótulo production. Edite-os no Langfuse: o AgentSDR usa a versão production.",
+        "uploadedWithExistingDescription": "Em {when}, o AgentSDR enviou {created, plural, one {# prompt} other {# prompts}} para este projeto, com o rótulo production; {existing, plural, one {# prompt já estava lá e foi mantido como está} other {# prompts já estavam lá e foram mantidos como estão}}. Edite-os no Langfuse: o AgentSDR usa a versão production.",
+        "failedDescription": "{message} Edite e salve a conexão para tentar de novo.",
+        "failedFallback": "O Langfuse não aceitou os prompts.",
+        "notUploadedDescription": "O AgentSDR envia os prompts quando a conexão é salva. Edite e salve a conexão para enviá-los."
+      },
+      "unipile": {
+        "title": "Webhooks",
+        "registeredCount": "{count, plural, one {# registrado} other {# registrados}}",
+        "failed": "Falha no registro",
+        "skipped": "Não registrados",
+        "notRegisteredYet": "Ainda não registrados",
+        "registeredDescription": "O AgentSDR os registrou no seu espaço de trabalho do Unipile em {when}, para que respostas, convites aceitos e mensagens do WhatsApp cheguem aqui.",
+        "defaultDescription": "O AgentSDR os registra no seu espaço de trabalho do Unipile, para que respostas, convites aceitos e mensagens do WhatsApp cheguem aqui.",
+        "hideUrls": "Ocultar URLs",
+        "loading": "Carregando…",
+        "showUrls": "Mostrar URLs e segredo",
+        "registering": "Registrando…",
+        "registerAgain": "Registrar de novo",
+        "register": "Registrar webhooks",
+        "registerError": "Não foi possível registrar os webhooks.",
+        "loadError": "Não foi possível carregar os detalhes dos webhooks.",
+        "manualHint": "Necessário só para registrar os webhooks manualmente. Cada URL é chamada com o cabeçalho <code>x-unipile-secret</code> definido com o segredo abaixo.",
+        "endpointsMissing": "Defina BETTER_AUTH_URL com o endereço público do app para obter as URLs dos webhooks.",
+        "secret": "Segredo"
+      },
+      "guide": {
+        "title": "Como conectar",
+        "steps": "{count, plural, one {# passo} other {# passos}}"
+      },
+      "dialog": {
+        "titleEdit": "Editar {name}",
+        "titleConnect": "Conectar {name}",
+        "description": "Tudo é testado no {name} antes de ser salvo.",
+        "guideLink": "Guia passo a passo",
+        "videoLink": "Ver como fazer",
+        "docsLink": "Documentação do {name}",
+        "filledFrom": "Campos preenchidos a partir de {file}. Confira os valores e conecte.",
+        "fillHint": "Preenche os campos abaixo. O arquivo fica no seu navegador.",
+        "savedPlaceholder": "Salvo — deixe em branco para manter",
+        "errorTitle": "Não foi possível conectar",
+        "saveError": "Não foi possível salvar a integração",
+        "networkError": "Erro de rede — tente novamente",
+        "readFileError": "Não foi possível ler esse arquivo",
+        "cancel": "Cancelar",
+        "testing": "Testando…",
+        "save": "Salvar",
+        "connectAndTest": "Conectar e testar"
+      }
+    },
+    "channelRulesForm": {
+      "days": {
+        "sun": "Dom",
+        "mon": "Seg",
+        "tue": "Ter",
+        "wed": "Qua",
+        "thu": "Qui",
+        "fri": "Sex",
+        "sat": "Sáb"
+      },
+      "defaultAnyTime": "qualquer horário",
+      "defaultNone": "nenhum",
+      "timeZone": "Fuso horário",
+      "anyTime": "Qualquer horário",
+      "setHours": "Definir horários",
+      "daysGroup": "Dias",
+      "start": "Início",
+      "end": "Fim",
+      "to": "até",
+      "clearHours": "Limpar: enviar em qualquer horário",
+      "country": "País",
+      "countryNone": "Nenhum (números precisam de + e código do país)",
+      "lowest": "Mínimo",
+      "highest": "Máximo",
+      "default": "Padrão: {value}",
+      "useDefault": "Usar padrão",
+      "readOnly": "Somente proprietários e administradores podem alterar isto.",
+      "saved": "Salvo. Os envios passam a seguir estas regras em até um minuto.",
+      "saveError": "Não foi possível salvar as regras de envio.",
+      "discard": "Descartar",
+      "saving": "Salvando…",
+      "save": "Salvar alterações"
+    },
+    "recorderExtension": {
+      "title": "Extensão Call Recorder",
+      "notInstalled": "Não instalada neste navegador",
+      "updateAvailable": "Atualização disponível",
+      "updateAvailableWithVersion": "Atualização disponível · você tem a {version}",
+      "upToDate": "Atualizada",
+      "description": "Faz chamadas de WhatsApp pelo AgentSDR e as grava. Somente no Chrome, carregada sem compactação.",
+      "latestVersion": "Versão mais recente: {version}",
+      "howToUpdate": "Como atualizar",
+      "howToInstall": "Como instalar",
+      "setupGuide": "Guia de configuração",
+      "update": "Atualizar",
+      "download": "Baixar",
+      "firstTime": {
+        "title": "Primeira instalação",
+        "step1": "Baixe o arquivo e descompacte.",
+        "step2": "Mova a pasta <code>agentsdr-call-recorder</code> para um lugar onde ela possa ficar, como Documentos.",
+        "step3": "Abra <code>chrome://extensions</code>, ative o Modo do desenvolvedor, clique em Carregar sem compactação e escolha essa pasta."
+      },
+      "toUpdate": {
+        "title": "Para atualizar",
+        "step1": "Clique em Atualizar. A extensão baixa a nova versão e se recarrega sozinha.",
+        "step2": "Na primeira vez, ela pede a própria pasta: a que aparece em Origem, em <code>chrome://extensions</code> → Detalhes. Permita que o Chrome a edite.",
+        "step3": "Recarregue o WhatsApp Web antes da próxima chamada.",
+        "oldVersions": "As versões anteriores à {version} não têm o botão Atualizar: substitua a pasta por um download novo uma vez e clique na seta de recarregar em <code>chrome://extensions</code>."
+      }
+    },
+    "workingHours": {
+      "days": {
+        "monday": "Segunda",
+        "tuesday": "Terça",
+        "wednesday": "Quarta",
+        "thursday": "Quinta",
+        "friday": "Sexta",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+      },
+      "title": "Horários de envio",
+      "descriptionNamed": "{address} só envia dentro desta janela. E-mails agendados para fora dela esperam o próximo horário disponível.",
+      "description": "Esta caixa de e-mail só envia dentro desta janela. E-mails agendados para fora dela esperam o próximo horário disponível.",
+      "timezone": "Fuso horário",
+      "timezoneHint": "Os dias e horários abaixo seguem este fuso horário.",
+      "daysLegend": "Dias",
+      "daysSummary": "{count, plural, =0 {Nenhum dia ativo — esta caixa de e-mail não enviará.} one {Envia # dia por semana.} other {Envia # dias por semana.}}",
+      "dayStart": "{day}: início",
+      "dayEnd": "{day}: fim",
+      "to": "até",
+      "notSending": "Sem envio",
+      "inverted": "{count, plural, one {{days} termina antes de começar, então nada será enviado nesse dia.} other {{days} terminam antes de começar, então nada será enviado nesses dias.}}",
+      "saveError": "Os horários de envio não foram salvos. Tente novamente.",
+      "networkError": "Não foi possível acessar o servidor. Tente novamente.",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "save": "Salvar horários"
+    },
+    "emailConnection": {
+      "title": "Conexão de e-mail",
+      "description": "A conta de serviço do Google Workspace que envia e lê o Gmail de todas as caixas de e-mail em E-mail → Caixas de e-mail. O Microsoft Outlook chega em breve.",
+      "outlook": {
+        "description": "Envie e leia e-mails de caixas do Microsoft 365 e do Outlook, conectadas pelo Microsoft Azure.",
+        "enablesMailboxes": "caixas do Outlook",
+        "enablesCampaigns": "campanhas de e-mail",
+        "enablesInbox": "sincronização da caixa de entrada"
+      }
+    },
+    "emailRules": {
+      "title": "Regras de envio de e-mail",
+      "description": "Com que velocidade e em quais horários as caixas de e-mail enviam. Os padrões servem para uma caixa do Google Workspace já aquecida; altere-os só se você conhecer a sua reputação de envio."
+    },
+    "linkedinConnection": {
+      "title": "Conexão do LinkedIn",
+      "description": "O Unipile conecta suas contas do LinkedIn para convites, mensagens, busca e sincronização da caixa de entrada.",
+      "unipileNote": "A mesma conexão do Unipile também habilita o WhatsApp; alterá-la aqui a altera lá também."
+    },
+    "linkedinRules": {
+      "title": "Regras de envio do LinkedIn",
+      "description": "Quantos convites e mensagens cada conta envia, com que velocidade e em quais horários. O LinkedIn restringe contas que andam rápido demais, por isso os padrões são conservadores."
+    },
+    "whatsappConnection": {
+      "title": "Integrações do WhatsApp",
+      "description": "O Unipile conecta seus números de WhatsApp para mensagens e chamadas. As chamadas feitas pelo AgentSDR são gravadas pela extensão Call Recorder e armazenadas no seu bucket do Cloudflare R2, junto com as fotos dos contatos. A transcrição usa o modelo escolhido em Provedor de IA.",
+      "unipileNote": "A mesma conexão do Unipile também habilita o LinkedIn; alterá-la aqui a altera lá também.",
+      "gologinNote": "Necessário apenas para números de chamada na nuvem (Configurações → WhatsApp → Números de chamada).",
+      "calcomNote": "Necessário apenas para campanhas de chamadas com IA que agendam reuniões: avisa quando um lead agenda."
+    },
+    "whatsappRules": {
+      "title": "Regras de envio do WhatsApp",
+      "description": "Com que velocidade os números podem iniciar conversas e enviar. O WhatsApp bane números que enviam mensagens a muitos desconhecidos rapidamente."
+    },
+    "rules": {
+      "email": {
+        "dailySendLimit": {
+          "label": "E-mails por dia, por caixa de e-mail",
+          "help": "Quantos e-mails por dia uma caixa recém-conectada envia. Caixas aquecidas podem enviar mais; as novas devem começar com pouco.",
+          "unit": "e-mails / dia",
+          "warning": "Acima de cerca de 50 por dia em uma caixa do Google Workspace, a entregabilidade costuma cair e o Google pode limitar os envios.",
+          "override": "Cada caixa de e-mail pode definir o próprio limite em E-mail → Caixas de e-mail."
+        },
+        "sendGapMinutes": {
+          "label": "Intervalo entre e-mails de uma mesma caixa",
+          "help": "Depois de cada envio, a caixa espera um tempo aleatório dentro deste intervalo antes do próximo, para que o envio pareça humano.",
+          "unit": "minutos",
+          "warning": "Enviar com intervalo menor que 10 minutos em uma mesma caixa parece automatizado para os filtros de spam."
+        },
+        "sendingHours": {
+          "label": "Horários de envio para caixas novas",
+          "help": "Quando uma caixa recém-conectada pode enviar. Cada caixa pode alterar os próprios horários em E-mail → Caixas de e-mail."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Intervalo entre follow-ups automáticos do CRM, por caixa de e-mail",
+          "help": "Uma sequência do CRM configurada para enviar follow-ups automaticamente envia no máximo um por caixa de e-mail nesse intervalo, do mais antigo ao mais recente; assim, os follow-ups que vencem juntos saem distribuídos ao longo do dia.",
+          "unit": "minutos",
+          "warning": "Follow-ups com menos de 15 minutos de intervalo em uma mesma caixa de e-mail parecem automatizados."
+        }
+      },
+      "linkedin": {
+        "invitesPerDayPremium": {
+          "label": "Convites por dia, contas Premium",
+          "help": "Solicitações de conexão que uma conta do LinkedIn com Premium ou Sales Navigator envia por dia.",
+          "unit": "convites / dia",
+          "warning": "O LinkedIn restringe contas que enviam bem mais de 30 convites por dia.",
+          "override": "Cada conta pode definir o próprio limite em LinkedIn → Contas."
+        },
+        "invitesPerDayFree": {
+          "label": "Convites por dia, contas gratuitas",
+          "help": "Solicitações de conexão que uma conta gratuita do LinkedIn envia por dia.",
+          "unit": "convites / dia",
+          "warning": "Contas gratuitas têm uma cota semanal de convites bem menor; mais de 10 por dia a esgota rápido.",
+          "override": "Cada conta pode definir o próprio limite em LinkedIn → Contas."
+        },
+        "invitesPerRun": {
+          "label": "Convites por rodada",
+          "help": "Cada rodada de envio manda uma quantidade aleatória de convites dentro deste intervalo e, depois, a conta descansa.",
+          "unit": "convites",
+          "warning": "Rajadas grandes parecem automatizadas; mantenha rodadas pequenas e frequentes."
+        },
+        "inviteDelaySeconds": {
+          "label": "Intervalo entre convites",
+          "help": "Dentro de uma rodada, a espera entre dois convites.",
+          "unit": "segundos",
+          "warning": "Convites com menos de 20 segundos de intervalo parecem automatizados."
+        },
+        "runGapMinutes": {
+          "label": "Descanso entre rodadas",
+          "help": "Depois de uma rodada, a conta descansa um tempo aleatório dentro deste intervalo antes da próxima.",
+          "unit": "minutos",
+          "warning": "Descansar menos de 20 minutos entre rodadas faz a atividade parecer contínua."
+        },
+        "followUpsPerRun": {
+          "label": "Mensagens de follow-up por rodada",
+          "help": "Mensagens para quem aceitou o convite, enviadas a cada rodada.",
+          "unit": "mensagens",
+          "warning": "Muitas mensagens em uma só rajada parecem automatizadas."
+        },
+        "profileLookupsPerRun": {
+          "label": "Consultas de perfil por rodada",
+          "help": "Perfis abertos por rodada para encontrar o membro do LinkedIn por trás de um lead.",
+          "unit": "perfis",
+          "warning": "Visitar muitos perfis rapidamente pode acionar os limites do LinkedIn."
+        },
+        "searchLeadsPerDay": {
+          "label": "Leads de busca por dia, por conta",
+          "help": "Quantos leads uma conta puxa das buscas do LinkedIn por dia.",
+          "unit": "leads / dia",
+          "warning": "Buscar em excesso é uma das formas mais rápidas de ter uma conta limitada."
+        },
+        "workingHours": {
+          "label": "Horário de trabalho para contas sem horário próprio",
+          "help": "Qualquer horário, a menos que você defina horários aqui. O horário de trabalho próprio de uma conta (LinkedIn → Contas) sempre prevalece."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Intervalo entre follow-ups automáticos do CRM, por conta",
+          "help": "Uma sequência do CRM configurada para enviar follow-ups automaticamente envia no máximo um por conta nesse intervalo, do mais antigo ao mais recente; assim, os follow-ups que vencem juntos saem distribuídos ao longo do dia.",
+          "unit": "minutos",
+          "warning": "Follow-ups com menos de 15 minutos de intervalo em uma mesma conta parecem automatizados."
+        }
+      },
+      "whatsapp": {
+        "sendingHours": {
+          "label": "Horários de envio de campanhas e follow-ups automáticos",
+          "help": "Qualquer horário, a menos que você defina horários aqui. As mensagens de campanha e os follow-ups automáticos do CRM só saem dentro desses horários; as mensagens que você envia por conta própria não são afetadas."
+        },
+        "warmupHours": {
+          "label": "Aquecimento após vincular um número",
+          "help": "Um número recém-vinculado responde a conversas existentes na hora, mas não inicia conversas novas durante este tempo.",
+          "unit": "horas",
+          "warning": "Números novos que escrevem para desconhecidos no primeiro dia são banidos com muito mais frequência."
+        },
+        "newChatsPerDay": {
+          "label": "Novas conversas por dia, por número",
+          "help": "Conversas que um número pode iniciar em uma janela móvel de 24 horas. Respostas a quem escreveu primeiro não contam.",
+          "unit": "conversas / dia",
+          "warning": "O WhatsApp bane números que iniciam muitas conversas com pessoas que não os têm salvos.",
+          "override": "Cada número pode definir o próprio limite em WhatsApp → Números."
+        },
+        "secondsBetweenSends": {
+          "label": "Segundos entre mensagens, por número",
+          "help": "O menor intervalo entre duas mensagens enviadas de um mesmo número.",
+          "unit": "segundos",
+          "warning": "Mensagens enviadas com menos de 10 segundos de intervalo parecem automatizadas."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Intervalo entre follow-ups automáticos do CRM, por número",
+          "help": "Uma sequência do CRM configurada para enviar follow-ups automaticamente envia no máximo um por número nesse intervalo, do mais antigo ao mais recente; assim, os follow-ups que vencem juntos saem distribuídos ao longo do dia.",
+          "unit": "minutos",
+          "warning": "Follow-ups com menos de 15 minutos de intervalo em um mesmo número parecem automatizados."
+        },
+        "callsPerDay": {
+          "label": "Chamadas de campanhas de IA por dia, por número",
+          "help": "Quantas chamadas as campanhas de IA fazem por dia a partir de um número de chamada, depois que o aquecimento termina.",
+          "unit": "chamadas / dia",
+          "warning": "Muitas chamadas por dia para pessoas que não têm o número salvo é o que leva números de WhatsApp a serem banidos.",
+          "override": "Cada número de chamada pode definir o próprio limite em WhatsApp → Números de chamada."
+        },
+        "callWarmupDays": {
+          "label": "Aquecimento das primeiras chamadas de campanha de IA de um número",
+          "help": "Durante este número de dias após a primeira chamada de campanha de IA de um número, ele faz no máximo 10 chamadas por dia na primeira semana, 20 na segunda e assim por diante, até o limite diário. 0 desativa o aquecimento.",
+          "unit": "dias",
+          "warning": "Um número que começa a ligar para desconhecidos com volume total no primeiro dia tem muito mais chance de ser banido."
+        },
+        "callGapMinutes": {
+          "label": "Intervalo entre chamadas de campanha de IA, por número",
+          "help": "Depois de fazer uma chamada, o número espera um tempo aleatório dentro deste intervalo antes da próxima.",
+          "unit": "minutos",
+          "warning": "Chamadas feitas uma logo após a outra parecem automatizadas."
+        },
+        "callingHours": {
+          "label": "Horários de chamada das campanhas de IA",
+          "help": "Quando as campanhas de IA podem ligar e enviar mensagens para leads. Cada número de chamada pode definir os próprios horários.",
+          "override": "Cada número de chamada pode definir os próprios horários em WhatsApp → Números de chamada."
+        }
+      },
+      "general": {
+        "timeZone": {
+          "label": "Fuso horário",
+          "help": "O fuso horário da sua organização. O novo dia abaixo começa nesse fuso."
+        },
+        "dayStartsAt": {
+          "label": "O novo dia começa às",
+          "help": "Os limites diários são reiniciados e a fila de e-mails do dia é montada neste horário."
+        },
+        "defaultPhoneCountry": {
+          "label": "País padrão dos telefones",
+          "help": "O país assumido para números de telefone digitados ou importados sem + e código do país."
+        }
+      }
+    },
+    "integrations": {
+      "unipile": {
+        "description": "Conecta contas do LinkedIn e do WhatsApp para envio, sincronização da caixa de entrada e chamadas.",
+        "settingsLabel": "Configurações → LinkedIn → Conexão",
+        "enables": {
+          "item1": "Contas e campanhas do LinkedIn",
+          "item2": "Mensagens e chamadas do WhatsApp"
+        },
+        "setupSteps": {
+          "step1": "Entre no painel do Unipile em dashboard.unipile.com.",
+          "step2": "Copie seu DSN — o endereço da API exibido no topo do painel.",
+          "step3": "Em Access tokens, gere um token e copie-o. Ele é exibido só uma vez.",
+          "step4": "Salve. O AgentSDR registra por conta própria, no seu espaço de trabalho do Unipile, os webhooks de que precisa, com um segredo que ele mesmo gera."
+        },
+        "fields": {
+          "baseUrl": {
+            "label": "DSN (endereço da API)",
+            "help": "Exibido no topo do painel do Unipile. Cole como aparece — https:// é adicionado se faltar."
+          },
+          "apiKey": {
+            "label": "Token de acesso",
+            "help": "Painel do Unipile → Access tokens → Generate. Copie na hora; o Unipile o mostra só uma vez."
+          },
+          "notifySecret": {
+            "label": "Segredo do webhook",
+            "help": "Deixe em branco: o AgentSDR gera um e registra os webhooks com ele. Preencha apenas para manter um segredo que você já usa."
+          }
+        }
+      },
+      "google": {
+        "description": "Envia e lê o Gmail por meio de uma conta de serviço com delegação em todo o domínio.",
+        "settingsLabel": "Configurações → E-mail → Conexão",
+        "enables": {
+          "item1": "Contas de e-mail",
+          "item2": "Campanhas de e-mail e sincronização de respostas"
+        },
+        "setupSteps": {
+          "step1": "No console do Google Cloud, abra APIs & Services → Library e ative a Gmail API.",
+          "step2": "Abra IAM & Admin → Service accounts → Create service account. Ela não precisa de nenhuma função.",
+          "step3": "Abra a nova conta de serviço → Keys → Add key → Create new key → JSON. Um arquivo de chave será baixado.",
+          "step4": "No console de administração do Google, abra Security → Access and data control → API controls → Manage domain-wide delegation → Add new. Cole o Client ID da conta de serviço (na aba Details) e estes escopos:",
+          "step5": "Envie o arquivo de chave abaixo para preencher os campos ou copie cada valor manualmente."
+        },
+        "fields": {
+          "clientEmail": {
+            "label": "E-mail da conta de serviço",
+            "help": "Console do Google Cloud → IAM & Admin → Service accounts, na coluna Email. Termina em .iam.gserviceaccount.com."
+          },
+          "privateKey": {
+            "label": "Chave privada",
+            "help": "O Google só entrega esta chave dentro de um arquivo de chave JSON (conta de serviço → Keys → Add key → Create new key → JSON). Envie esse arquivo acima ou abra-o e copie o valor de private_key, de -----BEGIN até END PRIVATE KEY-----."
+          },
+          "gmailWatchTopic": {
+            "label": "Tópico Pub/Sub do Gmail",
+            "help": "Console do Google Cloud → Pub/Sub → Topics: crie um tópico, dê ao gmail-api-push@system.gserviceaccount.com a função Pub/Sub Publisher nele e copie o nome completo. O envio funciona sem isso, mas as respostas por e-mail não são captadas."
+          }
+        },
+        "keyFile": {
+          "label": "Enviar arquivo de chave"
+        }
+      },
+      "r2": {
+        "description": "Armazena as gravações de chamadas do WhatsApp e as fotos dos contatos.",
+        "settingsLabel": "Configurações → WhatsApp → Integrações",
+        "enables": {
+          "item1": "Gravações de chamadas",
+          "item2": "Fotos de contatos"
+        },
+        "setupSteps": {
+          "step1": "No painel da Cloudflare, abra R2 Object Storage e crie um bucket para as gravações (ou escolha um existente).",
+          "step2": "Copie o Account ID na página de visão geral do R2.",
+          "step3": "Abra Manage API tokens → Create API token, dê a ele Object Read & Write nesse bucket e copie o Access Key ID e o Secret Access Key. O segredo é exibido só uma vez."
+        },
+        "fields": {
+          "accountId": {
+            "label": "ID da conta",
+            "help": "Painel da Cloudflare → R2 Object Storage, em Account details na página de visão geral."
+          },
+          "bucket": {
+            "label": "Nome do bucket",
+            "help": "O nome do bucket exatamente como aparece em R2 Object Storage."
+          },
+          "accessKeyId": {
+            "label": "ID da chave de acesso",
+            "help": "Exibido ao criar um token de API do R2 (R2 Object Storage → Manage API tokens)."
+          },
+          "secretAccessKey": {
+            "label": "Chave de acesso secreta",
+            "help": "Exibida uma única vez, ao lado do ID da chave de acesso, quando você cria o token."
+          }
+        }
+      },
+      "gologin": {
+        "description": "Perfis de navegador que executam o WhatsApp Web dos números de chamada na nuvem, para que as chamadas do agente de IA possam ser feitas sem depender do notebook de ninguém.",
+        "settingsLabel": "Configurações → WhatsApp → Integrações",
+        "enables": {
+          "item1": "Números de chamada na nuvem (launchers do GoLogin)"
+        },
+        "setupSteps": {
+          "step1": "Entre no GoLogin e abra Settings → API.",
+          "step2": "Crie um novo token de API e copie-o. Ele é exibido só uma vez.",
+          "step3": "Cole-o abaixo e salve. Depois, adicione um número de chamada em Configurações → WhatsApp → Números de chamada."
+        },
+        "fields": {
+          "apiToken": {
+            "label": "Token de API",
+            "help": "GoLogin → Settings → API → New token. Copie na hora; o GoLogin o mostra só uma vez."
+          }
+        }
+      },
+      "calcom": {
+        "description": "Avisa as campanhas de chamadas com IA quando um lead agenda (ou cancela) uma reunião pelo link de agendamento que o agente enviou.",
+        "settingsLabel": "Configurações → WhatsApp → Integrações",
+        "enables": {
+          "item1": "Reuniões agendadas por campanhas de chamadas com IA"
+        },
+        "setupSteps": {
+          "step1": "No Cal.com, abra Settings → Developer → Webhooks e crie um novo webhook.",
+          "step2": "Cole a URL do webhook exibida nesta página (ela leva a sua organização) como Subscriber URL.",
+          "step3": "Ative os gatilhos Booking created, Booking rescheduled e Booking cancelled.",
+          "step4": "Digite um segredo longo e aleatório em Secret, salve o webhook e cole o mesmo segredo abaixo."
+        },
+        "fields": {
+          "webhookSecret": {
+            "label": "Segredo do webhook",
+            "help": "O Secret que você digitou no webhook do Cal.com. O AgentSDR recusa entregas que não estejam assinadas com ele."
+          },
+          "apiKey": {
+            "label": "Chave de API (opcional)",
+            "help": "Cal.com → Settings → Developer → API keys. Por enquanto só é verificada; pode deixar em branco se preferir."
+          }
+        }
+      },
+      "langfuse": {
+        "description": "Guarda os prompts usados pela IA do AgentSDR, versionados e editáveis sem novo deploy, e rastreia cada chamada de IA.",
+        "settingsLabel": "Configurações → Provedor de IA",
+        "enables": {
+          "item1": "Edição dos prompts da IA no Langfuse (com versões)",
+          "item2": "Rastreamentos de cada chamada de IA: entradas, saídas, tokens e custo, com as chamadas telefônicas como sessões"
+        },
+        "setupSteps": {
+          "step1": "No Langfuse (cloud.langfuse.com ou o seu próprio Langfuse v3+), crie um projeto para o AgentSDR ou abra um existente.",
+          "step2": "Abra Settings → API Keys → Create new API keys do projeto. Copie a chave pública e a secreta; a secreta é exibida só uma vez.",
+          "step3": "Cole o host, a chave pública e a chave secreta abaixo.",
+          "step4": "Salve. O AgentSDR envia os prompts dele para o projeto, com o rótulo production. Prompts que já estão no projeto nunca são sobrescritos."
+        },
+        "fields": {
+          "baseUrl": {
+            "label": "Host",
+            "help": "O endereço em que você abre o Langfuse: https://cloud.langfuse.com (UE), https://us.cloud.langfuse.com (EUA) ou o seu Langfuse auto-hospedado. https:// é adicionado se faltar."
+          },
+          "publicKey": {
+            "label": "Chave pública",
+            "help": "Settings do projeto → API Keys, a chave que começa com pk-lf-."
+          },
+          "secretKey": {
+            "label": "Chave secreta",
+            "help": "Exibida uma única vez, ao lado da chave pública, quando você cria as chaves de API. Começa com sk-lf-."
+          }
+        }
+      }
+    },
+    "ruleProblems": {
+      "wholeNumber": "{label} precisa ser um número inteiro",
+      "between": "{label} precisa estar entre {min, number} e {max, number}",
+      "rangeNeedsTwo": "{label} precisa de um valor mínimo e de um máximo, ambos inteiros",
+      "rangeBetween": "{label} precisa ficar entre {min, number} e {max, number}",
+      "rangeOrder": "{label}: o valor mínimo não pode ser maior que o máximo",
+      "invalidHours": "{label}: valor inválido",
+      "unknownTimezone": "{label}: fuso horário desconhecido",
+      "pickDay": "{label}: escolha pelo menos um dia",
+      "timeFormat": "{label}: use horários no formato 09:00",
+      "endAfterStart": "{label}: o fim precisa ser depois do início",
+      "country": "{label} precisa ser um código de país de duas letras, como BR ou US"
+    }
+  }
 }

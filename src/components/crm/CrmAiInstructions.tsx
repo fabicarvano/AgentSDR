@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -58,20 +59,21 @@ function signature(blocks: AiInstructionBlock[]): string {
   return JSON.stringify(blocks.map((b) => [b.id, b.title.trim(), b.content.trim()]));
 }
 
-function validate(blocks: AiInstructionBlock[]): string | null {
-  if (blocks.length > MAX_AI_INSTRUCTION_BLOCKS) {
-    return `At most ${MAX_AI_INSTRUCTION_BLOCKS} instructions (${blocks.length} now).`;
-  }
+/** What is wrong with a list, as data: the component turns it into a sentence in the active language. */
+type Problem =
+  | { kind: "tooMany"; count: number }
+  | { kind: "titleTooLong"; title: string }
+  | { kind: "contentTooLong"; title: string }
+  | { kind: "totalTooLong"; total: number };
+
+function validate(blocks: AiInstructionBlock[]): Problem | null {
+  if (blocks.length > MAX_AI_INSTRUCTION_BLOCKS) return { kind: "tooMany", count: blocks.length };
   const longTitle = blocks.find((b) => b.title.length > MAX_AI_INSTRUCTION_TITLE_LENGTH);
-  if (longTitle) return `“${longTitle.title.slice(0, 30)}…” has a title over ${MAX_AI_INSTRUCTION_TITLE_LENGTH} characters.`;
+  if (longTitle) return { kind: "titleTooLong", title: longTitle.title.slice(0, 30) };
   const longContent = blocks.find((b) => b.content.length > MAX_AI_INSTRUCTION_CONTENT_LENGTH);
-  if (longContent) {
-    return `“${longContent.title.trim() || "Untitled instruction"}” is over ${MAX_AI_INSTRUCTION_CONTENT_LENGTH} characters.`;
-  }
+  if (longContent) return { kind: "contentTooLong", title: longContent.title.trim() };
   const total = renderAiInstructions(blocks)?.length ?? 0;
-  if (total > MAX_AI_INSTRUCTIONS_TOTAL_LENGTH) {
-    return `Together the instructions are ${total} characters; the limit is ${MAX_AI_INSTRUCTIONS_TOTAL_LENGTH}.`;
-  }
+  if (total > MAX_AI_INSTRUCTIONS_TOTAL_LENGTH) return { kind: "totalTooLong", total };
   return null;
 }
 
@@ -94,6 +96,8 @@ function InstructionRow({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("settingsKnowledge.instructions");
+  const format = useFormatter();
   const titleRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) titleRef.current?.focus();
@@ -116,8 +120,8 @@ function InstructionRow({
           size="xsmall"
           aria-expanded={expanded}
           aria-controls={panelId}
-          aria-label={expanded ? "Collapse instruction" : "Expand instruction"}
-          title={expanded ? "Collapse" : "Expand"}
+          aria-label={expanded ? t("row.collapseAria") : t("row.expandAria")}
+          title={expanded ? t("row.collapseTitle") : t("row.expandTitle")}
           onClick={onToggle}
         >
           <Button.Icon as={RiArrowDownSLine} className={cn("transition-transform duration-200", expanded && "rotate-180")} />
@@ -127,18 +131,18 @@ function InstructionRow({
           type="text"
           value={block.title}
           maxLength={MAX_AI_INSTRUCTION_TITLE_LENGTH}
-          placeholder="Untitled instruction"
-          aria-label="Instruction title"
+          placeholder={t("untitled")}
+          aria-label={t("row.titleAria")}
           onChange={(event) => onChange({ title: event.target.value })}
           className="h-8 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-label-sm text-text-strong-950 outline-none ring-1 ring-inset ring-transparent transition placeholder:text-text-soft-400 hover:ring-stroke-soft-200 focus:bg-bg-white-0 focus:shadow-button-important-focus focus:ring-stroke-strong-950"
         />
         {!expanded && (
           <span className={cn("hidden shrink-0 text-paragraph-xs tabular-nums sm:inline", over ? "text-error-base" : "text-text-soft-400")}>
-            {block.content.trim() ? `${block.content.length.toLocaleString("en-US")} chars` : "Empty"}
+            {block.content.trim() ? t("row.chars", { count: block.content.length }) : t("row.empty")}
           </span>
         )}
-        <IconButton label="Duplicate instruction" icon={RiFileCopyLine} onClick={onDuplicate} />
-        <IconButton label="Delete instruction" icon={RiDeleteBinLine} onClick={onDelete} className="hover:text-error-base" />
+        <IconButton label={t("row.duplicate")} icon={RiFileCopyLine} onClick={onDuplicate} />
+        <IconButton label={t("row.delete")} icon={RiDeleteBinLine} onClick={onDelete} className="hover:text-error-base" />
       </div>
       {expanded && (
         <div id={panelId} className="px-3 pb-3 sm:pl-12 sm:pr-4">
@@ -148,12 +152,12 @@ function InstructionRow({
             value={block.content}
             placeholder={placeholder}
             hasError={over}
-            aria-label={`${block.title.trim() || "Untitled instruction"} — instruction text`}
+            aria-label={t("row.textAria", { title: block.title.trim() || t("untitled") })}
             onChange={(event) => onChange({ content: event.target.value })}
             className="resize-y"
           />
           <div className={cn("mt-1 text-right text-paragraph-xs tabular-nums", over ? "text-error-base" : "text-text-sub-600")}>
-            {block.content.length.toLocaleString("en-US")} / {MAX_AI_INSTRUCTION_CONTENT_LENGTH.toLocaleString("en-US")}
+            {format.number(block.content.length)} / {format.number(MAX_AI_INSTRUCTION_CONTENT_LENGTH)}
           </div>
         </div>
       )}
@@ -162,10 +166,6 @@ function InstructionRow({
 }
 
 export function InstructionSection({
-  title,
-  helper,
-  placeholder,
-  emptyText,
   exportName,
   field,
   saved,
@@ -174,10 +174,6 @@ export function InstructionSection({
   defaults,
   customized: savedCustomized,
 }: {
-  title: string;
-  helper: string;
-  placeholder: string;
-  emptyText: string;
   exportName: string;
   field: InstructionField;
   saved: AiInstructionBlock[];
@@ -187,6 +183,7 @@ export function InstructionSection({
   defaults?: AiInstructionBlock[];
   customized?: boolean;
 }) {
+  const t = useTranslations("settingsKnowledge.instructions");
   const dialogs = useDialogs();
   const [blocks, setBlocks] = useState(saved);
   const [expanded, setExpanded] = useState<Set<string>>(
@@ -199,8 +196,22 @@ export function InstructionSection({
   const [copied, setCopied] = useState(false);
   const [customized, setCustomized] = useState(savedCustomized ?? true);
 
+  const describeProblem = (found: Problem): string => {
+    switch (found.kind) {
+      case "tooMany":
+        return t("problem.tooMany", { max: MAX_AI_INSTRUCTION_BLOCKS, count: found.count });
+      case "titleTooLong":
+        return t("problem.titleTooLong", { title: found.title, max: MAX_AI_INSTRUCTION_TITLE_LENGTH });
+      case "contentTooLong":
+        return t("problem.contentTooLong", { title: found.title || t("untitled"), max: MAX_AI_INSTRUCTION_CONTENT_LENGTH });
+      case "totalTooLong":
+        return t("problem.totalTooLong", { total: found.total, max: MAX_AI_INSTRUCTIONS_TOTAL_LENGTH });
+    }
+  };
+
   const dirty = signature(blocks) !== signature(saved);
-  const problem = validate(blocks);
+  const problemFound = validate(blocks);
+  const problem = problemFound ? describeProblem(problemFound) : null;
   const empty = blocks.length === 0;
   const allExpanded = !empty && blocks.every((b) => expanded.has(b.id));
 
@@ -225,16 +236,16 @@ export function InstructionSection({
   const duplicate = (index: number) => {
     const source = blocks[index];
     const id = newId();
-    const copy = { id, title: `${source.title.trim()} (copy)`.trim(), content: source.content };
+    const copy = { id, title: t("duplicateTitle", { title: source.title.trim() }).trim(), content: source.content };
     edit([...blocks.slice(0, index + 1), copy, ...blocks.slice(index + 1)]);
     setOpen(id, true);
   };
   const remove = async (block: AiInstructionBlock) => {
     if (block.content.trim()) {
       const confirmed = await dialogs.confirm({
-        title: "Delete instruction?",
-        description: `“${block.title.trim() || "Untitled instruction"}” will be removed from this list. Save to apply it.`,
-        confirmLabel: "Delete instruction",
+        title: t("confirmDelete.title"),
+        description: t("confirmDelete.description", { title: block.title.trim() || t("untitled") }),
+        confirmLabel: t("confirmDelete.confirm"),
         variant: "error",
       });
       if (!confirmed) return;
@@ -249,7 +260,7 @@ export function InstructionSection({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      setError("Could not copy to the clipboard.");
+      setError(t("section.copyError"));
     }
   };
   const exportJson = () => {
@@ -293,9 +304,9 @@ export function InstructionSection({
   const resetToDefaults = async () => {
     if (!defaults) return;
     const confirmed = await dialogs.confirm({
-      title: "Reset to the default instructions?",
-      description: "Your edits are replaced by the built-in instructions. Save is not needed.",
-      confirmLabel: "Reset",
+      title: t("confirmReset.title"),
+      description: t("confirmReset.description"),
+      confirmLabel: t("confirmReset.confirm"),
       variant: "error",
     });
     if (!confirmed) return;
@@ -324,22 +335,22 @@ export function InstructionSection({
   return (
     <Frame>
       <FrameHeader
-        title={title}
-        description={helper}
+        title={t(`sections.${field}.title`)}
+        description={t(`sections.${field}.helper`)}
         actions={
           <div className="flex items-center gap-0.5">
-            {copied && <span role="status" className="mr-1 text-paragraph-xs text-success-base">Copied</span>}
-            <IconButton label={copied ? "Copied" : "Copy all"} icon={RiFileList2Line} disabled={empty} onClick={() => void copyAll()} />
-            <IconButton label="Export JSON" icon={RiBracesLine} disabled={empty} onClick={exportJson} />
+            {copied && <span role="status" className="mr-1 text-paragraph-xs text-success-base">{t("section.copied")}</span>}
+            <IconButton label={copied ? t("section.copied") : t("section.copyAll")} icon={RiFileList2Line} disabled={empty} onClick={() => void copyAll()} />
+            <IconButton label={t("section.exportJson")} icon={RiBracesLine} disabled={empty} onClick={exportJson} />
             <IconButton
-              label={allExpanded ? "Collapse all" : "Expand all"}
+              label={allExpanded ? t("section.collapseAll") : t("section.expandAll")}
               icon={allExpanded ? RiArrowUpDoubleLine : RiArrowDownDoubleLine}
               disabled={empty}
               onClick={() => setExpanded(allExpanded ? new Set() : new Set(blocks.map((b) => b.id)))}
             />
             <Button.Root type="button" variant="neutral" mode="stroke" size="xsmall" className="ml-1.5" disabled={blocks.length >= MAX_AI_INSTRUCTION_BLOCKS} onClick={add}>
               <Button.Icon as={RiAddLine} />
-              Add instruction
+              {t("section.add")}
             </Button.Root>
           </div>
         }
@@ -347,19 +358,19 @@ export function InstructionSection({
       <FramePanel className="overflow-hidden p-0 sm:p-0">
         {defaults && !customized && !dirty && (
           <p className="border-b border-stroke-soft-200 bg-bg-weak-50 px-3 py-2 text-paragraph-xs text-text-sub-600 sm:px-4">
-            These are the built-in instructions. Edit them and save to make them yours; Reset to defaults brings them back.
+            {t("section.defaultsNotice")}
           </p>
         )}
         {empty ? (
           <EmptyState
             compact
             icon={RiQuillPenLine}
-            title="No instructions yet"
-            description={emptyText}
+            title={t("section.emptyTitle")}
+            description={t(`sections.${field}.emptyText`)}
             action={
               <Button.Root type="button" variant="neutral" mode="stroke" size="small" onClick={add}>
                 <Button.Icon as={RiAddLine} />
-                Add instruction
+                {t("section.add")}
               </Button.Root>
             }
           />
@@ -371,7 +382,7 @@ export function InstructionSection({
                 block={block}
                 expanded={expanded.has(block.id)}
                 autoFocus={focusId === block.id}
-                placeholder={placeholder}
+                placeholder={t(`sections.${field}.placeholder`)}
                 onToggle={() => setOpen(block.id, !expanded.has(block.id))}
                 onChange={(patch) => edit(blocks.map((b) => (b.id === block.id ? { ...b, ...patch } : b)))}
                 onDuplicate={() => duplicate(index)}
@@ -388,26 +399,26 @@ export function InstructionSection({
           ) : error ? (
             <span role="alert" className="text-error-base">{error}</span>
           ) : success && !dirty ? (
-            <span role="status" className="text-success-base">Saved</span>
+            <span role="status" className="text-success-base">{t("section.saved")}</span>
           ) : dirty ? (
-            <span className="text-warning-dark">Unsaved changes</span>
+            <span className="text-warning-dark">{t("section.unsaved")}</span>
           ) : (
             <span className="tabular-nums text-text-sub-600">
-              {blocks.length} of {MAX_AI_INSTRUCTION_BLOCKS} instructions · {total.toLocaleString("en-US")} of {MAX_AI_INSTRUCTIONS_TOTAL_LENGTH.toLocaleString("en-US")} characters
+              {t("section.summary", { count: blocks.length, max: MAX_AI_INSTRUCTION_BLOCKS, total, maxTotal: MAX_AI_INSTRUCTIONS_TOTAL_LENGTH })}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {defaults && (
             <Button.Root type="button" variant="neutral" mode="ghost" size="small" disabled={saving || (!customized && !dirty)} onClick={() => void resetToDefaults()}>
-              Reset to defaults
+              {t("section.resetDefaults")}
             </Button.Root>
           )}
           <Button.Root type="button" variant="neutral" mode="stroke" size="small" disabled={!dirty || saving} onClick={discard}>
-            Discard
+            {t("section.discard")}
           </Button.Root>
           <Button.Root type="button" variant="primary" mode="filled" size="small" disabled={!dirty || saving || !!problem || !pipelineId} onClick={() => void save()}>
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("section.saving") : t("section.save")}
           </Button.Root>
         </div>
       </footer>
@@ -415,27 +426,13 @@ export function InstructionSection({
   );
 }
 
+/**
+ * The text of each section (title, helper, placeholder, empty state) lives in the catalog under
+ * settingsKnowledge.instructions.sections.<field>. Only the download file names stay here, in English on
+ * purpose: they are file names, not interface text.
+ */
 export const INSTRUCTION_SECTIONS = {
-  draftInstructions: {
-    title: "Reply drafting",
-    helper: "Added to every draft the AI writes — email, LinkedIn and WhatsApp.",
-    placeholder: "Sign off as Priya from Youse. Keep emails under 120 words. Never offer discounts; suggest a 20-minute call instead.",
-    emptyText: "No instructions yet — add one to shape every draft.",
-    exportName: "reply-drafting-instructions.json",
-  },
-  classificationInstructions: {
-    title: "Reply classification",
-    helper: "Added to every classification of a reply or call.",
-    placeholder: "A referral to a colleague counts as Interested, not Other. Replies from agencies are Not interested.",
-    emptyText: "No instructions yet — add one to shape every classification.",
-    exportName: "reply-classification-instructions.json",
-  },
-  callingInstructions: {
-    title: "Calling",
-    helper:
-      "How the AI agent runs every WhatsApp call: the opening, the shape of the call, how it talks. Use {{agentName}} and {{firstName}}. Who it is, being honest that it is an AI, each campaign's goal and how a call ends stay fixed. Try changes with a rehearsal call on a campaign's sequence.",
-    placeholder: "Never mention competitors by name. If they say they already use an agency, ask what the agency does for their landing pages.",
-    emptyText: "No calling instructions — saving an empty list brings back the defaults.",
-    exportName: "calling-instructions.json",
-  },
-} as const satisfies Record<InstructionField, { title: string; helper: string; placeholder: string; emptyText: string; exportName: string }>;
+  draftInstructions: { exportName: "reply-drafting-instructions.json" },
+  classificationInstructions: { exportName: "reply-classification-instructions.json" },
+  callingInstructions: { exportName: "calling-instructions.json" },
+} as const satisfies Record<InstructionField, { exportName: string }>;

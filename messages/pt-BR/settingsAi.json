@@ -1,3 +1,193 @@
 {
-  "settingsAi": {}
+  "settingsAi": {
+    "page": {
+      "title": "Provedor de IA",
+      "description": "A conexão com o OpenRouter e os modelos que todos os recursos de IA usam, e onde ficam os prompts e os rastreamentos.",
+      "tracingTitle": "Prompts e rastreamento (Langfuse)",
+      "tracingDescription": "Opcional e salvo separadamente. Conecte um projeto do Langfuse para editar os prompts da IA por lá e ver cada chamada que ela faz. Sem isso, os recursos de IA usam os prompts embutidos no AgentSDR e nada é rastreado."
+    },
+    "assistantsPage": {
+      "title": "Assistentes de IA",
+      "description": "Conecte o Claude para trabalhar sua fila de Ação necessária: ler conversas, editar e enviar respostas, mudar etapas."
+    },
+    "byok": {
+      "errors": {
+        "generic": "Algo deu errado. Tente novamente.",
+        "load": "Não foi possível carregar as configurações de IA.",
+        "refresh": "Não foi possível atualizar os provedores BYOK.",
+        "keysRequired": "Informe a chave de API de inferência e a chave de API de gerenciamento.",
+        "noConnectionRecord": "A conta foi criada sem um registro de conexão.",
+        "connect": "Não foi possível conectar o OpenRouter.",
+        "save": "Não foi possível salvar as configurações de IA.",
+        "needConnection": "Conecte uma conta OpenRouter antes de salvar.",
+        "needProvider": "Selecione pelo menos um provedor BYOK.",
+        "needModel": "Selecione pelo menos um modelo.",
+        "needDefaultModel": "Escolha um modelo padrão.",
+        "needSharedCapacityConfirmation": "Confirme que o fallback de capacidade compartilhada do OpenRouter está definido como “Never use shared capacity”."
+      },
+      "success": {
+        "refreshed": "Provedores BYOK atualizados.",
+        "connected": "Conta OpenRouter conectada e verificada.",
+        "saved": "Configurações de IA salvas."
+      },
+      "picker": {
+        "noPrioritized": "Este provedor só tem credenciais na seção de fallback. Mova ou adicione uma chave na seção BYOK priorizada do OpenRouter.",
+        "restricted": "Esta chave é restrita a {count, plural, one {# modelo} other {# modelos}}, mas nenhum pôde ser associado a um modelo de texto ou imagem do OpenRouter que possa ser selecionado.",
+        "azureHint": "Para deployments do Azure, defina <code>model_slug</code> e <b>This key applies to</b> como o ID canônico (por exemplo, <code>openai/gpt-4o</code>), e não o nome do deployment do Azure.",
+        "noModels": "O OpenRouter não retornou modelos de texto ou imagem para este provedor. Atualize depois de conferir a configuração do provedor.",
+        "enableAria": "Ativar {name}",
+        "credentials": "<code>{slug}</code> · {prioritized, plural, one {# credencial priorizada} other {# credenciais priorizadas}}",
+        "credentialsWithFallback": "<code>{slug}</code> · {prioritized, plural, one {# credencial priorizada} other {# credenciais priorizadas}} · {fallback} só de fallback",
+        "selectedBadge": "{count, plural, one {# selecionado} other {# selecionados}}",
+        "reviewSettings": "Revisar configurações de BYOK de {name}",
+        "modelsSelected": "{count, plural, one {# modelo selecionado} other {# modelos selecionados}}",
+        "selectModels": "Selecionar modelos de {name}",
+        "searchAria": "Buscar modelos de {name}",
+        "searchPlaceholder": "Buscar modelos de {name}…",
+        "clearShown": "Limpar visíveis",
+        "selectShown": "Selecionar visíveis",
+        "modalityImage": "Imagem",
+        "modalityText": "Texto",
+        "context": "{amount} de contexto",
+        "priceInput": "Entrada {price}",
+        "priceOutput": "Saída {price}",
+        "pricePerMillion": "{amount} / 1 mi",
+        "noMatch": "Nenhum modelo corresponde a esta busca."
+      },
+      "step": {
+        "label": "Etapa {step}",
+        "done": "Etapa {step}, concluída"
+      },
+      "account": {
+        "title": "Conta OpenRouter",
+        "description": "Suas chaves de inferência e de gerenciamento são criptografadas antes de serem armazenadas.",
+        "inferenceKeys": "Chaves de inferência",
+        "managementKeys": "Chaves de gerenciamento",
+        "groupAria": "Conta OpenRouter",
+        "verificationRequired": "Verificação necessária",
+        "verified": "Verificada e pronta para uso",
+        "connectAnother": "Conectar outra conta",
+        "connect": "Conectar OpenRouter",
+        "connectHint": "Conecte uma conta para escolher provedores e modelos.",
+        "formTitle": "Conectar OpenRouter",
+        "formDescription": "Crie ou copie as duas chaves no painel do OpenRouter. Elas são verificadas antes de serem salvas.",
+        "openDashboard": "Abrir painel",
+        "nameLabel": "Nome da conta",
+        "namePlaceholder": "OpenRouter produção",
+        "apiKeyLabel": "Chave de API de inferência",
+        "managementKeyLabel": "Chave de API de gerenciamento",
+        "cancel": "Cancelar",
+        "verifying": "Verificando…",
+        "verifyAndConnect": "Verificar e conectar"
+      },
+      "providers": {
+        "title": "Provedores e modelos",
+        "description": "Os provedores para os quais o OpenRouter pode encaminhar requisições. Somente os modelos selecionados ficam disponíveis nas colunas de IA.",
+        "refreshing": "Atualizando…",
+        "refresh": "Atualizar provedores",
+        "searchAria": "Buscar provedores",
+        "searchPlaceholder": "Buscar provedores…",
+        "noMatchTitle": "Nenhum provedor corresponde",
+        "noneTitle": "Nenhum provedor BYOK encontrado",
+        "tryAnotherSearch": "Tente outra busca.",
+        "addKeyThenRefresh": "Adicione uma chave nas configurações de BYOK do OpenRouter e depois atualize.",
+        "connectFirst": "Conecte uma conta OpenRouter primeiro."
+      },
+      "defaultModel": {
+        "title": "Modelo padrão",
+        "description": "Todas as tarefas internas de IA usam este modelo de texto, e as novas colunas de IA compatíveis o selecionam automaticamente.",
+        "fieldLabel": "Provedor e modelo",
+        "fieldDescription": "Somente os modelos de texto selecionados que aceitam saída estruturada aparecem aqui.",
+        "fieldDescriptionEmpty": "Selecione acima pelo menos um modelo de texto com suporte a saída estruturada para escolher um padrão.",
+        "aria": "Modelo padrão",
+        "placeholder": "Selecione um modelo padrão",
+        "transcriptionLabel": "Modelo de transcrição de chamadas",
+        "transcriptionDescription": "Usado para transcrever as gravações de chamadas do WhatsApp. Escolha um modelo que aceite áudio (por exemplo, um modelo Gemini).",
+        "transcriptionOff": "Desativado"
+      },
+      "sharedCapacity": {
+        "title": "Capacidade compartilhada",
+        "description": "O AgentSDR só envia requisições com as suas próprias chaves de provedor.",
+        "checkboxLabel": "Nunca usar capacidade compartilhada",
+        "explanation": "Nas configurações de BYOK do OpenRouter de cada provedor ativado, defina “Shared capacity fallback” como <b>Never use shared capacity on this provider</b>. O OpenRouter não expõe essa configuração pela API pública, então esta confirmação é necessária para o AgentSDR enviar requisições.",
+        "reviewLink": "Revisar configurações de BYOK do OpenRouter"
+      },
+      "footer": {
+        "using": "Usando <account>{name}</account> · {done} de 4 etapas concluídas",
+        "connectToContinue": "Conecte uma conta OpenRouter para continuar",
+        "saving": "Salvando…",
+        "save": "Salvar configurações de IA"
+      }
+    },
+    "assistants": {
+      "relative": {
+        "never": "nunca",
+        "justNow": "agora mesmo",
+        "minutes": "há {count} min",
+        "hours": "há {count} h",
+        "yesterday": "ontem",
+        "days": "{count, plural, one {há # dia} other {há # dias}}"
+      },
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "tabs": {
+        "claude": "Claude (web e desktop)",
+        "code": "Claude Code",
+        "other": "Outros clientes"
+      },
+      "prompts": {
+        "title": "O que você pode pedir",
+        "queue": "“Resuma minha fila de Ação necessária”",
+        "pricing": "“Rascunhe respostas para todo mundo que pediu preços — me mostre antes de enviar”",
+        "priya": "“Encontre a Priya da Acme e me diga em que pé está o negócio”",
+        "notNow": "“Marque os leads que disseram ‘agora não’ para fazer follow-up no mês que vem”"
+      },
+      "errors": {
+        "load": "Não foi possível carregar suas conexões.",
+        "disconnect": "Não foi possível desconectar.",
+        "network": "Erro de rede. Tente novamente."
+      },
+      "disconnect": {
+        "title": "{named, select, yes {Desconectar {name}?} other {Desconectar este assistente?}}",
+        "description": "Ele deixa de funcionar imediatamente. Você pode conectá-lo de novo quando quiser.",
+        "confirm": "Desconectar",
+        "busy": "Desconectando…"
+      },
+      "connections": {
+        "title": "Suas conexões",
+        "description": "Assistentes que podem trabalhar nesta organização em seu nome.",
+        "loading": "Carregando…",
+        "empty": "Nenhum assistente conectado ainda.",
+        "unnamed": "Assistente de IA",
+        "meta": "{connected, select, date {Conectado em {date}} other {Conectado anteriormente}} · Última atividade: {lastActive}"
+      },
+      "serverUrl": {
+        "title": "URL do servidor",
+        "description": "Cole isto no Claude, no ChatGPT ou em qualquer cliente MCP para conectar.",
+        "aria": "URL do servidor MCP"
+      },
+      "howTo": {
+        "title": "Como conectar",
+        "description": "Escolha o app que você usa. Cada um leva cerca de um minuto.",
+        "claude": {
+          "step1": "Abra o Claude e acesse <b>Customize → Connectors</b> (também disponível pelas configurações).",
+          "step2": "Escolha <b>Add → Add custom connector</b>. Dê a ele o nome <b>AgentSDR</b>, cole a URL do servidor acima e escolha <b>Continue</b>.",
+          "step3": "Depois que o Claude verificar o servidor, escolha <b>Add</b> e, em seguida, <b>Connect</b>.",
+          "step4": "Entre no AgentSDR se solicitado, confira a organização e escolha <b>Allow</b>.",
+          "step5": "Em uma conversa, ative o AgentSDR no menu de ferramentas e pergunte, por exemplo, “O que há na minha fila de Ação necessária?”",
+          "teamNote": "Nos planos Claude Team e Enterprise, um proprietário precisa primeiro adicionar o conector nas configurações da organização para que os membros possam conectá-lo."
+        },
+        "code": {
+          "step1": "Execute isto no seu terminal:",
+          "step2": "Abra o Claude Code e execute <code>/mcp</code>.",
+          "step3": "Selecione <b>agentsdr</b>, escolha <b>Authenticate</b> e o navegador será aberto.",
+          "step4": "Entre no AgentSDR se solicitado e escolha <b>Allow</b>."
+        },
+        "other": {
+          "clients": "Qualquer cliente que ofereça suporte a MCP remoto via Streamable HTTP com OAuth funciona com a mesma URL de servidor, incluindo o ChatGPT (adicione o AgentSDR como app personalizado nas configurações dele), o Cursor e outros editores.",
+          "apiKey": "Para uma configuração sem navegador, um proprietário ou administrador pode criar uma chave de API em <b>Configurações → Chaves de API</b> e enviá-la como <code>Authorization: Bearer asdr_…</code>. Uma chave age como a organização inteira, não como uma única pessoa."
+        }
+      }
+    }
+  }
 }

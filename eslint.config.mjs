@@ -61,6 +61,20 @@ const TRANSLATED = [
   "src/app/domains/**/*.tsx",
   "src/app/analytics/**/*.tsx",
   "src/components/analytics/**/*.tsx",
+  // Batch C: the Settings screens. HostedAuth.tsx (LinkedIn, being changed by the Unipile v2 work) and the
+  // calling/CRM files not listed here belong to later batches.
+  "src/app/settings/**/*.tsx",
+  "src/components/settings/**/*.tsx",
+  "src/components/outreach/WorkingHoursModal.tsx",
+  "src/components/outreach/MailboxesPageClient.tsx",
+  "src/components/outreach/AddMailboxButton.tsx",
+  "src/components/linkedin/AccountsClient.tsx",
+  "src/components/whatsapp/WhatsappAccountsClient.tsx",
+  "src/components/ai/ByokSettingsClient.tsx",
+  "src/components/crm/CrmKnowledgeClient.tsx",
+  "src/components/crm/CrmAiInstructions.tsx",
+  "src/components/crm/CrmSettingsClient.tsx",
+  "src/components/calling/ai/StationHoursEditor.tsx",
 ];
 
 /**
@@ -80,7 +94,7 @@ export const literalStringOptions = {
   words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧]+", "AgentSDR", "Google", "⌘K"] },
   callees: {
     // `t.rich(...)` and `t.has(...)` are the same translator, as a member call.
-    exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
+    exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "t[A-Z][A-Za-z]*", "t[A-Z][A-Za-z]*\\.(rich|has|raw|markup)", "ruleText", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
   },
 };
 

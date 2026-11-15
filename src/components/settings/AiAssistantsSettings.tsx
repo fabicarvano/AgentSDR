@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
 import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
@@ -17,21 +18,24 @@ type Connection = {
   lastActiveAt: string | null;
 };
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
-function relative(iso: string | null): string {
-  if (!iso) return "never";
-  const ms = Date.now() - new Date(iso).getTime();
-  const minutes = Math.round(ms / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
+/** "never" / "just now" / "5 min ago" / "3 h ago" / "yesterday" / "4 days ago", in the interface language. */
+function useRelative() {
+  const t = useTranslations("settingsAi.assistants");
+  return (iso: string | null): string => {
+    if (!iso) return t("relative.never");
+    const ms = Date.now() - new Date(iso).getTime();
+    const minutes = Math.round(ms / 60_000);
+    if (minutes < 1) return t("relative.justNow");
+    if (minutes < 60) return t("relative.minutes", { count: minutes });
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return t("relative.hours", { count: hours });
+    const days = Math.round(hours / 24);
+    return days === 1 ? t("relative.yesterday") : t("relative.days", { count: days });
+  };
 }
 
-function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+function CopyButton({ text, label }: { text: string; label?: string }) {
+  const t = useTranslations("settingsAi.assistants");
   const [copied, setCopied] = useState(false);
   return (
     <Button.Root
@@ -48,7 +52,7 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
         }
       }}
     >
-      {copied ? "Copied" : label}
+      {copied ? t("copied") : (label ?? t("copy"))}
     </Button.Root>
   );
 }
@@ -79,20 +83,19 @@ function Steps({ items }: { items: React.ReactNode[] }) {
   );
 }
 
-const TABS = [
-  { id: "claude", label: "Claude (web & desktop)" },
-  { id: "code", label: "Claude Code" },
-  { id: "other", label: "Other clients" },
-] as const;
+const b = (chunks: React.ReactNode) => <b>{chunks}</b>;
+const code = (chunks: React.ReactNode) => <code>{chunks}</code>;
 
-const PROMPTS = [
-  "Summarise my Action required queue",
-  "Draft replies for everyone who asked for pricing — show me before sending",
-  "Find Priya from Acme and tell me where the deal stands",
-  "Mark the leads who said 'not now' to follow up next month",
-];
+/** Tab ids; the label is settingsAi.assistants.tabs.<id>. */
+const TABS = [{ id: "claude" }, { id: "code" }, { id: "other" }] as const;
+
+/** Example requests; the text is settingsAi.assistants.prompts.<key>. */
+const PROMPTS = ["queue", "pricing", "priya", "notNow"] as const;
 
 export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
+  const t = useTranslations("settingsAi.assistants");
+  const format = useFormatter();
+  const relative = useRelative();
   const dialogs = useDialogs();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("claude");
   const [connections, setConnections] = useState<Connection[] | null>(null);
@@ -103,14 +106,14 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
     try {
       const res = await fetch("/api/settings/ai-assistants", { credentials: "same-origin" });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Could not load your connections.");
+      if (!res.ok) throw new Error(data?.error || t("errors.load"));
       setConnections((data?.connections ?? []) as Connection[]);
       setError("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load your connections.");
+      setError(e instanceof Error ? e.message : t("errors.load"));
       setConnections((current) => current ?? []);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -118,11 +121,10 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
   }, [load]);
 
   async function disconnect(c: Connection) {
-    const name = c.name || "this assistant";
     const confirmed = await dialogs.confirm({
-      title: `Disconnect ${name}?`,
-      description: "It stops working at once. You can connect it again whenever you like.",
-      confirmLabel: "Disconnect",
+      title: t("disconnect.title", { named: c.name ? "yes" : "no", name: c.name ?? "" }),
+      description: t("disconnect.description"),
+      confirmLabel: t("disconnect.confirm"),
       variant: "error",
     });
     if (!confirmed) return;
@@ -136,10 +138,10 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
         body: JSON.stringify({ clientId: c.clientId }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) setError(data?.error || "Could not disconnect.");
+      if (!res.ok) setError(data?.error || t("errors.disconnect"));
       else await load();
     } catch {
-      setError("Network error. Try again.");
+      setError(t("errors.network"));
     } finally {
       setBusy(null);
     }
@@ -154,13 +156,13 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
   return (
     <div className="flex flex-col gap-6">
       <Frame>
-        <FrameHeader title="Your connections" description="Assistants that can work in this organization as you." />
+        <FrameHeader title={t("connections.title")} description={t("connections.description")} />
         <FramePanel>
           {error && <Callout tone="error" className="mb-3">{error}</Callout>}
           {connections === null ? (
-            <p className="text-paragraph-sm text-text-sub-600">Loading…</p>
+            <p className="text-paragraph-sm text-text-sub-600">{t("connections.loading")}</p>
           ) : connections.length === 0 ? (
-            <p className="text-paragraph-sm text-text-sub-600">No assistants connected yet.</p>
+            <p className="text-paragraph-sm text-text-sub-600">{t("connections.empty")}</p>
           ) : (
             <ul className="divide-y divide-stroke-soft-200">
               {connections.map((c) => (
@@ -171,15 +173,18 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
                       <img src={c.icon} alt="" className="size-8 shrink-0 rounded-lg object-cover" />
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-label-sm text-text-strong-950">{c.name || "AI assistant"}</p>
+                      <p className="truncate text-label-sm text-text-strong-950">{c.name || t("connections.unnamed")}</p>
                       <p className="text-paragraph-xs text-text-sub-600">
-                        Connected {c.connectedAt ? dateFormat.format(new Date(c.connectedAt)) : "earlier"} · Last active{" "}
-                        {relative(c.lastActiveAt)}
+                        {t("connections.meta", {
+                          connected: c.connectedAt ? "date" : "earlier",
+                          date: c.connectedAt ? format.dateTime(new Date(c.connectedAt), { dateStyle: "medium" }) : "",
+                          lastActive: relative(c.lastActiveAt),
+                        })}
                       </p>
                     </div>
                   </div>
                   <Button.Root variant="error" mode="ghost" size="xsmall" disabled={busy === c.clientId} onClick={() => void disconnect(c)}>
-                    {busy === c.clientId ? "Disconnecting…" : "Disconnect"}
+                    {busy === c.clientId ? t("disconnect.busy") : t("disconnect.confirm")}
                   </Button.Root>
                 </li>
               ))}
@@ -189,12 +194,12 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
       </Frame>
 
       <Frame>
-        <FrameHeader title="Server URL" description="Paste this into Claude, ChatGPT or any MCP client to connect." />
+        <FrameHeader title={t("serverUrl.title")} description={t("serverUrl.description")} />
         <FramePanel>
           <div className="flex items-center gap-2">
             <Input.Root size="small" className="flex-1">
               <Input.Wrapper>
-                <Input.Input aria-label="MCP server URL" readOnly value={serverUrl} onFocus={(e) => e.currentTarget.select()} />
+                <Input.Input aria-label={t("serverUrl.aria")} readOnly value={serverUrl} onFocus={(e) => e.currentTarget.select()} />
               </Input.Wrapper>
             </Input.Root>
             <CopyButton text={serverUrl} />
@@ -203,24 +208,24 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
       </Frame>
 
       <Frame>
-        <FrameHeader title="How to connect" description="Pick the app you use. Each takes about a minute." />
+        <FrameHeader title={t("howTo.title")} description={t("howTo.description")} />
         <FramePanel>
           <div role="tablist" className="mb-4 flex flex-wrap gap-1.5">
-            {TABS.map((t) => (
+            {TABS.map((item) => (
               <button
-                key={t.id}
+                key={item.id}
                 type="button"
                 role="tab"
-                aria-selected={tab === t.id}
-                onClick={() => setTab(t.id)}
+                aria-selected={tab === item.id}
+                onClick={() => setTab(item.id)}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-label-sm ring-1 ring-inset transition-colors",
-                  tab === t.id
+                  tab === item.id
                     ? "bg-bg-strong-950 text-text-white-0 ring-transparent"
                     : "bg-bg-white-0 text-text-sub-600 ring-stroke-soft-200 hover:bg-bg-weak-50",
                 )}
               >
-                {t.label}
+                {t(`tabs.${item.id}`)}
               </button>
             ))}
           </div>
@@ -229,16 +234,16 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
             <div className="flex flex-col gap-4">
               <Steps
                 items={[
-                  <>Open Claude and go to <b>Customize → Connectors</b> (also reachable from Settings).</>,
-                  <>Choose <b>Add → Add custom connector</b>. Name it <b>AgentSDR</b>, paste the server URL above, and choose <b>Continue</b>.</>,
-                  <>Once Claude has checked the server, choose <b>Add</b>, then <b>Connect</b>.</>,
-                  <>Sign in to AgentSDR if asked, check the organization, and choose <b>Allow</b>.</>,
-                  <>In a chat, switch AgentSDR on from the tools menu and ask, for example, &ldquo;What&apos;s in my Action required queue?&rdquo;</>,
+                  // Claude's own screen labels (Customize, Connectors, Add, Continue, Connect, Allow) stay English in every language: they are what the person has to find in Claude.
+                  t.rich("howTo.claude.step1", { b }),
+                  t.rich("howTo.claude.step2", { b }),
+                  t.rich("howTo.claude.step3", { b }),
+                  t.rich("howTo.claude.step4", { b }),
+                  t.rich("howTo.claude.step5", { b }),
                 ]}
               />
               <Callout tone="info">
-                On Claude Team and Enterprise plans, an owner must first add the connector under organization settings
-                before members can connect it.
+                {t("howTo.claude.teamNote")}
               </Callout>
             </div>
           )}
@@ -247,27 +252,21 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
             <Steps
               items={[
                 <div key="a" className="flex flex-col gap-2">
-                  <span>Run this in your terminal:</span>
+                  <span>{t("howTo.code.step1")}</span>
                   <CodeBlock text={`claude mcp add --transport http agentsdr ${serverUrl}`} />
                 </div>,
-                <>Start Claude Code and run <code>/mcp</code>.</>,
-                <>Select <b>agentsdr</b>, choose <b>Authenticate</b>, and your browser opens.</>,
-                <>Sign in to AgentSDR if asked and choose <b>Allow</b>.</>,
+                t.rich("howTo.code.step2", { code }),
+                // Claude Code's own menu labels (agentsdr, Authenticate, Allow) stay English: they are what the person has to find on screen.
+                t.rich("howTo.code.step3", { b }),
+                t.rich("howTo.code.step4", { b }),
               ]}
             />
           )}
 
           {tab === "other" && (
             <div className="flex flex-col gap-4 text-paragraph-sm text-text-sub-600">
-              <p>
-                Any client that supports remote MCP over Streamable HTTP with OAuth works with the same server URL, including
-                ChatGPT (add AgentSDR as a custom app in its settings), Cursor and other editors.
-              </p>
-              <p>
-                For a setup with no browser, an owner or admin can create an API key under <b>Settings → API keys</b> and
-                send it as <code>Authorization: Bearer asdr_…</code>. A key acts as the whole organization, not as one
-                person.
-              </p>
+              <p>{t("howTo.other.clients")}</p>
+              <p>{t.rich("howTo.other.apiKey", { b, code })}</p>
               <CodeBlock text={mcpJson} />
             </div>
           )}
@@ -275,11 +274,11 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
       </Frame>
 
       <Frame>
-        <FrameHeader title="Things to ask" />
+        <FrameHeader title={t("prompts.title")} />
         <FramePanel>
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-paragraph-sm text-text-sub-600">
-            {PROMPTS.map((p) => (
-              <li key={p}>&ldquo;{p}&rdquo;</li>
+            {PROMPTS.map((key) => (
+              <li key={key}>{t(`prompts.${key}`)}</li>
             ))}
           </ul>
         </FramePanel>

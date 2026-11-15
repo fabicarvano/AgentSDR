@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import AddMailboxButton from "@/components/outreach/AddMailboxButton";
 import MailboxesPageClient from "@/components/outreach/MailboxesPageClient";
 import { RequiresPlatform } from "@/components/settings/RequiresPlatform";
@@ -8,7 +10,10 @@ import { listMailboxes } from "@/lib/outreach/mailboxes";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Email accounts" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsAccounts.emailPage");
+  return { title: t("title") };
+}
 
 async function Mailboxes() {
   const ctx = await requirePageOrgContext();
@@ -16,11 +21,12 @@ async function Mailboxes() {
   return <MailboxesPageClient mailboxes={mailboxes} />;
 }
 
-export default function EmailAccountsPage() {
+export default async function EmailAccountsPage() {
+  const t = await getTranslations("settingsAccounts.emailPage");
   return (
     <SettingsPage
-      title="Email accounts"
-      description="The mailboxes outreach campaigns send from."
+      title={t("title")}
+      description={t("description")}
       actions={
         <RequiresPlatform platform="google" fallback={null}>
           <AddMailboxButton />

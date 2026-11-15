@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { authClient, useSession } from "@/lib/auth/client";
 import { roles, type OrgRole } from "@/lib/auth/permissions";
@@ -33,16 +34,17 @@ export function useOrgAccess() {
   const [org, setOrg] = useState<FullOrg | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const t = useTranslations("settingsOrg.access");
 
   const reload = useCallback(async () => {
     const res = await authClient.organization.getFullOrganization();
-    if (res.error) setError(res.error.message || "Could not load the organization.");
+    if (res.error) setError(res.error.message || t("loadFailed"));
     else {
       setError("");
       setOrg(res.data as unknown as FullOrg | null);
     }
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // Initial fetch; state is set after the awaited response, not synchronously.
@@ -63,6 +65,7 @@ export function useOrgAccess() {
 }
 
 export function useAsyncAction() {
+  const t = useTranslations("settingsOrg.access");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   /** Runs a Better Auth call; resolves true on success, otherwise shows its message inline. */
@@ -72,12 +75,12 @@ export function useAsyncAction() {
     try {
       const res = await call();
       if (res.error) {
-        setError(res.error.message || "Something went wrong.");
+        setError(res.error.message || t("generic"));
         return false;
       }
       return true;
     } catch {
-      setError("Network error. Try again.");
+      setError(t("network"));
       return false;
     } finally {
       setBusy(null);

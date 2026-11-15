@@ -1,3 +1,241 @@
 {
-  "settingsAccounts": {}
+  "settingsAccounts": {
+    "emailPage": {
+      "title": "Email accounts",
+      "description": "The mailboxes outreach campaigns send from."
+    },
+    "linkedinPage": {
+      "title": "LinkedIn accounts",
+      "description": "The LinkedIn profiles campaigns send from, connected through Unipile."
+    },
+    "whatsappPage": {
+      "title": "WhatsApp accounts",
+      "description": "The WhatsApp numbers messaging and calling run from, linked through Unipile."
+    },
+    "addMailbox": {
+      "button": "Add mailbox"
+    },
+    "overview": {
+      "filters": {
+        "all": "All",
+        "healthy": "Healthy",
+        "attention": "Needs attention"
+      },
+      "noMatch": {
+        "accounts": "No accounts match",
+        "numbers": "No numbers match",
+        "mailboxes": "No mailboxes match",
+        "hint": "Try another filter, or clear the search."
+      },
+      "pager": {
+        "accounts": "{from, number}–{to, number} of {total, plural, one {# account} other {# accounts}}",
+        "numbers": "{from, number}–{to, number} of {total, plural, one {# number} other {# numbers}}",
+        "mailboxes": "{from, number}–{to, number} of {total, plural, one {# mailbox} other {# mailboxes}}",
+        "previous": "Previous page",
+        "next": "Next page"
+      }
+    },
+    "limitDialog": {
+      "description": "For {account}. Leave it empty to follow the organization's sending rules.",
+      "limits": "Organization: {value, number} {unit}. Allowed: {min, number}–{max, number}.",
+      "useOrganization": "Use organization limit",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save limit",
+      "saveFailed": "Could not save the limit."
+    },
+    "requiresPlatform": {
+      "thisIntegration": "this integration",
+      "title": "Connect {name} to use this",
+      "description": "{name} powers {features}. Add its credentials once and this unlocks.",
+      "connect": "Connect {name}"
+    },
+    "mailboxes": {
+      "empty": {
+        "title": "No mailboxes yet",
+        "description": "Add a Google Workspace address authorised for sending, and campaigns can start sending from it."
+      },
+      "kpi": {
+        "connected": "Connected",
+        "connectedContext": "{count, plural, one {of # mailbox} other {of # mailboxes}}",
+        "needsAttention": "Needs attention",
+        "everySending": "Every mailbox is sending",
+        "failed": "{count, plural, one {# failed the connection test} other {# failed the connection test}}",
+        "disabledOrConnecting": "Disabled or still connecting",
+        "needsAttentionHint": "Mailboxes that are not connected: a failed connection test, disabled, or still connecting. They send nothing until fixed.",
+        "sentToday": "Sent today",
+        "capacityShare": "{percent} of today's capacity",
+        "noCapacity": "No sending capacity",
+        "leftToday": "Left today",
+        "leftContext": "of {capacity, number} a day across connected mailboxes",
+        "leftHint": "The daily send limits of connected mailboxes, minus what they have sent today."
+      },
+      "list": {
+        "title": "Mailboxes",
+        "description": "Daily limits, sending hours and connection health.",
+        "searchPlaceholder": "Search mailboxes…"
+      }
+    },
+    "whatsapp": {
+      "status": {
+        "connected": "Connected",
+        "credentials": "Needs credentials",
+        "disconnected": "Disconnected",
+        "error": "Error"
+      },
+      "errors": {
+        "generic": "Something went wrong. Please try again."
+      },
+      "notices": {
+        "synced": "Synced from Unipile.",
+        "syncedEmpty": "Synced — Unipile has no WhatsApp number linked yet.",
+        "importing": "Importing recent chats for {name}. They appear in Messages shortly.",
+        "importingThis": "Importing recent chats for this number. They appear in Messages shortly."
+      },
+      "thisNumber": "this number",
+      "numberFallback": "WhatsApp number",
+      "description": "The numbers AgentSDR messages from, linked in Unipile. Calls are placed from web.whatsapp.com by the recorder extension.",
+      "sync": "Sync from Unipile",
+      "syncing": "Syncing…",
+      "tryAgain": "Try again",
+      "empty": {
+        "title": "No WhatsApp numbers yet",
+        "description": "In the Unipile dashboard choose Accounts → Connect → WhatsApp and scan the QR with the phone the rep calls from. Then sync here."
+      },
+      "kpi": {
+        "connected": "Connected",
+        "connectedContext": "{count, plural, one {of # number} other {of # numbers}}",
+        "needsAttention": "Needs attention",
+        "everyNumberCanMessage": "Every number can message",
+        "relink": "Relink these in Unipile, then sync",
+        "needsAttentionHint": "Numbers that are disconnected, need credentials, or report an error. A banned number also loses its calling.",
+        "warmingUp": "Warming up",
+        "warmingUpContext": "No new chats for {hours, number} h after linking",
+        "warmingUpHint": "A newly linked number can reply to existing chats straight away, but starts new ones only after the warm-up, to protect it from bans.",
+        "newChatsADay": "New chats a day",
+        "newChatsContext": "{perNumber, number} per number · {seconds, number} s between sends",
+        "newChatsHint": "Each connected number starts at most this many new chats a day, and messages from one number are spaced apart. Change it in WhatsApp → Sending rules, or per number."
+      },
+      "list": {
+        "title": "Numbers",
+        "defaultNamed": "{name} is used when no other number is chosen.",
+        "defaultUnnamed": "The default number is used when no other number is chosen.",
+        "noDefault": "No default number yet — make one the default from its menu.",
+        "searchPlaceholder": "Search numbers…"
+      },
+      "table": {
+        "number": "Number",
+        "status": "Status",
+        "newChats": "New chats a day",
+        "lastSynced": "Last synced",
+        "actions": "Actions"
+      },
+      "row": {
+        "default": "Default",
+        "warmingUntil": "Warming up until {date}",
+        "ownLimit": "Own limit",
+        "never": "Never",
+        "moreActions": "More actions for {name}",
+        "makeDefault": "Make default",
+        "importChats": "Import recent chats",
+        "newChatsADay": "New chats a day"
+      }
+    },
+    "linkedin": {
+      "premiumLabel": "LinkedIn Premium",
+      "weekdays": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "hours": {
+        "anyTime": "Any time",
+        "everyDay": "Every day",
+        "monFri": "Mon–Fri",
+        "monSat": "Mon–Sat",
+        "range": "{days}, {start}–{end}",
+        "withTimezone": "{hours} ({timezone})"
+      },
+      "status": {
+        "connected": "Connected",
+        "limitReached": "Limit reached",
+        "disconnected": "Disconnected"
+      },
+      "errors": {
+        "saveFailed": "Save failed",
+        "networkError": "Network error"
+      },
+      "workingHours": {
+        "title": "Working hours",
+        "description": "For {name}. Profile enrichment, connection requests and follow-ups only run inside this window.",
+        "restrictLabel": "Restrict outreach to working hours",
+        "restrictHint": "Off: this account works whenever its campaigns are due.",
+        "timezone": "Timezone",
+        "start": "Start",
+        "end": "End",
+        "endsBeforeStart": "Ends before it starts.",
+        "workingDays": "Working days",
+        "noWorkingDays": "Select at least one working day.",
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Save hours"
+      },
+      "row": {
+        "reconnect": "Reconnect",
+        "openingUnipile": "Opening Unipile…",
+        "reconnectFailed": "Reconnect failed",
+        "requestsSentToday": "Connection requests sent today by {name}",
+        "ownLimit": "Own limit",
+        "next": "Next: {when}",
+        "readyNow": "Ready now",
+        "moreActions": "More actions for {name}",
+        "reconnectAccount": "Reconnect account",
+        "editHours": "Edit working hours",
+        "setHours": "Set working hours",
+        "dailyLimit": "Daily request limit"
+      },
+      "table": {
+        "account": "Account",
+        "status": "Status",
+        "requestsToday": "Requests today",
+        "pending": "Pending",
+        "pendingHint": "Leads waiting for a connection request from this account",
+        "schedule": "Schedule",
+        "actions": "Actions"
+      },
+      "empty": {
+        "title": "No LinkedIn accounts yet",
+        "description": "Connect one through Unipile — it syncs back here as soon as you finish."
+      },
+      "kpi": {
+        "connected": "Connected",
+        "connectedContext": "{count, plural, one {of # account} other {of # accounts}}",
+        "needsAttention": "Needs attention",
+        "everyAccountCanSend": "Every account can send",
+        "disconnectedCount": "{count} disconnected",
+        "limitedCount": "{count} at LinkedIn's limit",
+        "needsAttentionHint": "Disconnected accounts need reconnecting through Unipile. Accounts at LinkedIn's limit resume on their own.",
+        "requestsToday": "Requests today",
+        "capacityShare": "{percent} of {capacity, number} a day",
+        "noCapacity": "No connected capacity",
+        "requestsHint": "Connection requests sent today, against the daily limits of connected accounts.",
+        "premium": "Premium",
+        "onFreePlan": "{count} on a free plan",
+        "premiumHint": "Premium accounts can send {premium, number} connection requests a day; free accounts {free, number}. Change it in LinkedIn → Sending rules, or per account."
+      },
+      "disconnectedCallout": {
+        "title": "{count, plural, one {# account is disconnected} other {# accounts are disconnected}}",
+        "body": "Campaigns skip them until they are reconnected. Reconnect re-authenticates the same account in place, so its campaigns and history stay."
+      },
+      "list": {
+        "title": "Accounts",
+        "description": "Daily request limits, working hours and when each account next works.",
+        "searchPlaceholder": "Search accounts…"
+      }
+    }
+  }
 }

@@ -1,3 +1,165 @@
 {
-  "settingsOrg": {}
+  "settingsOrg": {
+    "organizationPage": {
+      "title": "Organização",
+      "description": "O nome e a URL da sua organização e a sua função nela.",
+      "defaultsTitle": "Padrões",
+      "defaultsDescription": "Valem para todos os canais."
+    },
+    "membersPage": {
+      "title": "Membros",
+      "description": "Convide pessoas e defina o que cada uma pode fazer."
+    },
+    "teamsPage": {
+      "title": "Equipes",
+      "description": "Agrupe os membros em equipes."
+    },
+    "apiKeysPage": {
+      "title": "Chaves de API",
+      "description": "Permita que outro aplicativo adicione leads às suas campanhas de e-mail e interrompa as sequências delas.",
+      "adminOnly": "Somente proprietários e administradores podem gerenciar chaves de API."
+    },
+    "columnsPage": {
+      "title": "Colunas de lead",
+      "description": "Os campos de Pessoas e Empresas, incluindo os que você adicionar."
+    },
+    "roles": {
+      "owner": "Proprietário",
+      "admin": "Administrador",
+      "member": "Membro"
+    },
+    "state": {
+      "loading": "Carregando…",
+      "noActiveOrganization": "Nenhuma organização ativa."
+    },
+    "kit": {
+      "optional": "(opcional)"
+    },
+    "general": {
+      "title": "Organização",
+      "yourRole": "Sua função: {role}",
+      "nameLabel": "Nome",
+      "slugLabel": "Nome na URL",
+      "slugDescription": "Letras minúsculas, números e hifens.",
+      "logoLabel": "URL do logotipo",
+      "nameAndSlugRequired": "O nome e o nome na URL são obrigatórios.",
+      "slugTaken": "Esse nome na URL já está em uso. Tente outro.",
+      "saved": "Alterações salvas.",
+      "saving": "Salvando…",
+      "save": "Salvar alterações",
+      "ownersOnly": "Somente proprietários e administradores podem alterar estes dados.",
+      "footer": "Todos em uma organização veem os mesmos leads, campanhas e conversas.",
+      "leaveOrganization": "Sair da organização",
+      "leaveDescription": "Remova seu acesso a esta organização.",
+      "leaveHint": "Você pode ser convidado de volta a qualquer momento.",
+      "leaving": "Saindo…",
+      "leaveConfirmTitle": "Sair de {name}?",
+      "leaveConfirmDescription": "Você perderá o acesso aos leads, campanhas e conversas da organização até que alguém convide você novamente."
+    },
+    "members": {
+      "inviteTitle": "Convidar pessoa",
+      "inviteDescription": "A pessoa recebe um e-mail com um link para entrar nesta organização.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "nome@empresa.com",
+      "roleLabel": "Função",
+      "sending": "Enviando…",
+      "sendInvite": "Enviar convite",
+      "pendingTitle": "Convites pendentes",
+      "pendingDescription": "Se não houver um serviço de e-mail configurado, copie o link e envie você mesmo.",
+      "invitationMeta": "{role} · expira em {date}",
+      "copyLink": "Copiar link do convite",
+      "copied": "Copiado",
+      "cancel": "Cancelar",
+      "membersTitle": "Membros",
+      "membersCount": "{count} em {org}",
+      "you": "(você)",
+      "memberMeta": "{email} · entrou em {date}",
+      "roleFor": "Função de {email}",
+      "remove": "Remover",
+      "copyFailed": "Não foi possível copiar. Selecione o link manualmente: /accept-invitation/{id}",
+      "removeTitle": "Remover {name}?",
+      "removeDescription": "A pessoa perde o acesso a {org} imediatamente.",
+      "removeConfirm": "Remover"
+    },
+    "teams": {
+      "loadFailed": "Não foi possível carregar as equipes.",
+      "note": "As equipes agrupam pessoas; todos na organização veem os mesmos dados.",
+      "createTitle": "Criar equipe",
+      "teamName": "Nome da equipe",
+      "creating": "Criando…",
+      "create": "Criar equipe",
+      "empty": "Nenhuma equipe ainda.",
+      "memberCount": "{count, plural, one {# membro} other {# membros}}",
+      "rename": "Renomear",
+      "delete": "Excluir",
+      "newTeamName": "Novo nome da equipe",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "noMembers": "Ninguém está nesta equipe ainda.",
+      "remove": "Remover",
+      "addMemberLabel": "Adicionar membro a {name}",
+      "addMemberPlaceholder": "Adicionar membro…",
+      "add": "Adicionar",
+      "deleteTitle": "Excluir {name}?",
+      "deleteDescription": "As pessoas continuam na organização; só a equipe é removida.",
+      "deleteConfirm": "Excluir equipe"
+    },
+    "apiKeys": {
+      "never": "nunca",
+      "createFailed": "Não foi possível criar a chave.",
+      "networkError": "Erro de rede. Tente novamente.",
+      "revokeTitle": "Revogar {name}?",
+      "revokeDescription": "Tudo o que usa esta chave deixa de funcionar na hora. Isso não pode ser desfeito.",
+      "revokeConfirm": "Revogar chave",
+      "revokeFailed": "Não foi possível revogar a chave.",
+      "copyFailed": "Não foi possível copiar. Selecione a chave e copie manualmente.",
+      "intro": "Uma chave age em nome de toda a organização, limitada ao que você marcar ao criá-la. Envie-a como <code>{header}</code> para <code>/api/v1/</code> ou use-a para conectar um assistente de IA a <code>/api/mcp</code> sem fazer login (Configurações → Assistentes de IA).",
+      "createdTitle": "Copie agora a chave de {name}",
+      "done": "Concluir",
+      "createdBody": "Ela é exibida uma única vez. Guarde-a nas configurações do outro aplicativo.",
+      "copied": "Copiada",
+      "copy": "Copiar",
+      "createTitle": "Criar chave",
+      "createDescription": "Dê a ela o nome de quem vai usá-la, por exemplo o nome do aplicativo.",
+      "keyName": "Nome da chave",
+      "creating": "Criando…",
+      "create": "Criar chave",
+      "scopesLegend": "O que a chave pode fazer",
+      "scopes": {
+        "crmRead": {
+          "label": "Ler o CRM",
+          "description": "Ver a fila de Ação necessária e os registros de leads: conversas, detalhes e chamadas."
+        },
+        "crmWrite": {
+          "label": "Trabalhar no CRM",
+          "description": "Editar e reescrever rascunhos, mudar etapas, adiar ou encerrar registros e marcar leads como Não contactar."
+        },
+        "crmSend": {
+          "label": "Enviar mensagens",
+          "description": "Enviar respostas aos leads por e-mail, LinkedIn ou WhatsApp em seu nome."
+        },
+        "campaignsRead": {
+          "label": "Ler campanhas",
+          "description": "Listar campanhas de e-mail."
+        },
+        "campaignsWrite": {
+          "label": "Gerenciar leads de campanhas",
+          "description": "Adicionar leads a campanhas de e-mail e interromper as sequências delas."
+        }
+      },
+      "keysTitle": "Chaves",
+      "keysActive": "{count, plural, one {# ativa} other {# ativas}}",
+      "empty": "Nenhuma chave ainda.",
+      "revoked": "Revogada",
+      "keyMeta": "<code>{prefix}…</code> · Criada em {created} · Último uso: {lastUsed}",
+      "fullAccess": "Acesso total",
+      "noAccess": "Sem acesso",
+      "revoke": "Revogar"
+    },
+    "access": {
+      "loadFailed": "Não foi possível carregar a organização.",
+      "generic": "Algo deu errado.",
+      "network": "Erro de rede. Tente novamente."
+    }
+  }
 }

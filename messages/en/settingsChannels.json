@@ -1,3 +1,538 @@
 {
-  "settingsChannels": {}
+  "settingsChannels": {
+    "platformConnection": {
+      "comingSoon": "Coming soon",
+      "willPower": "Will power: {features}",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "powers": "Powers: {features}",
+      "setupGuideLink": "Setup guide",
+      "disconnect": "Disconnect",
+      "edit": "Edit",
+      "connect": "Connect",
+      "lastVerified": "Last verified",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlHint": "Paste it as the Subscriber URL of a {name} webhook. It names your organization, so keep one per organization.",
+      "webhookUrlMissing": "Set BETTER_AUTH_URL to this deployment's public address to get the webhook URL.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "showSecret": "Show secret",
+      "hideSecret": "Hide secret",
+      "disconnectDialog": {
+        "title": "Disconnect {name}?",
+        "description": "{features} will stop working until it is connected again.",
+        "errorTitle": "Could not disconnect {name}",
+        "errorDescription": "Something went wrong. Please try again."
+      },
+      "langfuse": {
+        "title": "Prompts",
+        "uploaded": "In Langfuse",
+        "failed": "Upload failed",
+        "notUploaded": "Not uploaded yet",
+        "uploadedDescription": "On {when} AgentSDR uploaded {created, plural, one {# prompt} other {# prompts}} to this project, labelled production. Edit them in Langfuse: AgentSDR uses the production version.",
+        "uploadedWithExistingDescription": "On {when} AgentSDR uploaded {created, plural, one {# prompt} other {# prompts}} to this project, labelled production; {existing, plural, one {# prompt was already there and was left as it is} other {# prompts were already there and were left as they are}}. Edit them in Langfuse: AgentSDR uses the production version.",
+        "failedDescription": "{message} Edit and save the connection to try again.",
+        "failedFallback": "Langfuse did not take the prompts.",
+        "notUploadedDescription": "AgentSDR uploads its prompts when the connection is saved. Edit and save it to upload them."
+      },
+      "unipile": {
+        "title": "Webhooks",
+        "registeredCount": "{count} registered",
+        "failed": "Registration failed",
+        "skipped": "Not registered",
+        "notRegisteredYet": "Not registered yet",
+        "registeredDescription": "AgentSDR registered them in your Unipile workspace on {when}, so replies, accepted invitations and WhatsApp messages arrive here.",
+        "defaultDescription": "AgentSDR registers them in your Unipile workspace, so replies, accepted invitations and WhatsApp messages arrive here.",
+        "hideUrls": "Hide URLs",
+        "loading": "Loading…",
+        "showUrls": "Show URLs and secret",
+        "registering": "Registering…",
+        "registerAgain": "Register again",
+        "register": "Register webhooks",
+        "registerError": "Could not register the webhooks.",
+        "loadError": "Could not load the webhook details.",
+        "manualHint": "Only needed to register the webhooks by hand. Each URL is called with the header <code>x-unipile-secret</code> set to the secret below.",
+        "endpointsMissing": "Set BETTER_AUTH_URL to the app's public address to get the webhook URLs.",
+        "secret": "Secret"
+      },
+      "guide": {
+        "title": "How to connect",
+        "steps": "{count, plural, one {# step} other {# steps}}"
+      },
+      "dialog": {
+        "titleEdit": "Edit {name}",
+        "titleConnect": "Connect {name}",
+        "description": "Everything is tested against {name} before it is saved.",
+        "guideLink": "Step-by-step guide",
+        "videoLink": "Watch how",
+        "docsLink": "{name} docs",
+        "filledFrom": "Filled in from {file} — check the values, then connect.",
+        "fillHint": "Fills in the fields below. The file stays in your browser.",
+        "savedPlaceholder": "Saved — leave blank to keep",
+        "errorTitle": "Could not connect",
+        "saveError": "Could not save the integration",
+        "networkError": "Network error — please try again",
+        "readFileError": "Could not read that file",
+        "cancel": "Cancel",
+        "testing": "Testing…",
+        "save": "Save",
+        "connectAndTest": "Connect & test"
+      }
+    },
+    "channelRulesForm": {
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "defaultAnyTime": "any time",
+      "defaultNone": "none",
+      "timeZone": "Time zone",
+      "anyTime": "Any time",
+      "setHours": "Set hours",
+      "daysGroup": "Days",
+      "start": "Start",
+      "end": "End",
+      "to": "to",
+      "clearHours": "Clear: send at any time",
+      "country": "Country",
+      "countryNone": "None (numbers need a + and country code)",
+      "lowest": "Lowest",
+      "highest": "Highest",
+      "default": "Default: {value}",
+      "useDefault": "Use default",
+      "readOnly": "Only owners and admins can change these.",
+      "saved": "Saved. Sending follows these rules within a minute.",
+      "saveError": "Could not save the sending rules.",
+      "discard": "Discard",
+      "saving": "Saving…",
+      "save": "Save changes"
+    },
+    "recorderExtension": {
+      "title": "Call Recorder extension",
+      "notInstalled": "Not installed in this browser",
+      "updateAvailable": "Update available",
+      "updateAvailableWithVersion": "Update available · you have {version}",
+      "upToDate": "Up to date",
+      "description": "Places WhatsApp calls from AgentSDR and records them. Chrome only, loaded unpacked.",
+      "latestVersion": "Latest version: {version}",
+      "howToUpdate": "How to update",
+      "howToInstall": "How to install",
+      "setupGuide": "Setup guide",
+      "update": "Update",
+      "download": "Download",
+      "firstTime": {
+        "title": "First time",
+        "step1": "Download and unzip it.",
+        "step2": "Move the <code>agentsdr-call-recorder</code> folder somewhere it can stay, such as Documents.",
+        "step3": "Open <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and choose that folder."
+      },
+      "toUpdate": {
+        "title": "To update",
+        "step1": "Click Update. The extension downloads the new version and reloads itself.",
+        "step2": "The first time, it asks for its folder: the one under Source in <code>chrome://extensions</code> → Details. Allow Chrome to edit it.",
+        "step3": "Reload WhatsApp Web before your next call.",
+        "oldVersions": "Versions before {version} have no Update button: replace the folder with a fresh download once and click the reload arrow in <code>chrome://extensions</code>."
+      }
+    },
+    "workingHours": {
+      "days": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "title": "Sending hours",
+      "descriptionNamed": "{address} only sends inside this window. Emails due outside it wait for the next open slot.",
+      "description": "This mailbox only sends inside this window. Emails due outside it wait for the next open slot.",
+      "timezone": "Timezone",
+      "timezoneHint": "The days and times below are in this timezone.",
+      "daysLegend": "Days",
+      "daysSummary": "{count, plural, =0 {No days are on — this mailbox will not send.} one {Sends on # day a week.} other {Sends on # days a week.}}",
+      "dayStart": "{day} start",
+      "dayEnd": "{day} end",
+      "to": "to",
+      "notSending": "Not sending",
+      "inverted": "{count, plural, one {{days} ends before it starts, so nothing will send then.} other {{days} end before they start, so nothing will send then.}}",
+      "saveError": "The sending hours were not saved. Please try again.",
+      "networkError": "Could not reach the server. Please try again.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save hours"
+    },
+    "emailConnection": {
+      "title": "Email connection",
+      "description": "The Google Workspace service account that sends and reads Gmail for every mailbox in Email → Mailboxes. Microsoft Outlook is coming soon.",
+      "outlook": {
+        "description": "Send and read email from Microsoft 365 and Outlook mailboxes, connected through Microsoft Azure.",
+        "enablesMailboxes": "Outlook mailboxes",
+        "enablesCampaigns": "email campaigns",
+        "enablesInbox": "inbox sync"
+      }
+    },
+    "emailRules": {
+      "title": "Email sending rules",
+      "description": "How fast and when mailboxes send. Defaults suit a warm Google Workspace mailbox; change them only if you know your sending reputation."
+    },
+    "linkedinConnection": {
+      "title": "LinkedIn connection",
+      "description": "Unipile connects your LinkedIn accounts for invitations, messages, search and inbox sync.",
+      "unipileNote": "The same Unipile connection also powers WhatsApp; changing it here changes it there too."
+    },
+    "linkedinRules": {
+      "title": "LinkedIn sending rules",
+      "description": "How many invitations and messages each account sends, how fast, and when. LinkedIn restricts accounts that move too fast, so the defaults are conservative."
+    },
+    "whatsappConnection": {
+      "title": "WhatsApp integrations",
+      "description": "Unipile connects your WhatsApp numbers for messaging and calling. Calls placed from AgentSDR are recorded by the Call Recorder extension and stored in your Cloudflare R2 bucket, along with contact photos. Transcription uses the model chosen in AI provider.",
+      "unipileNote": "The same Unipile connection also powers LinkedIn; changing it here changes it there too.",
+      "gologinNote": "Only needed for cloud calling numbers (Settings → WhatsApp → Calling numbers).",
+      "calcomNote": "Only needed for AI calling campaigns that book meetings: tells them when a lead books."
+    },
+    "whatsappRules": {
+      "title": "WhatsApp sending rules",
+      "description": "How fast numbers may start chats and send. WhatsApp bans numbers that message many strangers quickly."
+    },
+    "rules": {
+      "email": {
+        "dailySendLimit": {
+          "label": "Emails per day, per mailbox",
+          "help": "How many emails a newly connected mailbox sends a day. Warm mailboxes can send more; new ones should start low.",
+          "unit": "emails / day",
+          "warning": "Above about 50 a day from one Google Workspace mailbox, deliverability usually drops and Google may throttle it.",
+          "override": "Each mailbox can set its own limit in Email → Mailboxes."
+        },
+        "sendGapMinutes": {
+          "label": "Gap between emails from one mailbox",
+          "help": "After each send, the mailbox waits a random time in this range before the next, so sending looks human.",
+          "unit": "minutes",
+          "warning": "Sending more often than every 10 minutes from one mailbox looks automated to spam filters."
+        },
+        "sendingHours": {
+          "label": "Sending hours for new mailboxes",
+          "help": "When a newly connected mailbox may send. Each mailbox can change its own hours in Email → Mailboxes."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Gap between automatic CRM follow-ups, per mailbox",
+          "help": "A CRM sequence set to send its follow-ups automatically sends at most one from each mailbox in this time, oldest first, so follow-ups that fall due together go out spread over the day.",
+          "unit": "minutes",
+          "warning": "Follow-ups less than 15 minutes apart from one mailbox look automated."
+        }
+      },
+      "linkedin": {
+        "invitesPerDayPremium": {
+          "label": "Invitations per day, premium accounts",
+          "help": "Connection requests one LinkedIn account with Premium or Sales Navigator sends a day.",
+          "unit": "invitations / day",
+          "warning": "LinkedIn restricts accounts that send much more than 30 invitations a day.",
+          "override": "Each account can set its own limit in LinkedIn → Accounts."
+        },
+        "invitesPerDayFree": {
+          "label": "Invitations per day, free accounts",
+          "help": "Connection requests one free LinkedIn account sends a day.",
+          "unit": "invitations / day",
+          "warning": "Free accounts have a much smaller weekly invitation allowance; more than 10 a day uses it up fast.",
+          "override": "Each account can set its own limit in LinkedIn → Accounts."
+        },
+        "invitesPerRun": {
+          "label": "Invitations per run",
+          "help": "Each sending run sends a random number of invitations in this range, then the account rests.",
+          "unit": "invitations",
+          "warning": "Large bursts look automated; keep runs small and frequent."
+        },
+        "inviteDelaySeconds": {
+          "label": "Delay between invitations",
+          "help": "Within a run, the wait between two invitations.",
+          "unit": "seconds",
+          "warning": "Invitations less than 20 seconds apart look automated."
+        },
+        "runGapMinutes": {
+          "label": "Rest between runs",
+          "help": "After a run, the account rests a random time in this range before the next one.",
+          "unit": "minutes",
+          "warning": "Resting less than 20 minutes between runs makes activity look continuous."
+        },
+        "followUpsPerRun": {
+          "label": "Follow-up messages per run",
+          "help": "Messages to people who accepted, sent per run.",
+          "unit": "messages",
+          "warning": "Many messages in one burst look automated."
+        },
+        "profileLookupsPerRun": {
+          "label": "Profile lookups per run",
+          "help": "Profiles opened per run to find the LinkedIn member behind a lead.",
+          "unit": "profiles",
+          "warning": "Viewing many profiles quickly can trigger LinkedIn's limits."
+        },
+        "searchLeadsPerDay": {
+          "label": "Search leads per day, per account",
+          "help": "How many leads one account pulls from LinkedIn searches a day.",
+          "unit": "leads / day",
+          "warning": "Heavy searching is one of the faster ways to have an account limited."
+        },
+        "workingHours": {
+          "label": "Working hours for accounts without their own",
+          "help": "Any time unless you set hours here. An account's own working hours (LinkedIn → Accounts) always win."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Gap between automatic CRM follow-ups, per account",
+          "help": "A CRM sequence set to send its follow-ups automatically sends at most one from each account in this time, oldest first, so follow-ups that fall due together go out spread over the day.",
+          "unit": "minutes",
+          "warning": "Follow-ups less than 15 minutes apart from one account look automated."
+        }
+      },
+      "whatsapp": {
+        "sendingHours": {
+          "label": "Sending hours for campaigns and automatic follow-ups",
+          "help": "Any time unless you set hours here. Campaign messages and automatic CRM follow-ups only go out inside these hours; messages you send yourself are not affected."
+        },
+        "warmupHours": {
+          "label": "Warm-up after linking a number",
+          "help": "A newly linked number replies to existing chats right away but starts no new chats for this long.",
+          "unit": "hours",
+          "warning": "New numbers that message strangers on their first day are banned far more often."
+        },
+        "newChatsPerDay": {
+          "label": "New chats per day, per number",
+          "help": "Conversations one number may start in a rolling day. Replies to people who wrote first are not counted.",
+          "unit": "chats / day",
+          "warning": "WhatsApp bans numbers that start many chats with people who don't have them saved.",
+          "override": "Each number can set its own limit in WhatsApp → Numbers."
+        },
+        "secondsBetweenSends": {
+          "label": "Seconds between messages, per number",
+          "help": "The shortest gap between two messages sent from one number.",
+          "unit": "seconds",
+          "warning": "Messages sent faster than every 10 seconds look automated."
+        },
+        "crmFollowUpGapMinutes": {
+          "label": "Gap between automatic CRM follow-ups, per number",
+          "help": "A CRM sequence set to send its follow-ups automatically sends at most one from each number in this time, oldest first, so follow-ups that fall due together go out spread over the day.",
+          "unit": "minutes",
+          "warning": "Follow-ups less than 15 minutes apart from one number look automated."
+        },
+        "callsPerDay": {
+          "label": "AI campaign calls per day, per number",
+          "help": "How many calls AI campaigns place from one calling number a day, once its warm-up is over.",
+          "unit": "calls / day",
+          "warning": "Many calls a day to people who don't have the number saved is how WhatsApp numbers get banned.",
+          "override": "Each calling number can set its own limit in WhatsApp → Calling numbers."
+        },
+        "callWarmupDays": {
+          "label": "Warm-up for a number's first AI campaign calls",
+          "help": "For this many days after a number's first AI campaign call, it places at most 10 calls a day in the first week, 20 in the second, and so on, up to its daily limit. 0 turns the warm-up off.",
+          "unit": "days",
+          "warning": "A number that starts cold-calling at full volume on day one is far more likely to be banned."
+        },
+        "callGapMinutes": {
+          "label": "Gap between AI campaign calls, per number",
+          "help": "After placing a call, the number waits a random time in this range before the next one.",
+          "unit": "minutes",
+          "warning": "Calls placed back to back look automated."
+        },
+        "callingHours": {
+          "label": "Calling hours for AI campaigns",
+          "help": "When AI campaigns may call and message leads. Each calling number can set its own hours.",
+          "override": "Each calling number can set its own hours in WhatsApp → Calling numbers."
+        }
+      },
+      "general": {
+        "timeZone": {
+          "label": "Time zone",
+          "help": "Your organization's time zone. The new day below starts at that time here."
+        },
+        "dayStartsAt": {
+          "label": "New day starts at",
+          "help": "Daily limits reset and the day's email queue is built at this time."
+        },
+        "defaultPhoneCountry": {
+          "label": "Default phone country",
+          "help": "The country assumed for phone numbers typed or imported without a + and country code."
+        }
+      }
+    },
+    "integrations": {
+      "unipile": {
+        "description": "Connects LinkedIn and WhatsApp accounts for sending, inbox sync and calling.",
+        "settingsLabel": "Settings → LinkedIn → Connection",
+        "enables": {
+          "item1": "LinkedIn accounts and campaigns",
+          "item2": "WhatsApp messaging and calling"
+        },
+        "setupSteps": {
+          "step1": "Sign in to the Unipile dashboard at dashboard.unipile.com.",
+          "step2": "Copy your DSN — the API address shown at the top of the dashboard.",
+          "step3": "Under Access tokens, generate a token and copy it. It is shown only once.",
+          "step4": "Save. AgentSDR registers the webhooks it needs in your Unipile workspace itself, with a secret it generates."
+        },
+        "fields": {
+          "baseUrl": {
+            "label": "DSN (API address)",
+            "help": "Shown at the top of the Unipile dashboard. Paste it as it appears — https:// is added if missing."
+          },
+          "apiKey": {
+            "label": "Access token",
+            "help": "Unipile dashboard → Access tokens → Generate. Copy it right away; Unipile shows it only once."
+          },
+          "notifySecret": {
+            "label": "Webhook secret",
+            "help": "Leave empty: AgentSDR generates one and registers the webhooks with it. Fill it in only to keep a secret you already use."
+          }
+        }
+      },
+      "google": {
+        "description": "Sends and reads Gmail through a service account with domain-wide delegation.",
+        "settingsLabel": "Settings → Email → Connection",
+        "enables": {
+          "item1": "Email accounts",
+          "item2": "Email campaigns and reply sync"
+        },
+        "setupSteps": {
+          "step1": "In the Google Cloud console, open APIs & Services → Library and enable the Gmail API.",
+          "step2": "Open IAM & Admin → Service accounts → Create service account. It needs no roles.",
+          "step3": "Open the new service account → Keys → Add key → Create new key → JSON. A key file downloads.",
+          "step4": "In the Google Admin console, open Security → Access and data control → API controls → Manage domain-wide delegation → Add new. Paste the service account's Client ID (on its Details tab) and these scopes:",
+          "step5": "Upload the key file below to fill in the fields, or copy each value in by hand."
+        },
+        "fields": {
+          "clientEmail": {
+            "label": "Service account email",
+            "help": "Google Cloud console → IAM & Admin → Service accounts, in the Email column. It ends in .iam.gserviceaccount.com."
+          },
+          "privateKey": {
+            "label": "Private key",
+            "help": "Google only gives this out inside a JSON key file (service account → Keys → Add key → Create new key → JSON). Upload that file above, or open it and copy the private_key value, from -----BEGIN to END PRIVATE KEY-----."
+          },
+          "gmailWatchTopic": {
+            "label": "Gmail Pub/Sub topic",
+            "help": "Google Cloud console → Pub/Sub → Topics: create a topic, give gmail-api-push@system.gserviceaccount.com the Pub/Sub Publisher role on it, and copy its full name. Sending works without it, but email replies are not picked up."
+          }
+        },
+        "keyFile": {
+          "label": "Upload key file"
+        }
+      },
+      "r2": {
+        "description": "Stores WhatsApp call recordings and contact photos.",
+        "settingsLabel": "Settings → WhatsApp → Integrations",
+        "enables": {
+          "item1": "Call recordings",
+          "item2": "Contact photos"
+        },
+        "setupSteps": {
+          "step1": "In the Cloudflare dashboard, open R2 Object Storage and create a bucket for recordings (or pick an existing one).",
+          "step2": "Copy your Account ID from the R2 overview page.",
+          "step3": "Open Manage API tokens → Create API token, give it Object Read & Write on that bucket, and copy the Access Key ID and Secret Access Key. The secret is shown only once."
+        },
+        "fields": {
+          "accountId": {
+            "label": "Account ID",
+            "help": "Cloudflare dashboard → R2 Object Storage, under Account details on the overview page."
+          },
+          "bucket": {
+            "label": "Bucket name",
+            "help": "The bucket's name exactly as listed under R2 Object Storage."
+          },
+          "accessKeyId": {
+            "label": "Access key ID",
+            "help": "Shown when you create an R2 API token (R2 Object Storage → Manage API tokens)."
+          },
+          "secretAccessKey": {
+            "label": "Secret access key",
+            "help": "Shown once, next to the access key ID, when you create the token."
+          }
+        }
+      },
+      "gologin": {
+        "description": "Browser profiles that run cloud calling numbers' WhatsApp Web, so AI agent calls can be placed without anyone's laptop.",
+        "settingsLabel": "Settings → WhatsApp → Integrations",
+        "enables": {
+          "item1": "Cloud calling numbers (GoLogin launchers)"
+        },
+        "setupSteps": {
+          "step1": "Sign in to GoLogin and open Settings → API.",
+          "step2": "Create a new API token and copy it. It is shown only once.",
+          "step3": "Paste it below and save. Then add a calling number under Settings → WhatsApp → Calling numbers."
+        },
+        "fields": {
+          "apiToken": {
+            "label": "API token",
+            "help": "GoLogin → Settings → API → New token. Copy it right away; GoLogin shows it only once."
+          }
+        }
+      },
+      "calcom": {
+        "description": "Tells AI calling campaigns when a lead books (or cancels) a meeting from the booking link the agent sent them.",
+        "settingsLabel": "Settings → WhatsApp → Integrations",
+        "enables": {
+          "item1": "Meetings booked from AI calling campaigns"
+        },
+        "setupSteps": {
+          "step1": "In Cal.com, open Settings → Developer → Webhooks and create a new webhook.",
+          "step2": "Paste the webhook URL shown on this page (it carries your organization) as the Subscriber URL.",
+          "step3": "Turn on the Booking created, Booking rescheduled and Booking cancelled triggers.",
+          "step4": "Type a long random secret into Secret, save the webhook, and paste the same secret below."
+        },
+        "fields": {
+          "webhookSecret": {
+            "label": "Webhook secret",
+            "help": "The Secret you typed on the Cal.com webhook. AgentSDR refuses deliveries that are not signed with it."
+          },
+          "apiKey": {
+            "label": "API key (optional)",
+            "help": "Cal.com → Settings → Developer → API keys. Only checked for now; leave it empty if you like."
+          }
+        }
+      },
+      "langfuse": {
+        "description": "Holds the prompts AgentSDR's AI uses, versioned and editable without a deploy, and traces every AI call.",
+        "settingsLabel": "Settings → AI provider",
+        "enables": {
+          "item1": "Editing the AI's prompts in Langfuse (versioned)",
+          "item2": "Traces of every AI call: inputs, outputs, tokens and cost, phone calls as sessions"
+        },
+        "setupSteps": {
+          "step1": "In Langfuse (cloud.langfuse.com, or your own Langfuse v3+), create a project for AgentSDR, or open an existing one.",
+          "step2": "Open the project's Settings → API Keys → Create new API keys. Copy the public and the secret key; the secret is shown only once.",
+          "step3": "Paste the host, the public key and the secret key below.",
+          "step4": "Save. AgentSDR uploads its prompts to the project, labelled production. Prompts already in the project are never overwritten."
+        },
+        "fields": {
+          "baseUrl": {
+            "label": "Host",
+            "help": "The address you open Langfuse at: https://cloud.langfuse.com (EU), https://us.cloud.langfuse.com (US), or your self-hosted Langfuse. https:// is added if missing."
+          },
+          "publicKey": {
+            "label": "Public key",
+            "help": "Project settings → API Keys, the key starting pk-lf-."
+          },
+          "secretKey": {
+            "label": "Secret key",
+            "help": "Shown once, next to the public key, when you create the API keys. It starts sk-lf-."
+          }
+        }
+      }
+    },
+    "ruleProblems": {
+      "wholeNumber": "{label} must be a whole number",
+      "between": "{label} must be between {min, number} and {max, number}",
+      "rangeNeedsTwo": "{label} needs a lowest and a highest whole number",
+      "rangeBetween": "{label} must stay between {min, number} and {max, number}",
+      "rangeOrder": "{label}: the lowest value can't be above the highest",
+      "invalidHours": "{label} is not valid",
+      "unknownTimezone": "{label}: unknown time zone",
+      "pickDay": "{label}: pick at least one day",
+      "timeFormat": "{label}: times must look like 09:00",
+      "endAfterStart": "{label}: the end must be after the start",
+      "country": "{label} must be a two-letter country code, like IN or US"
+    }
+  }
 }

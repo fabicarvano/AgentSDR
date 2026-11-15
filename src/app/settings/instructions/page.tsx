@@ -1,15 +1,18 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import InstructionsSettings from "@/components/settings/InstructionsSettings";
 
-export const metadata = { title: "Instructions" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsKnowledge.instructions");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function InstructionsPage() {
+export default async function InstructionsPage() {
+  const t = await getTranslations("settingsKnowledge.instructions");
   return (
-    <SettingsPage
-      title="Instructions"
-      description="Guidance added to every AI draft and classification. Each instruction is sent to the AI as its own titled section."
-    >
+    <SettingsPage title={t("title")} description={t("description")}>
       <InstructionsSettings />
     </SettingsPage>
   );

@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { RulesSettingsPage } from "@/components/settings/ChannelSettingsPages";
 
-export const metadata = { title: "WhatsApp sending rules" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsChannels.whatsappRules");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <RulesSettingsPage channel="whatsapp" title="WhatsApp sending rules" description="How fast numbers may start chats and send. WhatsApp bans numbers that message many strangers quickly." />;
+export default async function Page() {
+  const t = await getTranslations("settingsChannels.whatsappRules");
+  return <RulesSettingsPage channel="whatsapp" title={t("title")} description={t("description")} />;
 }

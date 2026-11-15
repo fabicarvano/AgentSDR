@@ -1,3 +1,241 @@
 {
-  "settingsAccounts": {}
+  "settingsAccounts": {
+    "emailPage": {
+      "title": "Contas de e-mail",
+      "description": "As caixas de e-mail de onde as campanhas de abordagem enviam."
+    },
+    "linkedinPage": {
+      "title": "Contas do LinkedIn",
+      "description": "Os perfis do LinkedIn de onde as campanhas enviam, conectados pelo Unipile."
+    },
+    "whatsappPage": {
+      "title": "Contas do WhatsApp",
+      "description": "Os números do WhatsApp de onde saem as mensagens e as ligações, vinculados pelo Unipile."
+    },
+    "addMailbox": {
+      "button": "Adicionar caixa de e-mail"
+    },
+    "overview": {
+      "filters": {
+        "all": "Todos",
+        "healthy": "Saudáveis",
+        "attention": "Requer atenção"
+      },
+      "noMatch": {
+        "accounts": "Nenhuma conta encontrada",
+        "numbers": "Nenhum número encontrado",
+        "mailboxes": "Nenhuma caixa de e-mail encontrada",
+        "hint": "Tente outro filtro ou limpe a busca."
+      },
+      "pager": {
+        "accounts": "{from, number}–{to, number} de {total, plural, one {# conta} other {# contas}}",
+        "numbers": "{from, number}–{to, number} de {total, plural, one {# número} other {# números}}",
+        "mailboxes": "{from, number}–{to, number} de {total, plural, one {# caixa de e-mail} other {# caixas de e-mail}}",
+        "previous": "Página anterior",
+        "next": "Próxima página"
+      }
+    },
+    "limitDialog": {
+      "description": "Para {account}. Deixe em branco para seguir as regras de envio da organização.",
+      "limits": "Organização: {value, number} {unit}. Permitido: {min, number}–{max, number}.",
+      "useOrganization": "Usar limite da organização",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "save": "Salvar limite",
+      "saveFailed": "Não foi possível salvar o limite."
+    },
+    "requiresPlatform": {
+      "thisIntegration": "esta integração",
+      "title": "Conecte {name} para usar este recurso",
+      "description": "{name} habilita {features}. Adicione as credenciais uma vez e este recurso é liberado.",
+      "connect": "Conectar {name}"
+    },
+    "mailboxes": {
+      "empty": {
+        "title": "Nenhuma caixa de e-mail ainda",
+        "description": "Adicione um endereço do Google Workspace autorizado para envio e as campanhas poderão começar a enviar por ele."
+      },
+      "kpi": {
+        "connected": "Conectadas",
+        "connectedContext": "{count, plural, one {de # caixa de e-mail} other {de # caixas de e-mail}}",
+        "needsAttention": "Requer atenção",
+        "everySending": "Todas as caixas de e-mail estão enviando",
+        "failed": "{count, plural, one {# falhou no teste de conexão} other {# falharam no teste de conexão}}",
+        "disabledOrConnecting": "Desativadas ou ainda conectando",
+        "needsAttentionHint": "Caixas de e-mail não conectadas: com falha no teste de conexão, desativadas ou ainda conectando. Elas não enviam nada até serem corrigidas.",
+        "sentToday": "Enviados hoje",
+        "capacityShare": "{percent} da capacidade de hoje",
+        "noCapacity": "Sem capacidade de envio",
+        "leftToday": "Restantes hoje",
+        "leftContext": "de {capacity, number} por dia nas caixas de e-mail conectadas",
+        "leftHint": "Os limites diários de envio das caixas de e-mail conectadas, menos o que elas já enviaram hoje."
+      },
+      "list": {
+        "title": "Caixas de e-mail",
+        "description": "Limites diários, horários de envio e saúde da conexão.",
+        "searchPlaceholder": "Buscar caixas de e-mail…"
+      }
+    },
+    "whatsapp": {
+      "status": {
+        "connected": "Conectado",
+        "credentials": "Requer credenciais",
+        "disconnected": "Desconectado",
+        "error": "Erro"
+      },
+      "errors": {
+        "generic": "Algo deu errado. Tente novamente."
+      },
+      "notices": {
+        "synced": "Sincronizado com o Unipile.",
+        "syncedEmpty": "Sincronizado — o Unipile ainda não tem nenhum número do WhatsApp vinculado.",
+        "importing": "Importando as conversas recentes de {name}. Elas aparecem em Mensagens em instantes.",
+        "importingThis": "Importando as conversas recentes deste número. Elas aparecem em Mensagens em instantes."
+      },
+      "thisNumber": "este número",
+      "numberFallback": "Número do WhatsApp",
+      "description": "Os números de onde o AgentSDR envia mensagens, vinculados no Unipile. As ligações são feitas em web.whatsapp.com pela extensão de gravação.",
+      "sync": "Sincronizar com o Unipile",
+      "syncing": "Sincronizando…",
+      "tryAgain": "Tentar novamente",
+      "empty": {
+        "title": "Nenhum número do WhatsApp ainda",
+        "description": "No painel do Unipile, escolha Accounts → Connect → WhatsApp e escaneie o QR code com o telefone usado nas ligações. Depois, sincronize aqui."
+      },
+      "kpi": {
+        "connected": "Conectados",
+        "connectedContext": "{count, plural, one {de # número} other {de # números}}",
+        "needsAttention": "Requer atenção",
+        "everyNumberCanMessage": "Todos os números podem enviar mensagens",
+        "relink": "Vincule-os de novo no Unipile e sincronize",
+        "needsAttentionHint": "Números desconectados, que precisam de credenciais ou que relatam um erro. Um número banido também perde as ligações.",
+        "warmingUp": "Em aquecimento",
+        "warmingUpContext": "Sem novas conversas por {hours, number} h após a vinculação",
+        "warmingUpHint": "Um número recém-vinculado pode responder a conversas existentes na hora, mas só inicia novas depois do aquecimento, para protegê-lo contra banimentos.",
+        "newChatsADay": "Novas conversas por dia",
+        "newChatsContext": "{perNumber, number} por número · {seconds, number} s entre envios",
+        "newChatsHint": "Cada número conectado inicia no máximo essa quantidade de novas conversas por dia, e as mensagens de um mesmo número são espaçadas. Altere em WhatsApp → Regras de envio, ou por número."
+      },
+      "list": {
+        "title": "Números",
+        "defaultNamed": "{name} é usado quando nenhum outro número é escolhido.",
+        "defaultUnnamed": "O número padrão é usado quando nenhum outro número é escolhido.",
+        "noDefault": "Ainda não há número padrão — defina um no menu do número.",
+        "searchPlaceholder": "Buscar números…"
+      },
+      "table": {
+        "number": "Número",
+        "status": "Status",
+        "newChats": "Novas conversas/dia",
+        "lastSynced": "Última sincronização",
+        "actions": "Ações"
+      },
+      "row": {
+        "default": "Padrão",
+        "warmingUntil": "Em aquecimento até {date}",
+        "ownLimit": "Limite próprio",
+        "never": "Nunca",
+        "moreActions": "Mais ações para {name}",
+        "makeDefault": "Definir como padrão",
+        "importChats": "Importar conversas recentes",
+        "newChatsADay": "Novas conversas por dia"
+      }
+    },
+    "linkedin": {
+      "premiumLabel": "LinkedIn Premium",
+      "weekdays": {
+        "sun": "Dom",
+        "mon": "Seg",
+        "tue": "Ter",
+        "wed": "Qua",
+        "thu": "Qui",
+        "fri": "Sex",
+        "sat": "Sáb"
+      },
+      "hours": {
+        "anyTime": "Qualquer horário",
+        "everyDay": "Todos os dias",
+        "monFri": "Seg–Sex",
+        "monSat": "Seg–Sáb",
+        "range": "{days}, {start}–{end}",
+        "withTimezone": "{hours} ({timezone})"
+      },
+      "status": {
+        "connected": "Conectada",
+        "limitReached": "Limite atingido",
+        "disconnected": "Desconectada"
+      },
+      "errors": {
+        "saveFailed": "Falha ao salvar",
+        "networkError": "Erro de rede"
+      },
+      "workingHours": {
+        "title": "Horário de trabalho",
+        "description": "Para {name}. O enriquecimento de perfis, os convites de conexão e os follow-ups só rodam dentro dessa janela.",
+        "restrictLabel": "Limitar a abordagem ao horário de trabalho",
+        "restrictHint": "Desativado: esta conta trabalha sempre que houver campanhas a executar.",
+        "timezone": "Fuso horário",
+        "start": "Início",
+        "end": "Fim",
+        "endsBeforeStart": "Termina antes de começar.",
+        "workingDays": "Dias de trabalho",
+        "noWorkingDays": "Selecione pelo menos um dia de trabalho.",
+        "cancel": "Cancelar",
+        "saving": "Salvando…",
+        "save": "Salvar horário"
+      },
+      "row": {
+        "reconnect": "Reconectar",
+        "openingUnipile": "Abrindo o Unipile…",
+        "reconnectFailed": "Falha ao reconectar",
+        "requestsSentToday": "Convites de conexão enviados hoje por {name}",
+        "ownLimit": "Limite próprio",
+        "next": "Próxima: {when}",
+        "readyNow": "Pronta agora",
+        "moreActions": "Mais ações para {name}",
+        "reconnectAccount": "Reconectar conta",
+        "editHours": "Editar horário de trabalho",
+        "setHours": "Definir horário de trabalho",
+        "dailyLimit": "Limite diário de convites"
+      },
+      "table": {
+        "account": "Conta",
+        "status": "Status",
+        "requestsToday": "Convites hoje",
+        "pending": "Pendentes",
+        "pendingHint": "Leads aguardando um convite de conexão desta conta",
+        "schedule": "Agenda",
+        "actions": "Ações"
+      },
+      "empty": {
+        "title": "Nenhuma conta do LinkedIn ainda",
+        "description": "Conecte uma pelo Unipile — ela é sincronizada aqui assim que você terminar."
+      },
+      "kpi": {
+        "connected": "Conectadas",
+        "connectedContext": "{count, plural, one {de # conta} other {de # contas}}",
+        "needsAttention": "Requer atenção",
+        "everyAccountCanSend": "Todas as contas podem enviar",
+        "disconnectedCount": "{count, plural, one {# desconectada} other {# desconectadas}}",
+        "limitedCount": "{count} no limite do LinkedIn",
+        "needsAttentionHint": "Contas desconectadas precisam ser reconectadas pelo Unipile. Contas no limite do LinkedIn voltam a funcionar sozinhas.",
+        "requestsToday": "Convites hoje",
+        "capacityShare": "{percent} de {capacity, number} por dia",
+        "noCapacity": "Sem capacidade conectada",
+        "requestsHint": "Convites de conexão enviados hoje, em relação aos limites diários das contas conectadas.",
+        "premium": "Premium",
+        "onFreePlan": "{count} no plano gratuito",
+        "premiumHint": "Contas Premium podem enviar {premium, number} convites de conexão por dia; contas gratuitas, {free, number}. Altere em LinkedIn → Regras de envio, ou por conta."
+      },
+      "disconnectedCallout": {
+        "title": "{count, plural, one {# conta está desconectada} other {# contas estão desconectadas}}",
+        "body": "As campanhas ignoram essas contas até que sejam reconectadas. Reconectar autentica de novo a mesma conta, então as campanhas e o histórico dela continuam."
+      },
+      "list": {
+        "title": "Contas",
+        "description": "Limites diários de convites, horários de trabalho e quando cada conta volta a trabalhar.",
+        "searchPlaceholder": "Buscar contas…"
+      }
+    }
+  }
 }

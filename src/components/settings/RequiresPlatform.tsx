@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { RiPlugLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -45,7 +46,7 @@ export async function RequiresPlatform({
 }
 
 /** The "Connect X to use this" card on its own, with Connect and "How to connect". No database access. */
-export function PlatformConnectPrompt({
+export async function PlatformConnectPrompt({
   platform,
   settingsHref,
   guideHref,
@@ -54,8 +55,11 @@ export function PlatformConnectPrompt({
   settingsHref?: string;
   guideHref?: string;
 }) {
+  const t = await getTranslations("settingsAccounts.requiresPlatform");
+  const format = await getFormatter();
+  const ti = await getTranslations("settingsChannels.integrations");
   const integration = getPlatformIntegration(platform);
-  const name = integration?.name ?? "this integration";
+  const name = integration?.name ?? t("thisIntegration");
   const guide = guideHref ?? integration?.guideUrl;
 
   return (
@@ -63,16 +67,16 @@ export function PlatformConnectPrompt({
       <FramePanel>
         <EmptyState
           icon={RiPlugLine}
-          title={`Connect ${name} to use this`}
+          title={t("title", { name })}
           description={
             integration
-              ? `${name} powers ${integration.enables.join(" and ").toLowerCase()}. Add its credentials once and this unlocks.`
+              ? t("description", { name, features: format.list(integration.enables.map((feature, index) => (ti.has(`${platform}.enables.item${index + 1}` as never) ? ti(`${platform}.enables.item${index + 1}` as never) : feature).toLowerCase())) })
               : undefined
           }
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button.Root asChild variant="primary" mode="filled" size="small">
-                <Link href={settingsHref ?? PLATFORM_SETTINGS_HREF[platform]}>Connect {name}</Link>
+                <Link href={settingsHref ?? PLATFORM_SETTINGS_HREF[platform]}>{t("connect", { name })}</Link>
               </Button.Root>
               {guide && <DocsLink href={guide} />}
             </div>

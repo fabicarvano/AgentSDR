@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { RequiresPlatform } from "@/components/settings/RequiresPlatform";
@@ -11,7 +13,10 @@ import { channelRules } from "@/lib/channels/rules.server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "LinkedIn accounts" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsAccounts.linkedinPage");
+  return { title: t("title") };
+}
 
 async function Accounts() {
   const ctx = await requirePageOrgContext();
@@ -35,11 +40,12 @@ async function Accounts() {
   );
 }
 
-export default function LinkedInAccountsPage() {
+export default async function LinkedInAccountsPage() {
+  const t = await getTranslations("settingsAccounts.linkedinPage");
   return (
     <SettingsPage
-      title="LinkedIn accounts"
-      description="The LinkedIn profiles campaigns send from, connected through Unipile."
+      title={t("title")}
+      description={t("description")}
       actions={
         <RequiresPlatform platform="unipile" fallback={null}>
           <ConnectAccountButton />

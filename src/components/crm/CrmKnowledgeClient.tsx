@@ -3,6 +3,7 @@
 
 // Renders its own SettingsPage so "Add document", which opens the editor held here, sits in the section header.
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArchiveLine,
@@ -35,20 +36,29 @@ import { Callout, Field } from "@/components/settings/SettingsKit";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ListSkeleton } from "@/components/settings/SettingsSkeletons";
 import { cn } from "@/utils/cn";
-import { asList, asObject, crmFetch, errorMessage, formatDate } from "./crm-utils";
+import type { Messages } from "@/i18n/catalog";
+import { asList, asObject, crmFetch, errorMessage } from "./crm-utils";
+
+// The two views of the screen, in tab order: `views.<key>` holds their labels.
+const VIEW_KEYS = ["active", "archived"] as const;
 
 type Document = Record<string, unknown>;
 type View = "active" | "archived";
 
-const KINDS: { value: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: "custom", label: "Custom", icon: RiFileTextLine },
-  { value: "company", label: "Company", icon: RiBuilding2Line },
-  { value: "product", label: "Product", icon: RiBox3Line },
-  { value: "pricing", label: "Pricing", icon: RiPriceTag3Line },
-  { value: "faq", label: "FAQ", icon: RiQuestionLine },
-  { value: "scheduling", label: "Scheduling", icon: RiCalendarLine },
-  { value: "objection", label: "Objection", icon: RiShieldCheckLine },
-  { value: "case_study", label: "Case study", icon: RiTrophyLine },
+/** `value` is what the API stores and never changes; `labelKey` picks the translated label (settingsKnowledge.knowledge.kinds.*). */
+const KINDS: {
+  value: string;
+  labelKey: keyof Messages["settingsKnowledge"]["knowledge"]["kinds"];
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { value: "custom", labelKey: "custom", icon: RiFileTextLine },
+  { value: "company", labelKey: "company", icon: RiBuilding2Line },
+  { value: "product", labelKey: "product", icon: RiBox3Line },
+  { value: "pricing", labelKey: "pricing", icon: RiPriceTag3Line },
+  { value: "faq", labelKey: "faq", icon: RiQuestionLine },
+  { value: "scheduling", labelKey: "scheduling", icon: RiCalendarLine },
+  { value: "objection", labelKey: "objection", icon: RiShieldCheckLine },
+  { value: "case_study", labelKey: "caseStudy", icon: RiTrophyLine },
 ];
 
 function kindMeta(kind: unknown) {
@@ -72,6 +82,8 @@ function snippet(content: string): string {
 }
 
 export default function CrmKnowledgeClient() {
+  const t = useTranslations("settingsKnowledge.knowledge");
+  const format = useFormatter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,29 +161,37 @@ export default function CrmKnowledgeClient() {
       if ((view === "archived") !== (d.active === false)) return false;
       if (!term) return true;
       const tags = Array.isArray(d.tags) ? d.tags.join(" ") : "";
-      return `${String(d.title ?? "")} ${tags} ${kindMeta(d.kind).label}`.toLowerCase().includes(term);
+      return `${String(d.title ?? "")} ${tags} ${t(`kinds.${kindMeta(d.kind).labelKey}`)}`.toLowerCase().includes(term);
     });
-  }, [documents, view, search]);
+  }, [documents, view, search, t]);
+
+  /** Same as crm-utils' formatDate, but in the interface language rather than the browser's. */
+  const formatUpdated = (value: unknown): string => {
+    if (!value) return "—";
+    const date = new Date(String(value));
+    if (Number.isNaN(date.getTime())) return "—";
+    return format.dateTime(date, { dateStyle: "medium", timeStyle: "short" });
+  };
 
   const addDocument = () => setEditor({ title: "", kind: "custom", content: "", tags: [], alwaysInclude: false });
   const addButton = (
     <Button.Root variant="primary" mode="filled" size="small" onClick={addDocument}>
       <Button.Icon as={RiAddLine} />
-      Add document
+      {t("addDocument")}
     </Button.Root>
   );
 
   return (
     <SettingsPage
-      title="Knowledge"
-      description="Product facts, pricing and policies the AI grounds its drafts in. Documents marked Always included go into every draft."
+      title={t("title")}
+      description={t("description")}
       actions={addButton}
     >
       <div className="space-y-5">
         {error && (
           <Callout
             tone="error"
-            action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => void load()}>Try again</Button.Root>}
+            action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => void load()}>{t("tryAgain")}</Button.Root>}
           >
             {error}
           </Callout>
@@ -184,8 +204,8 @@ export default function CrmKnowledgeClient() {
             <FramePanel>
               <EmptyState
                 icon={RiBookOpenLine}
-                title="No knowledge yet"
-                description="Add product, pricing, scheduling and company context, and the AI uses it when it drafts replies."
+                title={t("empty.title")}
+                description={t("empty.description")}
                 action={addButton}
               />
             </FramePanel>
@@ -194,15 +214,15 @@ export default function CrmKnowledgeClient() {
           <Frame>
             <header className="flex flex-col gap-3 px-4 pb-3 pt-3 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
-                <h3 className="text-label-sm text-text-strong-950">Documents</h3>
-                <p className="mt-0.5 text-paragraph-xs text-text-sub-600">Every saved edit creates a new version. Archived documents are left out of drafts.</p>
+                <h3 className="text-label-sm text-text-strong-950">{t("list.heading")}</h3>
+                <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{t("list.hint")}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap">
                 <SegmentedControl.Root value={view} onValueChange={(v) => setView(v as View)}>
                   <SegmentedControl.List className="w-auto auto-cols-auto">
-                    {(["active", "archived"] as const).map((v) => (
+                    {VIEW_KEYS.map((v) => (
                       <SegmentedControl.Trigger key={v} value={v} className="gap-1.5 px-3">
-                        {v === "active" ? "Active" : "Archived"}
+                        {v === "active" ? t("views.active") : t("views.archived")}
                         <span className="tabular-nums text-text-soft-400">{counts[v]}</span>
                       </SegmentedControl.Trigger>
                     ))}
@@ -211,7 +231,7 @@ export default function CrmKnowledgeClient() {
                 <Input.Root size="small" className="w-full sm:w-48">
                   <Input.Wrapper>
                     <Input.Icon as={RiSearchLine} />
-                    <Input.Input type="search" aria-label="Search documents" placeholder="Search documents…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                    <Input.Input type="search" aria-label={t("search.label")} placeholder={t("search.placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
                   </Input.Wrapper>
                 </Input.Root>
               </div>
@@ -221,8 +241,8 @@ export default function CrmKnowledgeClient() {
                 <EmptyState
                   compact
                   icon={search.trim() ? RiSearchLine : RiArchiveLine}
-                  title={search.trim() ? "No documents match" : view === "archived" ? "Nothing archived" : "No active documents"}
-                  description={search.trim() ? "Try another search." : view === "archived" ? "Archived documents appear here and can be restored." : "Restore an archived document or add a new one."}
+                  title={search.trim() ? t("noMatch.title") : view === "archived" ? t("noneArchived.title") : t("noneActive.title")}
+                  description={search.trim() ? t("noMatch.description") : view === "archived" ? t("noneArchived.description") : t("noneActive.description")}
                 />
               ) : (
                 <ul className="divide-y divide-stroke-soft-200">
@@ -231,7 +251,7 @@ export default function CrmKnowledgeClient() {
                     const text = snippet(contentOf(document));
                     const tags = Array.isArray(document.tags) ? (document.tags as unknown[]).map(String) : [];
                     const archived = document.active === false;
-                    const title = String(document.title ?? "Untitled document");
+                    const title = String(document.title ?? t("row.untitled"));
                     const busy = busyId === String(document.id);
                     return (
                       <li
@@ -254,19 +274,19 @@ export default function CrmKnowledgeClient() {
                           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                             <p className={cn("min-w-0 truncate text-label-sm", archived ? "text-text-sub-600" : "text-text-strong-950")} title={title}>{title}</p>
                             {alwaysIncluded(document) && !archived && (
-                              <Badge.Root size="small" variant="lighter" color="blue">Always included</Badge.Root>
+                              <Badge.Root size="small" variant="lighter" color="blue">{t("row.alwaysIncluded")}</Badge.Root>
                             )}
-                            {archived && <Badge.Root size="small" variant="lighter" color="gray">Archived</Badge.Root>}
+                            {archived && <Badge.Root size="small" variant="lighter" color="gray">{t("row.archived")}</Badge.Root>}
                           </div>
-                          <p className="mt-1 line-clamp-2 text-paragraph-sm text-text-sub-600">{text || "No content"}</p>
+                          <p className="mt-1 line-clamp-2 text-paragraph-sm text-text-sub-600">{text || t("row.noContent")}</p>
                           <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-paragraph-xs text-text-soft-400" suppressHydrationWarning>
-                            <span className="text-text-sub-600">{kind.label}</span>
+                            <span className="text-text-sub-600">{t(`kinds.${kind.labelKey}`)}</span>
                             <span aria-hidden="true">·</span>
-                            <span>Updated {formatDate(document.updatedAt ?? document.updated_at)}</span>
+                            <span>{t("row.updated", { date: formatUpdated(document.updatedAt ?? document.updated_at) })}</span>
                             {tags.length > 0 && (
                               <>
                                 <span aria-hidden="true">·</span>
-                                <span className="truncate">{tags.map((t) => `#${t}`).join(" ")}</span>
+                                <span className="truncate">{tags.map((tag) => `#${tag}`).join(" ")}</span>
                               </>
                             )}
                           </p>
@@ -274,18 +294,18 @@ export default function CrmKnowledgeClient() {
                         <div className="shrink-0" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                           <Dropdown.Root>
                             <Dropdown.Trigger asChild>
-                              <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={`Actions for ${title}`}>
+                              <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={t("row.actionsFor", { title })}>
                                 <Button.Icon as={RiMoreLine} />
                               </Button.Root>
                             </Dropdown.Trigger>
                             <Dropdown.Content align="end">
                               <Dropdown.Item onSelect={() => openEditor(document)}>
                                 <Dropdown.ItemIcon as={RiPencilLine} />
-                                Edit
+                                {t("row.edit")}
                               </Dropdown.Item>
                               <Dropdown.Item onSelect={() => void archive(document)}>
                                 <Dropdown.ItemIcon as={archived ? RiArrowGoBackLine : RiArchiveLine} />
-                                {archived ? "Restore" : "Archive"}
+                                {archived ? t("row.restore") : t("row.archive")}
                               </Dropdown.Item>
                             </Dropdown.Content>
                           </Dropdown.Root>
@@ -314,6 +334,7 @@ function KnowledgeEditor({
   onCancel: () => void;
   onSave: (document: Document) => Promise<string | null>;
 }) {
+  const t = useTranslations("settingsKnowledge.knowledge");
   const [title, setTitle] = useState(String(document.title ?? ""));
   const [kind, setKind] = useState(String(document.kind ?? "custom"));
   const [content, setContent] = useState(String(document.content ?? ""));
@@ -349,37 +370,37 @@ function KnowledgeEditor({
       <Modal.Content size="max-w-2xl" className="max-h-[calc(100dvh-2rem)]">
         <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
           <Modal.Header icon={RiBookOpenLine}>
-            <Modal.Title>{document.id ? "Edit document" : "New document"}</Modal.Title>
-            <Modal.Description>Every saved edit creates a new version.</Modal.Description>
+            <Modal.Title>{document.id ? t("editor.titleEdit") : t("editor.titleNew")}</Modal.Title>
+            <Modal.Description>{t("editor.description")}</Modal.Description>
           </Modal.Header>
           <Modal.Body className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
-              <Field label="Title" htmlFor="knowledge-title" required error={missingTitle ? "Give the document a title." : undefined}>
+              <Field label={t("editor.titleLabel")} htmlFor="knowledge-title" required error={missingTitle ? t("editor.titleMissing") : undefined}>
                 <Input.Root size="small" hasError={missingTitle}>
                   <Input.Wrapper>
-                    <Input.Input id="knowledge-title" autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Pricing and plans" />
+                    <Input.Input id="knowledge-title" autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("editor.titlePlaceholder")} />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
-              <Field label="Kind">
+              <Field label={t("editor.kind")}>
                 <Select.Root size="small" value={kind} onValueChange={setKind}>
-                  <Select.Trigger aria-label="Kind">
+                  <Select.Trigger aria-label={t("editor.kind")}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
                     {KINDS.map((k) => (
-                      <Select.Item key={k.value} value={k.value}>{k.label}</Select.Item>
+                      <Select.Item key={k.value} value={k.value}>{t(`kinds.${k.labelKey}`)}</Select.Item>
                     ))}
                   </Select.Content>
                 </Select.Root>
               </Field>
             </div>
             <Field
-              label="Content"
+              label={t("editor.content")}
               htmlFor="knowledge-content"
               required
-              description="Markdown. Headings and lists help the AI find the right part."
-              error={missingContent ? "Add the content the AI should know." : undefined}
+              description={t("editor.contentHint")}
+              error={missingContent ? t("editor.contentMissing") : undefined}
             >
               <Textarea.Root
                 id="knowledge-content"
@@ -389,31 +410,31 @@ function KnowledgeEditor({
                 onChange={(event) => setContent(event.target.value)}
                 rows={12}
                 className="min-h-48 resize-y font-mono text-paragraph-xs"
-                placeholder={"# Pricing\n\n- Starter: $49/month\n- Growth: $199/month"}
+                placeholder={t("editor.contentPlaceholder")}
               />
             </Field>
-            <Field label="Tags" htmlFor="knowledge-tags" optional description="Comma separated, e.g. pricing, onboarding.">
+            <Field label={t("editor.tags")} htmlFor="knowledge-tags" optional description={t("editor.tagsHint")}>
               <Input.Root size="small">
                 <Input.Wrapper>
-                  <Input.Input id="knowledge-tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="pricing, onboarding" />
+                  <Input.Input id="knowledge-tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder={t("editor.tagsPlaceholder")} />
                 </Input.Wrapper>
               </Input.Root>
             </Field>
             <label className="flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 ring-inset ring-stroke-soft-200">
               <Checkbox.Root className="mt-0.5" checked={alwaysInclude} onCheckedChange={(checked) => setAlwaysInclude(checked === true)} />
               <span>
-                <span className="block text-label-sm text-text-strong-950">Always include in draft context</span>
-                <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">Sent with every draft the AI writes, so keep these short.</span>
+                <span className="block text-label-sm text-text-strong-950">{t("editor.alwaysInclude")}</span>
+                <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">{t("editor.alwaysIncludeHint")}</span>
               </span>
             </label>
             {error && <Callout tone="error">{error}</Callout>}
           </Modal.Body>
           <Modal.Footer>
             <Button.Root type="button" variant="neutral" mode="stroke" size="small" disabled={saving} onClick={onCancel}>
-              Cancel
+              {t("editor.cancel")}
             </Button.Root>
             <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={saving}>
-              {saving ? "Saving…" : "Save document"}
+              {saving ? t("editor.saving") : t("editor.save")}
             </Button.Root>
           </Modal.Footer>
         </form>

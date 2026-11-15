@@ -1,3 +1,238 @@
 {
-  "settingsKnowledge": {}
+  "settingsKnowledge": {
+    "knowledge": {
+      "title": "Knowledge",
+      "description": "Product facts, pricing and policies the AI grounds its drafts in. Documents marked Always included go into every draft.",
+      "addDocument": "Add document",
+      "tryAgain": "Try again",
+      "empty": {
+        "title": "No knowledge yet",
+        "description": "Add product, pricing, scheduling and company context, and the AI uses it when it drafts replies."
+      },
+      "list": {
+        "heading": "Documents",
+        "hint": "Every saved edit creates a new version. Archived documents are left out of drafts."
+      },
+      "views": {
+        "active": "Active",
+        "archived": "Archived"
+      },
+      "search": {
+        "label": "Search documents",
+        "placeholder": "Search documents…"
+      },
+      "noMatch": {
+        "title": "No documents match",
+        "description": "Try another search."
+      },
+      "noneArchived": {
+        "title": "Nothing archived",
+        "description": "Archived documents appear here and can be restored."
+      },
+      "noneActive": {
+        "title": "No active documents",
+        "description": "Restore an archived document or add a new one."
+      },
+      "row": {
+        "untitled": "Untitled document",
+        "alwaysIncluded": "Always included",
+        "archived": "Archived",
+        "noContent": "No content",
+        "updated": "Updated {date}",
+        "actionsFor": "Actions for {title}",
+        "edit": "Edit",
+        "restore": "Restore",
+        "archive": "Archive"
+      },
+      "kinds": {
+        "custom": "Custom",
+        "company": "Company",
+        "product": "Product",
+        "pricing": "Pricing",
+        "faq": "FAQ",
+        "scheduling": "Scheduling",
+        "objection": "Objection",
+        "caseStudy": "Case study"
+      },
+      "editor": {
+        "titleEdit": "Edit document",
+        "titleNew": "New document",
+        "description": "Every saved edit creates a new version.",
+        "titleLabel": "Title",
+        "titleMissing": "Give the document a title.",
+        "titlePlaceholder": "Pricing and plans",
+        "kind": "Kind",
+        "content": "Content",
+        "contentHint": "Markdown. Headings and lists help the AI find the right part.",
+        "contentMissing": "Add the content the AI should know.",
+        "contentPlaceholder": "# Pricing\n\n- Starter: $49/month\n- Growth: $199/month",
+        "tags": "Tags",
+        "tagsHint": "Comma separated, e.g. pricing, onboarding.",
+        "tagsPlaceholder": "pricing, onboarding",
+        "alwaysInclude": "Always include in draft context",
+        "alwaysIncludeHint": "Sent with every draft the AI writes, so keep these short.",
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Save document"
+      }
+    },
+    "instructions": {
+      "title": "Instructions",
+      "description": "Guidance added to every AI draft and classification. Each instruction is sent to the AI as its own titled section.",
+      "untitled": "Untitled instruction",
+      "duplicateTitle": "{title} (copy)",
+      "load": {
+        "errorTitle": "Could not load the instructions",
+        "retry": "Try again"
+      },
+      "noPipeline": {
+        "title": "No CRM pipeline yet",
+        "body": "Instructions belong to the default CRM pipeline, and none is configured yet."
+      },
+      "sections": {
+        "draftInstructions": {
+          "title": "Reply drafting",
+          "helper": "Added to every draft the AI writes — email, LinkedIn and WhatsApp.",
+          "placeholder": "Sign off as Priya from Youse. Keep emails under 120 words. Never offer discounts; suggest a 20-minute call instead.",
+          "emptyText": "No instructions yet — add one to shape every draft."
+        },
+        "classificationInstructions": {
+          "title": "Reply classification",
+          "helper": "Added to every classification of a reply or call.",
+          "placeholder": "A referral to a colleague counts as Interested, not Other. Replies from agencies are Not interested.",
+          "emptyText": "No instructions yet — add one to shape every classification."
+        },
+        "callingInstructions": {
+          "title": "Calling",
+          "helper": "How the AI agent runs every WhatsApp call: the opening, the shape of the call, how it talks. Use '{{'agentName'}}' and '{{'firstName'}}'. Who it is, being honest that it is an AI, each campaign's goal and how a call ends stay fixed. Try changes with a rehearsal call on a campaign's sequence.",
+          "placeholder": "Never mention competitors by name. If they say they already use an agency, ask what the agency does for their landing pages.",
+          "emptyText": "No calling instructions — saving an empty list brings back the defaults."
+        }
+      },
+      "row": {
+        "collapseAria": "Collapse instruction",
+        "collapseTitle": "Collapse",
+        "expandAria": "Expand instruction",
+        "expandTitle": "Expand",
+        "titleAria": "Instruction title",
+        "chars": "{count, number} chars",
+        "empty": "Empty",
+        "duplicate": "Duplicate instruction",
+        "delete": "Delete instruction",
+        "textAria": "{title} — instruction text"
+      },
+      "section": {
+        "copied": "Copied",
+        "copyAll": "Copy all",
+        "exportJson": "Export JSON",
+        "collapseAll": "Collapse all",
+        "expandAll": "Expand all",
+        "add": "Add instruction",
+        "defaultsNotice": "These are the built-in instructions. Edit them and save to make them yours; Reset to defaults brings them back.",
+        "emptyTitle": "No instructions yet",
+        "saved": "Saved",
+        "unsaved": "Unsaved changes",
+        "summary": "{count, number} of {max, number} instructions · {total, number} of {maxTotal, number} characters",
+        "resetDefaults": "Reset to defaults",
+        "discard": "Discard",
+        "saving": "Saving…",
+        "save": "Save",
+        "copyError": "Could not copy to the clipboard."
+      },
+      "problem": {
+        "tooMany": "At most {max, number} instructions ({count, number} now).",
+        "titleTooLong": "“{title}…” has a title over {max, number} characters.",
+        "contentTooLong": "“{title}” is over {max, number} characters.",
+        "totalTooLong": "Together the instructions are {total, number} characters; the limit is {max, number}."
+      },
+      "confirmDelete": {
+        "title": "Delete instruction?",
+        "description": "“{title}” will be removed from this list. Save to apply it.",
+        "confirm": "Delete instruction"
+      },
+      "confirmReset": {
+        "title": "Reset to the default instructions?",
+        "description": "Your edits are replaced by the built-in instructions. Save is not needed.",
+        "confirm": "Reset"
+      }
+    },
+    "leadCategories": {
+      "title": "Lead categories",
+      "description": "The subcategories the AI sorts replies into, and the reply sequence each one starts.",
+      "tryAgain": "Try again",
+      "noPipeline": {
+        "title": "No CRM pipeline yet",
+        "body": "Subcategories belong to the default CRM pipeline, and none is configured yet."
+      },
+      "summary": "{active, plural, one {# active subcategory} other {# active subcategories}} across {categories, plural, one {# category} other {# categories}}",
+      "collapseAll": "Collapse all",
+      "expandAll": "Expand all",
+      "category": {
+        "customer": "Customer",
+        "interested": "Interested",
+        "notInterested": "Not interested",
+        "other": "Other"
+      },
+      "section": {
+        "count": "{active, plural, one {# subcategory} other {# subcategories}}{active, plural, =0 {} other { · {withSequence, number} with a sequence}}{archived, plural, =0 {} other { · {archived, number} archived}}",
+        "addAria": "Add a {category} subcategory",
+        "addLong": "Add subcategory",
+        "addShort": "Add",
+        "emptyTitle": "No {category} subcategories yet",
+        "emptyDescription": "Add one to define how replies are classified and which sequence follows.",
+        "caption": "{category} subcategories and their sequences",
+        "headSubcategory": "Subcategory",
+        "headDescription": "Classification description",
+        "headSequence": "Sequence",
+        "headActions": "Actions"
+      },
+      "row": {
+        "unnamed": "Unnamed",
+        "archived": "Archived",
+        "meta": "{records, plural, one {# active record} other {# active records}} · {stage, select, none {Not a funnel stage} other {Stage {rank, number}}}",
+        "addDescription": "Add a description so the AI knows when to use it",
+        "actionsFor": "Actions for {name}",
+        "edit": "Edit",
+        "restore": "Restore",
+        "delete": "Delete"
+      },
+      "sequence": {
+        "unavailable": "Unavailable sequence",
+        "unnamed": "Unnamed sequence",
+        "aria": "Sequence",
+        "none": "No sequence",
+        "optionArchived": "{name} — archived",
+        "optionPublishFirst": "{name} — publish first"
+      },
+      "dialog": {
+        "titleEdit": "Edit subcategory",
+        "titleAdd": "Add subcategory",
+        "description": "In <b>{category}</b>. The AI sorts replies into it using the description.",
+        "nameLabel": "Name",
+        "nameMissing": "Give the subcategory a name.",
+        "namePlaceholder": "e.g. Demo requested",
+        "descriptionLabel": "Classification description",
+        "descriptionHint": "Explain when an inbound reply should be placed here.",
+        "descriptionPlaceholder": "e.g. The person explicitly asks for a product demo",
+        "stageLabel": "Funnel stage",
+        "stageInvalid": "Use a whole number from 1, or leave it empty.",
+        "stageHint": "The AI can move a lead only to the same or a higher stage. Leave empty for outcomes that aren't funnel stages (Out of Office, Not Interested).",
+        "stagePlaceholder": "e.g. 2",
+        "cancel": "Cancel",
+        "adding": "Adding…",
+        "saving": "Saving…",
+        "saveChanges": "Save changes",
+        "add": "Add subcategory"
+      },
+      "confirmDelete": {
+        "title": "Delete subcategory?",
+        "description": "“{name}” will be permanently deleted along with its sequence assignment. Subcategories still holding CRM records or classification history cannot be deleted.",
+        "confirm": "Delete subcategory",
+        "fallbackName": "This subcategory"
+      },
+      "errors": {
+        "noPipeline": "No default CRM pipeline is configured yet."
+      }
+    }
+  }
 }

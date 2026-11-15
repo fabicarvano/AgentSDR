@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiMailCheckLine, RiMailLine, RiMailSendLine, RiSpeedUpLine } from "@remixicon/react";
 
 import { Frame, FramePanel } from "@/components/analytics/kit/Frame";
@@ -18,6 +19,9 @@ type Mailbox = typeof mailboxes.$inferSelect;
 const healthy = (m: Mailbox) => m.status === "connected";
 
 export default function MailboxesPageClient({ mailboxes }: { mailboxes: Mailbox[] }) {
+  const t = useTranslations("settingsAccounts.mailboxes");
+  const format = useFormatter();
+  const locale = useLocale();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<AccountFilter>("all");
   const [page, setPage] = useState(0);
@@ -54,8 +58,8 @@ export default function MailboxesPageClient({ mailboxes }: { mailboxes: Mailbox[
         <FramePanel>
           <EmptyState
             icon={RiMailLine}
-            title="No mailboxes yet"
-            description="Add a Google Workspace address authorised for sending, and campaigns can start sending from it."
+            title={t("empty.title")}
+            description={t("empty.description")}
             action={
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <AddMailboxButton />
@@ -71,27 +75,27 @@ export default function MailboxesPageClient({ mailboxes }: { mailboxes: Mailbox[
   return (
     <div>
       <KpiStrip columns={4}>
-        <KpiCell icon={RiMailCheckLine} label="Connected" value={String(connected)} context={`of ${mailboxes.length} ${mailboxes.length === 1 ? "mailbox" : "mailboxes"}`} />
+        <KpiCell icon={RiMailCheckLine} label={t("kpi.connected")} value={String(connected)} context={t("kpi.connectedContext", { count: mailboxes.length })} />
         <KpiCell
           icon={RiErrorWarningLine}
-          label="Needs attention"
+          label={t("kpi.needsAttention")}
           value={String(attention)}
-          context={attention === 0 ? "Every mailbox is sending" : failed > 0 ? `${failed} failed the connection test` : "Disabled or still connecting"}
-          hint="Mailboxes that are not connected: a failed connection test, disabled, or still connecting. They send nothing until fixed."
+          context={attention === 0 ? t("kpi.everySending") : failed > 0 ? t("kpi.failed", { count: failed }) : t("kpi.disabledOrConnecting")}
+          hint={t("kpi.needsAttentionHint")}
         />
-        <KpiCell icon={RiMailSendLine} label="Sent today" value={sentToday.toLocaleString("en-US")} context={capacity > 0 ? `${formatPercent(sentToday / capacity)} of today's capacity` : "No sending capacity"} />
+        <KpiCell icon={RiMailSendLine} label={t("kpi.sentToday")} value={format.number(sentToday)} context={capacity > 0 ? t("kpi.capacityShare", { percent: formatPercent(sentToday / capacity, undefined, locale) }) : t("kpi.noCapacity")} />
         <KpiCell
           icon={RiSpeedUpLine}
-          label="Left today"
-          value={left.toLocaleString("en-US")}
-          context={`of ${capacity.toLocaleString("en-US")} a day across connected mailboxes`}
-          hint="The daily send limits of connected mailboxes, minus what they have sent today."
+          label={t("kpi.leftToday")}
+          value={format.number(left)}
+          context={t("kpi.leftContext", { capacity })}
+          hint={t("kpi.leftHint")}
         />
       </KpiStrip>
 
       <AccountsFrame
-        title="Mailboxes"
-        description="Daily limits, sending hours and connection health."
+        title={t("list.title")}
+        description={t("list.description")}
         filter={filter}
         onFilterChange={(next) => {
           setFilter(next);
@@ -103,10 +107,10 @@ export default function MailboxesPageClient({ mailboxes }: { mailboxes: Mailbox[
           setSearch(value);
           setPage(0);
         }}
-        searchPlaceholder="Search mailboxes…"
-        footer={<AccountsPager page={current} total={filtered.length} noun="mailboxes" onPage={setPage} />}
+        searchPlaceholder={t("list.searchPlaceholder")}
+        footer={<AccountsPager page={current} total={filtered.length} kind="mailboxes" onPage={setPage} />}
       >
-        {filtered.length === 0 ? <AccountsNoMatch noun="mailboxes" /> : <MailboxTable mailboxes={visible} />}
+        {filtered.length === 0 ? <AccountsNoMatch kind="mailboxes" /> : <MailboxTable mailboxes={visible} />}
       </AccountsFrame>
     </div>
   );

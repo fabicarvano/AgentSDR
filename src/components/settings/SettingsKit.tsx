@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiCheckboxCircleLine,
   RiErrorWarningLine,
@@ -32,12 +33,13 @@ export function Field({
   className?: string;
   children: ReactNode;
 }) {
+  const t = useTranslations("settingsOrg.kit");
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       <label htmlFor={htmlFor} className="flex items-baseline gap-1 text-label-sm text-text-strong-950">
         {label}
         {required && <span className="text-primary-base" aria-hidden="true">*</span>}
-        {optional && <span className="text-paragraph-xs text-text-soft-400">(optional)</span>}
+        {optional && <span className="text-paragraph-xs text-text-soft-400">{t("optional")}</span>}
       </label>
       {children}
       {error ? (
@@ -139,6 +141,7 @@ export function Meter({
   label: string;
   className?: string;
 }) {
+  const format = useFormatter();
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div className={cn("flex min-w-0 items-center gap-2.5", className)}>
@@ -153,7 +156,7 @@ export function Meter({
         <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
       <span className="shrink-0 whitespace-nowrap text-paragraph-xs tabular-nums text-text-sub-600">
-        <span className="text-text-strong-950">{value.toLocaleString("en-US")}</span> / {max.toLocaleString("en-US")}
+        <span className="text-text-strong-950">{format.number(value)}</span> / {format.number(max)}
       </span>
     </div>
   );

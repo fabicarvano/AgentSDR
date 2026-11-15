@@ -1,3 +1,171 @@
 {
-  "settingsStations": {}
+  "settingsStations": {
+    "page": {
+      "title": "Números de chamada"
+    },
+    "callingStations": {
+      "title": "Números de chamada",
+      "description": "Números de WhatsApp dos quais o agente de IA faz chamadas, com o WhatsApp Web rodando em um navegador remoto, e não no notebook de um vendedor.",
+      "addNumber": "Adicionar número",
+      "loadingAria": "Carregando números de chamada",
+      "howItWorks": {
+        "title": "Como funcionam as chamadas na nuvem",
+        "body": "Um número de chamada é um número de WhatsApp vinculado a um perfil de navegador que um worker de chamadas abre a cada chamada. Ele precisa de um worker de chamadas em execução e, para perfis do GoLogin, da integração com o GoLogin conectada em <link>Configurações → WhatsApp → Integrações</link>. <docs>O que você precisa</docs>"
+      },
+      "empty": {
+        "title": "Nenhum número de chamada ainda",
+        "description": "Adicione um número de WhatsApp e o perfil de navegador dele, depois vincule-o ao WhatsApp Web por aqui."
+      },
+      "errors": {
+        "generic": "Algo deu errado. Tente novamente."
+      },
+      "ips": {
+        "title": "IPs",
+        "description": "Cada número sai por um IP próprio. Proxies ISP estáticos da Índia; um número por IP.",
+        "add": "Adicionar IP",
+        "empty": "Nenhum IP ainda. Números sem IP usam o IP do próprio worker."
+      },
+      "launchers": {
+        "cloak": "CloakBrowser",
+        "local": "Chromium local",
+        "gologinSdk": "GoLogin (este servidor)",
+        "gologinCloud": "GoLogin Cloud"
+      },
+      "status": {
+        "onboarding": "Ainda não vinculado",
+        "active": "Ativo",
+        "paused": "Pausado",
+        "loggedOut": "Desconectado",
+        "banned": "Banido"
+      },
+      "actions": {
+        "cancel": "Cancelar",
+        "save": "Salvar",
+        "edit": "Editar",
+        "delete": "Excluir"
+      },
+      "form": {
+        "addTitle": "Adicionar número de chamada",
+        "editTitle": "Editar número de chamada",
+        "addDescription": "Depois de adicionar, use Vincular WhatsApp para entrar com o número no WhatsApp Web.",
+        "editDescription": "{phone} não pode ser alterado aqui; exclua e adicione de novo para usar outro número.",
+        "editDescriptionNoPhone": "O número não pode ser alterado aqui; exclua e adicione de novo para usar outro número.",
+        "name": "Nome",
+        "namePlaceholder": "Linha de vendas 1",
+        "whatsappNumber": "Número de WhatsApp",
+        "browser": "Navegador",
+        "ip": "IP",
+        "ipNone": "Nenhum (IP do próprio worker)",
+        "gologinProfileId": "ID do perfil do GoLogin",
+        "gologinProfilePlaceholder": "O ID do perfil no GoLogin",
+        "aiCampaigns": "Campanhas de IA",
+        "callsPerDay": "Chamadas de IA por dia",
+        "callsPerDayPlaceholderRule": "Em branco: a regra da organização ({calls})",
+        "callsPerDayPlaceholder": "Em branco: a regra da organização",
+        "callingHours": "Horário de chamadas",
+        "useOrgHours": "Usar o horário da organização",
+        "setOwnHours": "Definir horário deste número",
+        "orgHours": "Horário da organização: {summary}",
+        "orgHoursFallback": "O horário de chamadas da organização (Configurações → WhatsApp → Regras de envio).",
+        "callsPerDayInvalid": "Chamadas de IA por dia deve ser um número inteiro de 1 a 100, ou deixe em branco para usar a regra da organização.",
+        "callingHoursInvalid": "O horário de chamadas precisa de pelo menos um dia e de um fim depois do início."
+      },
+      "proxyForm": {
+        "addTitle": "Adicionar um IP",
+        "editTitle": "Editar IP",
+        "description": "Um proxy pelo qual o navegador de um número de chamada acessa a internet. Pode ser atribuído a um só número.",
+        "label": "Rótulo",
+        "protocol": "Protocolo",
+        "host": "Host",
+        "port": "Porta",
+        "username": "Usuário",
+        "password": "Senha",
+        "passwordSaved": "Salva — deixe em branco para manter",
+        "country": "País",
+        "timeZone": "Fuso horário",
+        "provider": "Provedor",
+        "notes": "Observações",
+        "hostRequired": "O host é obrigatório.",
+        "portInvalid": "A porta deve ser um número de 1 a 65535."
+      },
+      "deleteProxy": {
+        "title": "Excluir {label}?",
+        "description": "O IP é removido desta lista. O proxy em si não é cancelado no seu provedor."
+      },
+      "wrongAccount": {
+        "title": "Vinculado a outro número de WhatsApp",
+        "description": "O WhatsApp Web de {name} está conectado como {linkedPhone}, e não como {phone}. As chamadas saem do número conectado, então este número não vai ligar até você escolher.",
+        "useBody": "<b>Usar {linkedPhone}</b> — manter este login e atualizar este número de chamada para esse número.",
+        "linkBody": "<b>Vincular {phone} em vez disso</b> — descartar este login (o número mantém o fingerprint do navegador) e vincular de novo pelo celular com o {phone}. Depois, remova o dispositivo extra no WhatsApp de {linkedPhone}, em Dispositivos conectados.",
+        "decideLater": "Decidir depois",
+        "linkInstead": "Vincular {phone}",
+        "use": "Usar {linkedPhone}"
+      },
+      "deleteStation": {
+        "title": "Excluir {name}?",
+        "description": "{phone} deixa de estar disponível para chamadas do agente de IA. As gravações e o histórico de chamadas continuam. O perfil de navegador em si não é excluído."
+      },
+      "card": {
+        "onCall": "Em chamada",
+        "ready": "Pronto em {worker}",
+        "readyTitle": "O WhatsApp Web fica aberto em {worker}, então as chamadas começam na hora",
+        "justNow": "agora mesmo",
+        "workerSeen": "Worker visto {time}",
+        "workerNone": "Nenhum worker o abriu ainda",
+        "lastCall": "última chamada {time}",
+        "proxy": "IP: {label}",
+        "proxyOwn": "IP próprio",
+        "aiLine": "Campanhas de IA: {calls} · {hours}",
+        "aiCallsOwn": "{count, plural, one {# chamada por dia} other {# chamadas por dia}}",
+        "aiCallsRule": "{count, plural, one {# chamada por dia (regra)} other {# chamadas por dia (regra)}}",
+        "aiHoursOrg": "horário de chamadas da organização",
+        "linkedAs": "WhatsApp: conectado como {phone}",
+        "linkedAsMismatch": "WhatsApp: conectado como {phone} — não é este número, então ele não vai ligar",
+        "useLinkedPhone": "Usar {phone} como este número",
+        "profileSaved": "Perfil: salvo {time} · v{version}",
+        "profileSavedSized": "Perfil: salvo {time} · {size} MB · v{version}",
+        "profileNone": "Perfil: ainda não salvo",
+        "cancelLink": "Cancelar vínculo",
+        "link": "Vincular WhatsApp",
+        "relink": "Revincular WhatsApp",
+        "resume": "Retomar",
+        "pause": "Pausar"
+      },
+      "proxyCard": {
+        "usedBy": "Usado por {name}",
+        "usedByUnnamed": "Usado por um número",
+        "unassigned": "Não atribuído",
+        "unassignFirst": "Remova-o do número primeiro"
+      },
+      "linkPanel": {
+        "title": "Vincular este número ao WhatsApp Web",
+        "codeAria": "Código de vinculação {code}",
+        "waitingForCode": "Aguardando um código. Se o WhatsApp Web mostrar um QR code, escaneie-o.",
+        "waitingForWorker": "Aguardando um worker de chamadas abrir o WhatsApp Web…",
+        "phoneSteps": "No celular: WhatsApp → Configurações → Dispositivos conectados → Conectar um dispositivo → Conectar com número de telefone, e então digite este código.",
+        "openFullAria": "Abrir a tela de login do WhatsApp Web em tamanho real",
+        "screenshotAlt": "Tela de login do WhatsApp Web no navegador na nuvem",
+        "screenshotHint": "A captura de tela é atualizada a cada poucos segundos. Clique nela para abrir em tamanho real.",
+        "zoomTitle": "Tela de login do WhatsApp Web",
+        "zoomedAlt": "Tela de login do WhatsApp Web no navegador na nuvem, em tamanho real"
+      }
+    },
+    "stationHours": {
+      "timeZone": "Fuso horário",
+      "daysLabel": "Dias",
+      "dayNames": {
+        "sun": "Dom",
+        "mon": "Seg",
+        "tue": "Ter",
+        "wed": "Qua",
+        "thu": "Qui",
+        "fri": "Sex",
+        "sat": "Sáb"
+      },
+      "start": "Início",
+      "end": "Fim",
+      "to": "até",
+      "invalid": "Escolha pelo menos um dia e um fim depois do início."
+    }
+  }
 }

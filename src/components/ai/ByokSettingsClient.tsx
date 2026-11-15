@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiArrowDownSLine,
   RiCheckLine,
@@ -81,6 +82,9 @@ const EMPTY_SETTINGS: Settings = {
 const KEYS_URL = "https://openrouter.ai/settings/keys";
 const MANAGEMENT_KEYS_URL = "https://openrouter.ai/settings/management-keys";
 const BYOK_URL = "https://openrouter.ai/workspaces/default/byok";
+// OpenRouter key prefixes: code, shown as they are in every language.
+const API_KEY_PLACEHOLDER = "sk-or-v1-…";
+const MANAGEMENT_KEY_PLACEHOLDER = "sk-or-mgmt-…";
 
 function normalizeSettings(value: unknown): Settings {
   if (!value || typeof value !== "object") return EMPTY_SETTINGS;
@@ -111,9 +115,10 @@ function normalizeSettings(value: unknown): Settings {
   };
 }
 
-async function readJson<T>(response: Response): Promise<T> {
+/** `fallback` (translated by the caller) is used when the API sends no `error` of its own; that one is shown as it arrives. */
+async function readJson<T>(response: Response, fallback: string): Promise<T> {
   const body = await response.json().catch(() => null) as { error?: string } | null;
-  if (!response.ok) throw new Error(body?.error ?? "Something went wrong. Please try again.");
+  if (!response.ok) throw new Error(body?.error ?? fallback);
   return body as T;
 }
 
@@ -121,15 +126,19 @@ function pairKey(provider: string, modelId: string) {
   return `${provider}::${modelId}`;
 }
 
-function formatContextLength(value?: number) {
+/** The compact token count ("128K"), without its label; the caller wraps it in the translated sentence. */
+function formatContextLength(value: number | undefined, format: ReturnType<typeof useFormatter>) {
   if (!value) return null;
-  return `${new Intl.NumberFormat("en-US", { notation: "compact" }).format(value)} context`;
+  return format.number(value, { notation: "compact" });
 }
 
-function formatPrice(value?: string) {
+/** The price per million tokens in dollars (OpenRouter bills in USD), without its "/ 1M" suffix. */
+function formatPrice(value: string | undefined, format: ReturnType<typeof useFormatter>) {
   if (!value || value === "0") return null;
   const amount = Number(value) * 1_000_000;
-  return Number.isFinite(amount) ? `$${amount.toFixed(amount < 0.01 ? 4 : 2)} / 1M` : null;
+  if (!Number.isFinite(amount)) return null;
+  const digits = amount < 0.01 ? 4 : 2;
+  return format.number(amount, { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
 function ProviderModelPicker({
@@ -155,6 +164,8 @@ function ProviderModelPicker({
   onToggleModel: (modelId: string) => void;
   onToggleVisible: (models: Model[]) => void;
 }) {
+  const t = useTranslations("settingsAi.byok");
+  const format = useFormatter();
   const query = search.trim().toLowerCase();
   const models = query
     ? provider.models.filter((model) =>
@@ -169,15 +180,16 @@ function ProviderModelPicker({
 
   let unavailableMessage: React.ReactNode = null;
   if (!hasPrioritizedCredential) {
-    unavailableMessage = <>This provider only has fallback-section credentials. Move or add a key in OpenRouter&apos;s prioritized BYOK section.</>;
+    unavailableMessage = <>{t("picker.noPrioritized")}</>;
   } else if (!hasModels && provider.modelFilterRestricted) {
     unavailableMessage = <>
-      This key is restricted to {provider.allowedModelCount} model{provider.allowedModelCount === 1 ? "" : "s"}, but none could be resolved to a selectable OpenRouter text or image model.
+      {t("picker.restricted", { count: provider.allowedModelCount })}
       {provider.unmatchedAllowedModels.length > 0 && <span className="mt-1 block break-words font-mono text-[11px]">{provider.unmatchedAllowedModels.join(", ")}</span>}
-      <span className="mt-1 block">For Azure deployments, set <code>model_slug</code> and <strong>This key applies to</strong> to the canonical ID (for example, <code>openai/gpt-4o</code>), not the Azure deployment name.</span>
+      {/* "This key applies to" is the field's name in OpenRouter's own (English) dashboard, so it stays English in every language. */}
+      <span className="mt-1 block">{t.rich("picker.azureHint", { code: (chunks) => <code>{chunks}</code>, b: (chunks) => <strong>{chunks}</strong> })}</span>
     </>;
   } else if (!hasModels) {
-    unavailableMessage = <>OpenRouter returned no text or image models for this provider. Refresh after checking the provider configuration.</>;
+    unavailableMessage = <>{t("picker.noModels")}</>;
   }
 
   return (
@@ -188,18 +200,22 @@ function ProviderModelPicker({
           checked={enabled}
           disabled={!canEnable && !enabled}
           onCheckedChange={onToggleProvider}
-          aria-label={`Enable ${provider.name}`}
+          aria-label={t("picker.enableAria", { name: provider.name })}
         />
         <AiBrandIcon identifier={provider.slug} label={provider.name} className="size-9" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-label-sm text-text-strong-950">{provider.name}</span>
           <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">
-            <code className="font-mono">{provider.slug}</code> · {provider.prioritizedCredentialCount} prioritized credential{provider.prioritizedCredentialCount === 1 ? "" : "s"}
-            {provider.fallbackCredentialCount > 0 ? ` · ${provider.fallbackCredentialCount} fallback-only` : ""}
+            {t.rich(provider.fallbackCredentialCount > 0 ? "picker.credentialsWithFallback" : "picker.credentials", {
+              slug: provider.slug,
+              prioritized: provider.prioritizedCredentialCount,
+              fallback: provider.fallbackCredentialCount,
+              code: (chunks) => <code className="font-mono">{chunks}</code>,
+            })}
           </span>
         </span>
         <Badge.Root size="medium" variant="lighter" color={selectedModels.length ? "blue" : "gray"} className="shrink-0">
-          {selectedModels.length} selected
+          {t("picker.selectedBadge", { count: selectedModels.length })}
         </Badge.Root>
       </label>
 
@@ -208,7 +224,7 @@ function ProviderModelPicker({
           <Callout tone="warning">
             <p>{unavailableMessage}</p>
             <a href={`${BYOK_URL}/${provider.slug}`} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-label-xs underline underline-offset-2">
-              Review {provider.name} BYOK settings<RiExternalLinkLine className="size-3.5" aria-hidden="true" />
+              {t("picker.reviewSettings", { name: provider.name })}<RiExternalLinkLine className="size-3.5" aria-hidden="true" />
             </a>
           </Callout>
         ) : (
@@ -220,7 +236,7 @@ function ProviderModelPicker({
               className="flex h-9 w-full items-center justify-between gap-2 rounded-lg bg-bg-white-0 px-3 text-left text-paragraph-sm text-text-strong-950 shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:shadow-button-important-focus focus-visible:ring-stroke-strong-950"
             >
               <span className={cn(!selectedModels.length && "text-text-soft-400")}>
-                {selectedModels.length ? `${selectedModels.length} model${selectedModels.length === 1 ? "" : "s"} selected` : `Select ${provider.name} models`}
+                {selectedModels.length ? t("picker.modelsSelected", { count: selectedModels.length }) : t("picker.selectModels", { name: provider.name })}
               </span>
               <RiArrowDownSLine className={cn("size-5 text-text-soft-400 transition-transform duration-200", open && "rotate-180")} aria-hidden="true" />
             </button>
@@ -231,33 +247,38 @@ function ProviderModelPicker({
                   <Input.Root size="xsmall" className="min-w-0 flex-1">
                     <Input.Wrapper>
                       <Input.Icon as={RiSearchLine} />
-                      <Input.Input value={search} onChange={(event) => onSearch(event.target.value)} aria-label={`Search ${provider.name} models`} placeholder={`Search ${provider.name} models…`} />
+                      <Input.Input value={search} onChange={(event) => onSearch(event.target.value)} aria-label={t("picker.searchAria", { name: provider.name })} placeholder={t("picker.searchPlaceholder", { name: provider.name })} />
                     </Input.Wrapper>
                   </Input.Root>
                   <Button.Root type="button" variant="neutral" mode="ghost" size="xsmall" onClick={() => onToggleVisible(models)} disabled={!models.length}>
-                    {allVisibleSelected ? "Clear shown" : "Select shown"}
+                    {allVisibleSelected ? t("picker.clearShown") : t("picker.selectShown")}
                   </Button.Root>
                 </div>
                 <div className="mt-2 max-h-72 divide-y divide-stroke-soft-200 overflow-y-auto rounded-lg bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200">
-                  {models.map((model) => (
-                    <label key={model.id} className="flex cursor-pointer items-start gap-2.5 px-3 py-2.5 transition hover:bg-bg-weak-50">
-                      <Checkbox.Root className="mt-1" checked={selectedModels.includes(model.id)} onCheckedChange={() => onToggleModel(model.id)} />
-                      <AiBrandIcon identifier={model.id} label={model.name} className="size-7" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-label-sm text-text-strong-950">{model.name}</span>
-                        <span className="mt-0.5 block truncate font-mono text-paragraph-xs text-text-sub-600">{model.id}</span>
-                        {model.description && <span className="mt-1 line-clamp-2 block text-paragraph-xs text-text-soft-400">{model.description}</span>}
-                        <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-paragraph-xs text-text-sub-600">
-                          {model.outputModalities?.includes("image") && <span>Image</span>}
-                          {model.outputModalities?.includes("text") && <span>Text</span>}
-                          {formatContextLength(model.context_length) && <span>{formatContextLength(model.context_length)}</span>}
-                          {formatPrice(model.pricing?.prompt) && <span>Input {formatPrice(model.pricing?.prompt)}</span>}
-                          {formatPrice(model.pricing?.completion) && <span>Output {formatPrice(model.pricing?.completion)}</span>}
+                  {models.map((model) => {
+                    const contextLength = formatContextLength(model.context_length, format);
+                    const inputPrice = formatPrice(model.pricing?.prompt, format);
+                    const outputPrice = formatPrice(model.pricing?.completion, format);
+                    return (
+                      <label key={model.id} className="flex cursor-pointer items-start gap-2.5 px-3 py-2.5 transition hover:bg-bg-weak-50">
+                        <Checkbox.Root className="mt-1" checked={selectedModels.includes(model.id)} onCheckedChange={() => onToggleModel(model.id)} />
+                        <AiBrandIcon identifier={model.id} label={model.name} className="size-7" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-label-sm text-text-strong-950">{model.name}</span>
+                          <span className="mt-0.5 block truncate font-mono text-paragraph-xs text-text-sub-600">{model.id}</span>
+                          {model.description && <span className="mt-1 line-clamp-2 block text-paragraph-xs text-text-soft-400">{model.description}</span>}
+                          <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-paragraph-xs text-text-sub-600">
+                            {model.outputModalities?.includes("image") && <span>{t("picker.modalityImage")}</span>}
+                            {model.outputModalities?.includes("text") && <span>{t("picker.modalityText")}</span>}
+                            {contextLength && <span>{t("picker.context", { amount: contextLength })}</span>}
+                            {inputPrice && <span>{t("picker.priceInput", { price: t("picker.pricePerMillion", { amount: inputPrice }) })}</span>}
+                            {outputPrice && <span>{t("picker.priceOutput", { price: t("picker.pricePerMillion", { amount: outputPrice }) })}</span>}
+                          </span>
                         </span>
-                      </span>
-                    </label>
-                  ))}
-                  {!models.length && <p className="px-3 py-5 text-center text-paragraph-sm text-text-sub-600">No models match this search.</p>}
+                      </label>
+                    );
+                  })}
+                  {!models.length && <p className="px-3 py-5 text-center text-paragraph-sm text-text-sub-600">{t("picker.noMatch")}</p>}
                 </div>
               </div>
             )}
@@ -284,12 +305,13 @@ function StepFrame({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("settingsAi.byok");
   return (
     <Frame>
       <header className="flex flex-col gap-3 px-4 pb-3 pt-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
           <span
-            aria-label={done ? `Step ${step}, done` : `Step ${step}`}
+            aria-label={done ? t("step.done", { step }) : t("step.label", { step })}
             className={cn(
               "mt-px flex size-5 shrink-0 items-center justify-center rounded-full text-label-xs tabular-nums",
               done ? "bg-success-base text-static-white" : "bg-bg-white-0 text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200",
@@ -313,6 +335,7 @@ const linkClass = "inline-flex items-center gap-1 rounded text-label-xs text-tex
 
 /** `children`: more of the AI provider page (Langfuse), shown after the steps and above the save bar. */
 export default function ByokSettingsClient({ children }: { children?: React.ReactNode }) {
+  const t = useTranslations("settingsAi.byok");
   const [settings, setSettings] = useState<Settings>(EMPTY_SETTINGS);
   const [catalog, setCatalog] = useState<Provider[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -333,15 +356,15 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
   async function loadCatalog(connectionId = settings.connectionId) {
     const params = connectionId ? `?all=1&connectionId=${encodeURIComponent(connectionId)}` : "?all=1";
     const response = await fetch(`/api/ai/openrouter/models${params}`);
-    const data = await readJson<CatalogResponse>(response);
+    const data = await readJson<CatalogResponse>(response, t("errors.generic"));
     setCatalog(data.providers ?? []);
   }
 
   useEffect(() => {
     let cancelled = false;
     void Promise.all([
-      fetch("/api/ai/openrouter/settings").then((response) => readJson<Settings>(response)),
-      fetch("/api/grid/ai/providers/openrouter/connections").then((response) => readJson<{ connections?: Connection[] }>(response)),
+      fetch("/api/ai/openrouter/settings").then((response) => readJson<Settings>(response, t("errors.generic"))),
+      fetch("/api/grid/ai/providers/openrouter/connections").then((response) => readJson<{ connections?: Connection[] }>(response, t("errors.generic"))),
     ]).then(async ([saved, accountData]) => {
       if (cancelled) return;
       const normalized = normalizeSettings(saved);
@@ -349,15 +372,17 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       setConnections(accountData.connections ?? []);
       if (normalized.connectionId) {
         const response = await fetch(`/api/ai/openrouter/models?all=1&connectionId=${encodeURIComponent(normalized.connectionId)}`);
-        const models = await readJson<CatalogResponse>(response);
+        const models = await readJson<CatalogResponse>(response, t("errors.generic"));
         if (!cancelled) setCatalog(models.providers ?? []);
       }
     }).catch((cause) => {
-      if (!cancelled) setError(cause instanceof Error ? cause.message : "Could not load AI settings.");
+      if (!cancelled) setError(cause instanceof Error ? cause.message : t("errors.load"));
     }).finally(() => {
       if (!cancelled) setLoading(false);
     });
     return () => { cancelled = true; };
+    // Loads once. `t` is only read for the error fallbacks: a language switch must not reload and overwrite unsaved choices.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedPairs = useMemo(() => {
@@ -455,9 +480,9 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
     setError(null);
     try {
       await loadCatalog();
-      setSuccess("BYOK providers refreshed.");
+      setSuccess(t("success.refreshed"));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not refresh BYOK providers.");
+      setError(cause instanceof Error ? cause.message : t("errors.refresh"));
     } finally {
       setRefreshing(false);
     }
@@ -477,13 +502,13 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
     setError(null);
     setSuccess(null);
     void loadCatalog(connectionId)
-      .catch((cause) => setError(cause instanceof Error ? cause.message : "Could not refresh BYOK providers."))
+      .catch((cause) => setError(cause instanceof Error ? cause.message : t("errors.refresh")))
       .finally(() => setRefreshing(false));
   }
 
   async function connectAccount() {
     if (!apiKey.trim() || !managementKey.trim()) {
-      setError("Enter both the inference API key and management API key.");
+      setError(t("errors.keysRequired"));
       return;
     }
     setConnecting(true);
@@ -494,12 +519,13 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Stored as the connection's name (sent to the API), so the default stays English in every language.
           name: accountName.trim() || "OpenRouter account",
           credentials: { apiKey: apiKey.trim(), managementKey: managementKey.trim() },
         }),
       });
-      const data = await readJson<{ connection?: Connection }>(response);
-      if (!data.connection) throw new Error("The account was created without a connection record.");
+      const data = await readJson<{ connection?: Connection }>(response, t("errors.generic"));
+      if (!data.connection) throw new Error(t("errors.noConnectionRecord"));
       setConnections((current) => [data.connection!, ...current.filter((item) => item.id !== data.connection!.id)]);
       updateSettings({ connectionId: data.connection.id });
       setApiKey("");
@@ -507,20 +533,20 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       setAccountName("");
       setShowConnectForm(false);
       await loadCatalog(data.connection.id);
-      setSuccess("OpenRouter account connected and verified.");
+      setSuccess(t("success.connected"));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not connect OpenRouter.");
+      setError(cause instanceof Error ? cause.message : t("errors.connect"));
     } finally {
       setConnecting(false);
     }
   }
 
   async function save() {
-    if (!settings.connectionId) return setError("Connect an OpenRouter account before saving.");
-    if (!settings.providers.length) return setError("Select at least one BYOK provider.");
-    if (!selectedPairs.length) return setError("Select at least one model.");
-    if (!settings.defaultModel) return setError("Choose a default model.");
-    if (!settings.byokOnlyConfirmed) return setError("Confirm that OpenRouter shared capacity fallback is set to Never use shared capacity.");
+    if (!settings.connectionId) return setError(t("errors.needConnection"));
+    if (!settings.providers.length) return setError(t("errors.needProvider"));
+    if (!selectedPairs.length) return setError(t("errors.needModel"));
+    if (!settings.defaultModel) return setError(t("errors.needDefaultModel"));
+    if (!settings.byokOnlyConfirmed) return setError(t("errors.needSharedCapacityConfirmation"));
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -530,11 +556,11 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      const saved = await readJson<Settings>(response);
+      const saved = await readJson<Settings>(response, t("errors.generic"));
       setSettings(normalizeSettings(saved));
-      setSuccess("AI settings saved.");
+      setSuccess(t("success.saved"));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save AI settings.");
+      setError(cause instanceof Error ? cause.message : t("errors.save"));
     } finally {
       setSaving(false);
     }
@@ -555,17 +581,17 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       <StepFrame
         step={1}
         done={stepsDone[0]}
-        title="OpenRouter account"
-        description="Your inference and management keys are encrypted before they are stored."
+        title={t("account.title")}
+        description={t("account.description")}
         actions={
           <>
-            <a href={KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>Inference keys<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
-            <a href={MANAGEMENT_KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>Management keys<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
+            <a href={KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>{t("account.inferenceKeys")}<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
+            <a href={MANAGEMENT_KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>{t("account.managementKeys")}<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
           </>
         }
       >
         {connections.length > 0 && (
-          <div role="radiogroup" aria-label="OpenRouter account" className="grid gap-2 sm:grid-cols-2">
+          <div role="radiogroup" aria-label={t("account.groupAria")} className="grid gap-2 sm:grid-cols-2">
             {connections.map((connection) => {
               const active = connection.id === settings.connectionId;
               return (
@@ -584,7 +610,7 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-label-sm text-text-strong-950">{connection.name}</span>
                     <span className={cn("mt-0.5 block text-paragraph-xs", connection.verified === false ? "text-warning-dark" : "text-text-sub-600")}>
-                      {connection.verified === false ? "Verification required" : "Verified and ready to use"}
+                      {connection.verified === false ? t("account.verificationRequired") : t("account.verified")}
                     </span>
                   </span>
                   {active && <RiCheckLine className="size-5 shrink-0 text-primary-base" aria-hidden="true" />}
@@ -598,53 +624,53 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
           <div className={cn("flex flex-wrap items-center gap-3", connections.length > 0 && "mt-4")}>
             <Button.Root type="button" variant={connections.length ? "neutral" : "primary"} mode={connections.length ? "stroke" : "filled"} size="small" onClick={() => { setShowConnectForm(true); setError(null); }}>
               <Button.Icon as={RiKey2Line} />
-              {connections.length ? "Connect another account" : "Connect OpenRouter"}
+              {connections.length ? t("account.connectAnother") : t("account.connect")}
             </Button.Root>
             {!connections.length && <DocsLink page="integrations/openrouter#set-it-up" />}
-            {!selectedConnection && <p className="text-paragraph-xs text-text-sub-600">Connect an account to choose providers and models.</p>}
+            {!selectedConnection && <p className="text-paragraph-xs text-text-sub-600">{t("account.connectHint")}</p>}
           </div>
         ) : (
           <div className={cn("rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200", connections.length > 0 && "mt-4")}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h4 className="text-label-sm text-text-strong-950">Connect OpenRouter</h4>
-                <p className="mt-0.5 text-paragraph-xs text-text-sub-600">Create or copy both keys from the OpenRouter dashboard. They are verified before they are saved.</p>
+                <h4 className="text-label-sm text-text-strong-950">{t("account.formTitle")}</h4>
+                <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{t("account.formDescription")}</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <DocsLink page="integrations/openrouter#set-it-up" appearance="inline" className={linkClass} />
-                <a href={KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>Open dashboard<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
+                <a href={KEYS_URL} target="_blank" rel="noreferrer" className={linkClass}>{t("account.openDashboard")}<RiExternalLinkLine className="size-3.5" aria-hidden="true" /></a>
               </div>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <Field label="Account name" htmlFor="or-name" optional>
+              <Field label={t("account.nameLabel")} htmlFor="or-name" optional>
                 <Input.Root size="small">
                   <Input.Wrapper>
-                    <Input.Input id="or-name" value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="OpenRouter production" />
+                    <Input.Input id="or-name" value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder={t("account.namePlaceholder")} />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
-              <Field label="Inference API key" htmlFor="or-key" required>
+              <Field label={t("account.apiKeyLabel")} htmlFor="or-key" required>
                 <Input.Root size="small">
                   <Input.Wrapper>
-                    <Input.Input id="or-key" type="password" autoComplete="new-password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder="sk-or-v1-…" />
+                    <Input.Input id="or-key" type="password" autoComplete="new-password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder={API_KEY_PLACEHOLDER} />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
-              <Field label="Management API key" htmlFor="or-mgmt" required>
+              <Field label={t("account.managementKeyLabel")} htmlFor="or-mgmt" required>
                 <Input.Root size="small">
                   <Input.Wrapper>
-                    <Input.Input id="or-mgmt" type="password" autoComplete="new-password" value={managementKey} onChange={(event) => setManagementKey(event.target.value)} placeholder="sk-or-mgmt-…" />
+                    <Input.Input id="or-mgmt" type="password" autoComplete="new-password" value={managementKey} onChange={(event) => setManagementKey(event.target.value)} placeholder={MANAGEMENT_KEY_PLACEHOLDER} />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button.Root type="button" variant="neutral" mode="stroke" size="small" onClick={() => setShowConnectForm(false)} disabled={connecting}>
-                Cancel
+                {t("account.cancel")}
               </Button.Root>
               <Button.Root type="button" variant="primary" mode="filled" size="small" onClick={() => void connectAccount()} disabled={connecting || !apiKey.trim() || !managementKey.trim()}>
                 {connecting && <Button.Icon as={RiLoader4Line} className="animate-spin" />}
-                {connecting ? "Verifying…" : "Verify & connect"}
+                {connecting ? t("account.verifying") : t("account.verifyAndConnect")}
               </Button.Root>
             </div>
           </div>
@@ -654,19 +680,19 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       <StepFrame
         step={2}
         done={stepsDone[1]}
-        title="Providers and models"
-        description="The providers OpenRouter may route requests to. Only the models you select are available in AI columns."
+        title={t("providers.title")}
+        description={t("providers.description")}
         actions={
           <Button.Root type="button" variant="neutral" mode="stroke" size="xsmall" onClick={() => void refreshDiscovery()} disabled={refreshing || !settings.connectionId}>
             <Button.Icon as={refreshing ? RiLoader4Line : RiRefreshLine} className={cn(refreshing && "animate-spin")} />
-            {refreshing ? "Refreshing…" : "Refresh providers"}
+            {refreshing ? t("providers.refreshing") : t("providers.refresh")}
           </Button.Root>
         }
       >
         <Input.Root size="small">
           <Input.Wrapper>
             <Input.Icon as={RiSearchLine} />
-            <Input.Input type="search" aria-label="Search providers" value={providerSearch} onChange={(event) => setProviderSearch(event.target.value)} placeholder="Search providers…" />
+            <Input.Input type="search" aria-label={t("providers.searchAria")} value={providerSearch} onChange={(event) => setProviderSearch(event.target.value)} placeholder={t("providers.searchPlaceholder")} />
           </Input.Wrapper>
         </Input.Root>
         {filteredProviders.length ? (
@@ -691,8 +717,8 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
           <EmptyState
             compact
             icon={RiSearchLine}
-            title={providerSearch.trim() ? "No providers match" : "No BYOK providers found"}
-            description={providerSearch.trim() ? "Try another search." : settings.connectionId ? "Add a key in OpenRouter's BYOK settings, then refresh." : "Connect an OpenRouter account first."}
+            title={providerSearch.trim() ? t("providers.noMatchTitle") : t("providers.noneTitle")}
+            description={providerSearch.trim() ? t("providers.tryAnotherSearch") : settings.connectionId ? t("providers.addKeyThenRefresh") : t("providers.connectFirst")}
           />
         )}
       </StepFrame>
@@ -700,20 +726,20 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       <StepFrame
         step={3}
         done={stepsDone[2]}
-        title="Default model"
-        description="Every internal AI task uses this text model, and new compatible AI columns select it automatically."
+        title={t("defaultModel.title")}
+        description={t("defaultModel.description")}
       >
         <Field
-          label="Provider and model"
-          description={defaultPairs.length ? "Only selected text models that support structured output are listed." : "Select at least one text model with structured-output support above to choose a default."}
+          label={t("defaultModel.fieldLabel")}
+          description={defaultPairs.length ? t("defaultModel.fieldDescription") : t("defaultModel.fieldDescriptionEmpty")}
           className="max-w-xl"
         >
           <Select.Root size="small" value={defaultValue} onValueChange={(value) => setDefaultModel(value)} disabled={!defaultPairs.length && !defaultValue}>
-            <Select.Trigger aria-label="Default model">
-              <Select.Value placeholder="Select a default model" />
+            <Select.Trigger aria-label={t("defaultModel.aria")}>
+              <Select.Value placeholder={t("defaultModel.placeholder")} />
             </Select.Trigger>
             <Select.Content>
-              <Select.Item value="">Select a default model</Select.Item>
+              <Select.Item value="">{t("defaultModel.placeholder")}</Select.Item>
               {defaultPairs.map((item) => {
                 const provider = catalog.find((candidate) => candidate.slug === item.provider);
                 const model = provider?.models.find((candidate) => candidate.id === item.modelId);
@@ -727,16 +753,16 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
           </Select.Root>
         </Field>
         <Field
-          label="Call transcription model"
-          description="Used to transcribe WhatsApp call recordings. Pick a model that accepts audio (e.g. a Gemini model)."
+          label={t("defaultModel.transcriptionLabel")}
+          description={t("defaultModel.transcriptionDescription")}
           className="mt-4 max-w-xl"
         >
           <Select.Root size="small" value={transcriptionValue} onValueChange={(value) => setTranscriptionModel(value)} disabled={!selectedPairs.length && !transcriptionValue}>
-            <Select.Trigger aria-label="Call transcription model">
-              <Select.Value placeholder="Off" />
+            <Select.Trigger aria-label={t("defaultModel.transcriptionLabel")}>
+              <Select.Value placeholder={t("defaultModel.transcriptionOff")} />
             </Select.Trigger>
             <Select.Content>
-              <Select.Item value="">Off</Select.Item>
+              <Select.Item value="">{t("defaultModel.transcriptionOff")}</Select.Item>
               {selectedPairs.map((item) => {
                 const provider = catalog.find((candidate) => candidate.slug === item.provider);
                 const model = provider?.models.find((candidate) => candidate.id === item.modelId);
@@ -754,18 +780,19 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       <StepFrame
         step={4}
         done={stepsDone[3]}
-        title="Shared capacity"
-        description="AgentSDR only sends requests on your own provider keys."
+        title={t("sharedCapacity.title")}
+        description={t("sharedCapacity.description")}
       >
         <label className={cn("flex cursor-pointer items-start gap-3 rounded-xl p-3.5 ring-1 ring-inset transition", settings.byokOnlyConfirmed ? "ring-stroke-soft-200" : "bg-warning-lighter ring-warning-light")}>
           <Checkbox.Root className="mt-0.5" checked={settings.byokOnlyConfirmed} onCheckedChange={(checked) => updateSettings({ byokOnlyConfirmed: checked === true })} />
           <span className="min-w-0">
-            <span className="block text-label-sm text-text-strong-950">Never use shared capacity</span>
+            <span className="block text-label-sm text-text-strong-950">{t("sharedCapacity.checkboxLabel")}</span>
             <span className="mt-1 block text-paragraph-xs text-text-sub-600">
-              In every enabled provider&apos;s OpenRouter BYOK settings, set Shared capacity fallback to <strong className="font-medium text-text-strong-950">Never use shared capacity on this provider</strong>. OpenRouter does not expose this setting through its public API, so this confirmation is required before AgentSDR will send requests.
+              {/* "Shared capacity fallback" and "Never use shared capacity on this provider" are OpenRouter's own (English) dashboard labels, so they stay English in every language. */}
+              {t.rich("sharedCapacity.explanation", { b: (chunks) => <strong className="font-medium text-text-strong-950">{chunks}</strong> })}
             </span>
             <a href={BYOK_URL} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} className={cn(linkClass, "mt-2")}>
-              Review OpenRouter BYOK settings<RiExternalLinkLine className="size-3.5" aria-hidden="true" />
+              {t("sharedCapacity.reviewLink")}<RiExternalLinkLine className="size-3.5" aria-hidden="true" />
             </a>
           </span>
         </label>
@@ -776,16 +803,18 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       <div className="sticky bottom-0 z-10 -mx-4 -mb-5 flex flex-wrap items-center justify-between gap-3 border-t border-stroke-soft-200 bg-bg-white-0/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-7 lg:px-8">
         <p className="text-paragraph-xs text-text-sub-600">
           {selectedConnection ? (
-            <>
-              Using <span className="text-text-strong-950">{selectedConnection.name}</span> · {stepsDone.filter(Boolean).length} of 4 steps done
-            </>
+            t.rich("footer.using", {
+              name: selectedConnection.name,
+              done: stepsDone.filter(Boolean).length,
+              account: (chunks) => <span className="text-text-strong-950">{chunks}</span>,
+            })
           ) : (
-            "Connect an OpenRouter account to continue"
+            t("footer.connectToContinue")
           )}
         </p>
         <Button.Root type="button" variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || !settings.connectionId || !settings.byokOnlyConfirmed}>
           {saving && <Button.Icon as={RiLoader4Line} className="animate-spin" />}
-          {saving ? "Saving…" : "Save AI settings"}
+          {saving ? t("footer.saving") : t("footer.save")}
         </Button.Root>
       </div>
     </div>

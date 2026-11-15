@@ -1,12 +1,18 @@
+import { getTranslations } from "next-intl/server";
 import { OrgMembers } from "@/components/settings/organization/OrgMembers";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 
-export const metadata = { title: "Members" };
 export const dynamic = "force-dynamic";
 
-export default function Page() {
+export async function generateMetadata() {
+  const t = await getTranslations("settingsOrg.membersPage");
+  return { title: t("title") };
+}
+
+export default async function Page() {
+  const t = await getTranslations("settingsOrg.membersPage");
   return (
-    <SettingsPage title="Members" description="Invite people and manage what each can do." width="narrow">
+    <SettingsPage title={t("title")} description={t("description")} width="narrow">
       <OrgMembers />
     </SettingsPage>
   );

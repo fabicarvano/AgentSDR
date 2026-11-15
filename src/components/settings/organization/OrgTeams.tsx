@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
 import * as Select from "@/components/alignui/select";
@@ -13,6 +14,8 @@ import { useAsyncAction, useOrgAccess, type OrgMember } from "./useOrgAccess";
 type Team = { id: string; name: string };
 
 export function OrgTeams() {
+  const t = useTranslations("settingsOrg.teams");
+  const ts = useTranslations("settingsOrg.state");
   const { org, role, loading, error: loadError, can } = useOrgAccess();
   const dialogs = useDialogs();
   const { busy, error, run } = useAsyncAction();
@@ -27,17 +30,17 @@ export function OrgTeams() {
   const loadTeams = useCallback(async () => {
     if (!orgId) return;
     const res = await authClient.organization.listTeams({ query: { organizationId: orgId } });
-    if (res.error || !res.data) return setListError(res.error?.message || "Could not load teams.");
+    if (res.error || !res.data) return setListError(res.error?.message || t("loadFailed"));
     setListError("");
-    setTeams(res.data.map((t) => ({ id: t.id, name: t.name })));
+    setTeams(res.data.map((team) => ({ id: team.id, name: team.name })));
     const entries = await Promise.all(
-      res.data.map(async (t) => {
-        const r = await authClient.organization.listTeamMembers({ query: { teamId: t.id } });
-        return [t.id, r.data ? r.data.map((m) => m.userId) : []] as const;
+      res.data.map(async (team) => {
+        const r = await authClient.organization.listTeamMembers({ query: { teamId: team.id } });
+        return [team.id, r.data ? r.data.map((m) => m.userId) : []] as const;
       }),
     );
     setTeamMembers(Object.fromEntries(entries));
-  }, [orgId]);
+  }, [orgId, t]);
 
   useEffect(() => {
     // Fetch once the organization is known; state lands after the awaited responses.
@@ -45,8 +48,8 @@ export function OrgTeams() {
     void loadTeams();
   }, [loadTeams]);
 
-  if (loading) return <p className="text-paragraph-sm text-text-sub-600">Loading…</p>;
-  if (!org || !role) return <Callout tone="error">{loadError || "No active organization."}</Callout>;
+  if (loading) return <p className="text-paragraph-sm text-text-sub-600">{ts("loading")}</p>;
+  if (!org || !role) return <Callout tone="error">{loadError || ts("noActiveOrganization")}</Callout>;
 
   const canCreate = can({ team: ["create"] });
   const canUpdate = can({ team: ["update"] });
@@ -79,9 +82,9 @@ export function OrgTeams() {
   async function remove(team: Team) {
     if (!org) return;
     const confirmed = await dialogs.confirm({
-      title: `Delete ${team.name}?`,
-      description: "People stay in the organization; only the team is removed.",
-      confirmLabel: "Delete team",
+      title: t("deleteTitle", { name: team.name }),
+      description: t("deleteDescription"),
+      confirmLabel: t("deleteConfirm"),
       variant: "error",
     });
     if (!confirmed) return;
@@ -106,21 +109,21 @@ export function OrgTeams() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Callout tone="info">Teams group people; everyone in the organization sees the same data.</Callout>
+      <Callout tone="info">{t("note")}</Callout>
       {(error || listError) && <Callout tone="error">{error || listError}</Callout>}
 
       {canCreate && (
         <Frame>
-          <FrameHeader title="Create a team" />
+          <FrameHeader title={t("createTitle")} />
           <FramePanel>
             <form onSubmit={create} className="flex flex-col gap-3 sm:flex-row">
               <Input.Root size="small" className="flex-1">
                 <Input.Wrapper>
-                  <Input.Input aria-label="Team name" placeholder="Team name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                  <Input.Input aria-label={t("teamName")} placeholder={t("teamName")} value={newName} onChange={(e) => setNewName(e.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
               <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={busy === "create" || !newName.trim()}>
-                {busy === "create" ? "Creating…" : "Create team"}
+                {busy === "create" ? t("creating") : t("create")}
               </Button.Root>
             </form>
           </FramePanel>
@@ -128,7 +131,7 @@ export function OrgTeams() {
       )}
 
       {teams.length === 0 ? (
-        <p className="text-paragraph-sm text-text-sub-600">No teams yet.</p>
+        <p className="text-paragraph-sm text-text-sub-600">{t("empty")}</p>
       ) : (
         teams.map((team) => {
           const ids = teamMembers[team.id] ?? [];
@@ -137,17 +140,17 @@ export function OrgTeams() {
             <Frame key={team.id}>
               <FrameHeader
                 title={team.name}
-                description={`${ids.length} ${ids.length === 1 ? "member" : "members"}`}
+                description={t("memberCount", { count: ids.length })}
                 actions={
                   <>
                     {canUpdate && (
                       <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => setRenaming({ id: team.id, name: team.name })}>
-                        Rename
+                        {t("rename")}
                       </Button.Root>
                     )}
                     {canDelete && (
                       <Button.Root variant="error" mode="ghost" size="xsmall" disabled={busy === `delete-${team.id}`} onClick={() => void remove(team)}>
-                        Delete
+                        {t("delete")}
                       </Button.Root>
                     )}
                   </>
@@ -158,19 +161,19 @@ export function OrgTeams() {
                   <form onSubmit={rename} className="flex gap-2">
                     <Input.Root size="small" className="flex-1">
                       <Input.Wrapper>
-                        <Input.Input aria-label="New team name" autoFocus value={renaming.name} onChange={(e) => setRenaming({ id: team.id, name: e.target.value })} />
+                        <Input.Input aria-label={t("newTeamName")} autoFocus value={renaming.name} onChange={(e) => setRenaming({ id: team.id, name: e.target.value })} />
                       </Input.Wrapper>
                     </Input.Root>
                     <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={busy === `rename-${team.id}`}>
-                      Save
+                      {t("save")}
                     </Button.Root>
                     <Button.Root type="button" variant="neutral" mode="ghost" size="small" onClick={() => setRenaming(null)}>
-                      Cancel
+                      {t("cancel")}
                     </Button.Root>
                   </form>
                 )}
                 {ids.length === 0 ? (
-                  <p className="text-paragraph-xs text-text-sub-600">No one is on this team yet.</p>
+                  <p className="text-paragraph-xs text-text-sub-600">{t("noMembers")}</p>
                 ) : (
                   <ul className="divide-y divide-stroke-soft-200">
                     {ids.map((uid) => {
@@ -183,7 +186,7 @@ export function OrgTeams() {
                           </span>
                           {canUpdate && (
                             <Button.Root variant="error" mode="ghost" size="xsmall" disabled={busy === `rm-${team.id}-${uid}`} onClick={() => void removeMember(team.id, uid)}>
-                              Remove
+                              {t("remove")}
                             </Button.Root>
                           )}
                         </li>
@@ -194,8 +197,8 @@ export function OrgTeams() {
                 {canUpdate && candidates.length > 0 && (
                   <div className="flex gap-2">
                     <Select.Root size="small" value={adding[team.id] ?? ""} onValueChange={(v) => setAdding((a) => ({ ...a, [team.id]: v }))}>
-                      <Select.Trigger aria-label={`Add a member to ${team.name}`}>
-                        <Select.Value placeholder="Add a member…" />
+                      <Select.Trigger aria-label={t("addMemberLabel", { name: team.name })}>
+                        <Select.Value placeholder={t("addMemberPlaceholder")} />
                       </Select.Trigger>
                       <Select.Content>
                         {candidates.map((m) => (
@@ -204,7 +207,7 @@ export function OrgTeams() {
                       </Select.Content>
                     </Select.Root>
                     <Button.Root variant="neutral" mode="stroke" size="small" disabled={!adding[team.id] || busy === `add-${team.id}`} onClick={() => void addMember(team.id)}>
-                      Add
+                      {t("add")}
                     </Button.Root>
                   </div>
                 )}

@@ -1,3 +1,238 @@
 {
-  "settingsKnowledge": {}
+  "settingsKnowledge": {
+    "knowledge": {
+      "title": "Conhecimento",
+      "description": "Fatos do produto, preços e políticas em que a IA se baseia ao escrever rascunhos. Documentos marcados como Sempre incluído entram em todo rascunho.",
+      "addDocument": "Adicionar documento",
+      "tryAgain": "Tentar novamente",
+      "empty": {
+        "title": "Nenhum conhecimento ainda",
+        "description": "Adicione contexto sobre produto, preços, agendamento e empresa, e a IA o usa ao redigir respostas."
+      },
+      "list": {
+        "heading": "Documentos",
+        "hint": "Cada edição salva cria uma nova versão. Documentos arquivados ficam fora dos rascunhos."
+      },
+      "views": {
+        "active": "Ativos",
+        "archived": "Arquivados"
+      },
+      "search": {
+        "label": "Buscar documentos",
+        "placeholder": "Buscar documentos…"
+      },
+      "noMatch": {
+        "title": "Nenhum documento encontrado",
+        "description": "Tente outra busca."
+      },
+      "noneArchived": {
+        "title": "Nada arquivado",
+        "description": "Os documentos arquivados aparecem aqui e podem ser restaurados."
+      },
+      "noneActive": {
+        "title": "Nenhum documento ativo",
+        "description": "Restaure um documento arquivado ou adicione um novo."
+      },
+      "row": {
+        "untitled": "Documento sem título",
+        "alwaysIncluded": "Sempre incluído",
+        "archived": "Arquivado",
+        "noContent": "Sem conteúdo",
+        "updated": "Atualizado em {date}",
+        "actionsFor": "Ações para {title}",
+        "edit": "Editar",
+        "restore": "Restaurar",
+        "archive": "Arquivar"
+      },
+      "kinds": {
+        "custom": "Personalizado",
+        "company": "Empresa",
+        "product": "Produto",
+        "pricing": "Preços",
+        "faq": "FAQ",
+        "scheduling": "Agendamento",
+        "objection": "Objeção",
+        "caseStudy": "Caso de sucesso"
+      },
+      "editor": {
+        "titleEdit": "Editar documento",
+        "titleNew": "Novo documento",
+        "description": "Cada edição salva cria uma nova versão.",
+        "titleLabel": "Título",
+        "titleMissing": "Dê um título ao documento.",
+        "titlePlaceholder": "Preços e planos",
+        "kind": "Tipo",
+        "content": "Conteúdo",
+        "contentHint": "Markdown. Títulos e listas ajudam a IA a encontrar o trecho certo.",
+        "contentMissing": "Adicione o conteúdo que a IA deve conhecer.",
+        "contentPlaceholder": "# Preços\n\n- Starter: R$ 49/mês\n- Growth: R$ 199/mês",
+        "tags": "Tags",
+        "tagsHint": "Separadas por vírgula, por exemplo: preços, onboarding.",
+        "tagsPlaceholder": "preços, onboarding",
+        "alwaysInclude": "Sempre incluir no contexto dos rascunhos",
+        "alwaysIncludeHint": "Enviado com todo rascunho que a IA escreve; por isso, mantenha-os curtos.",
+        "cancel": "Cancelar",
+        "saving": "Salvando…",
+        "save": "Salvar documento"
+      }
+    },
+    "instructions": {
+      "title": "Instruções",
+      "description": "Orientações adicionadas a todo rascunho e classificação da IA. Cada instrução é enviada à IA como uma seção própria, com título.",
+      "untitled": "Instrução sem título",
+      "duplicateTitle": "{title} (cópia)",
+      "load": {
+        "errorTitle": "Não foi possível carregar as instruções",
+        "retry": "Tentar novamente"
+      },
+      "noPipeline": {
+        "title": "Ainda não há pipeline de CRM",
+        "body": "As instruções pertencem ao pipeline de CRM padrão, e nenhum foi configurado ainda."
+      },
+      "sections": {
+        "draftInstructions": {
+          "title": "Rascunho de respostas",
+          "helper": "Adicionado a todo rascunho que a IA escreve — e-mail, LinkedIn e WhatsApp.",
+          "placeholder": "Assine como Priya, da Youse. Mantenha os e-mails com menos de 120 palavras. Nunca ofereça descontos; sugira uma conversa de 20 minutos.",
+          "emptyText": "Nenhuma instrução ainda — adicione uma para moldar todos os rascunhos."
+        },
+        "classificationInstructions": {
+          "title": "Classificação de respostas",
+          "helper": "Adicionado a toda classificação de uma resposta ou chamada.",
+          "placeholder": "A indicação de um colega conta como Interessado, não como Outro. Respostas de agências são Não interessado.",
+          "emptyText": "Nenhuma instrução ainda — adicione uma para moldar todas as classificações."
+        },
+        "callingInstructions": {
+          "title": "Chamadas",
+          "helper": "Como o agente de IA conduz cada chamada de WhatsApp: a abertura, o formato da chamada, o jeito de falar. Use '{{'agentName'}}' e '{{'firstName'}}'. Quem ele é, a transparência de que é uma IA, o objetivo de cada campanha e o modo como a chamada termina permanecem fixos. Teste as mudanças com uma chamada de ensaio na sequência de uma campanha.",
+          "placeholder": "Nunca cite concorrentes pelo nome. Se disserem que já usam uma agência, pergunte o que a agência faz pelas landing pages deles.",
+          "emptyText": "Nenhuma instrução de chamada — salvar uma lista vazia restaura os padrões."
+        }
+      },
+      "row": {
+        "collapseAria": "Recolher instrução",
+        "collapseTitle": "Recolher",
+        "expandAria": "Expandir instrução",
+        "expandTitle": "Expandir",
+        "titleAria": "Título da instrução",
+        "chars": "{count, number} caracteres",
+        "empty": "Vazia",
+        "duplicate": "Duplicar instrução",
+        "delete": "Excluir instrução",
+        "textAria": "{title} — texto da instrução"
+      },
+      "section": {
+        "copied": "Copiado",
+        "copyAll": "Copiar tudo",
+        "exportJson": "Exportar JSON",
+        "collapseAll": "Recolher tudo",
+        "expandAll": "Expandir tudo",
+        "add": "Adicionar instrução",
+        "defaultsNotice": "Estas são as instruções padrão do sistema. Edite e salve para torná-las suas; Restaurar padrões as traz de volta.",
+        "emptyTitle": "Nenhuma instrução ainda",
+        "saved": "Salvo",
+        "unsaved": "Alterações não salvas",
+        "summary": "{count, number} de {max, number} instruções · {total, number} de {maxTotal, number} caracteres",
+        "resetDefaults": "Restaurar padrões",
+        "discard": "Descartar",
+        "saving": "Salvando…",
+        "save": "Salvar",
+        "copyError": "Não foi possível copiar para a área de transferência."
+      },
+      "problem": {
+        "tooMany": "No máximo {max, number} instruções (há {count, number} agora).",
+        "titleTooLong": "“{title}…” tem um título com mais de {max, number} caracteres.",
+        "contentTooLong": "“{title}” tem mais de {max, number} caracteres.",
+        "totalTooLong": "Juntas, as instruções somam {total, number} caracteres; o limite é {max, number}."
+      },
+      "confirmDelete": {
+        "title": "Excluir instrução?",
+        "description": "“{title}” será removida desta lista. Salve para aplicar.",
+        "confirm": "Excluir instrução"
+      },
+      "confirmReset": {
+        "title": "Restaurar as instruções padrão?",
+        "description": "Suas edições serão substituídas pelas instruções padrão. Não é preciso salvar.",
+        "confirm": "Restaurar"
+      }
+    },
+    "leadCategories": {
+      "title": "Categorias de lead",
+      "description": "As subcategorias em que a IA classifica as respostas e a sequência de resposta que cada uma inicia.",
+      "tryAgain": "Tentar novamente",
+      "noPipeline": {
+        "title": "Ainda não há pipeline de CRM",
+        "body": "As subcategorias pertencem ao pipeline de CRM padrão, e nenhum foi configurado ainda."
+      },
+      "summary": "{active, plural, one {# subcategoria ativa} other {# subcategorias ativas}} em {categories, plural, one {# categoria} other {# categorias}}",
+      "collapseAll": "Recolher tudo",
+      "expandAll": "Expandir tudo",
+      "category": {
+        "customer": "Cliente",
+        "interested": "Interessado",
+        "notInterested": "Não interessado",
+        "other": "Outro"
+      },
+      "section": {
+        "count": "{active, plural, one {# subcategoria} other {# subcategorias}}{active, plural, =0 {} other { · {withSequence, number} com sequência}}{archived, plural, =0 {} one { · # arquivada} other { · # arquivadas}}",
+        "addAria": "Adicionar subcategoria em {category}",
+        "addLong": "Adicionar subcategoria",
+        "addShort": "Adicionar",
+        "emptyTitle": "Nenhuma subcategoria em “{category}” ainda",
+        "emptyDescription": "Adicione uma para definir como as respostas são classificadas e qual sequência vem depois.",
+        "caption": "Subcategorias de {category} e suas sequências",
+        "headSubcategory": "Subcategoria",
+        "headDescription": "Descrição da classificação",
+        "headSequence": "Sequência",
+        "headActions": "Ações"
+      },
+      "row": {
+        "unnamed": "Sem nome",
+        "archived": "Arquivada",
+        "meta": "{records, plural, one {# registro ativo} other {# registros ativos}} · {stage, select, none {Não é uma etapa do funil} other {Etapa {rank, number}}}",
+        "addDescription": "Adicione uma descrição para a IA saber quando usá-la",
+        "actionsFor": "Ações para {name}",
+        "edit": "Editar",
+        "restore": "Restaurar",
+        "delete": "Excluir"
+      },
+      "sequence": {
+        "unavailable": "Sequência indisponível",
+        "unnamed": "Sequência sem nome",
+        "aria": "Sequência",
+        "none": "Nenhuma sequência",
+        "optionArchived": "{name} — arquivada",
+        "optionPublishFirst": "{name} — publique antes"
+      },
+      "dialog": {
+        "titleEdit": "Editar subcategoria",
+        "titleAdd": "Adicionar subcategoria",
+        "description": "Em <b>{category}</b>. A IA classifica as respostas nela com base na descrição.",
+        "nameLabel": "Nome",
+        "nameMissing": "Dê um nome à subcategoria.",
+        "namePlaceholder": "ex.: Demonstração solicitada",
+        "descriptionLabel": "Descrição da classificação",
+        "descriptionHint": "Explique quando uma resposta recebida deve ser classificada aqui.",
+        "descriptionPlaceholder": "ex.: A pessoa pede explicitamente uma demonstração do produto",
+        "stageLabel": "Etapa do funil",
+        "stageInvalid": "Use um número inteiro a partir de 1 ou deixe em branco.",
+        "stageHint": "A IA só pode mover um lead para a mesma etapa ou para uma mais avançada. Deixe em branco para desfechos que não são etapas do funil (como Fora do escritório ou Sem interesse).",
+        "stagePlaceholder": "ex.: 2",
+        "cancel": "Cancelar",
+        "adding": "Adicionando…",
+        "saving": "Salvando…",
+        "saveChanges": "Salvar alterações",
+        "add": "Adicionar subcategoria"
+      },
+      "confirmDelete": {
+        "title": "Excluir subcategoria?",
+        "description": "“{name}” será excluída em definitivo, junto com a sequência atribuída. Subcategorias que ainda têm registros de CRM ou histórico de classificação não podem ser excluídas.",
+        "confirm": "Excluir subcategoria",
+        "fallbackName": "Esta subcategoria"
+      },
+      "errors": {
+        "noPipeline": "Ainda não há um pipeline de CRM padrão configurado."
+      }
+    }
+  }
 }

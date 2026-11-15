@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ConnectionSettingsPage } from "@/components/settings/ChannelSettingsPages";
 
-export const metadata = { title: "LinkedIn connection" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsChannels.linkedinConnection");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <ConnectionSettingsPage platforms={[{ platform: "unipile", note: "The same Unipile connection also powers WhatsApp; changing it here changes it there too." }]} title="LinkedIn connection" description="Unipile connects your LinkedIn accounts for invitations, messages, search and inbox sync." />;
+export default async function Page() {
+  const t = await getTranslations("settingsChannels.linkedinConnection");
+  return <ConnectionSettingsPage platforms={[{ platform: "unipile", note: t("unipileNote") }]} title={t("title")} description={t("description")} />;
 }

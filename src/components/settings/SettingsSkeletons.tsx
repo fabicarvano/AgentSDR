@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { KpiStripSkeleton, Skeleton, TableSkeleton } from "@/components/page/Skeletons";
 
 /**
@@ -20,8 +21,9 @@ function SectionHeaderSkeleton({ action = true }: { action?: boolean }) {
 }
 
 function SectionPad({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("shell.skeleton");
   return (
-    <div aria-busy="true" aria-label="Loading" className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+    <div aria-busy="true" aria-label={t("loading")} className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
       {children}
     </div>
   );
@@ -29,8 +31,9 @@ function SectionPad({ children }: { children: React.ReactNode }) {
 
 /** KPI strip + a table of accounts. */
 export function AccountsSkeleton({ withHeader = false }: { withHeader?: boolean }) {
+  const t = useTranslations("shell.skeleton");
   const body = (
-    <div aria-busy="true" aria-label="Loading" className="space-y-5">
+    <div aria-busy="true" aria-label={t("loading")} className="space-y-5">
       <KpiStripSkeleton cells={4} />
       <TableSkeleton rows={4} columns={5} />
     </div>
@@ -47,8 +50,9 @@ export function AccountsSkeleton({ withHeader = false }: { withHeader?: boolean 
 
 /** A Frame of rows: documents, instructions, columns. */
 export function ListSkeleton({ rows = 5, withHeader = false, toolbar = true }: { rows?: number; withHeader?: boolean; toolbar?: boolean }) {
+  const t = useTranslations("shell.skeleton");
   const body = (
-    <div aria-busy="true" aria-label="Loading" className="rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
+    <div aria-busy="true" aria-label={t("loading")} className="rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
       <div className="flex items-center justify-between gap-4 px-4 py-3">
         <div className="space-y-1.5">
           <Skeleton className="h-4 w-32" />
@@ -82,8 +86,9 @@ export function ListSkeleton({ rows = 5, withHeader = false, toolbar = true }: {
 
 /** Stacked form Frames, capped at the form width. */
 export function FormSkeleton({ frames = 3, withHeader = false }: { frames?: number; withHeader?: boolean }) {
+  const t = useTranslations("shell.skeleton");
   const body = (
-    <div aria-busy="true" aria-label="Loading" className="max-w-3xl space-y-4">
+    <div aria-busy="true" aria-label={t("loading")} className="max-w-3xl space-y-4">
       {Array.from({ length: frames }, (_, i) => (
         <div key={i} className="rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
           <div className="space-y-1.5 px-4 py-3">
@@ -111,8 +116,9 @@ export function FormSkeleton({ frames = 3, withHeader = false }: { frames?: numb
 
 /** Four collapsed category sections. */
 export function CategoriesSkeleton({ withHeader = false }: { withHeader?: boolean }) {
+  const t = useTranslations("shell.skeleton");
   const body = (
-    <div aria-busy="true" aria-label="Loading" className="space-y-3">
+    <div aria-busy="true" aria-label={t("loading")} className="space-y-3">
       {Array.from({ length: 4 }, (_, i) => (
         <div key={i} className="flex items-center gap-3 rounded-2xl bg-bg-weak-50 px-4 py-4 ring-1 ring-inset ring-stroke-soft-200">
           <Skeleton className="size-5 shrink-0 rounded" />

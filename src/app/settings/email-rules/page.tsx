@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { RulesSettingsPage } from "@/components/settings/ChannelSettingsPages";
 
-export const metadata = { title: "Email sending rules" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsChannels.emailRules");
+  return { title: t("title") };
+}
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <RulesSettingsPage channel="email" title="Email sending rules" description="How fast and when mailboxes send. Defaults suit a warm Google Workspace mailbox; change them only if you know your sending reputation." />;
+export default async function Page() {
+  const t = await getTranslations("settingsChannels.emailRules");
+  return <RulesSettingsPage channel="email" title={t("title")} description={t("description")} />;
 }

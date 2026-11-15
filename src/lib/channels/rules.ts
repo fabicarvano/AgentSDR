@@ -431,46 +431,83 @@ export function isTimeZone(value: string): boolean {
   }
 }
 
+/**
+ * Why a value is not acceptable, as a code plus the numbers a message needs. Screens translate it
+ * (settingsChannels.ruleProblems.<code>); `ruleError` words it in English for API responses.
+ */
+export type RuleProblem =
+  | { code: "wholeNumber" }
+  | { code: "between"; min: number; max: number }
+  | { code: "rangeNeedsTwo" }
+  | { code: "rangeBetween"; min: number; max: number }
+  | { code: "rangeOrder" }
+  | { code: "invalidHours" }
+  | { code: "unknownTimezone" }
+  | { code: "pickDay" }
+  | { code: "timeFormat" }
+  | { code: "endAfterStart" }
+  | { code: "country" };
+
 /** Why `value` is not acceptable for `rule`, or null when it is. */
-export function ruleError(rule: Rule, value: unknown): string | null {
+export function ruleProblem(rule: Rule, value: unknown): RuleProblem | null {
   switch (rule.kind) {
     case "number": {
-      if (typeof value !== "number" || !Number.isInteger(value)) return `${rule.label} must be a whole number`;
-      if (value < rule.min || value > rule.max) return `${rule.label} must be between ${rule.min} and ${rule.max}`;
+      if (typeof value !== "number" || !Number.isInteger(value)) return { code: "wholeNumber" };
+      if (value < rule.min || value > rule.max) return { code: "between", min: rule.min, max: rule.max };
       return null;
     }
     case "range": {
       if (!Array.isArray(value) || value.length !== 2 || !value.every((n) => typeof n === "number" && Number.isInteger(n))) {
-        return `${rule.label} needs a lowest and a highest whole number`;
+        return { code: "rangeNeedsTwo" };
       }
       const [lo, hi] = value as [number, number];
-      if (lo < rule.min || hi > rule.max) return `${rule.label} must stay between ${rule.min} and ${rule.max}`;
-      if (lo > hi) return `${rule.label}: the lowest value can't be above the highest`;
+      if (lo < rule.min || hi > rule.max) return { code: "rangeBetween", min: rule.min, max: rule.max };
+      if (lo > hi) return { code: "rangeOrder" };
       return null;
     }
     case "hours": {
       if (value === null && rule.optional) return null;
       const h = value as Partial<WeeklyHours> | null;
-      if (!h || typeof h !== "object") return `${rule.label} is not valid`;
-      if (typeof h.timezone !== "string" || !isTimeZone(h.timezone)) return `${rule.label}: unknown time zone`;
+      if (!h || typeof h !== "object") return { code: "invalidHours" };
+      if (typeof h.timezone !== "string" || !isTimeZone(h.timezone)) return { code: "unknownTimezone" };
       if (!Array.isArray(h.days) || !h.days.length || !h.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)) {
-        return `${rule.label}: pick at least one day`;
+        return { code: "pickDay" };
       }
       if (typeof h.start !== "string" || !HHMM.test(h.start) || typeof h.end !== "string" || !HHMM.test(h.end)) {
-        return `${rule.label}: times must look like 09:00`;
+        return { code: "timeFormat" };
       }
-      if (h.start >= h.end) return `${rule.label}: the end must be after the start`;
+      if (h.start >= h.end) return { code: "endAfterStart" };
       return null;
     }
     case "country": {
       if (value === "") return null;
-      if (typeof value !== "string" || !COUNTRY.test(value)) return `${rule.label} must be a two-letter country code, like IN or US`;
+      if (typeof value !== "string" || !COUNTRY.test(value)) return { code: "country" };
       return null;
     }
     case "timezone":
-      return typeof value === "string" && value !== "" && isTimeZone(value) ? null : `${rule.label}: unknown time zone`;
+      return typeof value === "string" && value !== "" && isTimeZone(value) ? null : { code: "unknownTimezone" };
     case "time":
-      return typeof value === "string" && HHMM.test(value) ? null : `${rule.label}: times must look like 09:00`;
+      return typeof value === "string" && HHMM.test(value) ? null : { code: "timeFormat" };
+  }
+}
+
+/** The English sentence for a problem: what the API returns. The screens use `ruleProblem` and their own catalog. */
+export function ruleError(rule: Rule, value: unknown): string | null {
+  const problem = ruleProblem(rule, value);
+  if (!problem) return null;
+  const { label } = rule;
+  switch (problem.code) {
+    case "wholeNumber": return `${label} must be a whole number`;
+    case "between": return `${label} must be between ${problem.min} and ${problem.max}`;
+    case "rangeNeedsTwo": return `${label} needs a lowest and a highest whole number`;
+    case "rangeBetween": return `${label} must stay between ${problem.min} and ${problem.max}`;
+    case "rangeOrder": return `${label}: the lowest value can't be above the highest`;
+    case "invalidHours": return `${label} is not valid`;
+    case "unknownTimezone": return `${label}: unknown time zone`;
+    case "pickDay": return `${label}: pick at least one day`;
+    case "timeFormat": return `${label}: times must look like 09:00`;
+    case "endAfterStart": return `${label}: the end must be after the start`;
+    case "country": return `${label} must be a two-letter country code, like IN or US`;
   }
 }
 

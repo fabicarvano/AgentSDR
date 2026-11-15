@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PlatformConnectPrompt, RequiresPlatform } from "@/components/settings/RequiresPlatform";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { WhatsappAccountsClient } from "@/components/whatsapp/WhatsappAccountsClient";
@@ -8,7 +10,10 @@ import { runInOrganization } from "@/lib/tenancy/scope";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "WhatsApp accounts" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settingsAccounts.whatsappPage");
+  return { title: t("title") };
+}
 
 async function Numbers() {
   const ctx = await requirePageOrgContext();
@@ -16,12 +21,13 @@ async function Numbers() {
   return <WhatsappAccountsClient rules={{ warmupHours: rules.warmupHours, newChatsPerDay: rules.newChatsPerDay, secondsBetweenSends: rules.secondsBetweenSends }} />;
 }
 
-export default function WhatsappAccountsPage() {
+export default async function WhatsappAccountsPage() {
+  const t = await getTranslations("settingsAccounts.whatsappPage");
   return (
     <RequiresPlatform
       platform="unipile"
       fallback={
-        <SettingsPage title="WhatsApp accounts" description="The WhatsApp numbers messaging and calling run from, linked through Unipile.">
+        <SettingsPage title={t("title")} description={t("description")}>
           {/* The gate's prompt, under the page header the client component would have supplied. */}
           <PlatformConnectPrompt platform="unipile" settingsHref="/settings/whatsapp-connection" guideHref={docsPageUrl("whatsapp/accounts")} />
         </SettingsPage>
