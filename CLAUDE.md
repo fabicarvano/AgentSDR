@@ -1,4 +1,17 @@
-# AgentSDR_v2
+# AgentSDR
+
+> SDR com IA — encontra leads, faz outreach por e-mail, LinkedIn e WhatsApp, e classifica/redige cada resposta recebida.
+> App único Next.js + PostgreSQL, self-hosted.
+>
+> **Repositório:** `fabicarvano/AgentSDR` (independente desde nov/2026)
+> **Base original:** `Kandid-ai/AgentSDR` (MIT)
+> **Responsável:** Fabio Carvano
+>
+> **Regras de trabalho com IA:**
+> - Nunca faça push sem autorização explícita
+> - Nunca abra PR automaticamente
+> - Commits direto em `main`, locais até autorização de push
+> - `npx tsc --noEmit` deve passar antes de cada commit
 
 ## TypeScript, not JavaScript
 
@@ -221,9 +234,9 @@ Langfuse is an optional platform integration **per organization**
 (`langfuse`: host, public and secret key; Settings → AI provider, under
 OpenRouter). An organization that connects its project gets its prompts from
 there and its traces sent there; one that has not — or code running outside
-an organization scope — uses the copies in code and traces nothing. Our own
-is self-hosted `fuse.kandid.ai`, server v3, so the `@langfuse/*` SDK is
-pinned to v5 (v6 needs a v4 server). There are no `LANGFUSE_*` keys in env.
+an organization scope — uses the copies in code and traces nothing. If you
+run a self-hosted Langfuse instance (server v3), pin `@langfuse/*` SDK to v5
+(v6 needs a v4 server). There are no `LANGFUSE_*` keys in env.
 
 Every prompt AgentSDR writes itself is a Langfuse prompt.
 `src/lib/prompts/registry.ts` lists them by name (`<area>/<what>`, e.g.
@@ -275,7 +288,7 @@ the registry, so a new limit is a registry entry plus the engine reading it —
 never a new constant or env var.
 
 The `WHATSAPP_*` constants in `src/lib/whatsapp/contract.ts` remain only as
-the defaults the extension shows (and agentsdr.ai, which copies this file) (that file must stay
+the defaults the extension shows (that file must stay
 import-free); `rules.test.ts` keeps them equal to the registry.
 
 ## CRM follow-ups: the reply is a person's, the follow-ups can send themselves
