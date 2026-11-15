@@ -14,6 +14,12 @@ import type auth from "../../messages/en/auth.json";
 import type common from "../../messages/en/common.json";
 import type leads from "../../messages/en/leads.json";
 import type settings from "../../messages/en/settings.json";
+import type settingsAccounts from "../../messages/en/settingsAccounts.json";
+import type settingsAi from "../../messages/en/settingsAi.json";
+import type settingsChannels from "../../messages/en/settingsChannels.json";
+import type settingsKnowledge from "../../messages/en/settingsKnowledge.json";
+import type settingsOrg from "../../messages/en/settingsOrg.json";
+import type settingsStations from "../../messages/en/settingsStations.json";
 import type shared from "../../messages/en/shared.json";
 import type shell from "../../messages/en/shell.json";
 
@@ -23,12 +29,18 @@ type Catalog = {
   common: typeof common;
   leads: typeof leads;
   settings: typeof settings;
+  settingsAccounts: typeof settingsAccounts;
+  settingsAi: typeof settingsAi;
+  settingsChannels: typeof settingsChannels;
+  settingsKnowledge: typeof settingsKnowledge;
+  settingsOrg: typeof settingsOrg;
+  settingsStations: typeof settingsStations;
   shared: typeof shared;
   shell: typeof shell;
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "common", "leads", "settings", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
+export const DOMAINS = ["analytics", "auth", "common", "leads", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
 
 export type Domain = (typeof DOMAINS)[number];
 
