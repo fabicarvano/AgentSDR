@@ -13,7 +13,7 @@ reports responsibly.
 | Older releases | ❌ Upgrade to the latest release |
 
 Self-hosted deployments are operated by their owners; a fix reaches you when
-you upgrade (see [docs/self-hosting.md](docs/self-hosting/production.mdx#upgrading)).
+you upgrade.
 
 ## Reporting a vulnerability
 
@@ -21,8 +21,8 @@ you upgrade (see [docs/self-hosting.md](docs/self-hosting/production.mdx#upgradi
 security problem.**
 
 1. **Preferred:** report privately through GitHub —
-   [Security → Report a vulnerability](https://github.com/Kandid-ai/AgentSDR/security/advisories/new).
-2. **Or email** **security@kandid.ai**.
+   [Security → Report a vulnerability](https://github.com/fabicarvano/AgentSDR/security/advisories/new).
+2. **Or email** **fabio.carvano@gmail.com**.
 
 Include what you can of:
 
@@ -74,9 +74,3 @@ We will not pursue legal action against researchers who act in good faith:
 who avoid privacy violations, data destruction and service degradation;
 who only access data they own or are explicitly authorised to access; and
 who give us reasonable time to fix an issue before disclosing it.
-
-## For operators
-
-Hardening guidance for self-hosted instances — secrets, the encryption key,
-public routes, the database connection limit — is in
-[docs/self-hosting.md](docs/self-hosting.md).
