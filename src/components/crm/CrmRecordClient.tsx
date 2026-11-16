@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiArrowDownSLine,
   RiArrowRightUpLine,
@@ -43,6 +44,9 @@ import { StatRow } from "@/components/page/StatRow";
 import { PersonWhatsappPanel } from "@/components/whatsapp/PersonWhatsappPanel";
 import { WhatsappLogo } from "@/components/whatsapp/WhatsappLogo";
 import { cn } from "@/utils/cn";
+import type { Messages } from "@/i18n/catalog";
+import type { CrmEventActor } from "@/lib/crm/events";
+import type { CrmDraftStatus, CrmSendAttemptStatus, CrmWorkflowState } from "@/lib/crm/schema";
 import {
   ErrorState,
   dangerButtonClass,
@@ -52,8 +56,9 @@ import {
   subtleButtonClass,
 } from "./CrmLayout";
 import { RecordBody } from "./CrmSkeletons";
-import { asList, asObject, crmFetch, displayName, errorMessage, formatDate, relativeDate } from "./crm-utils";
-import { ClassificationPicker, MoveStageDialog, moveStageSuccessMessage, RegenerateDraftDialog, humanize } from "./ActionRowTools";
+import { asList, asObject, crmFetch } from "./crm-utils";
+import { useCrmText } from "./useCrmText";
+import { ClassificationPicker, MoveStageDialog, RegenerateDraftDialog, humanize } from "./ActionRowTools";
 import { ContactAvatar } from "./ContactAvatar";
 import { takeRecordWorkspace } from "./recordPrefetch";
 import { announceRecordChanged } from "./recordEvents";
@@ -63,45 +68,73 @@ import { ChannelAvatar } from "./CrmActionsClient";
 type Data = Record<string, unknown>;
 type Channel = "email" | "linkedin" | "whatsapp";
 type TimelineFilter = "all" | Channel;
+const TIMELINE_FILTERS: TimelineFilter[] = ["all", "email", "linkedin", "whatsapp"];
 
-const eventLabels: Record<string, string> = {
-  "record.created": "CRM record created",
-  "reply.received": "Reply received",
-  "message.recorded": "Message sent outside AgentSDR",
-  "workflow.state_changed": "Workflow updated",
-  "classification.proposed": "AI classification proposed",
-  "classification.auto_applied": "Classification applied",
-  "classification.acknowledged": "Classification acknowledged",
-  "classification.changed": "Classification changed",
-  "classification.failed": "Classification failed",
-  "classification.stale": "Classification became outdated",
-  "classification.undone": "Classification undone",
-  "classification.overridden": "Classification updated",
-  "contact_policy.cleared": "Contact restriction cleared",
-  "contact_policy.dnc_cleared": "Do Not Contact cleared",
-  "contact_policy.dnc_set": "Do Not Contact enabled",
-  "contact_policy.enforced": "Contact restriction enforced",
-  "draft.generated": "Reply draft generated",
-  "draft.edited": "Reply draft edited",
-  "draft.discarded": "Reply draft discarded",
-  "draft.failed": "Draft generation failed",
-  "message.sending": "Message queued for delivery",
-  "message.sent": "Message delivered",
-  "message.failed": "Message failed",
-  "message.delivery_uncertain": "Delivery needs reconciliation",
-  "message.delivery_reconciled": "Delivery status reconciled",
-  "sequence.started": "Sequence started",
-  "sequence.interrupted": "Sequence interrupted",
-  "sequence.override_set": "Sequence override set",
-  "sequence.override_cleared": "Sequence override cleared",
-  "sequence.paused": "Sequence paused",
-  "sequence.resumed": "Sequence resumed",
-  "sequence.snoozed": "Next step snoozed",
-  "sequence.step_skipped": "Sequence step skipped",
-  "record.closed": "Record closed",
-  "record.reopened": "Record reopened",
-  "stage.moved": "Stage moved",
+type EventKey = keyof Messages["crmRecord"]["record"]["events"];
+// event_type is a free text column: every value the code writes has a key; anything else shows its raw value.
+const EVENT_KEYS = {
+  "record.created": "recordCreated",
+  "reply.received": "replyReceived",
+  "message.recorded": "messageRecorded",
+  "workflow.state_changed": "workflowStateChanged",
+  "classification.proposed": "classificationProposed",
+  "classification.auto_applied": "classificationAutoApplied",
+  "classification.acknowledged": "classificationAcknowledged",
+  "classification.changed": "classificationChanged",
+  "classification.failed": "classificationFailed",
+  "classification.stale": "classificationStale",
+  "classification.undone": "classificationUndone",
+  "classification.overridden": "classificationOverridden",
+  "contact_policy.cleared": "contactPolicyCleared",
+  "contact_policy.dnc_cleared": "contactPolicyDncCleared",
+  "contact_policy.dnc_set": "contactPolicyDncSet",
+  "contact_policy.enforced": "contactPolicyEnforced",
+  "draft.generated": "draftGenerated",
+  "draft.edited": "draftEdited",
+  "draft.discarded": "draftDiscarded",
+  "draft.failed": "draftFailed",
+  "draft.auto_send_queued": "draftAutoSendQueued",
+  "draft.auto_send_stopped": "draftAutoSendStopped",
+  "message.sending": "messageSending",
+  "message.sent": "messageSent",
+  "message.failed": "messageFailed",
+  "message.delivery_uncertain": "messageDeliveryUncertain",
+  "message.delivery_reconciled": "messageDeliveryReconciled",
+  "sequence.started": "sequenceStarted",
+  "sequence.interrupted": "sequenceInterrupted",
+  "sequence.override_set": "sequenceOverrideSet",
+  "sequence.override_cleared": "sequenceOverrideCleared",
+  "sequence.paused": "sequencePaused",
+  "sequence.resumed": "sequenceResumed",
+  "sequence.snoozed": "sequenceSnoozed",
+  "sequence.step_skipped": "sequenceStepSkipped",
+  "sequence.step_adopted": "sequenceStepAdopted",
+  "out_of_office.resumed": "outOfOfficeResumed",
+  "outreach.paused_by_reply": "outreachPausedByReply",
+  "record.closed": "recordClosed",
+  "record.reopened": "recordReopened",
+  "stage.moved": "stageMoved",
+} as const satisfies Record<string, EventKey>;
+const _eventsCovered: Exclude<EventKey, (typeof EVENT_KEYS)[keyof typeof EVENT_KEYS]> extends never ? true : false = true;
+void _eventsCovered;
+
+type StateKey = keyof Messages["crmRecord"]["record"]["states"];
+// Workflow, draft and send-attempt statuses share one label table.
+const _statesCovered: Exclude<CrmWorkflowState | CrmDraftStatus | CrmSendAttemptStatus, StateKey> extends never ? true : false = true;
+void _statesCovered;
+const STATE_KEYS: Record<StateKey, true> = {
+  unclassified: true, classifying: true, action_required: true, waiting: true, idle: true, paused: true, closed: true, error: true,
+  generating: true, awaiting_review: true, sending: true, sent: true, discarded: true, stale: true, failed: true, delivery_uncertain: true,
+  prepared: true, reconciled: true,
 };
+const isStateKey = (value: string): value is StateKey => Object.hasOwn(STATE_KEYS, value);
+
+type ActorKey = keyof Messages["crmRecord"]["record"]["actors"];
+const _actorsCovered: Exclude<CrmEventActor, ActorKey> extends never ? true : false = true;
+void _actorsCovered;
+const ACTOR_KEYS: Record<ActorKey, true> = { ai: true, human: true, system: true, integration: true, authenticated_operator: true };
+const isActorKey = (value: string): value is ActorKey => Object.hasOwn(ACTOR_KEYS, value);
+const isEventType = (value: string): value is keyof typeof EVENT_KEYS => Object.hasOwn(EVENT_KEYS, value);
 
 function text(value: unknown, fallback = ""): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
@@ -109,10 +142,6 @@ function text(value: unknown, fallback = ""): string {
 
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
-}
-
-function channelLabel(channel: unknown): string {
-  return channel === "linkedin" ? "LinkedIn" : channel === "whatsapp" ? "WhatsApp" : "Email";
 }
 
 function channelColor(channel: unknown): string | undefined {
@@ -132,6 +161,8 @@ function channelIcon(channel: unknown, className = "size-4") {
  * rather than the window.
  */
 export default function CrmRecordClient({ recordId, variant = "page" }: { recordId: string; variant?: "page" | "modal" }) {
+  const t = useTranslations("crmRecord.record");
+  const { displayName, errorMessage, formatDate, timeAgo, relativeDate, channelLabel } = useCrmText();
   const [data, setData] = useState<Data>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -153,11 +184,11 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
     try { setData(asObject(await (takeRecordWorkspace(recordId) ?? crmFetch(`/records/${recordId}`)))); }
     catch (cause) { setError(errorMessage(cause)); }
     finally { setLoading(false); }
-  }, [recordId]);
+  }, [recordId, errorMessage]);
 
   useEffect(() => { void load(); }, [load]);
 
-  const mutate = async (path: string, body: Data = {}, method = "POST", success = "Changes saved") => {
+  const mutate = async (path: string, body: Data = {}, method = "POST", success = t("toast.changesSaved")) => {
     setNotice("");
     setError("");
     try {
@@ -169,10 +200,13 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
     } catch (cause) { setError(errorMessage(cause)); }
   };
 
+  // The full page's way back to its list; the pop-up has its own close.
+  const back = variant === "page" ? { href: "/crm/actions", label: t("backActionRequired") } : undefined;
+
   // Only the first load blanks the page; a reload after an action keeps the
   // workspace on screen, dimmed, so the reader does not lose their place.
   if (loading && !data.id) return <RecordBody />;
-  if (error && !data.id) return <div className="space-y-6"><PageHeader back={variant === "page" ? BACK : undefined} title="Conversation" /><ErrorState message={error} onRetry={() => void load()} /></div>;
+  if (error && !data.id) return <div className="space-y-6"><PageHeader back={back} title={t("conversationTitle")} /><ErrorState message={error} onRetry={() => void load()} /></div>;
 
   const person = asObject(data.person);
   const draft = asObject(data.draft);
@@ -200,8 +234,8 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
   const name = displayName({ ...data, person });
   const avatarUrl = person.profilePictureUrl ? String(person.profilePictureUrl) : null;
   const channels = [...new Set([...conversations, ...messages].map((item) => item.channel).filter(Boolean))].map(channelLabel);
-  const lastInbound = data.lastInboundAt ? relativeDate(data.lastInboundAt).replace(" overdue", " ago") : "No reply yet";
-  const nextAction = text(currentStep.name, data.nextActionAt ? relativeDate(data.nextActionAt) : "None scheduled");
+  const lastInbound = data.lastInboundAt ? timeAgo(data.lastInboundAt) : t("stats.noReplyYet");
+  const nextAction = text(currentStep.name, data.nextActionAt ? relativeDate(data.nextActionAt) : t("stats.noneScheduled"));
   // The message being answered: the newest inbound one on any channel.
   const lastMessage = ([...messages] as Data[]).filter((message) => message.direction === "inbound")
     .sort((a, b) => String(b.sentAt ?? b.createdAt).localeCompare(String(a.sentAt ?? a.createdAt)))[0];
@@ -209,7 +243,7 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
   return (
     <div className={cn("space-y-5 transition-opacity", loading && "opacity-60")} aria-busy={loading || undefined}>
       <RecordHeader
-        back={variant === "page" ? BACK : undefined}
+        back={back}
         data={data}
         person={person}
         name={name}
@@ -223,18 +257,18 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
           categoryKey={String(data.categoryKey ?? asObject(data.classification).category ?? "other")}
           subcategoryId={data.subcategoryId ? String(data.subcategoryId) : null}
           contextVersion={Number(data.contextVersion)}
-          onMove={async (body) => { await mutate(`/records/${String(data.id)}/stage`, body, "POST", moveStageSuccessMessage(body)); return true; }}
+          onMove={async (body) => { await mutate(`/records/${String(data.id)}/stage`, body, "POST", body.next === "reply" ? t("toast.stageMovedReply") : t("toast.stageMovedFollowUps")); return true; }}
         />}
       />
 
-      {notice && <div role="status" className="flex items-center gap-2 rounded-xl bg-success-lighter px-4 py-2.5 text-paragraph-sm text-success-dark ring-1 ring-inset ring-success-light"><RiCheckLine className="size-4 shrink-0" aria-hidden="true" /><span className="min-w-0 flex-1">{notice}</span><button type="button" onClick={() => setNotice("")} className="text-label-xs opacity-70 hover:opacity-100">Dismiss</button></div>}
+      {notice && <div role="status" className="flex items-center gap-2 rounded-xl bg-success-lighter px-4 py-2.5 text-paragraph-sm text-success-dark ring-1 ring-inset ring-success-light"><RiCheckLine className="size-4 shrink-0" aria-hidden="true" /><span className="min-w-0 flex-1">{notice}</span><button type="button" onClick={() => setNotice("")} className="text-label-xs opacity-70 hover:opacity-100">{t("dismiss")}</button></div>}
       {error && <ErrorState message={error} onRetry={() => void load()} />}
 
       <StatRow items={[
-        { label: "Last reply", value: lastInbound, icon: RiReplyLine, hint: data.lastInboundAt ? formatDate(data.lastInboundAt) : undefined },
-        { label: "Next step", value: nextAction, icon: RiTimerLine, hint: data.nextActionAt ? formatDate(data.nextActionAt) : undefined },
-        { label: "Sequence", value: activeSequence.name ? `${String(activeSequence.name)}${activeRun.status === "paused" ? " · paused" : ""}` : "None running", icon: RiLoopLeftLine },
-        { label: channels.length > 1 ? "Channels" : "Channel", value: channels.join(", ") || "—", icon: RiChat3Line },
+        { label: t("stats.lastReply"), value: lastInbound, icon: RiReplyLine, hint: data.lastInboundAt ? formatDate(data.lastInboundAt) : undefined },
+        { label: t("stats.nextStep"), value: nextAction, icon: RiTimerLine, hint: data.nextActionAt ? formatDate(data.nextActionAt) : undefined },
+        { label: t("stats.sequence"), value: activeSequence.name ? (activeRun.status === "paused" ? t("stats.sequencePaused", { name: String(activeSequence.name) }) : String(activeSequence.name)) : t("stats.noneRunning"), icon: RiLoopLeftLine },
+        { label: channels.length > 1 ? t("stats.channels") : t("stats.channel"), value: channels.join(", ") || "—", icon: RiChat3Line },
       ]} />
 
       {/* The measured height only holds if the grid row is allowed to be
@@ -269,8 +303,6 @@ export default function CrmRecordClient({ recordId, variant = "page" }: { record
     </div>
   );
 }
-
-const BACK = { href: "/crm/actions", label: "Action required" };
 
 /**
  * Height of the workspace row, measured rather than assumed.
@@ -310,15 +342,16 @@ function useWorkspaceHeight<T extends HTMLElement>(ready: boolean) {
   return [ref, height] as const;
 }
 
-const WORKFLOW_BADGE: Record<string, { label: string; color: React.ComponentProps<typeof Badge.Root>["color"] }> = {
-  action_required: { label: "Action required", color: "orange" },
-  error: { label: "Error", color: "red" },
-  waiting: { label: "Waiting", color: "purple" },
-  paused: { label: "Paused", color: "pink" },
-  closed: { label: "Closed", color: "green" },
-  classifying: { label: "Classifying", color: "gray" },
-  unclassified: { label: "Unclassified", color: "gray" },
-  idle: { label: "Idle", color: "gray" },
+// Colour only: the label comes from the `states` keys of the catalog.
+const WORKFLOW_COLOR: Record<CrmWorkflowState, React.ComponentProps<typeof Badge.Root>["color"]> = {
+  action_required: "orange",
+  error: "red",
+  waiting: "purple",
+  paused: "pink",
+  closed: "green",
+  classifying: "gray",
+  unclassified: "gray",
+  idle: "gray",
 };
 
 function RecordHeader({ back, data, person, name, avatarUrl, currentStep, activeRun, onAction, onCallStarted, moveStage }: {
@@ -336,6 +369,7 @@ function RecordHeader({ back, data, person, name, avatarUrl, currentStep, active
   /** Move stage: record something that happened and move the lead on. */
   moveStage: React.ReactNode;
 }) {
+  const t = useTranslations("crmRecord.record");
   const id = String(data.id);
   const personId = String(person.id ?? data.personId);
   const dnc = Boolean(data.dnc);
@@ -353,7 +387,7 @@ function RecordHeader({ back, data, person, name, avatarUrl, currentStep, active
   // "Profile" label that hides which account it points at.
   const linkedinHref = linkedin.startsWith("http") ? linkedin : `https://www.linkedin.com/in/${linkedin}`;
   const linkedinSlug = linkedin.replace(/\/+$/, "").split("/").pop() || linkedin;
-  const state = WORKFLOW_BADGE[workflowState];
+  const stateColor = Object.hasOwn(WORKFLOW_COLOR, workflowState) ? WORKFLOW_COLOR[workflowState as CrmWorkflowState] : undefined;
 
   return (
     <PageHeader
@@ -363,14 +397,14 @@ function RecordHeader({ back, data, person, name, avatarUrl, currentStep, active
         <span className="truncate">{name}</span>
       </span>}
       badge={<>
-        {state && <Badge.Root variant="lighter" size="medium" color={state.color}><Badge.Dot />{state.label}</Badge.Root>}
-        {dnc && <Badge.Root variant="lighter" size="medium" color="red"><Badge.Dot />Do not contact</Badge.Root>}
+        {stateColor && <Badge.Root variant="lighter" size="medium" color={stateColor}><Badge.Dot />{t(`states.${workflowState as CrmWorkflowState}`)}</Badge.Root>}
+        {dnc && <Badge.Root variant="lighter" size="medium" color="red"><Badge.Dot />{t("header.dnc")}</Badge.Root>}
       </>}
       description={<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-paragraph-sm text-text-sub-600">
         {(title || company) && <span className="inline-flex min-w-0 items-center gap-1.5"><RiBriefcaseLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" /><span className="truncate">{[title, company].filter(Boolean).join(" · ")}</span></span>}
         {email && <a href={`mailto:${email}`} className="inline-flex min-w-0 items-center gap-1.5 transition hover:text-text-strong-950"><RiMailLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" /><span className="truncate">{email}</span></a>}
         {phone && <span className="inline-flex items-center gap-1.5"><RiPhoneLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" />{phone}</span>}
-        {linkedin && <a href={linkedinHref} target="_blank" rel="noreferrer" title={`Open ${name} on LinkedIn`} className="inline-flex min-w-0 items-center gap-1.5 transition hover:text-text-strong-950"><RiLinkedinLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" /><span className="truncate">{linkedinSlug}</span><RiArrowRightUpLine className="size-3.5 shrink-0 text-text-soft-400" aria-hidden="true" /></a>}
+        {linkedin && <a href={linkedinHref} target="_blank" rel="noreferrer" title={t("header.openLinkedin", { name })} className="inline-flex min-w-0 items-center gap-1.5 transition hover:text-text-strong-950"><RiLinkedinLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" /><span className="truncate">{linkedinSlug}</span><RiArrowRightUpLine className="size-3.5 shrink-0 text-text-soft-400" aria-hidden="true" /></a>}
       </div>}
       actions={<>
         <CallButton personId={personId} crmRecordId={id} phone={phone} onCallStarted={onCallStarted} />
@@ -378,31 +412,31 @@ function RecordHeader({ back, data, person, name, avatarUrl, currentStep, active
           variant="neutral"
           mode="stroke"
           size="xsmall"
-          title={`Mark "${String(currentStep.name)}" as done without sending it; the next step waits its usual delay`}
-          onClick={() => void onAction(`/records/${id}/skip`, {}, "POST", "Step skipped — the next one is scheduled")}
-        aria-label="Skip step"><Button.Icon as={RiSkipForwardLine} /><span className="hidden sm:inline">Skip step</span></Button.Root>}
+          title={t("header.skipStepTitle", { step: String(currentStep.name) })}
+          onClick={() => void onAction(`/records/${id}/skip`, {}, "POST", t("toast.stepSkipped"))}
+        aria-label={t("header.skipStep")}><Button.Icon as={RiSkipForwardLine} /><span className="hidden sm:inline">{t("header.skipStep")}</span></Button.Root>}
         {moveStage}
         <Dropdown.Root>
           <Dropdown.Trigger asChild>
-            <Button.Root variant="neutral" mode="stroke" size="xsmall" title="Manage record" aria-label="Manage record"><Button.Icon as={RiMoreLine} /></Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="xsmall" title={t("header.manageRecord")} aria-label={t("header.manageRecord")}><Button.Icon as={RiMoreLine} /></Button.Root>
           </Dropdown.Trigger>
           <Dropdown.Content align="end">
             {/* Pause and snooze are one-click record actions, so they sit
                 with the other record actions rather than in a card of their own. */}
             {!closed && <>
-              <Dropdown.Item onSelect={() => void onAction(`/records/${id}/${paused ? "resume" : "pause"}`, {}, "POST", paused ? "Sequence resumed" : "Sequence paused")}>
-                <Dropdown.ItemIcon as={paused ? RiPlayLine : RiPauseLine} />{paused ? "Resume sequence" : "Pause sequence"}
+              <Dropdown.Item onSelect={() => void onAction(`/records/${id}/${paused ? "resume" : "pause"}`, {}, "POST", paused ? t("toast.sequenceResumed") : t("toast.sequencePaused"))}>
+                <Dropdown.ItemIcon as={paused ? RiPlayLine : RiPauseLine} />{paused ? t("header.resumeSequence") : t("header.pauseSequence")}
               </Dropdown.Item>
-              <Dropdown.Item onSelect={() => void onAction(`/records/${id}/snooze`, { until: new Date(Date.now() + 86_400_000).toISOString() }, "POST", "Next action snoozed for one day")}>
-                <Dropdown.ItemIcon as={RiTimerLine} />Snooze a day
+              <Dropdown.Item onSelect={() => void onAction(`/records/${id}/snooze`, { until: new Date(Date.now() + 86_400_000).toISOString() }, "POST", t("toast.snoozed"))}>
+                <Dropdown.ItemIcon as={RiTimerLine} />{t("header.snoozeDay")}
               </Dropdown.Item>
               <Dropdown.Separator />
             </>}
-            <Dropdown.Item onSelect={() => void onAction(`/people/${personId}/dnc`, { enabled: !dnc }, "POST", dnc ? "Do not contact removed" : "Contact marked as do not contact")}>
-              <Dropdown.ItemIcon as={RiUserLine} />{dnc ? "Clear do not contact" : "Mark do not contact"}
+            <Dropdown.Item onSelect={() => void onAction(`/people/${personId}/dnc`, { enabled: !dnc }, "POST", dnc ? t("toast.dncRemoved") : t("toast.dncSet"))}>
+              <Dropdown.ItemIcon as={RiUserLine} />{dnc ? t("header.clearDnc") : t("header.markDnc")}
             </Dropdown.Item>
-            <Dropdown.Item destructive={!closed} onSelect={() => void onAction(`/records/${id}/${closed ? "reopen" : "close"}`, closed ? {} : { reason: "Closed by operator" }, "POST", closed ? "Record reopened" : "Record closed")}>
-              <Dropdown.ItemIcon as={closed ? RiPlayLine : RiCloseCircleLine} />{closed ? "Reopen record" : "Close record"}
+            <Dropdown.Item destructive={!closed} onSelect={() => void onAction(`/records/${id}/${closed ? "reopen" : "close"}`, closed ? {} : { reason: "Closed by operator" /* stored in the record's history, not interface text */ }, "POST", closed ? t("toast.recordReopened") : t("toast.recordClosed"))}>
+              <Dropdown.ItemIcon as={closed ? RiPlayLine : RiCloseCircleLine} />{closed ? t("header.reopenRecord") : t("header.closeRecord")}
             </Dropdown.Item>
           </Dropdown.Content>
         </Dropdown.Root>
@@ -417,19 +451,20 @@ function RecordHeader({ back, data, person, name, avatarUrl, currentStep, active
  * one toggle away. The Call button lives in the lead header above.
  */
 function WhatsappRecordPanel({ personId, onSent, children }: { personId: string; onSent: () => void; children: React.ReactNode }) {
+  const t = useTranslations("crmRecord.record");
   const [view, setView] = useState<"whatsapp" | "all">("whatsapp");
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-2">
       <SegmentedControl.Root value={view} onValueChange={(value) => setView(value as "whatsapp" | "all")} className="shrink-0">
-        <SegmentedControl.List className="w-auto" aria-label="Conversation view">
+        <SegmentedControl.List className="w-auto" aria-label={t("whatsappPanel.viewLabel")}>
           <SegmentedControl.Trigger value="whatsapp" className="gap-1.5 px-3"><WhatsappLogo className="size-3.5" />WhatsApp</SegmentedControl.Trigger>
-          <SegmentedControl.Trigger value="all" className="px-3">All channels</SegmentedControl.Trigger>
+          <SegmentedControl.Trigger value="all" className="px-3">{t("whatsappPanel.allChannels")}</SegmentedControl.Trigger>
         </SegmentedControl.List>
       </SegmentedControl.Root>
       <div className="min-h-0 flex-1">
         {view === "whatsapp"
           ? <Frame className="h-full">
-              <FrameHeader title="WhatsApp" description="The live thread, sent through the linked number." />
+              <FrameHeader title="WhatsApp" description={t("whatsappPanel.description")} />
               <FramePanel className="flex min-h-0 flex-col overflow-hidden p-4 sm:p-4">
                 <PersonWhatsappPanel personId={personId} onSent={onSent} className="flex min-h-0 flex-1 flex-col" heightClass="min-h-0 flex-1" />
               </FramePanel>
@@ -441,6 +476,9 @@ function WhatsappRecordPanel({ personId, onSent, children }: { personId: string;
 }
 
 function ConversationPanel({ conversations, messages, name, avatarUrl }: { conversations: Data[]; messages: Data[]; name: string; avatarUrl: string | null }) {
+  const t = useTranslations("crmRecord.record");
+  const format = useFormatter();
+  const { channelLabel, formatDate } = useCrmText();
   const [filter, setFilter] = useState<TimelineFilter>("all");
   const scrollRef = useRef<HTMLDivElement>(null);
   const visible = useMemo(() => messages.filter((message) => filter === "all" || message.channel === filter).sort((a, b) => String(a.sentAt ?? a.createdAt).localeCompare(String(b.sentAt ?? b.createdAt))), [messages, filter]);
@@ -463,14 +501,14 @@ function ConversationPanel({ conversations, messages, name, avatarUrl }: { conve
     <Frame className="h-full min-h-0">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 pb-3 pt-3">
         <div className="min-w-0">
-          <h2 className="text-label-sm text-text-strong-950">Conversation</h2>
-          <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{messages.length} {messages.length === 1 ? "message" : "messages"}{channelSummary.length ? ` across ${channelSummary.join(" and ")}` : ""}</p>
+          <h2 className="text-label-sm text-text-strong-950">{t("conversationTitle")}</h2>
+          <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{channelSummary.length ? t("conversation.messageCountAcross", { count: messages.length, channels: format.list(channelSummary, { type: "conjunction" }) }) : t("conversation.messageCount", { count: messages.length })}</p>
         </div>
         <SegmentedControl.Root value={filter} onValueChange={(value) => setFilter(value as TimelineFilter)}>
-          <SegmentedControl.List className="w-auto" aria-label="Channel">
-            {(["all", "email", "linkedin", "whatsapp"] as TimelineFilter[]).map((item) => {
+          <SegmentedControl.List className="w-auto" aria-label={t("conversation.channelLabel")}>
+            {TIMELINE_FILTERS.map((item) => {
               const disabled = item !== "all" && !channels.has(item);
-              return <SegmentedControl.Trigger key={item} value={item} disabled={disabled} className={cn("gap-1.5 px-2 text-label-xs sm:px-2.5", disabled && "opacity-40")}>{item !== "all" && channelIcon(item, "size-3.5")}{item === "all" ? "All" : channelLabel(item)}</SegmentedControl.Trigger>;
+              return <SegmentedControl.Trigger key={item} value={item} disabled={disabled} className={cn("gap-1.5 px-2 text-label-xs sm:px-2.5", disabled && "opacity-40")}>{item !== "all" && channelIcon(item, "size-3.5")}{item === "all" ? t("conversation.all") : channelLabel(item)}</SegmentedControl.Trigger>;
             })}
           </SegmentedControl.List>
         </SegmentedControl.Root>
@@ -481,13 +519,13 @@ function ConversationPanel({ conversations, messages, name, avatarUrl }: { conve
           {visible.map((message, index) => {
             const inbound = message.direction === "inbound";
             const subject = text(message.subject);
-            const body = text(message.body ?? message.bodyText, "Message content unavailable");
+            const body = text(message.body ?? message.bodyText, t("conversation.contentUnavailable"));
             const label = text(message.label);
             return (
               <article key={String(message.id ?? index)} className={cn("flex gap-3", !inbound && "flex-row-reverse")}>
                 {inbound
                   ? <ContactAvatar src={avatarUrl} fallback={initials(name)} className="mt-1 size-8 bg-bg-white-0 text-label-xs text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200" />
-                  : <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-alpha-10 text-label-xs text-primary-base">You</span>}
+                  : <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-alpha-10 text-label-xs text-primary-base">{t("conversation.you")}</span>}
                 <div className={cn("min-w-0 max-w-[88%]", !inbound && "text-right")}>
                   <div className={cn("mb-1.5 flex flex-wrap items-center gap-2 text-paragraph-xs text-text-soft-400", !inbound && "justify-end")}>
                     <span className="inline-flex items-center gap-1" style={{ color: channelColor(message.channel) }}>{channelIcon(message.channel, "size-3.5")}<span className="text-text-soft-400">{channelLabel(message.channel)}</span></span>
@@ -503,7 +541,7 @@ function ConversationPanel({ conversations, messages, name, avatarUrl }: { conve
             );
           })}
         </div>
-      ) : <EmptyState className="min-h-80 flex-1" icon={RiChat3Line} title={messages.length ? "No messages on this channel" : "No messages yet"} description={messages.length ? "Pick All to see the whole thread." : "Messages will appear here when this contact replies."} />}
+      ) : <EmptyState className="min-h-80 flex-1" icon={RiChat3Line} title={messages.length ? t("conversation.emptyChannelTitle") : t("conversation.emptyTitle")} description={messages.length ? t("conversation.emptyChannelDescription") : t("conversation.emptyDescription")} />}
       </FramePanel>
     </Frame>
   );
@@ -525,6 +563,8 @@ function ReplyComposer({ record, draft, conversations, citations, uncertainAttem
   uncertainAttempt?: Data;
   onAction: (path: string, body?: Data, method?: string, success?: string) => Promise<void>;
 }) {
+  const t = useTranslations("crmRecord.record");
+  const { channelLabel, formatDate } = useCrmText();
   const draftConversationId = text(draft.conversationId);
   const defaultConversation = conversations.find((item) => item.id === draftConversationId) ?? conversations.find((item) => item.channel === record.activeChannel) ?? conversations[0];
   const [conversationId, setConversationId] = useState(String(defaultConversation?.id ?? ""));
@@ -576,56 +616,56 @@ function ReplyComposer({ record, draft, conversations, citations, uncertainAttem
       {/* Narrow: title and Activity share the first line, the classification
           takes the second whole. Wide: one line. */}
       <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-3 pt-3">
-        <h2 className="text-label-sm text-text-strong-950">Reply</h2>
+        <h2 className="text-label-sm text-text-strong-950">{t("reply.title")}</h2>
         <div className="order-3 flex min-w-0 basis-full items-center sm:order-none sm:basis-auto">{stage}</div>
         <div className="order-2 ml-auto sm:order-none">{activity}</div>
       </div>
       {stageNotice && <div className="shrink-0 px-1 pb-2">{stageNotice}</div>}
       <FramePanel className="flex min-h-0 flex-col overflow-hidden p-0 sm:p-0">
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-5">
-        {Boolean(record.dnc) && <InlineWarning tone="danger" title="Sending is blocked" detail="This person is marked as Do Not Contact. Clear that status before replying." />}
-        {editingCurrentDraft && draft.status === "failed" && <InlineWarning tone="danger" title="The draft could not be written" detail={text(draft.error, "Regenerate it, or write the reply yourself.")} />}
+        {Boolean(record.dnc) && <InlineWarning tone="danger" title={t("reply.dncTitle")} detail={t("reply.dncDetail")} />}
+        {editingCurrentDraft && draft.status === "failed" && <InlineWarning tone="danger" title={t("reply.draftFailedTitle")} detail={text(draft.error, t("reply.draftFailedFallback"))} />}
         {editingCurrentDraft && draft.status === "awaiting_review" && Boolean(draft.autoSendAt) && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-information-lighter p-3 ring-1 ring-inset ring-information-light">
-            <Badge.Root variant="lighter" size="medium" color="blue" className="shrink-0 whitespace-nowrap"><Badge.Dot />Sends automatically</Badge.Root>
-            <p className="min-w-0 flex-1 text-paragraph-xs text-information-dark">Goes out on its own when its account&apos;s next slot opens: one follow-up per account every 30 minutes by default (Sending rules), inside sending hours.</p>
-            <button type="button" className={cn(secondaryButtonClass, "h-7 whitespace-nowrap px-2.5 text-label-xs")} onClick={() => void onAction(`/drafts/${String(draft.id)}/review`, {}, "POST", "Moved to Action required")}>Review before sending</button>
+            <Badge.Root variant="lighter" size="medium" color="blue" className="shrink-0 whitespace-nowrap"><Badge.Dot />{t("reply.autoSendBadge")}</Badge.Root>
+            <p className="min-w-0 flex-1 text-paragraph-xs text-information-dark">{t("reply.autoSendNote")}</p>
+            <button type="button" className={cn(secondaryButtonClass, "h-7 whitespace-nowrap px-2.5 text-label-xs")} onClick={() => void onAction(`/drafts/${String(draft.id)}/review`, {}, "POST", t("toast.movedToActionRequired"))}>{t("reply.reviewBeforeSending")}</button>
           </div>
         )}
-        {stale && editingCurrentDraft && <InlineWarning tone="warning" title="This draft may be out of date" detail="A newer reply changed the conversation. Regenerate or carefully review before sending." />}
-        {!conversations.length && <InlineWarning tone="warning" title="No reply channel available" detail="Email or LinkedIn must be connected before a reply can be sent." />}
+        {stale && editingCurrentDraft && <InlineWarning tone="warning" title={t("reply.staleTitle")} detail={t("reply.staleDetail")} />}
+        {!conversations.length && <InlineWarning tone="warning" title={t("reply.noChannelTitle")} detail={t("reply.noChannelDetail")} />}
 
         {/* Below xl the conversation stacks under this panel, so the message
             being answered is quoted here instead of a scroll away. */}
         {lastMessage && <figure className="shrink-0 rounded-lg bg-bg-weak-50 px-3 py-2.5 ring-1 ring-inset ring-stroke-soft-200 xl:hidden">
-          <figcaption className="mb-1 flex items-center gap-1.5 text-paragraph-xs text-text-soft-400">{channelIcon(lastMessage.channel, "size-3.5")}Replying to their message · {formatDate(lastMessage.sentAt ?? lastMessage.createdAt)}</figcaption>
-          <blockquote className="line-clamp-4 whitespace-pre-wrap text-paragraph-sm text-text-strong-950">{text(lastMessage.body ?? lastMessage.bodyText, "Message content unavailable")}</blockquote>
+          <figcaption className="mb-1 flex items-center gap-1.5 text-paragraph-xs text-text-soft-400">{channelIcon(lastMessage.channel, "size-3.5")}{t("reply.replyingTo", { date: formatDate(lastMessage.sentAt ?? lastMessage.createdAt) })}</figcaption>
+          <blockquote className="line-clamp-4 whitespace-pre-wrap text-paragraph-sm text-text-strong-950">{text(lastMessage.body ?? lastMessage.bodyText, t("conversation.contentUnavailable"))}</blockquote>
         </figure>}
 
-        {!editingCurrentDraft && Boolean(draft.id) && <div className="rounded-lg bg-information-lighter p-3 text-paragraph-xs text-information-dark ring-1 ring-inset ring-information-light">You switched channels. This will create a separate {channelLabel(channel)} draft; the existing {channelLabel(draft.channel)} draft is preserved.</div>}
+        {!editingCurrentDraft && Boolean(draft.id) && <div className="rounded-lg bg-information-lighter p-3 text-paragraph-xs text-information-dark ring-1 ring-inset ring-information-light">{t("reply.switchedChannels", { channel: channelLabel(channel), existing: channelLabel(draft.channel) })}</div>}
 
-        {channel === "email" && <label className="block"><span className="mb-1.5 block text-label-xs text-text-sub-600">Subject</span><input className={fieldClass} value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Email subject" /></label>}
+        {channel === "email" && <label className="block"><span className="mb-1.5 block text-label-xs text-text-sub-600">{t("reply.subject")}</span><input className={fieldClass} value={subject} onChange={(event) => setSubject(event.target.value)} placeholder={t("reply.subjectPlaceholder")} /></label>}
         <div className="flex min-h-40 flex-1 flex-col">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-2">
-              <label htmlFor="crm-reply-body" className="text-label-sm text-text-strong-950">{editingCurrentDraft ? "Draft reply" : "Your reply"}</label>
+              <label htmlFor="crm-reply-body" className="text-label-sm text-text-strong-950">{editingCurrentDraft ? t("reply.draftReply") : t("reply.yourReply")}</label>
               {editingCurrentDraft && <DraftBadge draft={draft} stale={stale} dnc={Boolean(record.dnc)} />}
             </span>
-            {editingCurrentDraft && <button type="button" className={cn(secondaryButtonClass, "h-7 gap-1.5 whitespace-nowrap px-2.5 text-label-xs")} onClick={() => setRegenerateOpen(true)} aria-label="Regenerate draft"><RiRefreshLine className="size-3.5" aria-hidden="true" /><span className="hidden sm:inline">Regenerate draft</span></button>}
+            {editingCurrentDraft && <button type="button" className={cn(secondaryButtonClass, "h-7 gap-1.5 whitespace-nowrap px-2.5 text-label-xs")} onClick={() => setRegenerateOpen(true)} aria-label={t("reply.regenerateDraft")}><RiRefreshLine className="size-3.5" aria-hidden="true" /><span className="hidden sm:inline">{t("reply.regenerateDraft")}</span></button>}
           </div>
-          <textarea id="crm-reply-body" className={cn(fieldClass, "min-h-32 flex-1 resize-y leading-6")} value={body} onChange={(event) => setBody(event.target.value)} placeholder={`Write a ${channelLabel(channel)} reply…`} />
+          <textarea id="crm-reply-body" className={cn(fieldClass, "min-h-32 flex-1 resize-y leading-6")} value={body} onChange={(event) => setBody(event.target.value)} placeholder={t("reply.writePlaceholder", { channel: channelLabel(channel) })} />
         </div>
 
-        {citations.length > 0 && editingCurrentDraft && <details className="shrink-0 rounded-lg bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200"><summary className="cursor-pointer text-label-xs text-text-sub-600">Knowledge used ({citations.length})</summary>{citations.map((citation, index) => <blockquote key={String(citation.id ?? index)} className="mt-2 border-l-2 border-primary-alpha-24 pl-2 text-paragraph-xs text-text-sub-600">{String(citation.excerpt ?? "")}</blockquote>)}</details>}
+        {citations.length > 0 && editingCurrentDraft && <details className="shrink-0 rounded-lg bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200"><summary className="cursor-pointer text-label-xs text-text-sub-600">{t("reply.knowledgeUsed", { count: citations.length })}</summary>{citations.map((citation, index) => <blockquote key={String(citation.id ?? index)} className="mt-2 border-l-2 border-primary-alpha-24 pl-2 text-paragraph-xs text-text-sub-600">{String(citation.excerpt ?? "")}</blockquote>)}</details>}
 
       </div>
       <div className="shrink-0 border-t border-stroke-soft-200 px-4 py-3 sm:px-5">
         {uncertainAttempt && editingCurrentDraft ? (
           <div className="space-y-3 rounded-xl bg-warning-lighter p-3.5 ring-1 ring-inset ring-warning-light">
-            <div className="flex gap-2"><RiErrorWarningLine className="mt-0.5 size-4 shrink-0 text-warning-base" aria-hidden="true" /><div><p className="text-label-sm text-warning-dark">Delivery needs confirmation</p><p className="mt-0.5 text-paragraph-xs text-warning-dark">Check the provider before recording the result.</p></div></div>
-            <input value={providerMessageId} onChange={(event) => setProviderMessageId(event.target.value)} className={fieldClass} placeholder="Provider message ID (if delivered)" />
-            <input value={reconciliationNote} onChange={(event) => setReconciliationNote(event.target.value)} className={fieldClass} placeholder="Required reconciliation note" />
-            <div className="flex gap-2"><button disabled={!reconciliationNote.trim()} type="button" className={primaryButtonClass} onClick={() => void onAction(`/send-attempts/${String(uncertainAttempt.id)}/reconcile`, { delivered: true, providerMessageId: providerMessageId || null, note: reconciliationNote }, "POST", "Delivery confirmed")}>Confirm delivered</button><button disabled={!reconciliationNote.trim()} type="button" className={dangerButtonClass} onClick={() => void onAction(`/send-attempts/${String(uncertainAttempt.id)}/reconcile`, { delivered: false, note: reconciliationNote }, "POST", "Marked not delivered")}>Not delivered</button></div>
+            <div className="flex gap-2"><RiErrorWarningLine className="mt-0.5 size-4 shrink-0 text-warning-base" aria-hidden="true" /><div><p className="text-label-sm text-warning-dark">{t("reply.deliveryTitle")}</p><p className="mt-0.5 text-paragraph-xs text-warning-dark">{t("reply.deliveryNote")}</p></div></div>
+            <input value={providerMessageId} onChange={(event) => setProviderMessageId(event.target.value)} className={fieldClass} placeholder={t("reply.providerIdPlaceholder")} />
+            <input value={reconciliationNote} onChange={(event) => setReconciliationNote(event.target.value)} className={fieldClass} placeholder={t("reply.noteRequiredPlaceholder")} />
+            <div className="flex gap-2"><button disabled={!reconciliationNote.trim()} type="button" className={primaryButtonClass} onClick={() => void onAction(`/send-attempts/${String(uncertainAttempt.id)}/reconcile`, { delivered: true, providerMessageId: providerMessageId || null, note: reconciliationNote }, "POST", t("toast.deliveryConfirmed"))}>{t("reply.confirmDelivered")}</button><button disabled={!reconciliationNote.trim()} type="button" className={dangerButtonClass} onClick={() => void onAction(`/send-attempts/${String(uncertainAttempt.id)}/reconcile`, { delivered: false, note: reconciliationNote }, "POST", t("toast.markedNotDelivered"))}>{t("reply.notDelivered")}</button></div>
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-2">
@@ -633,10 +673,10 @@ function ReplyComposer({ record, draft, conversations, citations, uncertainAttem
             <SenderPicker conversations={conversations} value={conversationId} onChange={changeConversation} />
             <div className="ml-auto flex items-center gap-2">
               {editingCurrentDraft ? <>
-                <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} onSubmit={async (feedback) => { await onAction(`/drafts/${String(draft.id)}/regenerate`, { feedback }, "POST", "Draft rewritten with your notes"); return true; }} />
-                <button type="button" disabled={!ready} className={secondaryButtonClass} onClick={() => void onAction(`/drafts/${String(draft.id)}`, { subject: requestSubject, body, revision }, "PATCH", "Draft saved")}><RiSaveLine className="size-4" aria-hidden="true" />Save</button>
-                <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onAction(`/drafts/${String(draft.id)}/send`, { subject: requestSubject, body, revision }, "POST", "Reply queued for sending")}><RiSendPlaneLine className="size-4" aria-hidden="true" />Approve &amp; send</button>
-              </> : <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onAction(`/records/${String(record.id)}/draft`, { conversationId, subject: requestSubject, bodyText: body, bodyHtml: null }, "POST", "Draft created and ready for review")}><RiSaveLine className="size-4" aria-hidden="true" />Create draft</button>}
+                <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} onSubmit={async (feedback) => { await onAction(`/drafts/${String(draft.id)}/regenerate`, { feedback }, "POST", t("toast.draftRewritten")); return true; }} />
+                <button type="button" disabled={!ready} className={secondaryButtonClass} onClick={() => void onAction(`/drafts/${String(draft.id)}`, { subject: requestSubject, body, revision }, "PATCH", t("toast.draftSaved"))}><RiSaveLine className="size-4" aria-hidden="true" />{t("reply.save")}</button>
+                <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onAction(`/drafts/${String(draft.id)}/send`, { subject: requestSubject, body, revision }, "POST", t("toast.replyQueued"))}><RiSendPlaneLine className="size-4" aria-hidden="true" />{t("reply.approveSend")}</button>
+              </> : <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onAction(`/records/${String(record.id)}/draft`, { conversationId, subject: requestSubject, bodyText: body, bodyHtml: null }, "POST", t("toast.draftCreated"))}><RiSaveLine className="size-4" aria-hidden="true" />{t("reply.createDraft")}</button>}
             </div>
           </div>
         )}
@@ -648,12 +688,13 @@ function ReplyComposer({ record, draft, conversations, citations, uncertainAttem
 
 /** Where the AI draft stands, in the same words the Action required table uses. */
 function DraftBadge({ draft, stale, dnc }: { draft: Data; stale: boolean; dnc: boolean }) {
+  const t = useTranslations("crmRecord.record");
   const status = String(draft.status ?? "");
-  const [label, color]: [string, React.ComponentProps<typeof Badge.Root>["color"]] = status === "failed" ? ["Draft failed", "red"]
-    : dnc ? ["Do not contact", "red"]
-    : stale ? ["Out of date", "orange"]
-    : status === "awaiting_review" ? ["Ready to send", "green"]
-    : [humanize(status || "draft"), "gray"];
+  const [label, color]: [string, React.ComponentProps<typeof Badge.Root>["color"]] = status === "failed" ? [t("reply.draftFailedBadge"), "red"]
+    : dnc ? [t("header.dnc"), "red"]
+    : stale ? [t("reply.outOfDateBadge"), "orange"]
+    : status === "awaiting_review" ? [t("reply.readyBadge"), "green"]
+    : [!status ? t("reply.draftBadge") : isStateKey(status) ? t(`states.${status}`) : humanize(status), "gray"];
   return <Badge.Root variant="lighter" size="medium" color={color} className="shrink-0 whitespace-nowrap"><Badge.Dot />{label}</Badge.Root>;
 }
 
@@ -662,24 +703,26 @@ function DraftBadge({ draft, stale, dnc }: { draft: Data; stale: boolean; dnc: b
  * conversation is just a label; with several it opens a menu to switch.
  */
 function SenderPicker({ conversations, value, onChange }: { conversations: Data[]; value: string; onChange: (conversationId: string) => void }) {
+  const t = useTranslations("crmRecord.record");
+  const { channelLabel } = useCrmText();
   if (!conversations.length) return null;
   const current = conversations.find((item) => String(item.id) === value) ?? conversations[0]!;
-  const senderName = (item: Data) => text(item.accountName ?? item.accountLabel ?? item.accountRef, "Connected account");
+  const senderName = (item: Data) => text(item.accountName ?? item.accountLabel ?? item.accountRef, t("sender.connectedAccount"));
   const identity = (item: Data) => (
     <>
       <ContactAvatar src={item.accountAvatarUrl ? String(item.accountAvatarUrl) : null} fallback={initials(senderName(item))} className="size-6 shrink-0 bg-primary-alpha-10 text-[10px] text-primary-base" />
       <span className="min-w-0 truncate text-label-sm text-text-strong-950">{senderName(item)}</span>
-      <span className="inline-flex shrink-0 items-center gap-1 text-paragraph-xs text-text-soft-400">{channelIcon(item.channel, "size-3.5")}{channelLabel(item.channel)}{item.status === "closed" ? " · closed" : ""}</span>
+      <span className="inline-flex shrink-0 items-center gap-1 text-paragraph-xs text-text-soft-400">{channelIcon(item.channel, "size-3.5")}{item.status === "closed" ? t("sender.channelClosed", { channel: channelLabel(item.channel) }) : channelLabel(item.channel)}</span>
     </>
   );
-  const title = `Sending as ${text(current.accountLabel ?? current.accountRef, "a connected account")} via ${channelLabel(current.channel)}`;
+  const title = t("sender.sendingAs", { account: text(current.accountLabel ?? current.accountRef, t("sender.aConnectedAccount")), channel: channelLabel(current.channel) });
   if (conversations.length === 1) {
     return <div title={title} className="flex min-w-0 items-center gap-2">{identity(current)}</div>;
   }
   return (
     <Dropdown.Root>
       <Dropdown.Trigger asChild>
-        <button type="button" title={title} aria-label={`${title}. Change`} className="flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition hover:bg-bg-weak-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-strong-950">
+        <button type="button" title={title} aria-label={t("sender.changeAria", { title })} className="flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 transition hover:bg-bg-weak-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-strong-950">
           {identity(current)}
           <RiArrowDownSLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" />
         </button>
@@ -712,6 +755,7 @@ function InlineWarning({ tone, title, detail }: { tone: "warning" | "danger"; ti
  * both jobs.
  */
 function ClassificationSelect({ record, categories, onAction }: { record: Data; categories: Data[]; onAction: (path: string, body?: Data, method?: string, success?: string) => Promise<void> }) {
+  const t = useTranslations("crmRecord.record");
   const classification = asObject(record.classification);
   const categoryKey = String(record.categoryKey ?? classification.category ?? "other");
   const subcategoryId = record.subcategoryId ? String(record.subcategoryId) : null;
@@ -728,12 +772,12 @@ function ClassificationSelect({ record, categories, onAction }: { record: Data; 
         categoryKey={categoryKey}
         subcategoryId={subcategoryId}
         subcategoryName={record.subcategory ? String(record.subcategory) : null}
-        title="Fix classification — the AI misread this reply"
+        title={t("classification.fixTitle")}
         onChange={(chosen) => void onAction(`/records/${String(record.id)}/classification`, {
           ...chosen,
           expectedContextVersion: record.contextVersion,
           classificationId: classification.id,
-        }, "PATCH", "Classification updated")}
+        }, "PATCH", t("toast.classificationUpdated"))}
       />
     </div>
   );
@@ -746,6 +790,8 @@ function ClassificationSelect({ record, categories, onAction }: { record: Data; 
  * human decides rather than it sitting silent in the classification history.
  */
 function ProposedClassificationNotice({ record, categories, onAction }: { record: Data; categories: Data[]; onAction: (path: string, body?: Data, method?: string, success?: string) => Promise<void> }) {
+  const t = useTranslations("crmRecord.record");
+  const { categoryLabel } = useCrmText();
   const classification = asObject(record.classification);
   if (classification.status !== "proposed") return null;
   const proposedCategoryKey = classification.proposedCategoryKey ? String(classification.proposedCategoryKey) : null;
@@ -753,47 +799,48 @@ function ProposedClassificationNotice({ record, categories, onAction }: { record
   const proposedSubcategory = proposedSubcategoryId
     ? categories.flatMap((category) => asList<Data>(category.subcategories)).find((item) => String(item.id) === proposedSubcategoryId)
     : null;
-  const proposedLabel = proposedSubcategory ? String(proposedSubcategory.name) : humanize(proposedCategoryKey);
+  const proposedLabel = proposedSubcategory ? String(proposedSubcategory.name) : categoryLabel(proposedCategoryKey);
   const currentCategoryKey = String(record.categoryKey ?? "other");
   const currentSubcategoryId = record.subcategoryId ? String(record.subcategoryId) : null;
-  const currentLabel = record.subcategory ? String(record.subcategory) : humanize(currentCategoryKey);
+  const currentLabel = record.subcategory ? String(record.subcategory) : categoryLabel(currentCategoryKey);
   const respond = (choice: { categoryKey: string; subcategoryId: string | null }) => void onAction(`/records/${String(record.id)}/classification`, {
     ...choice,
     expectedContextVersion: record.contextVersion,
     classificationId: classification.id,
-  }, "PATCH", "Classification updated");
+  }, "PATCH", t("toast.classificationUpdated"));
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg bg-warning-lighter px-3 py-2 text-paragraph-xs text-warning-dark ring-1 ring-inset ring-warning-light">
       <RiSparklingLine className="size-3.5 shrink-0" aria-hidden="true" />
-      <span className="min-w-0 flex-1">AI suggests: <strong className="font-medium">{proposedLabel}</strong> — held for review, since it isn&apos;t a forward move.</span>
+      <span className="min-w-0 flex-1">{t.rich("classification.aiSuggests", { label: proposedLabel, b: (chunks) => <strong className="font-medium">{chunks}</strong> })}</span>
       <div className="flex shrink-0 gap-1.5">
-        <button type="button" className="rounded-md bg-bg-white-0 px-2 py-1 text-label-xs text-warning-dark ring-1 ring-inset ring-warning-light transition hover:brightness-95" onClick={() => respond(proposedCategoryKey ? { categoryKey: proposedCategoryKey, subcategoryId: proposedSubcategoryId } : { categoryKey: currentCategoryKey, subcategoryId: currentSubcategoryId })}>Accept</button>
-        <button type="button" className="rounded-md px-2 py-1 text-label-xs text-warning-dark transition hover:bg-bg-white-0" onClick={() => respond({ categoryKey: currentCategoryKey, subcategoryId: currentSubcategoryId })}>Keep {currentLabel}</button>
+        <button type="button" className="rounded-md bg-bg-white-0 px-2 py-1 text-label-xs text-warning-dark ring-1 ring-inset ring-warning-light transition hover:brightness-95" onClick={() => respond(proposedCategoryKey ? { categoryKey: proposedCategoryKey, subcategoryId: proposedSubcategoryId } : { categoryKey: currentCategoryKey, subcategoryId: currentSubcategoryId })}>{t("classification.accept")}</button>
+        <button type="button" className="rounded-md px-2 py-1 text-label-xs text-warning-dark transition hover:bg-bg-white-0" onClick={() => respond({ categoryKey: currentCategoryKey, subcategoryId: currentSubcategoryId })}>{t("classification.keep", { label: currentLabel })}</button>
       </div>
     </div>
   );
 }
 
 function ActivityDrawer({ events, drafts, sendAttempts }: { events: Data[]; drafts: Data[]; sendAttempts: Data[] }) {
+  const t = useTranslations("crmRecord.record");
   return (
     <Modal.Root>
       <Modal.Trigger asChild>
-        <button type="button" className={subtleButtonClass} title="Activity history" aria-label={`Activity history, ${events.length} events`}>
+        <button type="button" className={subtleButtonClass} title={t("activity.title")} aria-label={t("activity.aria", { count: events.length })}>
           <RiHistoryLine className="size-4" aria-hidden="true" />
-          Activity
+          {t("activity.label")}
           {events.length > 0 && <span className="ml-0.5 rounded-full bg-bg-weak-50 px-1.5 text-label-xs text-text-sub-600">{events.length}</span>}
         </button>
       </Modal.Trigger>
       <Modal.SideContent size="max-w-xl">
         <Modal.Header icon={RiHistoryLine}>
-          <Modal.Title>Activity history</Modal.Title>
-          <Modal.Description>A complete audit trail of decisions, drafts, and delivery</Modal.Description>
+          <Modal.Title>{t("activity.title")}</Modal.Title>
+          <Modal.Description>{t("activity.description")}</Modal.Description>
         </Modal.Header>
         <div className="flex shrink-0 flex-wrap gap-2 px-5 pt-4">
-          <Badge.Root variant="lighter" color="gray" size="medium">{events.length} events</Badge.Root>
-          <Badge.Root variant="lighter" color="gray" size="medium">{drafts.length} drafts</Badge.Root>
-          <Badge.Root variant="lighter" color="gray" size="medium">{sendAttempts.length} send attempts</Badge.Root>
+          <Badge.Root variant="lighter" color="gray" size="medium">{t("activity.events", { count: events.length })}</Badge.Root>
+          <Badge.Root variant="lighter" color="gray" size="medium">{t("activity.drafts", { count: drafts.length })}</Badge.Root>
+          <Badge.Root variant="lighter" color="gray" size="medium">{t("activity.sendAttempts", { count: sendAttempts.length })}</Badge.Root>
         </div>
         <Modal.Body className="p-0 pt-4">
           {events.length ? (
@@ -803,7 +850,7 @@ function ActivityDrawer({ events, drafts, sendAttempts }: { events: Data[]; draf
           ) : (
             <div className="p-10 text-center">
               <RiHistoryLine className="mx-auto size-6 text-text-soft-400" aria-hidden="true" />
-              <p className="mt-2 text-paragraph-sm text-text-sub-600">No activity has been recorded yet.</p>
+              <p className="mt-2 text-paragraph-sm text-text-sub-600">{t("activity.empty")}</p>
             </div>
           )}
         </Modal.Body>
@@ -813,15 +860,23 @@ function ActivityDrawer({ events, drafts, sendAttempts }: { events: Data[]; draf
 }
 
 function EventRow({ event }: { event: Data }) {
+  const t = useTranslations("crmRecord.record");
+  const { categoryLabel, formatDate } = useCrmText();
   const type = String(event.eventType ?? "event");
   const from = asObject(event.fromData);
   const to = asObject(event.toData);
   const meta = asObject(event.meta);
+  // A state, a status or a category key: translated when known, else shown raw.
+  const valueLabel = (value: string) => isStateKey(value) ? t(`states.${value}`) : ["customer", "interested", "not_interested", "other"].includes(value) ? categoryLabel(value) : humanize(value);
+  const actor = (value: unknown) => {
+    const key = String(value ?? "");
+    return isActorKey(key) ? t(`actors.${key}`) : humanize(value);
+  };
   const transition = text(from.workflowState ?? from.status ?? from.categoryKey);
   const destination = text(to.workflowState ?? to.status ?? to.categoryKey);
   const detail = transition && destination && transition !== destination
-    ? `${humanize(transition)} → ${humanize(destination)}`
+    ? `${valueLabel(transition)} → ${valueLabel(destination)}`
     : text(meta.reason ?? meta.error ?? to.reason ?? event.error);
   const failed = type.includes("failed") || type.includes("error") || type.includes("uncertain");
-  return <div className="grid gap-3 px-5 py-4 sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:items-center"><span className={cn("flex size-9 items-center justify-center rounded-full", failed ? "bg-error-lighter text-error-base" : "bg-bg-weak-50 text-text-soft-400")}><RiCheckboxCircleLine className="size-4" aria-hidden="true" /></span><div className="min-w-0"><p className="text-label-sm text-text-strong-950">{eventLabels[type] ?? humanize(type)}</p><p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">{detail || `${humanize(event.actorType)}${event.actorRef ? ` · ${String(event.actorRef)}` : ""}`}</p></div><div className="text-left sm:text-right"><time className="text-paragraph-xs text-text-soft-400">{formatDate(event.createdAt)}</time><p className="mt-0.5 text-subheading-2xs uppercase tracking-wider text-text-soft-400">{humanize(event.actorType)}</p></div></div>;
+  return <div className="grid gap-3 px-5 py-4 sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:items-center"><span className={cn("flex size-9 items-center justify-center rounded-full", failed ? "bg-error-lighter text-error-base" : "bg-bg-weak-50 text-text-soft-400")}><RiCheckboxCircleLine className="size-4" aria-hidden="true" /></span><div className="min-w-0"><p className="text-label-sm text-text-strong-950">{isEventType(type) ? t(`events.${EVENT_KEYS[type]}`) : humanize(type)}</p><p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">{detail || `${actor(event.actorType)}${event.actorRef ? ` · ${String(event.actorRef)}` : ""}`}</p></div><div className="text-left sm:text-right"><time className="text-paragraph-xs text-text-soft-400">{formatDate(event.createdAt)}</time><p className="mt-0.5 text-subheading-2xs uppercase tracking-wider text-text-soft-400">{actor(event.actorType)}</p></div></div>;
 }

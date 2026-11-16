@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiLoader4Line, RiRouteLine, RiSparkling2Fill } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { useDialogs } from "@/components/DialogProvider";
 import { ClassificationPicker, humanize, type ClassificationChoice } from "@/components/crm/ActionRowTools";
-import { crmFetch, errorMessage } from "@/components/crm/crm-utils";
+import { crmFetch } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import type { InboxCrmContext, InboxCrmDraft, InboxCrmSummary } from "@/lib/linkedin/messages/crmContext";
 import { inboxCrmStepLabel } from "@/lib/linkedin/messages/crmContext";
 import { cn } from "@/utils/cn";
@@ -32,6 +34,11 @@ export type CrmCategoryOption = {
   subcategories: { id: string; name: string; categoryKey: string; active?: boolean }[];
 };
 
+/**
+ * English-only twin kept for callers that are not translated yet (the inbox lists and threads). Inside this file
+ * and in translated screens use `useInboxCrmText()`, which returns the translated versions.
+ * The step label (`inboxCrmStepLabel`) still comes from `src/lib` in English (batch I).
+ */
 /** The (sub)category a row or header names: the subcategory, else the category, else "Unclassified". */
 export function crmCategoryLabel(summary: Pick<InboxCrmSummary, "categoryKey" | "subcategoryName"> | null | undefined): string {
   if (!summary) return "Unclassified";
@@ -45,6 +52,26 @@ export function crmSequenceLine(context: InboxCrmSummary): string {
     ? nextAt.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
     : null;
   return `${context.sequenceName ? `${context.sequenceName} · ` : ""}${inboxCrmStepLabel(context)}${nextAtLabel ? ` · next ${nextAtLabel}` : ""}`;
+}
+
+/** Translated `crmCategoryLabel` and `crmSequenceLine` for translated screens. */
+export function useInboxCrmText() {
+  const t = useTranslations("crmRecord.inboxStrip");
+  const format = useFormatter();
+  const { categoryLabel } = useCrmText();
+  return {
+    categoryLabel: (summary: Pick<InboxCrmSummary, "categoryKey" | "subcategoryName"> | null | undefined): string => {
+      if (!summary) return categoryLabel(null);
+      return summary.subcategoryName ?? categoryLabel(summary.categoryKey ?? null);
+    },
+    sequenceLine: (context: InboxCrmSummary): string => {
+      const nextAt = context.nextActionAt ? new Date(context.nextActionAt) : null;
+      const nextAtLabel = nextAt && !Number.isNaN(nextAt.getTime())
+        ? t("nextAt", { date: format.dateTime(nextAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })
+        : null;
+      return `${context.sequenceName ? `${context.sequenceName} · ` : ""}${inboxCrmStepLabel(context)}${nextAtLabel ? ` · ${nextAtLabel}` : ""}`;
+    },
+  };
 }
 
 /**
@@ -64,6 +91,8 @@ export function CrmCategoryControl({
   onClassified: () => void;
   className?: string;
 }) {
+  const t = useTranslations("crmRecord.inboxStrip");
+  const { errorMessage } = useCrmText();
   const dialogs = useDialogs();
   const [saving, setSaving] = useState(false);
 
@@ -80,7 +109,7 @@ export function CrmCategoryControl({
       await crmFetch(`/records/${context.recordId}/classification`, { method: "PATCH", body: JSON.stringify(body) });
       onClassified();
     } catch (err) {
-      void dialogs.alert({ title: "Could not update classification", description: errorMessage(err), variant: "error" });
+      void dialogs.alert({ title: t("classifyErrorTitle"), description: errorMessage(err), variant: "error" });
     } finally {
       setSaving(false);
     }
@@ -96,22 +125,21 @@ export function CrmCategoryControl({
         onChange={(choice) => void classify(choice)}
         disabled={disabled || saving}
         compact
-        title="CRM category — change to reclassify"
+        title={t("categoryTitle")}
         className="min-w-0 max-w-[11rem]"
       />
-      {saving && <RiLoader4Line className="size-3.5 shrink-0 animate-spin text-text-soft-400" aria-label="Saving classification" />}
+      {saving && <RiLoader4Line className="size-3.5 shrink-0 animate-spin text-text-soft-400" aria-label={t("savingClassification")} />}
     </span>
   );
 }
 
 /** The lead opted out: said once, where the reply box would be. */
 export function DoNotContactNotice({ className }: { className?: string }) {
+  const t = useTranslations("crmRecord.inboxStrip");
   return (
     <div role="alert" className={cn("flex items-start gap-2 rounded-xl bg-error-lighter px-3 py-2.5 text-paragraph-xs text-error-dark ring-1 ring-inset ring-error-light", className)}>
       <RiErrorWarningLine className="mt-px size-4 shrink-0" aria-hidden="true" />
-      <span>
-        <span className="text-label-xs">Do not contact.</span> This lead opted out, so sending is turned off.
-      </span>
+      <span>{t.rich("dncNotice", { b: (chunks) => <span className="text-label-xs">{chunks}</span> })}</span>
     </div>
   );
 }
@@ -127,7 +155,7 @@ export function CrmDraftCard({
   active,
   disabled,
   onUse,
-  useLabel = "Review draft",
+  useLabel,
 }: {
   draft: InboxCrmDraft;
   active: boolean;
@@ -135,16 +163,19 @@ export function CrmDraftCard({
   onUse: () => void;
   useLabel?: string;
 }) {
+  const t = useTranslations("crmRecord.inboxStrip");
   const [expanded, setExpanded] = useState(false);
   if (active) return null;
-  const typeLabel = draft.stepType === "follow_up" ? "Follow-up" : "Reply";
+  const followUp = draft.stepType === "follow_up";
+  // Compared with the default step names stored in the database ("Reply", "Follow-up"), not shown.
+  const typeLabel = followUp ? "Follow-up" : "Reply";
   const stepLabel = draft.stepName && draft.stepName !== typeLabel ? draft.stepName : null;
   const ready = draft.status === "awaiting_review";
   const long = draft.body.length > 200 || draft.body.split("\n").length > 3;
 
   return (
     <section
-      aria-label="AI-drafted reply"
+      aria-label={t("draftAria")}
       className={cn(
         "rounded-xl px-3.5 py-2.5 ring-1 ring-inset",
         draft.status === "failed" ? "bg-bg-weak-50 ring-stroke-soft-200" : "bg-primary-alpha-10 ring-primary-alpha-16",
@@ -155,13 +186,13 @@ export function CrmDraftCard({
           <RiSparkling2Fill className="size-3" aria-hidden="true" />
         </span>
         <p className="min-w-0 flex-1 truncate text-label-xs text-text-strong-950" title={stepLabel ?? undefined}>
-          {ready ? `AI ${typeLabel.toLowerCase()} ready` : draft.status === "generating" ? `Drafting a ${typeLabel.toLowerCase()}…` : `${typeLabel} draft failed`}
+          {ready ? t(followUp ? "followUpReady" : "replyReady") : draft.status === "generating" ? t(followUp ? "followUpDrafting" : "replyDrafting") : t(followUp ? "followUpFailed" : "replyFailed")}
           {stepLabel && <span className="font-normal text-text-sub-600"> · {stepLabel}</span>}
         </p>
         {draft.status === "generating" && <RiLoader4Line className="size-4 shrink-0 animate-spin text-primary-base" aria-hidden="true" />}
         {ready && (
           <Button.Root variant="primary" mode="filled" size="xxsmall" onClick={onUse} disabled={disabled} className="shrink-0">
-            {useLabel}
+            {useLabel ?? t("reviewDraft")}
           </Button.Root>
         )}
       </div>
@@ -176,7 +207,7 @@ export function CrmDraftCard({
               aria-expanded={expanded}
               className="mt-0.5 text-label-xs text-text-sub-600 underline-offset-2 outline-none hover:text-text-strong-950 hover:underline focus-visible:underline"
             >
-              {expanded ? "Show less" : "Show full draft"}
+              {expanded ? t("showLess") : t("showFull")}
             </button>
           )}
         </div>
@@ -201,7 +232,8 @@ export function InboxCrmStrip({
   onClassified: () => void;
   onUseDraft: (draft: InboxCrmDraft) => void;
 }) {
-  const sequenceLine = crmSequenceLine(context);
+  const { sequenceLine: buildSequenceLine } = useInboxCrmText();
+  const sequenceLine = buildSequenceLine(context);
   return (
     <div className="space-y-2 border-t border-stroke-soft-200 bg-bg-weak-50 px-4 py-2.5 sm:px-5">
       <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
