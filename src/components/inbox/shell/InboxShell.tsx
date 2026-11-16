@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ComponentType, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from "react";
+import { useMemo, useState, type ComponentType, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from "react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { RiArrowDownSLine, RiArrowLeftLine, RiCheckLine, RiFilter3Line, RiSearchLine, RiUser3Line } from "@remixicon/react";
 
 import * as Badge from "@/components/alignui/badge";
@@ -10,6 +11,7 @@ import * as Input from "@/components/alignui/input";
 import * as Popover from "@/components/alignui/popover";
 import { CHANNEL_META } from "@/components/analytics/theme";
 import { categoryColor } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { EmptyState } from "@/components/page/EmptyState";
 import { Skeleton } from "@/components/page/Skeletons";
 import { cn } from "@/utils/cn";
@@ -112,9 +114,10 @@ export function ListPane({
  * over it on narrow ones.
  */
 export function ReadingPane({ shown, aside, className, children }: { shown: boolean; aside?: ReactNode; className?: string; children: ReactNode }) {
+  const t = useTranslations("inboxShell.readingPane");
   return (
     <div className={cn("relative min-w-0 flex-1 overflow-hidden", shown ? "flex" : "hidden md:flex")}>
-      <section aria-label="Conversation" className={cn("@container flex min-w-0 flex-1 flex-col overflow-hidden", className)}>
+      <section aria-label={t("conversation")} className={cn("@container flex min-w-0 flex-1 flex-col overflow-hidden", className)}>
         {children}
       </section>
       {aside}
@@ -125,8 +128,8 @@ export function ReadingPane({ shown, aside, className, children }: { shown: bool
 /** Nothing open yet: the same prompt in every inbox, with the keyboard shortcuts. */
 export function ReadingEmpty({
   icon,
-  title = "Select a conversation",
-  description = "Pick one from the list to read it and reply.",
+  title,
+  description,
   shortcuts = true,
 }: {
   icon: ComponentType<{ className?: string }>;
@@ -134,20 +137,18 @@ export function ReadingEmpty({
   description?: string;
   shortcuts?: boolean;
 }) {
+  const t = useTranslations("inboxShell.readingEmpty");
+  const key = (chunks: ReactNode) => <Kbd>{chunks}</Kbd>;
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-bg-weak-50/60">
-      <EmptyState icon={icon} title={title} description={description} />
+      <EmptyState icon={icon} title={title ?? t("title")} description={description ?? t("description")} />
       {shortcuts && (
         <p className="-mt-10 hidden items-center gap-1.5 text-paragraph-xs text-text-soft-400 md:flex">
-          <Kbd>J</Kbd>
-          <Kbd>K</Kbd>
-          to move
+          {t.rich("shortcutMove", { k: key })}
           <span aria-hidden="true" className="mx-1">·</span>
-          <Kbd>Enter</Kbd>
-          to open
+          {t.rich("shortcutOpen", { k: key })}
           <span aria-hidden="true" className="mx-1">·</span>
-          <Kbd>Esc</Kbd>
-          back to the list
+          {t.rich("shortcutBack", { k: key })}
         </p>
       )}
     </div>
@@ -219,6 +220,8 @@ export function TriageTabs({
   value: string;
   onChange: (key: string) => void;
 }) {
+  const t = useTranslations("inboxShell.triageTabs");
+  const format = useFormatter();
   const groups = moreGroups ?? (more.length ? [{ label: "", tabs: more }] : []);
   const moreTabs = groups.flatMap((group) => group.tabs);
   const activeMore = moreTabs.find((tab) => tab.key === value);
@@ -243,13 +246,13 @@ export function TriageTabs({
             <button
               type="button"
               data-triage-tab
-              aria-label={activeMore ? `Showing ${activeMore.label}. Other views` : "More views"}
+              aria-label={activeMore ? t("showing", { label: activeMore.label }) : t("moreViews")}
               className={cn(
                 "relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2 text-label-sm outline-none transition focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-base",
                 activeMore ? "text-text-strong-950" : "text-text-sub-600 hover:text-text-strong-950",
               )}
             >
-              {activeMore ? activeMore.label : "More"}
+              {activeMore ? activeMore.label : t("more")}
               {activeMore?.count ? <TabCount count={activeMore.count} title={activeMore.countTitle} active /> : null}
               <RiArrowDownSLine className="size-4 text-text-soft-400" aria-hidden="true" />
               {activeMore && <span aria-hidden="true" className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary-base" />}
@@ -266,7 +269,7 @@ export function TriageTabs({
                       <RiCheckLine className={cn("size-4 shrink-0", tab.key === value ? "text-primary-base" : "invisible")} aria-hidden="true" />
                       <span className="truncate">{tab.label}</span>
                     </span>
-                    {tab.count ? <span className="text-paragraph-xs tabular-nums text-text-soft-400">{tab.count.toLocaleString("en-US")}</span> : null}
+                    {tab.count ? <span className="text-paragraph-xs tabular-nums text-text-soft-400">{format.number(tab.count)}</span> : null}
                   </Dropdown.Item>
                 ))}
               </Dropdown.Group>
@@ -301,6 +304,7 @@ function TabButton({ tab, active, onClick }: { tab: TriageTab; active: boolean; 
 }
 
 function TabCount({ count, title, active }: { count: number; title?: string; active: boolean }) {
+  const format = useFormatter();
   return (
     <span
       title={title}
@@ -309,7 +313,8 @@ function TabCount({ count, title, active }: { count: number; title?: string; act
         active ? "bg-bg-weak-50 text-text-strong-950 ring-1 ring-inset ring-stroke-soft-200" : "text-text-soft-400",
       )}
     >
-      {count > 999 ? `${Math.floor(count / 100) / 10}k` : count.toLocaleString("en-US")}
+      {/* "k" is a compact-number suffix, kept in both languages */}
+      {count > 999 ? `${format.number(Math.floor(count / 100) / 10)}k` : format.number(count)}
     </span>
   );
 }
@@ -341,12 +346,13 @@ export function FilterPopover({
   iconOnly?: boolean;
   children: ReactNode;
 }) {
+  const t = useTranslations("inboxShell.filterPopover");
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       <Popover.Trigger asChild>
-        <Button.Root variant="neutral" mode="stroke" size="small" className={cn("shrink-0", iconOnly && "gap-1 px-2.5")} aria-label={iconOnly ? `Filters${count ? ` (${count} set)` : ""}` : undefined} title={iconOnly ? "Filters" : undefined}>
+        <Button.Root variant="neutral" mode="stroke" size="small" className={cn("shrink-0", iconOnly && "gap-1 px-2.5")} aria-label={iconOnly ? (count ? t("filtersSet", { count }) : t("filters")) : undefined} title={iconOnly ? t("filters") : undefined}>
           <Button.Icon as={RiFilter3Line} />
-          {!iconOnly && "Filter"}
+          {!iconOnly && t("filter")}
           {count > 0 && (
             <Badge.Root size="medium" variant="filled" color="blue" square>
               {count}
@@ -367,7 +373,7 @@ export function FilterPopover({
         }}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-label-md text-text-strong-950">Filters</h2>
+          <h2 className="text-label-md text-text-strong-950">{t("filters")}</h2>
           {onClear && (
             <button
               type="button"
@@ -375,7 +381,7 @@ export function FilterPopover({
               disabled={clearDisabled ?? !count}
               className="text-label-sm text-primary-base outline-none hover:underline focus-visible:underline disabled:pointer-events-none disabled:text-text-disabled-300"
             >
-              Clear all
+              {t("clearAll")}
             </button>
           )}
         </div>
@@ -399,6 +405,7 @@ export function FilterField({ label, hint, children }: { label: string; hint?: s
 
 /** Removable chips for the filters that are set, so they stay visible with the popover closed. */
 export function ActiveFilterChips({ chips, onClearAll }: { chips: { key: string; label: string; onRemove: () => void }[]; onClearAll?: () => void }) {
+  const t = useTranslations("inboxShell.activeFilterChips");
   if (chips.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -408,7 +415,7 @@ export function ActiveFilterChips({ chips, onClearAll }: { chips: { key: string;
           <button
             type="button"
             onClick={chip.onRemove}
-            aria-label={`Remove filter: ${chip.label}`}
+            aria-label={t("remove", { label: chip.label })}
             className="flex size-4 shrink-0 items-center justify-center rounded text-text-soft-400 outline-none transition hover:bg-bg-white-0 hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base"
           >
             <svg viewBox="0 0 24 24" fill="none" className="size-3" aria-hidden="true">
@@ -419,7 +426,7 @@ export function ActiveFilterChips({ chips, onClearAll }: { chips: { key: string;
       ))}
       {onClearAll && chips.length > 1 && (
         <button type="button" onClick={onClearAll} className="h-6 rounded-md px-1.5 text-label-xs text-primary-base outline-none hover:underline focus-visible:underline">
-          Clear all
+          {t("clearAll")}
         </button>
       )}
     </div>
@@ -428,13 +435,16 @@ export function ActiveFilterChips({ chips, onClearAll }: { chips: { key: string;
 
 /** "20 of 1,224" — the list footer's count. */
 export function ListCount({ shown, total, noun, loading }: { shown: number; total?: number | null; noun: string; loading?: boolean }) {
+  const t = useTranslations("inboxShell.listCount");
+  const format = useFormatter();
   if (loading && shown === 0) return <Skeleton className="h-3.5 w-20" />;
+  // `noun` comes from the caller, already translated.
   const text =
     total == null
-      ? `${shown.toLocaleString("en-US")} ${noun}`
+      ? t("simple", { count: format.number(shown), noun })
       : shown >= total
-        ? `${total.toLocaleString("en-US")} ${noun}`
-        : `${shown.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} ${noun}`;
+        ? t("simple", { count: format.number(total), noun })
+        : t("of", { shown: format.number(shown), total: format.number(total), noun });
   return <span className="shrink-0 whitespace-nowrap text-paragraph-xs tabular-nums text-text-soft-400">{text}</span>;
 }
 
@@ -514,6 +524,7 @@ export function ConversationRow({
   /** The row's tooltip (the mailbox a thread belongs to). */
   hint?: string;
 }) {
+  const t = useTranslations("inboxShell.conversationRow");
   const count = unreadCount ?? 0;
   return (
     <button
@@ -537,7 +548,7 @@ export function ConversationRow({
         <span className="flex items-baseline gap-2">
           <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
             <span className={cn("truncate text-label-sm", unread ? "font-semibold text-text-strong-950" : "text-text-strong-950")} title={title}>
-              {unread && <span className="sr-only">Unread: </span>}
+              {unread && <span className="sr-only">{t("unreadPrefix")}</span>}
               {title}
             </span>
             {subtitle && <span className="hidden min-w-0 truncate text-paragraph-xs text-text-soft-400 sm:inline">{subtitle}</span>}
@@ -557,7 +568,7 @@ export function ConversationRow({
           <span className="mt-0.5 flex items-center gap-2">
             <span className={cn("min-w-0 flex-1 truncate text-paragraph-xs", unread && !headline ? "text-text-strong-950" : "text-text-soft-400")}>{snippet}</span>
             {count > 0 && (
-              <span className="flex h-[1.125rem] min-w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-primary-base px-1 text-[11px] font-semibold leading-none text-static-white" aria-label={`${count} unread`}>
+              <span className="flex h-[1.125rem] min-w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-primary-base px-1 text-[11px] font-semibold leading-none text-static-white" aria-label={t("unreadCount", { count })}>
                 {count > 9 ? "9+" : count}
               </span>
             )}
@@ -598,13 +609,14 @@ export function CategoryChip({ categoryKey, label, title }: { categoryKey: strin
 }
 
 /** "AI draft" — a reply is drafted and waiting for review. */
-export function DraftChip({ label = "AI draft" }: { label?: string }) {
+export function DraftChip({ label }: { label?: string }) {
+  const t = useTranslations("inboxShell.draftChip");
   return (
-    <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-primary-alpha-10 px-1.5 text-label-xs text-primary-base" title="An AI-drafted reply is waiting for review">
+    <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-primary-alpha-10 px-1.5 text-label-xs text-primary-base" title={t("title")}>
       <svg viewBox="0 0 24 24" className="size-3" aria-hidden="true" fill="currentColor">
         <path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zm7 12l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" />
       </svg>
-      {label}
+      {label ?? t("label")}
     </span>
   );
 }
@@ -631,8 +643,9 @@ export function DayHeading({ children, action }: { children: ReactNode; action?:
 
 /** Skeleton rows for a list's first load. */
 export function RowsSkeleton({ rows = 8 }: { rows?: number }) {
+  const t = useTranslations("inboxShell.rowsSkeleton");
   return (
-    <div aria-busy="true" aria-label="Loading" className="pt-1.5">
+    <div aria-busy="true" aria-label={t("loading")} className="pt-1.5">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex gap-3 py-2.5 pl-4 pr-3">
           <Skeleton className="size-9 shrink-0 rounded-full" />
@@ -660,13 +673,14 @@ export function ListEnd({ children }: { children: ReactNode }) {
 /** Channel identity: the channel's icon in its colour, and its name. */
 export function ChannelTag({ channel, label }: { channel: InboxChannel; label?: string }) {
   const meta = CHANNEL_META[channel];
+  const { channelLabel } = useCrmText();
   const Icon = meta.icon;
   return (
     <span className="inline-flex shrink-0 items-center gap-1 text-paragraph-xs text-text-sub-600">
       <span style={{ color: meta.color }} className="inline-flex">
         <Icon className="size-3.5" />
       </span>
-      {label ?? meta.label}
+      {label ?? channelLabel(channel)}
     </span>
   );
 }
@@ -679,7 +693,7 @@ export function ChannelTag({ channel, label }: { channel: InboxChannel; label?: 
  */
 export function ThreadHeader({
   onBack,
-  backLabel = "Back to conversations",
+  backLabel,
   avatar,
   title,
   badges,
@@ -701,10 +715,11 @@ export function ThreadHeader({
   actions?: ReactNode;
   strip?: ReactNode;
 }) {
+  const t = useTranslations("inboxShell.threadHeader");
   return (
     <header className="shrink-0 border-b border-stroke-soft-200 bg-bg-white-0">
       <div className="flex items-center gap-3 px-3 py-2.5 sm:px-5 sm:py-3">
-        <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={onBack} aria-label={backLabel} className="-ml-1 shrink-0 md:hidden">
+        <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={onBack} aria-label={backLabel ?? t("back")} className="-ml-1 shrink-0 md:hidden">
           <Button.Icon as={RiArrowLeftLine} />
         </Button.Root>
         {avatar && <span className="hidden shrink-0 sm:inline-flex">{avatar}</span>}
@@ -781,8 +796,9 @@ export function HeaderAction({
 
 /** Message area skeleton while a thread loads. */
 export function ThreadSkeleton() {
+  const t = useTranslations("inboxShell.threadSkeleton");
   return (
-    <div aria-busy="true" aria-label="Loading conversation" className="flex flex-1 flex-col gap-4 overflow-hidden px-5 py-6">
+    <div aria-busy="true" aria-label={t("loading")} className="flex flex-1 flex-col gap-4 overflow-hidden px-5 py-6">
       <div className="space-y-1.5">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-14 w-3/5 rounded-2xl" />
@@ -805,12 +821,13 @@ export function ThreadSkeleton() {
 
 /** Inline error with an optional retry. */
 export function InlineError({ children, onRetry, className }: { children: ReactNode; onRetry?: () => void; className?: string }) {
+  const t = useTranslations("inboxShell.inlineError");
   return (
     <div role="alert" className={cn("flex items-start justify-between gap-3 rounded-lg bg-error-lighter px-3 py-2 text-paragraph-xs text-error-dark ring-1 ring-inset ring-error-light", className)}>
       <span className="min-w-0">{children}</span>
       {onRetry && (
         <button type="button" onClick={onRetry} className="shrink-0 text-label-xs text-error-dark underline-offset-2 outline-none hover:underline focus-visible:underline">
-          Try again
+          {t("retry")}
         </button>
       )}
     </div>
@@ -819,17 +836,28 @@ export function InlineError({ children, onRetry, className }: { children: ReactN
 
 // ---------------------------------------------------------------- time
 
+/**
+ * The words and the locale the time helpers below use. Call sites in a component
+ * should take the translated helpers from `useInboxTime()`; the bare functions
+ * keep working without it (English words, the browser's locale) for callers that
+ * have not moved over yet.
+ */
+export type InboxTimeText = { today: string; yesterday: string; thisWeek: string; earlier: string; locale?: string };
+
+// English defaults for callers that pass no `text`: kept so the exports stay source-compatible.
+const DEFAULT_TIME_TEXT: InboxTimeText = { today: "Today", yesterday: "Yesterday", thisWeek: "This week", earlier: "Earlier" };
+
 export function dayKeyOf(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
 /** "Today", "Yesterday", "Mon, Sep 12", or with the year when it is not this year. */
-export function dayHeading(date: Date, now = new Date()): string {
+export function dayHeading(date: Date, now = new Date(), text: InboxTimeText = DEFAULT_TIME_TEXT): string {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (dayKeyOf(date) === dayKeyOf(now)) return "Today";
-  if (dayKeyOf(date) === dayKeyOf(yesterday)) return "Yesterday";
-  return date.toLocaleDateString(undefined, {
+  if (dayKeyOf(date) === dayKeyOf(now)) return text.today;
+  if (dayKeyOf(date) === dayKeyOf(yesterday)) return text.yesterday;
+  return date.toLocaleDateString(text.locale, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -838,37 +866,37 @@ export function dayHeading(date: Date, now = new Date()): string {
 }
 
 /** A list row's time: the clock today, the weekday this week, the date otherwise. */
-export function rowTime(date: Date | null, now = new Date()): string {
+export function rowTime(date: Date | null, now = new Date(), text: InboxTimeText = DEFAULT_TIME_TEXT): string {
   if (!date) return "";
-  if (dayKeyOf(date) === dayKeyOf(now)) return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  if (dayKeyOf(date) === dayKeyOf(now)) return date.toLocaleTimeString(text.locale, { hour: "numeric", minute: "2-digit" });
   const days = (startOfDay(now) - startOfDay(date)) / DAY_MS;
-  if (days === 1) return "Yesterday";
-  if (days > 1 && days < 7) return date.toLocaleDateString(undefined, { weekday: "short" });
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() === now.getFullYear() ? undefined : "2-digit" });
+  if (days === 1) return text.yesterday;
+  if (days > 1 && days < 7) return date.toLocaleDateString(text.locale, { weekday: "short" });
+  return date.toLocaleDateString(text.locale, { month: "short", day: "numeric", year: date.getFullYear() === now.getFullYear() ? undefined : "2-digit" });
 }
 
 /** Full timestamp for a `title` tooltip. */
-export function fullTime(date: Date | null): string | undefined {
-  return date ? date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : undefined;
+export function fullTime(date: Date | null, text: InboxTimeText = DEFAULT_TIME_TEXT): string | undefined {
+  return date ? date.toLocaleString(text.locale, { dateStyle: "medium", timeStyle: "short" }) : undefined;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
 /** Today / Yesterday / This week / Earlier — the list's grouping, coarse enough to scan. */
-export function recencyBucket(date: Date, now = new Date()): string {
+export function recencyBucket(date: Date, now = new Date(), text: InboxTimeText = DEFAULT_TIME_TEXT): string {
   const days = Math.round((startOfDay(now) - startOfDay(date)) / DAY_MS);
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return "This week";
-  return "Earlier";
+  if (days <= 0) return text.today;
+  if (days === 1) return text.yesterday;
+  if (days < 7) return text.thisWeek;
+  return text.earlier;
 }
 
 /**
  * Walks rows in order and reports whether each starts a new day, for lists
  * sorted newest-first. Rows without a date never start a group.
  */
-export function withDayBreaks<T>(rows: T[], dateOf: (row: T) => Date | null): { row: T; heading: string | null }[] {
+export function withDayBreaks<T>(rows: T[], dateOf: (row: T) => Date | null, text: InboxTimeText = DEFAULT_TIME_TEXT): { row: T; heading: string | null }[] {
   let last: string | null = null;
   const now = new Date();
   return rows.map((row) => {
@@ -877,7 +905,7 @@ export function withDayBreaks<T>(rows: T[], dateOf: (row: T) => Date | null): { 
     const key = dayKeyOf(date);
     if (key === last) return { row, heading: null };
     last = key;
-    return { row, heading: dayHeading(date, now) };
+    return { row, heading: dayHeading(date, now, text) };
   });
 }
 
@@ -886,15 +914,32 @@ export function withDayBreaks<T>(rows: T[], dateOf: (row: T) => Date | null): { 
  * Earlier). Each heading appears once, so a list that is not strictly
  * newest-first never repeats one.
  */
-export function withRecencyBreaks<T>(rows: T[], dateOf: (row: T) => Date | null): { row: T; heading: string | null }[] {
+export function withRecencyBreaks<T>(rows: T[], dateOf: (row: T) => Date | null, text: InboxTimeText = DEFAULT_TIME_TEXT): { row: T; heading: string | null }[] {
   const seen = new Set<string>();
   const now = new Date();
   return rows.map((row) => {
     const date = dateOf(row);
     if (!date) return { row, heading: null };
-    const bucket = recencyBucket(date, now);
+    const bucket = recencyBucket(date, now, text);
     if (seen.has(bucket)) return { row, heading: null };
     seen.add(bucket);
     return { row, heading: bucket };
   });
+}
+
+/** The translated, locale-aware versions of the helpers above. Prefer this inside components. */
+export function useInboxTime() {
+  const t = useTranslations("inboxShell.time");
+  const locale = useLocale();
+  return useMemo(() => {
+    const text: InboxTimeText = { today: t("today"), yesterday: t("yesterday"), thisWeek: t("thisWeek"), earlier: t("earlier"), locale };
+    return {
+      dayHeading: (date: Date, now?: Date) => dayHeading(date, now, text),
+      rowTime: (date: Date | null, now?: Date) => rowTime(date, now, text),
+      fullTime: (date: Date | null) => fullTime(date, text),
+      recencyBucket: (date: Date, now?: Date) => recencyBucket(date, now, text),
+      withDayBreaks: <T,>(rows: T[], dateOf: (row: T) => Date | null) => withDayBreaks(rows, dateOf, text),
+      withRecencyBreaks: <T,>(rows: T[], dateOf: (row: T) => Date | null) => withRecencyBreaks(rows, dateOf, text),
+    };
+  }, [t, locale]);
 }

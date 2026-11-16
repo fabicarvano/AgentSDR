@@ -1,3 +1,113 @@
 {
-  "inboxShell": {}
+  "inboxShell": {
+    "readingPane": {
+      "conversation": "Conversa"
+    },
+    "readingEmpty": {
+      "title": "Selecione uma conversa",
+      "description": "Escolha uma na lista para ler e responder.",
+      "shortcutMove": "<k>J</k><k>K</k> para mover",
+      "shortcutOpen": "<k>Enter</k> para abrir",
+      "shortcutBack": "<k>Esc</k> volta à lista"
+    },
+    "triageTabs": {
+      "more": "Mais",
+      "moreViews": "Mais visões",
+      "showing": "Mostrando {label}. Outras visões"
+    },
+    "filterPopover": {
+      "filter": "Filtrar",
+      "filters": "Filtros",
+      "filtersSet": "Filtros ({count} ativos)",
+      "clearAll": "Limpar tudo"
+    },
+    "activeFilterChips": {
+      "remove": "Remover filtro: {label}",
+      "clearAll": "Limpar tudo"
+    },
+    "listCount": {
+      "of": "{shown} de {total} {noun}",
+      "simple": "{count} {noun}"
+    },
+    "conversationRow": {
+      "unreadPrefix": "Não lida: ",
+      "unreadCount": "{count, plural, one {# não lida} other {# não lidas}}"
+    },
+    "draftChip": {
+      "label": "Rascunho de IA",
+      "title": "Uma resposta rascunhada pela IA aguarda revisão"
+    },
+    "rowsSkeleton": {
+      "loading": "Carregando"
+    },
+    "routeSkeleton": {
+      "loading": "Carregando"
+    },
+    "threadSkeleton": {
+      "loading": "Carregando conversa"
+    },
+    "threadHeader": {
+      "back": "Voltar às conversas"
+    },
+    "inlineError": {
+      "retry": "Tentar de novo"
+    },
+    "time": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "thisWeek": "Esta semana",
+      "earlier": "Antes"
+    },
+    "composer": {
+      "placeholder": "Escreva uma mensagem…",
+      "ariaLabel": "Mensagem",
+      "send": "Enviar",
+      "sending": "Enviando…",
+      "sendTitle": "Enviar (Enter)",
+      "hint": "<k>Enter</k> envia · <k>Shift</k>+<k>Enter</k> quebra a linha"
+    },
+    "draftBanner": {
+      "label": "Rascunho de IA",
+      "note": "Edite à vontade: aprovar envia como o rascunho do CRM.",
+      "dismiss": "Não usar rascunho"
+    },
+    "expandableText": {
+      "showMore": "Ver mais",
+      "showLess": "Ver menos"
+    },
+    "details": {
+      "ariaLabel": "Detalhes do contato",
+      "title": "Detalhes",
+      "close": "Fechar detalhes",
+      "crmRecord": "Registro do CRM",
+      "linkedinProfile": "Perfil no LinkedIn",
+      "emailLink": "Enviar e-mail para {email}",
+      "phoneLink": "Ligar para {phone}",
+      "crm": "CRM",
+      "doNotContact": "Não contatar: este lead pediu para sair.",
+      "category": "Categoria",
+      "stage": "Estágio",
+      "sequence": "Sequência",
+      "nextStep": "Próximo passo",
+      "nextAction": "Próxima ação",
+      "lastReply": "Última resposta",
+      "lastSent": "Último envio",
+      "conversation": "Conversa",
+      "channel": "Canal",
+      "contact": "Contato",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "linkedin": "LinkedIn"
+    },
+    "workflow": {
+      "unclassified": "Sem classificação",
+      "classifying": "Classificando",
+      "action_required": "Ação necessária",
+      "waiting": "Aguardando",
+      "idle": "Parado",
+      "paused": "Pausado",
+      "closed": "Encerrado",
+      "error": "Requer atenção"
+    }
+  }
 }

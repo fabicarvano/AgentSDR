@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type KeyboardEvent, type ReactNode } from "react";
 import {
   RiBuilding2Line,
@@ -18,7 +19,9 @@ import { CompanyFavicon } from "@/components/calling/callingShared";
 import { asObject, categoryColor, crmFetch } from "@/components/crm/crm-utils";
 import { Skeleton } from "@/components/page/Skeletons";
 import { cn } from "@/utils/cn";
-import { ChannelTag, InboxAvatar, fullTime, type InboxChannel } from "./InboxShell";
+import type { Messages } from "@/i18n/catalog";
+import type { CrmWorkflowState } from "@/lib/crm/schema";
+import { ChannelTag, InboxAvatar, useInboxTime, type InboxChannel } from "./InboxShell";
 
 /**
  * The right-hand column of an inbox: who the person is and where they stand.
@@ -95,6 +98,7 @@ export function useDetailsPanel(key: string | null) {
 
 /** The column itself: a titled, scrolling aside; an overlay with a scrim below 1400 px. */
 export function DetailsPanel({ open, wide, onClose, children }: { open: boolean; wide: boolean; onClose: () => void; children: ReactNode }) {
+  const t = useTranslations("inboxShell.details");
   if (!open) return null;
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === "Escape" && !wide) {
@@ -106,7 +110,7 @@ export function DetailsPanel({ open, wide, onClose, children }: { open: boolean;
     <>
       {!wide && <div aria-hidden="true" onClick={onClose} className="absolute inset-0 z-20 bg-bg-strong-950/10 backdrop-blur-[1px]" />}
       <aside
-        aria-label="Contact details"
+        aria-label={t("ariaLabel")}
         onKeyDown={onKeyDown}
         className={cn(
           "flex flex-col bg-bg-white-0",
@@ -114,8 +118,8 @@ export function DetailsPanel({ open, wide, onClose, children }: { open: boolean;
         )}
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-stroke-soft-200 pl-5 pr-3">
-          <h2 className="text-label-sm text-text-strong-950">Details</h2>
-          <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onClose} aria-label="Close details" title="Close details" autoFocus={!wide}>
+          <h2 className="text-label-sm text-text-strong-950">{t("title")}</h2>
+          <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onClose} aria-label={t("close")} title={t("close")} autoFocus={!wide}>
             <Button.Icon as={RiCloseLine} />
           </Button.Root>
         </div>
@@ -170,6 +174,7 @@ export function ContactDetails({
   /** Extra actions under the quick links (Call). */
   actions?: ReactNode;
 }) {
+  const t = useTranslations("inboxShell.details");
   const linkedinHref = links.linkedinUrl ? toLinkedinHref(links.linkedinUrl) : null;
   return (
     <div className="divide-y divide-stroke-soft-200">
@@ -188,41 +193,41 @@ export function ContactDetails({
             <Button.Root variant="neutral" mode="stroke" size="xxsmall" asChild>
               <Link href={`/crm/records/${links.recordId}`}>
                 <Button.Icon as={RiUserSearchLine} />
-                CRM record
+                {t("crmRecord")}
               </Link>
             </Button.Root>
           )}
-          {linkedinHref && <QuickLink href={linkedinHref} icon={RiLinkedinBoxLine} label="LinkedIn profile" external />}
-          {links.email && <QuickLink href={`mailto:${links.email}`} icon={RiMailLine} label={`Email ${links.email}`} />}
-          {links.phone && <QuickLink href={`tel:${links.phone}`} icon={RiPhoneLine} label={`Phone ${links.phone}`} />}
+          {linkedinHref && <QuickLink href={linkedinHref} icon={RiLinkedinBoxLine} label={t("linkedinProfile")} external />}
+          {links.email && <QuickLink href={`mailto:${links.email}`} icon={RiMailLine} label={t("emailLink", { email: links.email })} />}
+          {links.phone && <QuickLink href={`tel:${links.phone}`} icon={RiPhoneLine} label={t("phoneLink", { phone: links.phone })} />}
           {actions}
         </div>
       </section>
 
       {(crm || crmLoading) && (
         <section className="px-5 py-4">
-          <SectionTitle>CRM</SectionTitle>
+          <SectionTitle>{t("crm")}</SectionTitle>
           {crm ? (
             <>
               {crm.doNotContact && (
                 <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-error-lighter px-2.5 py-2 text-paragraph-xs text-error-dark ring-1 ring-inset ring-error-light">
                   <RiErrorWarningLine className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                  Do not contact — this lead opted out.
+                  {t("doNotContact")}
                 </p>
               )}
               <dl className="space-y-2.5">
-                <Fact label="Category">
+                <Fact label={t("category")}>
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: categoryColor(crm.categoryKey).color }} />
                     <span className="truncate">{crm.categoryLabel}</span>
                   </span>
                 </Fact>
-                {crm.stage && <Fact label="Stage">{crm.stage}</Fact>}
-                {crm.sequence && <Fact label="Sequence">{crm.sequence}</Fact>}
-                {crm.step && <Fact label="Next step">{crm.step}</Fact>}
-                {crm.nextActionAt && <Fact label="Next action"><When iso={crm.nextActionAt} /></Fact>}
-                {crm.lastInboundAt && <Fact label="Last reply"><When iso={crm.lastInboundAt} /></Fact>}
-                {crm.lastOutboundAt && <Fact label="Last sent"><When iso={crm.lastOutboundAt} /></Fact>}
+                {crm.stage && <Fact label={t("stage")}>{crm.stage}</Fact>}
+                {crm.sequence && <Fact label={t("sequence")}>{crm.sequence}</Fact>}
+                {crm.step && <Fact label={t("nextStep")}>{crm.step}</Fact>}
+                {crm.nextActionAt && <Fact label={t("nextAction")}><When iso={crm.nextActionAt} /></Fact>}
+                {crm.lastInboundAt && <Fact label={t("lastReply")}><When iso={crm.lastInboundAt} /></Fact>}
+                {crm.lastOutboundAt && <Fact label={t("lastSent")}><When iso={crm.lastOutboundAt} /></Fact>}
               </dl>
             </>
           ) : (
@@ -236,9 +241,9 @@ export function ContactDetails({
       )}
 
       <section className="px-5 py-4">
-        <SectionTitle>Conversation</SectionTitle>
+        <SectionTitle>{t("conversation")}</SectionTitle>
         <dl className="space-y-2.5">
-          <Fact label="Channel">
+          <Fact label={t("channel")}>
             <ChannelTag channel={channel} />
           </Fact>
           {facts.map((fact) => (
@@ -251,20 +256,20 @@ export function ContactDetails({
 
       {(links.email || links.phone || linkedinHref) && (
         <section className="px-5 py-4">
-          <SectionTitle>Contact</SectionTitle>
+          <SectionTitle>{t("contact")}</SectionTitle>
           <dl className="space-y-2.5">
             {links.email && (
-              <Fact label="Email" title={links.email}>
+              <Fact label={t("email")} title={links.email}>
                 <a href={`mailto:${links.email}`} className="truncate text-text-strong-950 underline-offset-2 hover:underline">{links.email}</a>
               </Fact>
             )}
             {links.phone && (
-              <Fact label="Phone">
+              <Fact label={t("phone")}>
                 <a href={`tel:${links.phone}`} className="tabular-nums text-text-strong-950 underline-offset-2 hover:underline">{links.phone}</a>
               </Fact>
             )}
             {linkedinHref && (
-              <Fact label="LinkedIn">
+              <Fact label={t("linkedin")}>
                 <a href={linkedinHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-1 text-text-strong-950 underline-offset-2 hover:underline">
                   <span className="truncate">{linkedinHandle(linkedinHref)}</span>
                   <RiExternalLinkLine className="size-3 shrink-0 text-text-soft-400" aria-hidden="true" />
@@ -294,11 +299,13 @@ function Fact({ label, title, children }: { label: string; title?: string; child
 }
 
 function When({ iso }: { iso: string }) {
+  const { fullTime } = useInboxTime();
+  const relativeWhenText = useRelativeWhen();
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return <>—</>;
   return (
     <span title={fullTime(date)} suppressHydrationWarning>
-      {relativeWhen(date)}
+      {relativeWhenText(date)}
     </span>
   );
 }
@@ -313,7 +320,24 @@ function QuickLink({ href, icon: Icon, label, external }: { href: string; icon: 
   );
 }
 
-/** "in 3h", "2d ago", "just now" — with the full stamp in the tooltip. */
+/** The translated `relativeWhen`: "in 3h" / "em 3h", "2d ago" / "há 2d", "just now". */
+export function useRelativeWhen() {
+  const t = useTranslations("crmShared");
+  return useCallback(
+    (date: Date, now = Date.now()): string => {
+      const delta = date.getTime() - now;
+      const minutes = Math.round(Math.abs(delta) / 60_000);
+      if (minutes < 1) return t("timeAgo.justNow");
+      const hours = Math.round(minutes / 60);
+      const days = Math.round(minutes / (60 * 24));
+      if (delta > 0) return minutes < 60 ? t("relative.inMinutes", { count: minutes }) : minutes < 60 * 24 ? t("relative.inHours", { count: hours }) : t("relative.inDays", { count: days });
+      return minutes < 60 ? t("timeAgo.minutes", { count: minutes }) : minutes < 60 * 24 ? t("timeAgo.hours", { count: hours }) : t("timeAgo.days", { count: days });
+    },
+    [t],
+  );
+}
+
+/** "in 3h", "2d ago", "just now" — English only; inside components use `useRelativeWhen`. */
 export function relativeWhen(date: Date, now = Date.now()): string {
   const delta = date.getTime() - now;
   const abs = Math.abs(delta);
@@ -333,6 +357,7 @@ function linkedinHandle(href: string): string {
   return href.replace(/^https?:\/\/(www\.)?linkedin\.com\//i, "").replace(/\/+$/, "") || href;
 }
 
+// English fallback for callers outside a component; inside one use `useWorkflowLabel`.
 const WORKFLOW_LABEL: Record<string, string> = {
   unclassified: "Unclassified",
   classifying: "Classifying",
@@ -347,6 +372,23 @@ const WORKFLOW_LABEL: Record<string, string> = {
 export function workflowLabel(state: string | null | undefined): string | null {
   if (!state) return null;
   return WORKFLOW_LABEL[state] ?? state.replace(/_/g, " ");
+}
+
+type WorkflowKey = keyof Messages["inboxShell"]["workflow"];
+// Compile-time exhaustiveness: a workflow state added to the CRM without a label key fails tsc here.
+const _workflowCovered: Exclude<CrmWorkflowState, WorkflowKey> extends never ? true : false = true;
+void _workflowCovered;
+
+/** The translated `workflowLabel`; a state it does not know is shown as stored. */
+export function useWorkflowLabel() {
+  const t = useTranslations("inboxShell.workflow");
+  return useCallback(
+    (state: string | null | undefined): string | null => {
+      if (!state) return null;
+      return Object.hasOwn(WORKFLOW_LABEL, state) ? t(state as WorkflowKey) : state.replace(/_/g, " ");
+    },
+    [t],
+  );
 }
 
 // ---------------------------------------------------------------- CRM record

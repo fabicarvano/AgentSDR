@@ -1,3 +1,113 @@
 {
-  "inboxShell": {}
+  "inboxShell": {
+    "readingPane": {
+      "conversation": "Conversation"
+    },
+    "readingEmpty": {
+      "title": "Select a conversation",
+      "description": "Pick one from the list to read it and reply.",
+      "shortcutMove": "<k>J</k><k>K</k> to move",
+      "shortcutOpen": "<k>Enter</k> to open",
+      "shortcutBack": "<k>Esc</k> back to the list"
+    },
+    "triageTabs": {
+      "more": "More",
+      "moreViews": "More views",
+      "showing": "Showing {label}. Other views"
+    },
+    "filterPopover": {
+      "filter": "Filter",
+      "filters": "Filters",
+      "filtersSet": "Filters ({count} set)",
+      "clearAll": "Clear all"
+    },
+    "activeFilterChips": {
+      "remove": "Remove filter: {label}",
+      "clearAll": "Clear all"
+    },
+    "listCount": {
+      "of": "{shown} of {total} {noun}",
+      "simple": "{count} {noun}"
+    },
+    "conversationRow": {
+      "unreadPrefix": "Unread: ",
+      "unreadCount": "{count, plural, one {# unread} other {# unread}}"
+    },
+    "draftChip": {
+      "label": "AI draft",
+      "title": "An AI-drafted reply is waiting for review"
+    },
+    "rowsSkeleton": {
+      "loading": "Loading"
+    },
+    "routeSkeleton": {
+      "loading": "Loading"
+    },
+    "threadSkeleton": {
+      "loading": "Loading conversation"
+    },
+    "threadHeader": {
+      "back": "Back to conversations"
+    },
+    "inlineError": {
+      "retry": "Try again"
+    },
+    "time": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "earlier": "Earlier"
+    },
+    "composer": {
+      "placeholder": "Write a message…",
+      "ariaLabel": "Message",
+      "send": "Send",
+      "sending": "Sending…",
+      "sendTitle": "Send (Enter)",
+      "hint": "<k>Enter</k> to send · <k>Shift</k>+<k>Enter</k> new line"
+    },
+    "draftBanner": {
+      "label": "AI draft",
+      "note": "Edit freely — approving sends it as the CRM draft.",
+      "dismiss": "Don't use draft"
+    },
+    "expandableText": {
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "details": {
+      "ariaLabel": "Contact details",
+      "title": "Details",
+      "close": "Close details",
+      "crmRecord": "CRM record",
+      "linkedinProfile": "LinkedIn profile",
+      "emailLink": "Email {email}",
+      "phoneLink": "Phone {phone}",
+      "crm": "CRM",
+      "doNotContact": "Do not contact — this lead opted out.",
+      "category": "Category",
+      "stage": "Stage",
+      "sequence": "Sequence",
+      "nextStep": "Next step",
+      "nextAction": "Next action",
+      "lastReply": "Last reply",
+      "lastSent": "Last sent",
+      "conversation": "Conversation",
+      "channel": "Channel",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "linkedin": "LinkedIn"
+    },
+    "workflow": {
+      "unclassified": "Unclassified",
+      "classifying": "Classifying",
+      "action_required": "Action required",
+      "waiting": "Waiting",
+      "idle": "Idle",
+      "paused": "Paused",
+      "closed": "Closed",
+      "error": "Needs attention"
+    }
+  }
 }
