@@ -10,9 +10,28 @@ import { emailValidations } from "./schema";
 const WINDOW_MS = 72 * 60 * 60 * 1000;
 const DEFAULT_FROM = "noreply@restricaonuncamais.com.br";
 
-// TODO(Fabio): subject and HTML body are placeholders until they are defined.
-const SUBJECT = "TODO";
-const HTML = "<p>TODO</p>";
+/**
+ * Subject, plain text and a minimal HTML part of the validation email,
+ * addressed by first name. The HTML is the same text with only the signature
+ * formatted: a lighter message is less likely to land in spam, and the HTML
+ * part is what lets Resend track opens.
+ */
+function buildMessage(name: string | null) {
+  // Single line: the name goes into the subject header.
+  const firstName = (name ?? "").replace(/\s+/g, " ").trim().split(" ")[0] || "tudo bem";
+  const subject = `${firstName}, saiba como melhorar seu score de crédito`;
+  const lines = [
+    `Olá, ${firstName}!`,
+    "Preparamos dicas simples para você melhorar seu score de crédito e sair da restrição.",
+    "Em breve enviaremos mais novidades. Fique de olho na sua caixa de entrada!",
+  ];
+  const signature = "Equipe Restrição Nunca Mais";
+  const escape = (value: string) =>
+    value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  const text = `${lines.join("\n")}\n\n${signature}`;
+  const html = `${lines.map((line) => `<p>${escape(line)}</p>`).join("")}<p><strong>${signature}</strong></p>`;
+  return { subject, text, html };
+}
 
 /**
  * Sends one validation email for a Person and starts the 72h watch. Resend's
@@ -22,7 +41,7 @@ const HTML = "<p>TODO</p>";
 export async function triggerEmailValidation(personId: string, organizationId: string): Promise<void> {
   return runInOrganization(organizationId, async () => {
     const [person] = await db
-      .select({ id: people.id, email: people.email })
+      .select({ id: people.id, email: people.email, firstName: people.firstName, fullName: people.fullName })
       .from(people)
       .where(and(inOrg(people), eq(people.id, personId)))
       .limit(1);
@@ -64,6 +83,7 @@ export async function triggerEmailValidation(personId: string, organizationId: s
       .returning({ id: emailValidations.id });
     if (!claimed) return;
 
+    const message = buildMessage(person.firstName ?? person.fullName);
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -71,8 +91,7 @@ export async function triggerEmailValidation(personId: string, organizationId: s
         body: JSON.stringify({
           from: process.env.EMAIL_VALIDATION_FROM || DEFAULT_FROM,
           to: [email],
-          subject: SUBJECT,
-          html: HTML,
+          ...message,
         }),
       });
       if (!response.ok) {
