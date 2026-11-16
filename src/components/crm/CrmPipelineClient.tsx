@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RiCheckDoubleLine,
@@ -17,6 +18,7 @@ import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame
 import { KpiCell, KpiStrip } from "@/components/analytics/kit/KpiStrip";
 import { EmptyState } from "@/components/page/EmptyState";
 import { PageHeader } from "@/components/page/PageHeader";
+import type { Messages } from "@/i18n/catalog";
 import { cn } from "@/utils/cn";
 import { HoverPreviewProvider } from "./ActionRowTools";
 import {
@@ -39,18 +41,20 @@ import {
 } from "./CrmActionsClient";
 import { ErrorState } from "./CrmLayout";
 import { RowsSkeleton } from "./CrmSkeletons";
-import { asList, asObject, crmFetch, errorMessage } from "./crm-utils";
+import { asList, asObject, crmFetch } from "./crm-utils";
+import { useCrmText } from "./useCrmText";
 
 const STAGES = Object.keys(STAGE_META) as PipelineStage[];
 /** Cards per column per request; a board shows three columns at once. */
 const BOARD_PAGE = 20;
 
-const EMPTY_COPY: Record<PipelineStage | "all", { title: string; detail: string }> = {
-  all: { title: "No open leads", detail: "Anyone who replies will show up here until their record is closed." },
-  needs_action: { title: "Nothing needs attention", detail: "New replies and due follow-ups land here." },
-  waiting: { title: "No one is waiting", detail: "Leads you have replied to, or with a follow-up scheduled, land here." },
-  exhausted: { title: "No exhausted sequences", detail: "Leads whose every follow-up went out without a reply land here." },
-};
+// Stage and empty-state text lives in the catalog, keyed by the stage id; tsc fails if STAGE_META gains a stage with no entry.
+type StageKey = keyof Messages["crmPipeline"]["client"]["stage"];
+type EmptyKey = keyof Messages["crmPipeline"]["client"]["empty"];
+const _stagesCovered: Exclude<PipelineStage, StageKey> extends never ? true : false = true;
+const _emptyCovered: Exclude<PipelineStage | "all", EmptyKey> extends never ? true : false = true;
+void _stagesCovered;
+void _emptyCovered;
 
 type Filters = { category: string; channel: string };
 const DEFAULT_FILTERS: Filters = { category: "potential", channel: "" };
@@ -72,6 +76,7 @@ function filterParams(filters: Filters) {
  * both fetching.
  */
 function usePipelinePage(query: string, pageSize: number, enabled: boolean) {
+  const { errorMessage } = useCrmText();
   const [actions, setActions] = useState<Action[]>([]);
   const [stageCounts, setStageCounts] = useState<Partial<Record<PipelineStage, number>> | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -101,7 +106,7 @@ function usePipelinePage(query: string, pageSize: number, enabled: boolean) {
       setHasMore(Boolean(body.hasMore));
       setLoaded(true);
     } catch (cause) { setError(errorMessage(cause)); } finally { setLoading(false); setLoadingMore(false); }
-  }, [query, pageSize]);
+  }, [query, pageSize, errorMessage]);
   useEffect(() => { if (enabled) void load(0); }, [load, enabled]);
   const loadMore = useCallback(() => { void load(nextOffset); }, [load, nextOffset]);
   return { actions, setActions, stageCounts, loaded, loading, loadingMore, error, hasMore, load, loadMore };
@@ -117,6 +122,10 @@ type View = "board" | "list";
  * the list is the same data as a table, with the inline draft editor.
  */
 export function CrmPipelineClient() {
+  const t = useTranslations("crmPipeline.client");
+  const intl = useFormatter();
+  const { errorMessage, categoryLabel, channelLabel } = useCrmText();
+  const notInterested = categoryLabel("not_interested");
   const [view, setView] = useState<View>("board");
   const [categories, setCategories] = useState<Data[]>([]);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -126,7 +135,7 @@ export function CrmPipelineClient() {
   const [categoryError, setCategoryError] = useState("");
   useEffect(() => {
     void crmFetch("/categories").then((result) => setCategories(asList<Data>(asObject(result).categories))).catch((cause) => setCategoryError(errorMessage(cause)));
-  }, []);
+  }, [errorMessage]);
 
   const base = useMemo(() => filterParams(filters).toString(), [filters]);
   const stageQuery = (stage: PipelineStage | "all") => {
@@ -158,47 +167,47 @@ export function CrmPipelineClient() {
     : null;
   const filtered = filters.category !== DEFAULT_FILTERS.category || Boolean(filters.channel);
   const setFilter = (key: keyof Filters, value: string) => setFilters((old) => ({ ...old, [key]: value }));
-  const format = (value: number | null) => value === null ? "—" : value.toLocaleString();
+  const format = (value: number | null) => value === null ? "—" : intl.number(value);
   const total = countFor("all");
 
   return <>
     <PageHeader
-      title="Pipeline"
-      description="Every open lead, by where it stands: waiting on you, waiting on them, or out of follow-ups."
+      title={t("title")}
+      description={t("description")}
     />
 
     <KpiStrip className="mt-6" columns={4}>
-      <KpiCell icon={RiTeamLine} label="Open leads" value={format(total)} context={filters.category === "potential" ? "Not counting “Not interested”" : "Under the current filters"} hint="Every CRM record that is not closed, under the category and channel filters below." />
-      <KpiCell icon={STAGE_META.needs_action.icon} label={STAGE_META.needs_action.label} value={format(countFor("needs_action"))} context={STAGE_META.needs_action.detail} hint="The same records as Action required." />
-      <KpiCell icon={STAGE_META.waiting.icon} label={STAGE_META.waiting.label} value={format(countFor("waiting"))} context={STAGE_META.waiting.detail} />
-      <KpiCell icon={STAGE_META.exhausted.icon} label={STAGE_META.exhausted.label} value={format(countFor("exhausted"))} context={STAGE_META.exhausted.detail} hint="The last sequence run finished its final step without an answer. Move their stage or close them." />
+      <KpiCell icon={RiTeamLine} label={t("kpi.openLeads")} value={format(total)} context={filters.category === "potential" ? t("kpi.contextPotential", { category: notInterested }) : t("kpi.contextFiltered")} hint={t("kpi.openLeadsHint")} />
+      <KpiCell icon={STAGE_META.needs_action.icon} label={t("stage.needs_action.label")} value={format(countFor("needs_action"))} context={t("stage.needs_action.detail")} hint={t("kpi.needsActionHint")} />
+      <KpiCell icon={STAGE_META.waiting.icon} label={t("stage.waiting.label")} value={format(countFor("waiting"))} context={t("stage.waiting.detail")} />
+      <KpiCell icon={STAGE_META.exhausted.icon} label={t("stage.exhausted.label")} value={format(countFor("exhausted"))} context={t("stage.exhausted.detail")} hint={t("kpi.exhaustedHint")} />
     </KpiStrip>
 
     <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
       <SegmentedControl.Root value={view} onValueChange={(value) => setView(value as View)}>
-        <SegmentedControl.List className="w-auto" aria-label="View">
-          <SegmentedControl.Trigger value="board" className="gap-1.5 px-3"><RiKanbanView2 className="size-4" aria-hidden="true" />Board</SegmentedControl.Trigger>
-          <SegmentedControl.Trigger value="list" className="gap-1.5 px-3"><RiListUnordered className="size-4" aria-hidden="true" />List</SegmentedControl.Trigger>
+        <SegmentedControl.List className="w-auto" aria-label={t("view.label")}>
+          <SegmentedControl.Trigger value="board" className="gap-1.5 px-3"><RiKanbanView2 className="size-4" aria-hidden="true" />{t("view.board")}</SegmentedControl.Trigger>
+          <SegmentedControl.Trigger value="list" className="gap-1.5 px-3"><RiListUnordered className="size-4" aria-hidden="true" />{t("view.list")}</SegmentedControl.Trigger>
         </SegmentedControl.List>
       </SegmentedControl.Root>
       <div className="flex flex-wrap items-center gap-2">
-        <CompactSelect label="Category" placeholder="All categories" value={filters.category} onChange={(value) => setFilter("category", value)}>
-          <Select.Item value="potential">Potential (not “Not interested”)</Select.Item>
-          <Select.Item value="">All categories</Select.Item>
-          {categoryItems()}
+        <CompactSelect label={t("filters.category")} placeholder={t("filters.allCategories")} value={filters.category} onChange={(value) => setFilter("category", value)}>
+          <Select.Item value="potential">{t("filters.potential", { category: notInterested })}</Select.Item>
+          <Select.Item value="">{t("filters.allCategories")}</Select.Item>
+          {categoryItems(categoryLabel)}
         </CompactSelect>
-        <CompactSelect label="Channel" placeholder="All channels" value={filters.channel} onChange={(value) => setFilter("channel", value)}><Select.Item value="">All channels</Select.Item>{channelItems()}</CompactSelect>
-        {filtered && <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => setFilters(DEFAULT_FILTERS)}>Reset</Button.Root>}
+        <CompactSelect label={t("filters.channel")} placeholder={t("filters.allChannels")} value={filters.channel} onChange={(value) => setFilter("channel", value)}><Select.Item value="">{t("filters.allChannels")}</Select.Item>{channelItems(channelLabel)}</CompactSelect>
+        {filtered && <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => setFilters(DEFAULT_FILTERS)}>{t("filters.reset")}</Button.Root>}
       </div>
     </div>
     {categoryError && <div className="mt-3"><ErrorState message={categoryError} /></div>}
 
     {view === "board" ? <>
       <SegmentedControl.Root value={mobileStage} onValueChange={(value) => setMobileStage(value as PipelineStage)} className="mt-4 lg:hidden">
-        <SegmentedControl.List aria-label="Stage">
+        <SegmentedControl.List aria-label={t("stageAria")}>
           {STAGES.map((stage) => <SegmentedControl.Trigger key={stage} value={stage} className="gap-1 px-1.5 text-label-xs sm:gap-1.5 sm:px-2">
             <StageGlyph stage={stage} />
-            {STAGE_META[stage].short}
+            {t(`stage.${stage}.short`)}
             <span className="tabular-nums text-text-soft-400">{format(countFor(stage))}</span>
           </SegmentedControl.Trigger>)}
         </SegmentedControl.List>
@@ -221,14 +230,14 @@ export function CrmPipelineClient() {
       </HoverPreviewProvider>
     </> : <Frame className="mt-4">
       <FrameHeader
-        title="Open leads"
-        description={list.loaded ? `${format(countFor(listStage))} leads · most recent activity first` : "Loading…"}
+        title={t("list.title")}
+        description={list.loaded ? t("list.description", { count: countFor(listStage) ?? 0 }) : t("list.loading")}
         actions={
           <SegmentedControl.Root value={listStage} onValueChange={(value) => setListStage(value as PipelineStage | "all")}>
-            <SegmentedControl.List className="w-full sm:inline-grid sm:w-auto" aria-label="Pipeline stage">
+            <SegmentedControl.List className="w-full sm:inline-grid sm:w-auto" aria-label={t("pipelineStageAria")}>
               {(["all", ...STAGES] as const).map((stage) => <SegmentedControl.Trigger key={stage} value={stage} className="gap-1.5 px-2 sm:px-3">
                 {stage !== "all" && <StageGlyph stage={stage} className="hidden sm:flex" />}
-                {stage === "all" ? "All" : STAGE_META[stage].short}
+                {stage === "all" ? t("all") : t(`stage.${stage}.short`)}
                 <span className="tabular-nums text-text-soft-400">{format(countFor(stage))}</span>
               </SegmentedControl.Trigger>)}
             </SegmentedControl.List>
@@ -249,8 +258,8 @@ export function CrmPipelineClient() {
               hasMore={list.hasMore && !list.loadingMore}
               onLoadMore={list.loadMore}
               empty={filtered
-                ? { icon: RiFilterOffLine, title: "No leads match these filters", detail: "Try another category or channel.", action: <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setFilters(DEFAULT_FILTERS)}>Reset filters</Button.Root> }
-                : { icon: RiCheckDoubleLine, ...EMPTY_COPY[listStage] }}
+                ? { icon: RiFilterOffLine, title: t("list.noMatchTitle"), detail: t("list.noMatchDetail"), action: <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setFilters(DEFAULT_FILTERS)}>{t("filters.resetFilters")}</Button.Root> }
+                : { icon: RiCheckDoubleLine, title: t(`empty.${listStage}.title`), detail: t(`empty.${listStage}.detail`) }}
             />
             {list.hasMore && <LoadMoreOnScroll onLoadMore={list.loadMore} busy={list.loadingMore} />}
           </>}
@@ -273,6 +282,8 @@ function BoardColumn({ stage, page, columns, count, categories, filtered, onRese
   className?: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("crmPipeline.client");
+  const intl = useFormatter();
   const [now] = useState(() => Date.now());
   // An edit can move a lead to another stage (a sent reply takes it from
   // Needs action to Waiting): the refreshed card leaves this column and joins
@@ -292,24 +303,23 @@ function BoardColumn({ stage, page, columns, count, categories, filtered, onRese
   const { busyIds, notice, setNotice, mutateRow, classify, refreshRow } = useRowMutations({ onActionsChange, pipeline: true, onMutated });
   // A lead changed in the record pop-up re-reads here, and moves column if its stage changed.
   useSyncRecordChanges(page.actions, refreshRow, onMutated);
-  const meta = STAGE_META[stage];
 
   return <Frame className={cn("min-w-0", className)} aria-busy={page.loading || undefined} aria-labelledby={`stage-${stage}`}>
     <header className="flex items-center gap-3 px-3 pb-3 pt-2.5">
       <StageIcon stage={stage} className="size-9 rounded-xl" iconClassName="size-[18px]" />
       <div className="min-w-0 flex-1">
-        <h2 id={`stage-${stage}`} className="truncate text-label-md text-text-strong-950">{meta.label}</h2>
-        <p className="truncate text-paragraph-xs text-text-sub-600">{meta.detail}</p>
+        <h2 id={`stage-${stage}`} className="truncate text-label-md text-text-strong-950">{t(`stage.${stage}.label`)}</h2>
+        <p className="truncate text-paragraph-xs text-text-sub-600">{t(`stage.${stage}.detail`)}</p>
       </div>
-      <span className="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg bg-bg-white-0 px-2 text-label-sm tabular-nums text-text-strong-950 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200" title={`${count === null ? "—" : count.toLocaleString()} leads`}>{count === null ? "—" : count.toLocaleString()}</span>
+      <span className="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg bg-bg-white-0 px-2 text-label-sm tabular-nums text-text-strong-950 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200" title={count === null ? "—" : t("board.countTitle", { count })}>{count === null ? "—" : intl.number(count)}</span>
     </header>
     <NoticeBar notice={notice} onDismiss={() => setNotice(null)} className="mb-1 rounded-lg" />
     {!page.loaded && page.loading ? <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="h-36 animate-pulse rounded-xl bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200" />)}</div>
       : page.error && !page.actions.length ? <FramePanel className="p-3 sm:p-3"><ErrorState message={page.error} onRetry={() => void page.load(0)} /></FramePanel>
       : !page.actions.length ? <FramePanel className="p-0 sm:p-0">
         {filtered
-          ? <EmptyState compact icon={RiFilterOffLine} title="No matches here" description="No lead in this stage fits the filters." action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={onReset}>Reset filters</Button.Root>} />
-          : <EmptyState compact icon={RiCheckDoubleLine} title={EMPTY_COPY[stage].title} description={EMPTY_COPY[stage].detail} />}
+          ? <EmptyState compact icon={RiFilterOffLine} title={t("board.noMatchesTitle")} description={t("board.noMatchesDetail")} action={<Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={onReset}>{t("filters.resetFilters")}</Button.Root>} />
+          : <EmptyState compact icon={RiCheckDoubleLine} title={t(`empty.${stage}.title`)} description={t(`empty.${stage}.detail`)} />}
       </FramePanel>
       // From lg each column scrolls on its own, like a board: the three stages
       // stay side by side instead of the page growing to the longest column.
@@ -329,7 +339,7 @@ function BoardColumn({ stage, page, columns, count, categories, filtered, onRese
           />;
         })}
         {page.hasMore && <Button.Root variant="neutral" mode="ghost" size="small" className="w-full" onClick={page.loadMore} disabled={page.loadingMore}>
-          {page.loadingMore ? "Loading…" : "Load more"}
+          {page.loadingMore ? t("board.loadingMore") : t("board.loadMore")}
         </Button.Root>}
       </div>}
   </Frame>;

@@ -1,3 +1,95 @@
 {
-  "crmPipeline": {}
+  "crmPipeline": {
+    "skeleton": {
+      "loading": "Carregando"
+    },
+    "layout": {
+      "retry": "Tentar de novo",
+      "loading": "Carregando",
+      "loadingContent": "Carregando conteúdo",
+      "back": "Voltar",
+      "kind": {
+        "people": "pessoas",
+        "companies": "empresas"
+      }
+    },
+    "client": {
+      "title": "Pipeline",
+      "description": "Todos os leads em aberto, por situação: aguardando você, aguardando o lead ou sem follow-ups.",
+      "stage": {
+        "needs_action": {
+          "label": "Ação necessária",
+          "short": "Ação",
+          "detail": "Há uma resposta, rascunho ou follow-up a fazer"
+        },
+        "waiting": {
+          "label": "Aguardando o lead",
+          "short": "Aguardando",
+          "detail": "Já respondido ou com follow-up agendado"
+        },
+        "exhausted": {
+          "label": "Follow-ups esgotados",
+          "short": "Esgotados",
+          "detail": "Todos os follow-ups enviados, sem resposta"
+        }
+      },
+      "empty": {
+        "all": {
+          "title": "Nenhum lead em aberto",
+          "detail": "Quem responder aparece aqui até o registro ser encerrado."
+        },
+        "needs_action": {
+          "title": "Nada precisa de atenção",
+          "detail": "Novas respostas e follow-ups vencidos aparecem aqui."
+        },
+        "waiting": {
+          "title": "Ninguém aguardando",
+          "detail": "Leads que você respondeu, ou com follow-up agendado, aparecem aqui."
+        },
+        "exhausted": {
+          "title": "Nenhuma sequência esgotada",
+          "detail": "Leads cujos follow-ups foram todos enviados sem resposta aparecem aqui."
+        }
+      },
+      "kpi": {
+        "openLeads": "Leads em aberto",
+        "openLeadsHint": "Todo registro do CRM que não foi encerrado, dentro dos filtros de categoria e canal abaixo.",
+        "contextPotential": "Sem contar “{category}”",
+        "contextFiltered": "Nos filtros atuais",
+        "needsActionHint": "Os mesmos registros de Ação necessária.",
+        "exhaustedHint": "A última execução da sequência terminou o último passo sem resposta. Mude o estágio do lead ou encerre o registro."
+      },
+      "view": {
+        "label": "Visualização",
+        "board": "Quadro",
+        "list": "Lista"
+      },
+      "filters": {
+        "category": "Categoria",
+        "allCategories": "Todas as categorias",
+        "potential": "Potenciais (sem “{category}”)",
+        "channel": "Canal",
+        "allChannels": "Todos os canais",
+        "reset": "Limpar",
+        "resetFilters": "Limpar filtros"
+      },
+      "stageAria": "Estágio",
+      "pipelineStageAria": "Estágio do pipeline",
+      "all": "Todos",
+      "list": {
+        "title": "Leads em aberto",
+        "description": "{count, plural, one {# lead} other {# leads}} · atividade mais recente primeiro",
+        "loading": "Carregando…",
+        "noMatchTitle": "Nenhum lead corresponde aos filtros",
+        "noMatchDetail": "Tente outra categoria ou canal."
+      },
+      "board": {
+        "noMatchesTitle": "Nada por aqui",
+        "noMatchesDetail": "Nenhum lead deste estágio corresponde aos filtros.",
+        "countTitle": "{count, plural, one {# lead} other {# leads}}",
+        "loadMore": "Carregar mais",
+        "loadingMore": "Carregando…"
+      }
+    }
+  }
 }

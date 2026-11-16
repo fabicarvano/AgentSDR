@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiArrowLeftLine, RiCheckboxCircleLine } from "@remixicon/react";
 import * as AlignSelect from "@/components/alignui/select";
 import { PageContainer, PageHeader } from "@/components/page/PageHeader";
@@ -23,6 +24,8 @@ export function CrmLayout({ children, title, description }: { children: React.Re
 }
 
 export function DatabasePageHeader({ kind, title, description, count, actions }: { kind: "people" | "companies"; title: string; description: string; count: number; actions?: React.ReactNode }) {
+  const t = useTranslations("crmPipeline.layout");
+  const format = useFormatter();
   return (
     <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0">
@@ -30,7 +33,7 @@ export function DatabasePageHeader({ kind, title, description, count, actions }:
         <p className="mt-1 max-w-2xl text-paragraph-sm text-text-sub-600">{description}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex h-9 items-center rounded-lg bg-bg-white-0 px-3 text-label-sm text-text-sub-600 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200"><strong className="mr-1 text-text-strong-950">{count.toLocaleString()}</strong> {kind}</span>
+        <span className="inline-flex h-9 items-center rounded-lg bg-bg-white-0 px-3 text-label-sm text-text-sub-600 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200"><strong className="mr-1 text-text-strong-950">{format.number(count)}</strong> {t(`kind.${kind}`)}</span>
         {actions}
       </div>
     </div>
@@ -50,11 +53,13 @@ export function EmptyState({ title, detail }: { title: string; detail?: string }
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
-  return <div role="alert" className="rounded-xl bg-error-lighter px-4 py-3 text-paragraph-sm text-error-dark ring-1 ring-inset ring-error-light"><p>{message}</p>{onRetry && <button type="button" className="mt-2 text-label-sm underline underline-offset-2" onClick={onRetry}>Try again</button>}</div>;
+  const t = useTranslations("crmPipeline.layout");
+  return <div role="alert" className="rounded-xl bg-error-lighter px-4 py-3 text-paragraph-sm text-error-dark ring-1 ring-inset ring-error-light"><p>{message}</p>{onRetry && <button type="button" className="mt-2 text-label-sm underline underline-offset-2" onClick={onRetry}>{t("retry")}</button>}</div>;
 }
 
 export function LoadingRows({ count = 4 }: { count?: number }) {
-  return <div className="space-y-2 p-4" role="status" aria-label="Loading">{Array.from({ length: count }, (_, index) => <div key={index} className="h-12 animate-pulse rounded-lg bg-bg-weak-50" />)}<span className="sr-only">Loading content</span></div>;
+  const t = useTranslations("crmPipeline.layout");
+  return <div className="space-y-2 p-4" role="status" aria-label={t("loading")}>{Array.from({ length: count }, (_, index) => <div key={index} className="h-12 animate-pulse rounded-lg bg-bg-weak-50" />)}<span className="sr-only">{t("loadingContent")}</span></div>;
 }
 
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "success" | "info" | "danger" | "warning" }) {
@@ -69,8 +74,9 @@ export function Select({ label, value, onChange, children, className, ariaLabel 
 /** An option of `Select` above. */
 export const SelectOption = AlignSelect.Item;
 
-export function BackLink({ href, children = "Back" }: { href: string; children?: React.ReactNode }) {
-  return <Link href={href} className="mb-4 inline-flex items-center gap-1.5 text-label-sm text-text-sub-600 transition hover:text-text-strong-950"><RiArrowLeftLine className="size-4" aria-hidden="true" />{children}</Link>;
+export function BackLink({ href, children }: { href: string; children?: React.ReactNode }) {
+  const t = useTranslations("crmPipeline.layout");
+  return <Link href={href} className="mb-4 inline-flex items-center gap-1.5 text-label-sm text-text-sub-600 transition hover:text-text-strong-950"><RiArrowLeftLine className="size-4" aria-hidden="true" />{children ?? t("back")}</Link>;
 }
 
 export const primaryButtonClass = "inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary-base px-3 text-label-sm text-static-white transition hover:bg-primary-darker focus-visible:outline-none focus-visible:shadow-button-primary-focus disabled:pointer-events-none disabled:bg-bg-weak-50 disabled:text-text-disabled-300";

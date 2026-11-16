@@ -1,3 +1,95 @@
 {
-  "crmPipeline": {}
+  "crmPipeline": {
+    "skeleton": {
+      "loading": "Loading"
+    },
+    "layout": {
+      "retry": "Try again",
+      "loading": "Loading",
+      "loadingContent": "Loading content",
+      "back": "Back",
+      "kind": {
+        "people": "people",
+        "companies": "companies"
+      }
+    },
+    "client": {
+      "title": "Pipeline",
+      "description": "Every open lead, by where it stands: waiting on you, waiting on them, or out of follow-ups.",
+      "stage": {
+        "needs_action": {
+          "label": "Needs action",
+          "short": "Needs action",
+          "detail": "A reply, draft or follow-up is due"
+        },
+        "waiting": {
+          "label": "Waiting on them",
+          "short": "Waiting",
+          "detail": "Replied to, or a follow-up is scheduled"
+        },
+        "exhausted": {
+          "label": "Follow-ups exhausted",
+          "short": "Exhausted",
+          "detail": "Every follow-up sent, no reply yet"
+        }
+      },
+      "empty": {
+        "all": {
+          "title": "No open leads",
+          "detail": "Anyone who replies will show up here until their record is closed."
+        },
+        "needs_action": {
+          "title": "Nothing needs attention",
+          "detail": "New replies and due follow-ups land here."
+        },
+        "waiting": {
+          "title": "No one is waiting",
+          "detail": "Leads you have replied to, or with a follow-up scheduled, land here."
+        },
+        "exhausted": {
+          "title": "No exhausted sequences",
+          "detail": "Leads whose every follow-up went out without a reply land here."
+        }
+      },
+      "kpi": {
+        "openLeads": "Open leads",
+        "openLeadsHint": "Every CRM record that is not closed, under the category and channel filters below.",
+        "contextPotential": "Not counting “{category}”",
+        "contextFiltered": "Under the current filters",
+        "needsActionHint": "The same records as Action required.",
+        "exhaustedHint": "The last sequence run finished its final step without an answer. Move their stage or close them."
+      },
+      "view": {
+        "label": "View",
+        "board": "Board",
+        "list": "List"
+      },
+      "filters": {
+        "category": "Category",
+        "allCategories": "All categories",
+        "potential": "Potential (not “{category}”)",
+        "channel": "Channel",
+        "allChannels": "All channels",
+        "reset": "Reset",
+        "resetFilters": "Reset filters"
+      },
+      "stageAria": "Stage",
+      "pipelineStageAria": "Pipeline stage",
+      "all": "All",
+      "list": {
+        "title": "Open leads",
+        "description": "{count, plural, one {# lead} other {# leads}} · most recent activity first",
+        "loading": "Loading…",
+        "noMatchTitle": "No leads match these filters",
+        "noMatchDetail": "Try another category or channel."
+      },
+      "board": {
+        "noMatchesTitle": "No matches here",
+        "noMatchesDetail": "No lead in this stage fits the filters.",
+        "countTitle": "{count, plural, one {# lead} other {# leads}}",
+        "loadMore": "Load more",
+        "loadingMore": "Loading…"
+      }
+    }
+  }
 }
