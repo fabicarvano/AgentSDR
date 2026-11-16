@@ -1,0 +1,33 @@
+{
+  "crmShared": {
+    "category": {
+      "customer": "Customer",
+      "interested": "Interested",
+      "not_interested": "Not interested",
+      "other": "Other",
+      "unclassified": "Unclassified"
+    },
+    "channel": {
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "whatsapp": "WhatsApp"
+    },
+    "unknownContact": "Unknown contact",
+    "timeAgo": {
+      "justNow": "just now",
+      "minutes": "{count}m ago",
+      "hours": "{count}h ago",
+      "days": "{count}d ago"
+    },
+    "relative": {
+      "overdueMinutes": "{count}m overdue",
+      "overdueHours": "{count}h overdue",
+      "overdueDays": "{count}d overdue",
+      "inMinutes": "in {count}m",
+      "inHours": "in {count}h",
+      "inDays": "in {count}d"
+    },
+    "requestFailed": "Request failed ({status})",
+    "somethingWentWrong": "Something went wrong. Please try again."
+  }
+}

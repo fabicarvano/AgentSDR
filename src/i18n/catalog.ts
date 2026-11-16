@@ -12,6 +12,14 @@
 import type analytics from "../../messages/en/analytics.json";
 import type auth from "../../messages/en/auth.json";
 import type common from "../../messages/en/common.json";
+import type crmActions from "../../messages/en/crmActions.json";
+import type crmPipeline from "../../messages/en/crmPipeline.json";
+import type crmRecord from "../../messages/en/crmRecord.json";
+import type crmSequences from "../../messages/en/crmSequences.json";
+import type crmShared from "../../messages/en/crmShared.json";
+import type inboxMain from "../../messages/en/inboxMain.json";
+import type inboxShell from "../../messages/en/inboxShell.json";
+import type inboxThread from "../../messages/en/inboxThread.json";
 import type leads from "../../messages/en/leads.json";
 import type settings from "../../messages/en/settings.json";
 import type settingsAccounts from "../../messages/en/settingsAccounts.json";
@@ -27,6 +35,14 @@ type Catalog = {
   analytics: typeof analytics;
   auth: typeof auth;
   common: typeof common;
+  crmActions: typeof crmActions;
+  crmPipeline: typeof crmPipeline;
+  crmRecord: typeof crmRecord;
+  crmSequences: typeof crmSequences;
+  crmShared: typeof crmShared;
+  inboxMain: typeof inboxMain;
+  inboxShell: typeof inboxShell;
+  inboxThread: typeof inboxThread;
   leads: typeof leads;
   settings: typeof settings;
   settingsAccounts: typeof settingsAccounts;
@@ -40,7 +56,7 @@ type Catalog = {
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "common", "leads", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
+export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "inboxMain", "inboxShell", "inboxThread", "leads", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
 
 export type Domain = (typeof DOMAINS)[number];
 

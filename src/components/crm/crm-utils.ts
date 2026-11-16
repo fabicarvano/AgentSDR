@@ -43,7 +43,13 @@ export function asObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+/** English fallback kept for the screens of batches that are not translated yet; translated screens use `useCrmText().displayName`. */
 export function displayName(value: Record<string, unknown>): string {
+  return displayNameOr(value, "Unknown contact");
+}
+
+/** Same lookup as `displayName`, with the "no name at all" text supplied by the caller (so it can come from the catalog). */
+export function displayNameOr(value: Record<string, unknown>, unknownLabel: string): string {
   const person = asObject(value.person);
   const raw = asObject(value.raw);
   const personRaw = asObject(person.raw);
@@ -65,7 +71,7 @@ export function displayName(value: Record<string, unknown>): string {
     const slug = linkedin.trim().replace(/\/+$/, "").split("/").pop() || linkedin.trim();
     return `LinkedIn · ${slug}`;
   }
-  return "Unknown contact";
+  return unknownLabel;
 }
 
 export function formatDate(value: unknown, fallback = "—"): string {
@@ -102,6 +108,22 @@ export function relativeDate(value: unknown): string {
   return days < 0 ? `${Math.abs(days)}d overdue` : `in ${days}d`;
 }
 
+/**
+ * What `crmFetch` throws. `message` is exactly what it always was (the server's `error`, or
+ * "Request failed (n)"), so existing callers are unaffected; translated screens use
+ * `useCrmText().errorMessage` to show their own wording when the server sent no message.
+ */
+export class CrmHttpError extends Error {
+  readonly status: number;
+  readonly fromServer: boolean;
+  constructor(message: string, status: number, fromServer: boolean) {
+    super(message);
+    this.name = "CrmHttpError";
+    this.status = status;
+    this.fromServer = fromServer;
+  }
+}
+
 export async function crmFetch<T = unknown>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
@@ -111,8 +133,9 @@ export async function crmFetch<T = unknown>(path: string, init?: RequestInit): P
   const response = await fetch(`/api/crm${path}`, { ...init, headers });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = typeof body?.error === "string" ? body.error : `Request failed (${response.status})`;
-    throw new Error(message);
+    const fromServer = typeof body?.error === "string";
+    const message = fromServer ? body.error : `Request failed (${response.status})`;
+    throw new CrmHttpError(message, response.status, fromServer);
   }
   return body as T;
 }
