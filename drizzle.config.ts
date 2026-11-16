@@ -106,6 +106,7 @@ const OWNED_TABLES = [
   "grid_providers",
   "channel_settings",
   "api_keys",
+  "email_validations",
   "grid_rows",
   "grid_tables",
   "grid_workbooks",

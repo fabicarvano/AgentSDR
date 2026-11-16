@@ -9,6 +9,7 @@ import { runSearchQueue } from "@/jobs/runSearchQueue";
 import { startTrackedJob } from "@/lib/linkedin/jobTracker";
 import { jobRuns } from "@/lib/linkedin/schema";
 import { runCrmAutoFollowUps } from "@/lib/crm/autoFollowUps";
+import { markExpiredValidations } from "@/lib/emailValidation/expiry";
 import { pruneClaims } from "./claims";
 import type { PlatformJobName } from "./schedules";
 
@@ -56,6 +57,10 @@ export async function startPlatformJob(name: PlatformJobName): Promise<StartedJo
     case "crm-auto-follow-ups": {
       const summary = await runCrmAutoFollowUps();
       return { body: { ok: true, summary }, done: finished };
+    }
+    case "email-validation-expiry": {
+      const expired = await markExpiredValidations();
+      return { body: { ok: true, expired }, done: finished };
     }
     case "history-prune": {
       // Shared history, once a day for the whole platform (it used to ride

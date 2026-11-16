@@ -20,6 +20,7 @@ export type PlatformJobName =
   | "linkedin-run-search-queue"
   | "linkedin-replay-webhooks"
   | "crm-auto-follow-ups"
+  | "email-validation-expiry"
   | "history-prune";
 
 export type PlatformJob = {
@@ -67,6 +68,12 @@ export const PLATFORM_JOBS: readonly PlatformJob[] = [
     schedule: everyMinutes(5),
     enabled: true,
     description: "Automatic CRM follow-ups, one per sending account at a time (sequences with automatic follow-ups on)",
+  },
+  {
+    name: "email-validation-expiry",
+    schedule: everyMinutes(15),
+    enabled: true,
+    description: "Mark email validations with no events after 72h as presumed valid",
   },
   {
     name: "history-prune",

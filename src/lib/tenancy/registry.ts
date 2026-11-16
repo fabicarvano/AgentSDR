@@ -61,6 +61,8 @@ export const SCOPED_TABLES: readonly ScopedTable[] = [
   snake("channel_settings"),
   // Public API keys
   snake("api_keys"),
+  // Email validation via Resend
+  snake("email_validations"),
   // Calling and WhatsApp
   snake("call_campaigns"),
   snake("call_sessions"),

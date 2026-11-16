@@ -2102,6 +2102,27 @@ CREATE TABLE public.domains (
 );
 
 --
+-- Name: email_validations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_validations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    person_id uuid NOT NULL,
+    email text NOT NULL,
+    status text DEFAULT 'validando'::text NOT NULL,
+    resend_email_id text,
+    sent_at timestamp with time zone,
+    resolved_at timestamp with time zone,
+    expires_at timestamp with time zone,
+    last_event text,
+    last_event_at timestamp with time zone,
+    bounce_type text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: entity_columns; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3356,6 +3377,13 @@ ALTER TABLE ONLY public.domains
     ADD CONSTRAINT domains_pkey PRIMARY KEY (domain);
 
 --
+-- Name: email_validations email_validations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_validations
+    ADD CONSTRAINT email_validations_pkey PRIMARY KEY (id);
+
+--
 -- Name: entity_columns entity_columns_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4287,6 +4315,36 @@ CREATE INDEX crm_tasks_organization_idx ON public.crm_tasks USING btree (organiz
 --
 
 CREATE INDEX crm_webhook_events_organization_idx ON public.crm_webhook_events USING btree (organization_id);
+
+--
+-- Name: email_validations_expires_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_validations_expires_idx ON public.email_validations USING btree (expires_at);
+
+--
+-- Name: email_validations_organization_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_validations_organization_idx ON public.email_validations USING btree (organization_id);
+
+--
+-- Name: email_validations_person_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_validations_person_idx ON public.email_validations USING btree (person_id);
+
+--
+-- Name: email_validations_person_uq; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX email_validations_person_uq ON public.email_validations USING btree (person_id);
+
+--
+-- Name: email_validations_resend_email_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_validations_resend_email_idx ON public.email_validations USING btree (resend_email_id);
 
 --
 -- Name: entity_columns_entity_pos_idx; Type: INDEX; Schema: public; Owner: -
@@ -5796,6 +5854,20 @@ ALTER TABLE ONLY public.crm_tasks
 
 ALTER TABLE ONLY public.crm_webhook_events
     ADD CONSTRAINT crm_webhook_events_organization_fk FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE RESTRICT;
+
+--
+-- Name: email_validations email_validations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_validations
+    ADD CONSTRAINT email_validations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id);
+
+--
+-- Name: email_validations email_validations_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_validations
+    ADD CONSTRAINT email_validations_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.people(id) ON DELETE CASCADE;
 
 --
 -- Name: entity_columns entity_columns_organization_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
