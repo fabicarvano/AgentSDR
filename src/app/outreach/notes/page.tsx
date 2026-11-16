@@ -1,8 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import NotesTasksClient from "@/components/inbox/NotesTasksClient";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Notes" };
+export async function generateMetadata() {
+  const t = await getTranslations("inboxThread.page");
+  return { title: t("notesTitle") };
+}
 
 export default function NotesPage() {
   return (

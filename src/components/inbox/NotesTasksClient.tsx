@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowGoBackLine,
@@ -34,9 +35,7 @@ import {
   RowBadge,
   RowsSkeleton,
   ThreadHeader,
-  fullTime,
-  rowTime,
-  withDayBreaks,
+  useInboxTime,
 } from "./shell/InboxShell";
 import { useInboxHotkeys } from "./shell/hotkeys";
 
@@ -54,20 +53,21 @@ type Item = {
 };
 
 type StatusFilter = "all" | "pending" | "completed";
-const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "pending", label: "Pending" },
-  { key: "completed", label: "Done" },
+const STATUS_FILTERS: { key: StatusFilter; labelKey: "filterAll" | "filterPending" | "filterDone" }[] = [
+  { key: "all", labelKey: "filterAll" },
+  { key: "pending", labelKey: "filterPending" },
+  { key: "completed", labelKey: "filterDone" },
 ];
 
 const labelOf = (item: Item, isTasks: boolean) => (isTasks ? item.name : item.title) ?? "";
 const leadNameOf = (item: Item) => fullName(item.leadFirstName, item.leadLastName) || item.leadEmail || "";
 
 export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) {
+  const t = useTranslations("inboxThread.notesTasks");
+  const format = useFormatter();
+  const { fullTime, rowTime, withDayBreaks } = useInboxTime();
   const dialogs = useDialogs();
   const isTasks = mode === "tasks";
-  const noun = isTasks ? "task" : "note";
-  const Noun = isTasks ? "Task" : "Note";
   const endpoint = isTasks ? "/api/outreach/inbox/tasks" : "/api/outreach/inbox/notes";
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +135,7 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
       }),
     [items, isTasks, search, statusFilter],
   );
-  const grouped = useMemo(() => withDayBreaks(filtered, (item) => new Date(item.createdAt)), [filtered]);
+  const grouped = useMemo(() => withDayBreaks(filtered, (item) => new Date(item.createdAt)), [filtered, withDayBreaks]);
   const selected = items.find((item) => item.id === selectedId) ?? null;
 
   function openForCreate() {
@@ -181,9 +181,9 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
 
   async function handleDelete(item: Item) {
     const ok = await dialogs.confirm({
-      title: `Delete this ${noun}?`,
-      description: "This cannot be undone.",
-      confirmLabel: "Delete",
+      title: t(`${mode}.deleteTitle`),
+      description: t("confirmDescription"),
+      confirmLabel: t("delete"),
       variant: "error",
     });
     if (!ok) return;
@@ -209,17 +209,13 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
 
   const header = (
     <PageHeader
-      back={{ href: "/outreach/inbox", label: "Master Inbox" }}
-      title={isTasks ? "Tasks" : "Notes"}
-      description={
-        isTasks
-          ? "Follow-ups to do, added here or from a thread in the Master Inbox."
-          : "What you want to remember about a lead, added here or from a thread in the Master Inbox."
-      }
+      back={{ href: "/outreach/inbox", label: t("backToInbox") }}
+      title={t(`${mode}.title`)}
+      description={t(`${mode}.description`)}
       actions={
         <Button.Root variant="primary" mode="filled" size="small" onClick={openForCreate}>
           <Button.Icon as={RiAddLine} />
-          New {noun}
+          {t(`${mode}.newButton`)}
         </Button.Root>
       }
     />
@@ -228,53 +224,53 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
   return (
     <InboxLayout header={header} threadOpen={paneOpen}>
       <ListPane
-        label={isTasks ? "Tasks" : "Notes"}
+        label={t(`${mode}.title`)}
         hidden={paneOpen}
         busy={refreshing}
         scrollRef={listRef}
         toolbar={
           <>
-            <ListSearch value={search} onChange={setSearch} placeholder={`Search ${noun}s…`} label={`Search ${noun}s`} />
+            <ListSearch value={search} onChange={setSearch} placeholder={t(`${mode}.searchPlaceholder`)} label={t(`${mode}.searchLabel`)} />
             <div className="flex items-center justify-between gap-2">
               {isTasks ? (
                 <SegmentedControl.Root value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
                   <SegmentedControl.List className="w-auto">
                     {STATUS_FILTERS.map((f) => (
                       <SegmentedControl.Trigger key={f.key} value={f.key} className="gap-1.5 px-2.5">
-                        {f.label}
+                        {t(f.labelKey)}
                         <span className="tabular-nums text-text-soft-400">{counts[f.key]}</span>
                       </SegmentedControl.Trigger>
                     ))}
                   </SegmentedControl.List>
                 </SegmentedControl.Root>
               ) : (
-                <span className="text-label-sm text-text-strong-950">All notes</span>
+                <span className="text-label-sm text-text-strong-950">{t("allNotes")}</span>
               )}
-              {!isTasks && <ListCount shown={filtered.length} total={items.length} noun={items.length === 1 ? "note" : "notes"} loading={loading} />}
+              {!isTasks && <ListCount shown={filtered.length} total={items.length} noun={t("noteCount", { count: items.length })} loading={loading} />}
             </div>
           </>
         }
       >
         {loadError && (
           <InlineError className="m-3" onRetry={() => void reload()}>
-            Could not load {noun}s.
+            {t(`${mode}.loadError`)}
           </InlineError>
         )}
         {loading && items.length === 0 ? (
           <RowsSkeleton />
         ) : filtered.length === 0 ? (
           loadError ? null : narrowing && items.length > 0 ? (
-            <EmptyState compact icon={RiSearchLine} title={`No ${noun}s match`} description="Try another search or status." />
+            <EmptyState compact icon={RiSearchLine} title={t(`${mode}.noMatchTitle`)} description={t("noMatchDescription")} />
           ) : (
             <EmptyState
               compact
               icon={isTasks ? RiTaskLine : RiStickyNoteLine}
-              title={`No ${noun}s yet`}
-              description={`Add one here, or with “+ ${Noun}” on a thread in the Master Inbox.`}
+              title={t(`${mode}.emptyTitle`)}
+              description={t(`${mode}.emptyDescription`)}
               action={
                 <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={openForCreate}>
                   <Button.Icon as={RiAddLine} />
-                  New {noun}
+                  {t(`${mode}.newButton`)}
                 </Button.Root>
               }
             />
@@ -314,7 +310,7 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
                       <Checkbox.Root
                         checked={item.isCompleted === true}
                         onCheckedChange={() => void handleToggleComplete(item)}
-                        aria-label={item.isCompleted ? `Mark “${label}” as not done` : `Mark “${label}” as done`}
+                        aria-label={item.isCompleted ? t("markNotDoneAria", { label }) : t("markDoneAria", { label })}
                       />
                     </span>
                   )}
@@ -345,7 +341,7 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
       <ReadingPane shown={paneOpen}>
         {editing ? (
           <>
-            <ThreadHeader onBack={closeForm} backLabel={`Back to ${noun}s`} title={creating ? `New ${noun}` : `Edit ${noun}`} />
+            <ThreadHeader onBack={closeForm} backLabel={t(`${mode}.backLabel`)} title={creating ? t(`${mode}.formNew`) : t(`${mode}.formEdit`)} />
             <form
               className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5"
               onSubmit={(e) => {
@@ -355,23 +351,23 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
             >
               <div className="max-w-xl space-y-4">
                 <label className="block space-y-1.5">
-                  <span className="block text-label-sm text-text-strong-950">{isTasks ? "Task" : "Title"}</span>
+                  <span className="block text-label-sm text-text-strong-950">{t(`${mode}.fieldLabel`)}</span>
                   <Input.Root>
                     <Input.Wrapper>
-                      <Input.Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={isTasks ? "Task name" : "Note title"} autoFocus />
+                      <Input.Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t(`${mode}.namePlaceholder`)} autoFocus />
                     </Input.Wrapper>
                   </Input.Root>
                 </label>
                 <label className="block space-y-1.5">
-                  <span className="block text-label-sm text-text-strong-950">Description</span>
-                  <Textarea.Root simple rows={6} value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Description…" />
+                  <span className="block text-label-sm text-text-strong-950">{t("description")}</span>
+                  <Textarea.Root simple rows={6} value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} />
                 </label>
                 <div className="flex items-center gap-2">
                   <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={!formName.trim() || saving}>
-                    {saving ? "Saving…" : "Save"}
+                    {saving ? t("saving") : t("save")}
                   </Button.Root>
                   <Button.Root type="button" variant="neutral" mode="stroke" size="small" onClick={closeForm}>
-                    Cancel
+                    {t("cancel")}
                   </Button.Root>
                 </div>
               </div>
@@ -381,25 +377,25 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
           <>
             <ThreadHeader
               onBack={() => setSelectedId(null)}
-              backLabel={`Back to ${noun}s`}
+              backLabel={t(`${mode}.backLabel`)}
               title={<span className={cn(selected.isCompleted && "text-text-soft-400 line-through")}>{labelOf(selected, isTasks)}</span>}
-              badges={isTasks ? <RowBadge tone={selected.isCompleted ? "green" : "gray"}>{selected.isCompleted ? "Done" : "Pending"}</RowBadge> : undefined}
-              subtitle={<span suppressHydrationWarning>Created {fullTime(new Date(selected.createdAt))}</span>}
+              badges={isTasks ? <RowBadge tone={selected.isCompleted ? "green" : "gray"}>{selected.isCompleted ? t("badgeDone") : t("badgePending")}</RowBadge> : undefined}
+              subtitle={<span suppressHydrationWarning>{t("created", { time: format.dateTime(new Date(selected.createdAt), { dateStyle: "medium", timeStyle: "short" }) })}</span>}
               actions={
                 <>
                   {isTasks && (
                     <Button.Root variant="neutral" mode="stroke" size="xxsmall" onClick={() => void handleToggleComplete(selected)}>
                       <Button.Icon as={selected.isCompleted ? RiArrowGoBackLine : RiCheckboxCircleLine} />
-                      {selected.isCompleted ? "Reopen" : "Mark done"}
+                      {selected.isCompleted ? t("reopen") : t("markDone")}
                     </Button.Root>
                   )}
                   <Button.Root variant="neutral" mode="stroke" size="xxsmall" onClick={() => openForEdit(selected)}>
                     <Button.Icon as={RiPencilLine} />
-                    Edit
+                    {t("edit")}
                   </Button.Root>
                   <Button.Root variant="error" mode="stroke" size="xxsmall" onClick={() => void handleDelete(selected)}>
                     <Button.Icon as={RiDeleteBinLine} />
-                    Delete
+                    {t("delete")}
                   </Button.Root>
                 </>
               }
@@ -417,15 +413,15 @@ export default function NotesTasksClient({ mode }: { mode: "tasks" | "notes" }) 
               {selected.description ? (
                 <p className="max-w-xl whitespace-pre-wrap text-paragraph-sm text-text-strong-950">{selected.description}</p>
               ) : (
-                <p className="text-paragraph-sm text-text-soft-400">No description.</p>
+                <p className="text-paragraph-sm text-text-soft-400">{t("noDescription")}</p>
               )}
             </div>
           </>
         ) : (
           <ReadingEmpty
             icon={isTasks ? RiTaskLine : RiStickyNoteLine}
-            title={`Select a ${noun}`}
-            description={`Pick one from the list to read or edit it, or add a new ${noun}.`}
+            title={t(`${mode}.selectTitle`)}
+            description={t(`${mode}.selectDescription`)}
           />
         )}
       </ReadingPane>

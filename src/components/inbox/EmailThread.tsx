@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiMailLine, RiMoreLine, RiStarFill, RiStarLine } from "@remixicon/react";
 import { EmptyState } from "@/components/page/EmptyState";
 import { cn } from "@/utils/cn";
 import type { EmailAddress, MessageRecipients } from "@/lib/email/recipients";
-import { InboxAvatar, fullTime } from "./shell/InboxShell";
+import { InboxAvatar, useInboxTime } from "./shell/InboxShell";
 
 export type ThreadMessage = {
   id: string;
@@ -29,7 +30,11 @@ export function formatAddresses(list: EmailAddress[]): { text: string; title: st
   };
 }
 
-function formatTimestamp(iso: string | null): string {
+function formatTimestamp(
+  iso: string | null,
+  format: ReturnType<typeof useFormatter>,
+  yesterdayLabel: (time: string) => string,
+): string {
   if (!iso) return "";
   const date = new Date(iso);
   const now = new Date();
@@ -37,10 +42,10 @@ function formatTimestamp(iso: string | null): string {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const time = format.dateTime(date, { hour: "numeric", minute: "2-digit" });
   if (isToday) return time;
-  if (isYesterday) return `Yesterday, ${time}`;
-  return `${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() === now.getFullYear() ? undefined : "numeric" })}, ${time}`;
+  if (isYesterday) return yesterdayLabel(time);
+  return `${format.dateTime(date, { month: "short", day: "numeric", year: date.getFullYear() === now.getFullYear() ? undefined : "numeric" })}, ${time}`;
 }
 
 /** "Re: Fwd: Hello" → "Hello". */
@@ -107,11 +112,14 @@ function MessageCard({
   defaultOpen: boolean;
   onToggleImportant: (id: string, next: boolean) => void;
 }) {
+  const t = useTranslations("inboxThread.emailThread");
+  const format = useFormatter();
+  const { fullTime } = useInboxTime();
   const [open, setOpen] = useState(defaultOpen);
   const [showQuoted, setShowQuoted] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const inbound = message.direction === "inbound";
-  const senderName = inbound ? leadName : "You";
+  const senderName = inbound ? leadName : t("you");
   const body = message.bodyText ?? "";
   const { main, quoted } = useMemo(() => splitQuoted(body), [body]);
   const preview = (main || body).replace(/\s+/g, " ").slice(0, 200);
@@ -122,6 +130,12 @@ function MessageCard({
   const to = message.recipients?.to ?? [];
   const cc = message.recipients?.cc ?? [];
   const bcc = inbound ? [] : message.recipients?.bcc ?? [];
+  // Which header line each list is: a key into the `${field}Line` messages, not text a person reads.
+  const addressParts = [
+    { field: "to", list: to },
+    { field: "cc", list: cc },
+    { field: "bcc", list: bcc },
+  ] as const;
 
   return (
     <article
@@ -145,7 +159,7 @@ function MessageCard({
         }}
         className="flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-base"
       >
-        <InboxAvatar name={inbound ? leadName : message.fromEmail || "You"} size="sm" />
+        <InboxAvatar name={inbound ? leadName : message.fromEmail || t("you")} size="sm" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-1.5">
@@ -156,7 +170,7 @@ function MessageCard({
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
               <span className="text-paragraph-xs tabular-nums text-text-soft-400" title={fullTime(when ? new Date(when) : null)} suppressHydrationWarning>
-                {formatTimestamp(when)}
+                {formatTimestamp(when, format, (time) => t("yesterday", { time }))}
               </span>
               <button
                 type="button"
@@ -170,8 +184,8 @@ function MessageCard({
                   "flex size-7 items-center justify-center rounded-md outline-none transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base",
                   message.important ? "text-warning-base" : "text-text-soft-400 hover:text-text-sub-600",
                 )}
-                title={message.important ? "Remove from important" : "Mark as important"}
-                aria-label={message.important ? "Remove from important" : "Mark as important"}
+                title={message.important ? t("removeImportant") : t("markImportant")}
+                aria-label={message.important ? t("removeImportant") : t("markImportant")}
               >
                 {message.important ? <RiStarFill className="size-4" /> : <RiStarLine className="size-4" />}
               </button>
@@ -180,33 +194,29 @@ function MessageCard({
           {open ? (
             to.length > 0 || cc.length > 0 || bcc.length > 0 ? (
               <div className="text-paragraph-xs text-text-soft-400">
-                {[
-                  { label: "to", list: to },
-                  { label: "cc", list: cc },
-                  { label: "bcc", list: bcc },
-                ]
+                {addressParts
                   .filter((part) => part.list.length > 0)
                   .map((part) => {
                     const { text, title } = formatAddresses(part.list);
                     return (
-                      <p key={part.label} className="truncate" title={title}>
-                        {part.label} {text}
+                      <p key={part.field} className="truncate" title={title}>
+                        {t(`${part.field}Line`, { list: text })}
                       </p>
                     );
                   })}
               </div>
             ) : (
-              recipient && <p className="truncate text-paragraph-xs text-text-soft-400">to {recipient}</p>
+              recipient && <p className="truncate text-paragraph-xs text-text-soft-400">{t("toLine", { list: recipient })}</p>
             )
           ) : (
-            <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">{preview || "(empty)"}</p>
+            <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">{preview || t("empty")}</p>
           )}
         </div>
       </div>
       {open && (
         <div className="px-4 pb-4 sm:pl-15 sm:pr-6">
           <p className={cn("whitespace-pre-wrap wrap-break-word text-paragraph-sm leading-6 text-text-strong-950", long && !showAll && "line-clamp-[18]")}>
-            {main || (quoted ? "" : "(empty)")}
+            {main || (quoted ? "" : t("empty"))}
           </p>
           {long && (
             <button
@@ -215,7 +225,7 @@ function MessageCard({
               aria-expanded={showAll}
               className="mt-1.5 text-label-xs text-text-sub-600 underline-offset-2 outline-none hover:text-text-strong-950 hover:underline focus-visible:underline"
             >
-              {showAll ? "Show less" : "Show the whole message"}
+              {showAll ? t("showLess") : t("showWhole")}
             </button>
           )}
           {quoted && (
@@ -224,8 +234,8 @@ function MessageCard({
                 type="button"
                 onClick={() => setShowQuoted((value) => !value)}
                 aria-expanded={showQuoted}
-                aria-label={showQuoted ? "Hide quoted text" : "Show quoted text"}
-                title={showQuoted ? "Hide quoted text" : "Show quoted text"}
+                aria-label={showQuoted ? t("hideQuoted") : t("showQuoted")}
+                title={showQuoted ? t("hideQuoted") : t("showQuoted")}
                 className="inline-flex h-5 items-center rounded-md bg-bg-weak-50 px-1.5 text-text-sub-600 outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base"
               >
                 <RiMoreLine className="size-4" aria-hidden="true" />
@@ -258,6 +268,7 @@ export default function EmailThread({
   leadEmail?: string;
   onToggleImportant: (id: string, next: boolean) => void;
 }) {
+  const t = useTranslations("inboxThread.emailThread");
   const rootRef = useRef<HTMLDivElement>(null);
   const [showEarlier, setShowEarlier] = useState(false);
   const lastMessageId = messages[messages.length - 1]?.id;
@@ -277,12 +288,12 @@ export default function EmailThread({
   }, [lastMessageId]);
 
   if (messages.length === 0) {
-    return <EmptyState icon={RiMailLine} title="No messages yet" description="Emails sent and received with this lead appear here." />;
+    return <EmptyState icon={RiMailLine} title={t("emptyTitle")} description={t("emptyDescription")} />;
   }
 
   const lastInboundId = [...messages].reverse().find((m) => m.direction === "inbound")?.id;
   const lastId = lastMessageId;
-  const subject = threadSubject([...messages].reverse().find((m) => m.subject)?.subject) || "(no subject)";
+  const subject = threadSubject([...messages].reverse().find((m) => m.subject)?.subject) || t("noSubject");
 
   // Keep the first message and the last three; fold a longer middle.
   const foldFrom = 1;
@@ -294,7 +305,7 @@ export default function EmailThread({
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="min-w-0 text-label-lg text-text-strong-950 wrap-break-word">{subject}</h2>
         <span className="shrink-0 text-paragraph-xs tabular-nums text-text-soft-400">
-          {messages.length} {messages.length === 1 ? "message" : "messages"}
+          {t("messageCount", { count: messages.length })}
         </span>
       </div>
       <div className="flex flex-col gap-2">
@@ -309,7 +320,7 @@ export default function EmailThread({
                 className="relative my-1 flex items-center justify-center py-1 text-label-xs text-text-sub-600 outline-none before:absolute before:inset-x-0 before:top-1/2 before:h-px before:bg-stroke-soft-200 hover:text-text-strong-950 focus-visible:underline"
               >
                 <span className="relative rounded-full bg-bg-white-0 px-3 py-0.5 ring-1 ring-inset ring-stroke-soft-200">
-                  {folded} earlier messages
+                  {t("earlierMessages", { count: folded })}
                 </span>
               </button>
             );

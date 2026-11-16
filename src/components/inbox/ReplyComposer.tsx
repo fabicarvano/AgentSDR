@@ -5,6 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Highlight from "@tiptap/extension-highlight";
 import { useEffect, useState, type ComponentType } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiBold,
   RiCloseLine,
@@ -45,6 +46,7 @@ function RecipientChips({
   /** Right-hand slot of the row — the Cc/Bcc toggles on To, a remove button on Cc/Bcc. */
   trailing?: React.ReactNode;
 }) {
+  const t = useTranslations("inboxThread.replyComposer");
   const [input, setInput] = useState("");
 
   function addFromInput() {
@@ -62,7 +64,7 @@ function RecipientChips({
         {values.map((v) => (
           <span key={v} className="inline-flex max-w-full items-center gap-1 rounded-md bg-bg-weak-50 py-0.5 pl-2 pr-1 text-paragraph-xs text-text-strong-950 ring-1 ring-inset ring-stroke-soft-200">
             <span className="truncate">{v}</span>
-            <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} aria-label={`Remove ${v}`} className="rounded text-text-soft-400 outline-none hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base">
+            <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} aria-label={t("removeRecipient", { value: v })} className="rounded text-text-soft-400 outline-none hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base">
               <RiCloseLine className="size-3.5" />
             </button>
           </span>
@@ -77,8 +79,8 @@ function RecipientChips({
             }
           }}
           onBlur={addFromInput}
-          aria-label={`${label} recipients`}
-          placeholder={values.length === 0 ? "Add recipient…" : ""}
+          aria-label={t("recipientsAria", { label })}
+          placeholder={values.length === 0 ? t("addRecipient") : ""}
           className="min-w-24 flex-1 bg-transparent py-0.5 text-paragraph-sm text-text-strong-950 outline-none placeholder:text-text-soft-400"
         />
       </div>
@@ -153,6 +155,7 @@ export default function ReplyComposer({
   onSend,
   onCancel,
 }: ReplyComposerProps) {
+  const t = useTranslations("inboxThread.replyComposer");
   const [expanded, setExpanded] = useState(isDraftApproval);
   const [to, setTo] = useState<Recipient[]>(initialTo);
   const [cc, setCc] = useState<Recipient[]>(initialCc ?? []);
@@ -169,6 +172,7 @@ export default function ReplyComposer({
   // block, so inside it the quote showed in full and its "Show quoted text"
   // label went out with the reply. It is shown collapsed under the editor and
   // appended to what is sent.
+  // The "On …, … wrote:" header is written INTO the outgoing email (content, not interface), so it stays English.
   const quoteHeader = quotedText != null && quotedFrom ? `On ${quotedDate ?? ""}, ${quotedFrom} wrote:` : "";
   const quoteHtml =
     quotedText != null
@@ -244,8 +248,8 @@ export default function ReplyComposer({
       >
         <RiReplyLine className="size-4 shrink-0" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">
-          {replyToName ? `Reply to ${replyToName}…` : "Reply…"}
-          <span className="ml-2 hidden text-paragraph-xs sm:inline">from {from}</span>
+          {replyToName ? t("replyTo", { name: replyToName }) : t("reply")}
+          <span className="ml-2 hidden text-paragraph-xs sm:inline">{t("fromShort", { from })}</span>
         </span>
         <kbd className="hidden shrink-0 rounded-md bg-bg-weak-50 px-1.5 py-0.5 font-sans text-[11px] text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200 sm:inline">R</kbd>
       </button>
@@ -277,13 +281,13 @@ export default function ReplyComposer({
           {isDraftApproval && (
             <>
               <RiSparkling2Line className="size-4 shrink-0 text-primary-base" aria-hidden="true" />
-              <span className="text-label-xs text-text-strong-950">AI-generated draft</span>
-              <span className="truncate text-paragraph-xs text-text-sub-600">Review, edit and approve to send</span>
+              <span className="text-label-xs text-text-strong-950">{t("aiDraft")}</span>
+              <span className="truncate text-paragraph-xs text-text-sub-600">{t("aiDraftHint")}</span>
             </>
           )}
           <span className="flex-1" />
           {onCancel && (
-            <button type="button" onClick={onCancel} className="flex size-6 items-center justify-center rounded-md text-text-soft-400 outline-none hover:bg-bg-white-0 hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base" aria-label="Close composer">
+            <button type="button" onClick={onCancel} className="flex size-6 items-center justify-center rounded-md text-text-soft-400 outline-none hover:bg-bg-white-0 hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base" aria-label={t("closeComposer")}>
               <RiCloseLine className="size-4" />
             </button>
           )}
@@ -291,24 +295,24 @@ export default function ReplyComposer({
       )}
 
       <div className={fieldRow}>
-        <span className={fieldLabel}>From</span>
+        <span className={fieldLabel}>{t("from")}</span>
         <span className="min-w-0 flex-1 truncate py-0.5 text-paragraph-sm text-text-sub-600">{from}</span>
       </div>
 
       <RecipientChips
-        label="To"
+        label={t("to")}
         values={to}
         onChange={setTo}
         trailing={
           <>
             {!showCc && (
               <button type="button" onClick={() => setShowCc(true)} className={linkish}>
-                Cc
+                {t("cc")}
               </button>
             )}
             {!showBcc && (
               <button type="button" onClick={() => setShowBcc(true)} className={linkish}>
-                Bcc
+                {t("bcc")}
               </button>
             )}
           </>
@@ -316,7 +320,7 @@ export default function ReplyComposer({
       />
       {showCc && (
         <RecipientChips
-          label="Cc"
+          label={t("cc")}
           values={cc}
           onChange={setCc}
           trailing={
@@ -329,7 +333,7 @@ export default function ReplyComposer({
                 setShowCc(false);
               }}
               className={linkish}
-              aria-label="Remove Cc"
+              aria-label={t("removeCc")}
             >
               <RiCloseLine className="size-3.5" />
             </button>
@@ -338,7 +342,7 @@ export default function ReplyComposer({
       )}
       {showBcc && (
         <RecipientChips
-          label="Bcc"
+          label={t("bcc")}
           values={bcc}
           onChange={setBcc}
           trailing={
@@ -349,7 +353,7 @@ export default function ReplyComposer({
                 setShowBcc(false);
               }}
               className={linkish}
-              aria-label="Remove Bcc"
+              aria-label={t("removeBcc")}
             >
               <RiCloseLine className="size-3.5" />
             </button>
@@ -358,31 +362,31 @@ export default function ReplyComposer({
       )}
 
       <div className={fieldRow}>
-        <span className={fieldLabel}>Subject</span>
+        <span className={fieldLabel}>{t("subject")}</span>
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          aria-label="Subject"
-          placeholder="Subject"
+          aria-label={t("subject")}
+          placeholder={t("subject")}
           className="min-w-0 flex-1 bg-transparent py-0.5 text-paragraph-sm text-text-strong-950 outline-none placeholder:text-text-soft-400"
         />
       </div>
 
       {editor && (
         <div className="flex items-center gap-0.5 border-b border-stroke-soft-200 px-2 py-1">
-          <ToolbarButton title="Bold" icon={RiBold} active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} />
-          <ToolbarButton title="Italic" icon={RiItalic} active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} />
-          <ToolbarButton title="Bullet list" icon={RiListUnordered} active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
-          <ToolbarButton title="Highlight" icon={RiMarkPenLine} active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
+          <ToolbarButton title={t("bold")} icon={RiBold} active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} />
+          <ToolbarButton title={t("italic")} icon={RiItalic} active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} />
+          <ToolbarButton title={t("bulletList")} icon={RiListUnordered} active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
+          <ToolbarButton title={t("highlight")} icon={RiMarkPenLine} active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
           <div className="relative">
-            <ToolbarButton title="Link" icon={RiLink} active={editor.isActive("link")} onClick={() => setLinkPromptOpen((o) => !o)} />
+            <ToolbarButton title={t("link")} icon={RiLink} active={editor.isActive("link")} onClick={() => setLinkPromptOpen((o) => !o)} />
             {linkPromptOpen && (
               <div className="absolute bottom-full left-0 z-10 mb-1 flex items-center gap-1 rounded-lg bg-bg-white-0 p-1.5 shadow-regular-md ring-1 ring-inset ring-stroke-soft-200">
                 <input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://…"
-                  aria-label="Link URL"
+                  aria-label={t("linkUrl")}
                   className="w-40 bg-transparent px-1.5 text-paragraph-xs text-text-strong-950 outline-none placeholder:text-text-soft-400"
                   autoFocus
                 />
@@ -395,7 +399,7 @@ export default function ReplyComposer({
                   }}
                   className="rounded px-1.5 text-label-xs text-primary-base outline-none hover:underline focus-visible:underline"
                 >
-                  Add
+                  {t("addLink")}
                 </button>
               </div>
             )}
@@ -411,7 +415,7 @@ export default function ReplyComposer({
         {quotedText != null && (
           <div className="mt-2">
             <button type="button" onClick={() => setShowQuote((v) => !v)} aria-expanded={showQuote} className={linkish}>
-              {showQuote ? "Hide quoted text" : "Show quoted text"}
+              {showQuote ? t("hideQuoted") : t("showQuoted")}
             </button>
             {showQuote && (
               <blockquote className="mt-1.5 whitespace-pre-wrap border-l-2 border-stroke-soft-200 pl-3 text-paragraph-xs text-text-sub-600">
@@ -425,10 +429,10 @@ export default function ReplyComposer({
 
       <div className="flex shrink-0 items-center justify-between gap-3 rounded-b-2xl border-t border-stroke-soft-200 bg-bg-weak-50 px-3 py-2">
         <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={onCancel ?? (() => setExpanded(false))}>
-          {isDraftApproval ? "Don't use draft" : "Close"}
+          {isDraftApproval ? t("dontUseDraft") : t("close")}
         </Button.Root>
         <Button.Root variant="primary" mode="filled" size="xsmall" onClick={() => void handleSend()} disabled={!canSend} title="⌘⏎ / Ctrl+Enter">
-          {sending ? "Sending…" : isDraftApproval ? "Approve & send" : "Send"}
+          {sending ? t("sending") : isDraftApproval ? t("approveAndSend") : t("send")}
           {!sending && <kbd className="font-sans text-paragraph-xs opacity-70">⌘⏎</kbd>}
         </Button.Root>
       </div>
