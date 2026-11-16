@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   RiArrowDownSLine,
@@ -20,13 +21,24 @@ import * as Modal from "@/components/alignui/modal";
 import * as Select from "@/components/alignui/select";
 import { cn } from "@/utils/cn";
 import { dangerButtonClass, fieldClass, primaryButtonClass, secondaryButtonClass, subtleButtonClass } from "./CrmLayout";
-import { asList, asObject, CATEGORY_COLOR, categoryColor, formatDate } from "./crm-utils";
+import { asList, asObject, CATEGORY_COLOR, categoryColor } from "./crm-utils";
+import { useCrmText } from "./useCrmText";
 
 type Data = Record<string, unknown>;
 
 export function humanize(value: unknown): string {
   const input = String(value ?? "").replaceAll("_", " ").replaceAll(".", " ").trim();
   return input ? input.charAt(0).toUpperCase() + input.slice(1) : "—";
+}
+
+/**
+ * A category's name: the translated one when the code knows the key, otherwise the stored key made readable.
+ * `categoryLabel` is `useCrmText().categoryLabel`, which answers a key it does not know with the key itself.
+ */
+export function categoryDisplayName(categoryLabel: (key: string) => string, key: string | null | undefined): string {
+  if (!key) return humanize(key);
+  const label = categoryLabel(key);
+  return label === key ? humanize(key) : label;
 }
 
 export type ClassificationChoice = { categoryKey: string; subcategoryId: string | null };
@@ -76,6 +88,8 @@ export function ClassificationPicker({ categories, categoryKey, subcategoryId, s
   /** Overrides the compact badge's hover title — used where a second, different action (Move stage) sits next to it and the two need to read as distinct. */
   title?: string;
 }) {
+  const t = useTranslations("crmActions.tools");
+  const { categoryLabel: sharedCategoryLabel } = useCrmText();
   const value = subcategoryId || (categoryKey ? `category:${categoryKey}` : "");
   const save = (next: string) => {
     if (!next) return;
@@ -92,7 +106,7 @@ export function ClassificationPicker({ categories, categoryKey, subcategoryId, s
     key: String(category.key),
     subcategories: asList<Data>(category.subcategories).filter((item) => item.active !== false),
   }));
-  const categoryLabel = categoryKey ? humanize(categoryKey) : "Unclassified";
+  const categoryLabel = categoryKey ? categoryDisplayName(sharedCategoryLabel, categoryKey) : sharedCategoryLabel(null);
 
   if (!compact) {
     return (
@@ -102,15 +116,15 @@ export function ClassificationPicker({ categories, categoryKey, subcategoryId, s
         disabled={disabled}
         onValueChange={(next) => save(next)}
       >
-        <Select.Trigger aria-label="Classification" className={cn("max-w-56", className)}>
-          <Select.Value placeholder="Unclassified" />
+        <Select.Trigger aria-label={t("picker.aria")} className={cn("max-w-56", className)}>
+          <Select.Value placeholder={sharedCategoryLabel(null)} />
         </Select.Trigger>
         <Select.Content>
           {groups.length === 0 && categoryKey && <Select.Item value={value}>{categoryLabel}{subcategoryName ? ` · ${subcategoryName}` : ""}</Select.Item>}
           {groups.map((group) => (
             <Select.Group key={group.key}>
-              <Select.GroupLabel>{humanize(group.key)}</Select.GroupLabel>
-              <Select.Item value={`category:${group.key}`}>{humanize(group.key)} · no subcategory</Select.Item>
+              <Select.GroupLabel>{categoryDisplayName(sharedCategoryLabel, group.key)}</Select.GroupLabel>
+              <Select.Item value={`category:${group.key}`}>{t("picker.noSubcategory", { category: categoryDisplayName(sharedCategoryLabel, group.key) })}</Select.Item>
               {group.subcategories.map((item) => <Select.Item key={String(item.id)} value={String(item.id)}>{String(item.name)}</Select.Item>)}
             </Select.Group>
           ))}
@@ -129,7 +143,7 @@ export function ClassificationPicker({ categories, categoryKey, subcategoryId, s
         <button
           type="button"
           disabled={disabled || groups.length === 0}
-          aria-label={`Classification: ${label}. Change`}
+          aria-label={t("picker.changeAria", { label })}
           title={title ?? (subcategoryName ? `${categoryLabel} · ${subcategoryName}` : categoryLabel)}
           className={cn("inline-flex h-6 max-w-full items-center gap-1 rounded-md pl-2 pr-1.5 text-label-xs ring-1 ring-inset transition", categoryKey && "hover:brightness-95", "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-strong-950 disabled:opacity-60 data-[state=open]:ring-2 data-[state=open]:ring-stroke-strong-950", tone, className)}
         >
@@ -153,6 +167,7 @@ function ClassificationMenu({ groups, value, onPick }: {
   value: string;
   onPick: (next: string) => void;
 }) {
+  const { categoryLabel } = useCrmText();
   const contentRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLDivElement>(null);
   // One step darker than the hover tint, so the current choice still reads
@@ -168,7 +183,7 @@ function ClassificationMenu({ groups, value, onPick }: {
           <Dropdown.Group key={group.key}>
             {index > 0 && <Dropdown.Separator />}
             <Dropdown.Item ref={value === categoryValue ? selectedRef : undefined} onSelect={() => onPick(categoryValue)} className={itemClass(value === categoryValue)}>
-              <span className={cn("inline-flex h-6 items-center rounded-md px-2 text-label-xs ring-1 ring-inset", categoryToneClass[group.key] ?? "bg-bg-weak-50 text-text-sub-600 ring-stroke-soft-200")}>{humanize(group.key)}</span>
+              <span className={cn("inline-flex h-6 items-center rounded-md px-2 text-label-xs ring-1 ring-inset", categoryToneClass[group.key] ?? "bg-bg-weak-50 text-text-sub-600 ring-stroke-soft-200")}>{categoryDisplayName(categoryLabel, group.key)}</span>
               <span className="flex-1" />
               {value === categoryValue && check}
             </Dropdown.Item>
@@ -277,13 +292,8 @@ export const HoverPreviewProvider = ({ children }: { children: React.ReactNode }
 export type RowMutation = (path: string, body: Data, method: string, success: string) => Promise<boolean>;
 
 /** Starting points for feedback; each appends a line so several can be combined. */
-const REGENERATE_HINTS: { label: string; text: string }[] = [
-  { label: "Shorter", text: "Make it shorter — three or four lines at most." },
-  { label: "Less formal", text: "Less formal, more like a person writing." },
-  { label: "Answer their question", text: "Answer their actual question before anything else." },
-  { label: "Less salesy", text: "Drop the sales pitch; just be helpful." },
-  { label: "One next step", text: "Propose one concrete next step." },
-];
+// The text of a hint is written into the feedback box, where the person reads and edits it, so it comes from the catalog too.
+const REGENERATE_HINTS = ["shorter", "lessFormal", "answerQuestion", "lessSalesy", "oneNextStep"] as const;
 
 /**
  * Regenerating with no brief just reruns the same prompt and gets much the
@@ -297,6 +307,7 @@ export function RegenerateDraftDialog({ open, onOpenChange, onSubmit, busy }: {
   onSubmit: (feedback: string) => Promise<boolean>;
   busy?: boolean;
 }) {
+  const t = useTranslations("crmActions.tools");
   const [feedback, setFeedback] = useState("");
   const [working, setWorking] = useState(false);
   useEffect(() => { if (!open) { setFeedback(""); setWorking(false); } }, [open]);
@@ -317,31 +328,31 @@ export function RegenerateDraftDialog({ open, onOpenChange, onSubmit, busy }: {
     <Modal.Root open={open} onOpenChange={(next) => { if (!working) onOpenChange(next); }}>
       <Modal.Content size="max-w-lg">
         <Modal.Header icon={RiRefreshLine}>
-          <Modal.Title>Regenerate this draft</Modal.Title>
-          <Modal.Description>Tell the AI what to change. It rewrites the reply with your notes and the current draft in front of it.</Modal.Description>
+          <Modal.Title>{t("regenerate.title")}</Modal.Title>
+          <Modal.Description>{t("regenerate.description")}</Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-3">
           <textarea
-            aria-label="What should change"
+            aria-label={t("regenerate.textareaAria")}
             autoFocus
             value={feedback}
             disabled={working}
             onChange={(event) => setFeedback(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void submit(); } }}
-            placeholder="e.g. Too long and too salesy. They asked about pricing — answer that first, then offer the 20-minute call."
+            placeholder={t("regenerate.placeholder")}
             className={cn(fieldClass, "min-h-28 resize-y leading-6")}
           />
           <div className="flex flex-wrap gap-1.5">
             {REGENERATE_HINTS.map((hint) => (
-              <button key={hint.label} type="button" disabled={working} onClick={() => addHint(hint.text)} className="rounded-full bg-bg-weak-50 px-2.5 py-1 text-label-xs text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-soft-200 hover:text-text-strong-950 disabled:opacity-60">{hint.label}</button>
+              <button key={hint} type="button" disabled={working} onClick={() => addHint(t(`regenerate.hints.${hint}.text`))} className="rounded-full bg-bg-weak-50 px-2.5 py-1 text-label-xs text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-soft-200 hover:text-text-strong-950 disabled:opacity-60">{t(`regenerate.hints.${hint}.label`)}</button>
             ))}
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <span className="mr-auto text-paragraph-xs text-text-soft-400">⌘↵ to regenerate</span>
-          <Modal.Close asChild><button type="button" className={secondaryButtonClass} disabled={working}>Cancel</button></Modal.Close>
+          <span className="mr-auto text-paragraph-xs text-text-soft-400">{t("regenerate.shortcut")}</span>
+          <Modal.Close asChild><button type="button" className={secondaryButtonClass} disabled={working}>{t("cancel")}</button></Modal.Close>
           <button type="button" className={primaryButtonClass} disabled={!ready} onClick={() => void submit()}>
-            <RiRefreshLine className={cn("size-4", working && "animate-spin")} aria-hidden="true" />{working ? "Rewriting…" : "Regenerate"}
+            <RiRefreshLine className={cn("size-4", working && "animate-spin")} aria-hidden="true" />{working ? t("regenerate.rewriting") : t("regenerate.button")}
           </button>
         </Modal.Footer>
       </Modal.Content>
@@ -360,11 +371,20 @@ export type MoveStageBody = {
   next: "follow_up" | "reply";
 };
 
-/** The toast for a finished move, which differs by what happens next. */
+/**
+ * The toast for a finished move, which differs by what happens next. Screens call `useMoveStageSuccessMessage()` for the
+ * translated text; this plain function keeps its English output only for screens that have not switched to the hook yet.
+ */
 export function moveStageSuccessMessage(body: MoveStageBody): string {
   return body.next === "reply"
     ? "Stage moved — the first reply is being drafted"
     : "Stage moved — follow-ups scheduled";
+}
+
+/** The translated twin of `moveStageSuccessMessage`. */
+export function useMoveStageSuccessMessage() {
+  const t = useTranslations("crmActions.tools");
+  return useCallback((body: MoveStageBody): string => t(body.next === "reply" ? "moveStage.successReply" : "moveStage.successFollowUp"), [t]);
 }
 
 /** yyyy-mm-dd for today in the browser's own timezone, not UTC — so the date input's default and max agree with what the reviewer calls "today". */
@@ -408,6 +428,8 @@ export function MoveStageDialog({ categories, categoryKey, subcategoryId, contex
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const t = useTranslations("crmActions.tools");
+  const { categoryLabel } = useCrmText();
   const [internalOpen, setInternalOpen] = useState(false);
   const controlled = openProp !== undefined;
   const open = controlled ? Boolean(openProp) : internalOpen;
@@ -444,24 +466,24 @@ export function MoveStageDialog({ categories, categoryKey, subcategoryId, contex
   return (
     <div className="contents" onClick={(event) => event.stopPropagation()}>
     <Modal.Root open={open} onOpenChange={(next) => { if (!working) setOpen(next); }}>
-      {!controlled && <Modal.Trigger asChild>{trigger ?? <button type="button" disabled={disabled} className={cn(primaryButtonClass, "h-7 gap-1.5 whitespace-nowrap px-2.5 text-label-xs")}><RiArrowRightLine className="size-3.5" aria-hidden="true" />Move stage</button>}</Modal.Trigger>}
+      {!controlled && <Modal.Trigger asChild>{trigger ?? <button type="button" disabled={disabled} className={cn(primaryButtonClass, "h-7 gap-1.5 whitespace-nowrap px-2.5 text-label-xs")}><RiArrowRightLine className="size-3.5" aria-hidden="true" />{t("moveStage.trigger")}</button>}</Modal.Trigger>}
       <Modal.Content size="max-w-lg">
         <Modal.Header icon={RiArrowRightLine}>
-          <Modal.Title>Move stage</Modal.Title>
-          <Modal.Description>Something happened outside the conversation — record it and move this lead on.</Modal.Description>
+          <Modal.Title>{t("moveStage.title")}</Modal.Title>
+          <Modal.Description>{t("moveStage.description")}</Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-3">
           <label className="block">
-            <span className="mb-1.5 block text-label-xs text-text-sub-600">New stage</span>
+            <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("moveStage.newStage")}</span>
             <Select.Root value={stage} disabled={Boolean(working)} onValueChange={(next) => setStage(next)}>
-              <Select.Trigger aria-label="New stage" className="w-full">
-                <Select.Value placeholder="Choose a stage…" />
+              <Select.Trigger aria-label={t("moveStage.newStage")} className="w-full">
+                <Select.Value placeholder={t("moveStage.choose")} />
               </Select.Trigger>
               <Select.Content>
                 {groups.map((group) => (
                   <Select.Group key={group.key}>
-                    <Select.GroupLabel>{humanize(group.key)}</Select.GroupLabel>
-                    {currentValue !== `category:${group.key}` && <Select.Item value={`category:${group.key}`}>{humanize(group.key)} · no subcategory</Select.Item>}
+                    <Select.GroupLabel>{categoryDisplayName(categoryLabel, group.key)}</Select.GroupLabel>
+                    {currentValue !== `category:${group.key}` && <Select.Item value={`category:${group.key}`}>{t("picker.noSubcategory", { category: categoryDisplayName(categoryLabel, group.key) })}</Select.Item>}
                     {group.subcategories.map((item) => <Select.Item key={String(item.id)} value={String(item.id)}>{String(item.name)}</Select.Item>)}
                   </Select.Group>
                 ))}
@@ -469,10 +491,10 @@ export function MoveStageDialog({ categories, categoryKey, subcategoryId, contex
             </Select.Root>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-label-xs text-text-sub-600">When did it happen?</span>
+            <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("moveStage.when")}</span>
             <input
               type="date"
-              aria-label="When did it happen"
+              aria-label={t("moveStage.whenAria")}
               value={date}
               max={todayLocalDate()}
               disabled={Boolean(working)}
@@ -481,24 +503,24 @@ export function MoveStageDialog({ categories, categoryKey, subcategoryId, contex
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-label-xs text-text-sub-600">What happened? (optional)</span>
+            <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("moveStage.what")}</span>
             <textarea
               value={note}
               disabled={Boolean(working)}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="e.g. They want pricing for 50 seats; loop in their CTO"
+              placeholder={t("moveStage.whatPlaceholder")}
               className={cn(fieldClass, "min-h-20 resize-y leading-6")}
             />
           </label>
-          <p className="text-paragraph-xs text-text-soft-400">The AI&apos;s reading of the last reply stays as it was. <strong className="font-medium text-text-sub-600">Add to follow-ups</strong> treats the new stage&apos;s first reply as already handled and schedules its follow-ups; <strong className="font-medium text-text-sub-600">Draft a reply now</strong> writes that first reply for you to send. Either way, the drafts use this note.</p>
+          <p className="text-paragraph-xs text-text-soft-400">{t.rich("moveStage.explanation", { b: (chunks) => <strong className="font-medium text-text-sub-600">{chunks}</strong> })}</p>
         </Modal.Body>
         <Modal.Footer>
-          <Modal.Close asChild><button type="button" className={cn(secondaryButtonClass, "mr-auto")} disabled={Boolean(working)}>Cancel</button></Modal.Close>
+          <Modal.Close asChild><button type="button" className={cn(secondaryButtonClass, "mr-auto")} disabled={Boolean(working)}>{t("cancel")}</button></Modal.Close>
           <button type="button" className={secondaryButtonClass} disabled={!ready} onClick={() => void submit("reply")}>
-            <RiSparklingLine className="size-4" aria-hidden="true" />{working === "reply" ? "Moving…" : "Draft a reply now"}
+            <RiSparklingLine className="size-4" aria-hidden="true" />{working === "reply" ? t("moveStage.moving") : t("moveStage.draftReplyNow")}
           </button>
           <button type="button" className={primaryButtonClass} disabled={!ready} onClick={() => void submit("follow_up")}>
-            <RiTimerLine className="size-4" aria-hidden="true" />{working === "follow_up" ? "Moving…" : "Add to follow-ups"}
+            <RiTimerLine className="size-4" aria-hidden="true" />{working === "follow_up" ? t("moveStage.moving") : t("moveStage.addToFollowUps")}
           </button>
         </Modal.Footer>
       </Modal.Content>
@@ -513,6 +535,9 @@ export function MoveStageDialog({ categories, categoryKey, subcategoryId, contex
  * Approve & send / Save / Regenerate / Discard set the record page has.
  */
 export function InlineDraftEditor({ action, onMutate, onClose, busy }: { action: Data; onMutate: RowMutation; onClose: () => void; busy: boolean }) {
+  const t = useTranslations("crmActions.tools");
+  const ta = useTranslations("crmActions.actions");
+  const { formatDate } = useCrmText();
   const record = asObject(action.record);
   const draft = asObject(action.draft);
   const inbound = asObject(action.latestInbound);
@@ -543,40 +568,40 @@ export function InlineDraftEditor({ action, onMutate, onClose, busy }: { action:
     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onClose(); } }}>
       <div className="min-w-0 rounded-xl bg-bg-weak-50 p-3.5 ring-1 ring-inset ring-stroke-soft-200">
         <div className="mb-2 flex items-baseline justify-between gap-3">
-          <p className="text-label-xs uppercase tracking-wide text-text-soft-400">Their message</p>
+          <p className="text-label-xs uppercase tracking-wide text-text-soft-400">{t("editor.theirMessage")}</p>
           <p className="text-paragraph-xs text-text-soft-400">{formatDate(inbound.sentAt ?? record.lastInboundAt)}</p>
         </div>
         {inboundSubject && <p className="mb-1 text-label-sm text-text-strong-950">{inboundSubject}</p>}
-        <p className="max-h-64 overflow-y-auto whitespace-pre-wrap text-paragraph-sm leading-6 text-text-sub-600">{inboundBody || "No message text available."}</p>
+        <p className="max-h-64 overflow-y-auto whitespace-pre-wrap text-paragraph-sm leading-6 text-text-sub-600">{inboundBody || t("editor.noMessageText")}</p>
       </div>
       <div className="flex min-w-0 flex-col gap-3">
-        {dnc && <Warning tone="danger" title="Sending is blocked" detail="This person is marked as Do Not Contact." />}
-        {stale && !dnc && <Warning tone="warning" title="This draft may be out of date" detail="A newer reply changed the conversation. Regenerate, or open the record to review before sending." />}
-        {channel === "email" && <input aria-label="Subject" className={fieldClass} value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Email subject" disabled={busy} />}
+        {dnc && <Warning tone="danger" title={t("editor.blockedTitle")} detail={t("editor.blockedDetail")} />}
+        {stale && !dnc && <Warning tone="warning" title={t("editor.staleTitle")} detail={t("editor.staleDetail")} />}
+        {channel === "email" && <input aria-label={t("editor.subjectAria")} className={fieldClass} value={subject} onChange={(event) => setSubject(event.target.value)} placeholder={t("editor.subjectPlaceholder")} disabled={busy} />}
         <textarea
-          aria-label="Reply"
+          aria-label={t("editor.replyAria")}
           autoFocus
           className={cn(fieldClass, "min-h-36 resize-y leading-6")}
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          placeholder={`Write a ${channel === "linkedin" ? "LinkedIn" : channel === "whatsapp" ? "WhatsApp" : "email"} reply…`}
+          placeholder={t("editor.replyPlaceholder", { channel })}
           disabled={busy}
         />
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onMutate(`/drafts/${draftId}/send`, payload, "POST", "Reply queued for sending")}>
-            <RiSendPlaneLine className="size-4" aria-hidden="true" />{dirty ? "Save & send" : "Approve & send"}
+          <button type="button" disabled={!ready} className={primaryButtonClass} onClick={() => void onMutate(`/drafts/${draftId}/send`, payload, "POST", ta("replyQueued"))}>
+            <RiSendPlaneLine className="size-4" aria-hidden="true" />{dirty ? t("editor.saveAndSend") : t("editor.approveAndSend")}
           </button>
-          <button type="button" disabled={!draftId || !dirty || busy || !body.trim()} className={secondaryButtonClass} onClick={() => void onMutate(`/drafts/${draftId}`, payload, "PATCH", "Draft saved")}>
-            <RiSaveLine className="size-4" aria-hidden="true" />Save
+          <button type="button" disabled={!draftId || !dirty || busy || !body.trim()} className={secondaryButtonClass} onClick={() => void onMutate(`/drafts/${draftId}`, payload, "PATCH", t("editor.draftSaved"))}>
+            <RiSaveLine className="size-4" aria-hidden="true" />{t("editor.save")}
           </button>
           <button type="button" disabled={!draftId || busy} className={subtleButtonClass} onClick={() => setRegenerateOpen(true)}>
-            <RiRefreshLine className="size-4" aria-hidden="true" />Regenerate
+            <RiRefreshLine className="size-4" aria-hidden="true" />{t("regenerate.button")}
           </button>
-          <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} busy={busy} onSubmit={(feedback) => onMutate(`/drafts/${draftId}/regenerate`, { feedback }, "POST", "Draft rewritten with your notes")} />
-          <button type="button" disabled={!draftId || busy} className={dangerButtonClass} onClick={() => void onMutate(`/drafts/${draftId}/discard`, {}, "POST", "Draft discarded")}>
-            <RiDeleteBinLine className="size-4" aria-hidden="true" />Discard
+          <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} busy={busy} onSubmit={(feedback) => onMutate(`/drafts/${draftId}/regenerate`, { feedback }, "POST", ta("draftRewritten"))} />
+          <button type="button" disabled={!draftId || busy} className={dangerButtonClass} onClick={() => void onMutate(`/drafts/${draftId}/discard`, {}, "POST", ta("draftDiscarded"))}>
+            <RiDeleteBinLine className="size-4" aria-hidden="true" />{t("editor.discard")}
           </button>
-          <button type="button" className={cn(subtleButtonClass, "ml-auto")} onClick={onClose}>Cancel</button>
+          <button type="button" className={cn(subtleButtonClass, "ml-auto")} onClick={onClose}>{t("cancel")}</button>
         </div>
       </div>
     </div>

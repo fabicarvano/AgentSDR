@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAlarmWarningFill,
   RiArchiveStackFill,
@@ -56,13 +57,16 @@ import { cn } from "@/utils/cn";
 import { ContactAvatar } from "./ContactAvatar";
 import { ErrorState, primaryButtonClass, secondaryButtonClass } from "./CrmLayout";
 import { RowsSkeleton } from "./CrmSkeletons";
-import { CategoryDot, ClassificationPicker, HoverPreview, HoverPreviewProvider, InlineDraftEditor, MoveStageDialog, moveStageSuccessMessage, RegenerateDraftDialog, humanize, type MoveStageBody, type RowMutation } from "./ActionRowTools";
-import { asList, asObject, CATEGORY_LABELS, crmFetch, displayName, errorMessage, formatDate, relativeDate, timeAgo } from "./crm-utils";
+import { categoryDisplayName, CategoryDot, ClassificationPicker, HoverPreview, HoverPreviewProvider, InlineDraftEditor, MoveStageDialog, RegenerateDraftDialog, humanize, useMoveStageSuccessMessage, type MoveStageBody, type RowMutation } from "./ActionRowTools";
+import { asList, asObject, crmFetch } from "./crm-utils";
+import { useCrmText } from "./useCrmText";
 import { prefetchRecordWorkspace } from "./recordPrefetch";
 import { useRecordChanged } from "./recordEvents";
 import { publishRecordQueue, withdrawRecordQueue, type RecordQueue } from "./recordQueue";
 import { CRM_DUE_STATE_LABELS, type CrmDueState } from "@/lib/crm/stateMachine";
-import { CRM_ACTION_GROUP_LABELS, CRM_ACTION_GROUPS } from "@/lib/crm/actionGroups";
+import { CRM_ACTION_GROUPS } from "@/lib/crm/actionGroups";
+import type { CrmDraftStatus } from "@/lib/crm/schema";
+import type { Messages } from "@/i18n/catalog";
 
 export type Data = Record<string, unknown>;
 export type Action = Data;
@@ -79,6 +83,8 @@ export function actionDueState(action: Action): CrmDueState {
   return value in CRM_DUE_STATE_LABELS ? value as CrmDueState : "none";
 }
 export function actionChannel(action: Action) { return String(action.channel ?? asObject(action.conversation).channel ?? "none"); }
+// `actionType` is the server's own label for what a row needs (src/lib/crm/queries.ts) and works as its id here: the screen
+// looks the text up in the catalog by that value and shows the raw value for one it does not know.
 function actionType(action: Action) { return String(action.actionType ?? "Human review"); }
 export function actionId(action: Action) { return String(action.id ?? action.recordId ?? asObject(action.record).id ?? ""); }
 
@@ -96,8 +102,8 @@ export function CompactSelect({ label, value, onChange, placeholder, children, c
 }
 
 /** Category options with their identity dot, shared by both CRM lists. */
-export function categoryItems() {
-  return CATEGORY_KEYS.map((key) => <Select.Item key={key} value={key}><ItemLabel><CategoryDot categoryKey={key} className="size-2" />{CATEGORY_LABELS[key]}</ItemLabel></Select.Item>);
+export function categoryItems(categoryLabel: (key: string) => string) {
+  return CATEGORY_KEYS.map((key) => <Select.Item key={key} value={key}><ItemLabel><CategoryDot categoryKey={key} className="size-2" />{categoryLabel(key)}</ItemLabel></Select.Item>);
 }
 
 /**
@@ -110,10 +116,10 @@ function ItemLabel({ children }: { children: React.ReactNode }) {
   return <span className="flex min-w-0 items-center gap-2">{children}</span>;
 }
 
-export function channelItems() {
+export function channelItems(channelLabel: (key: string) => string) {
   return CHANNELS.map((key) => {
     const Icon = CHANNEL_META[key].icon;
-    return <Select.Item key={key} value={key}><ItemLabel><span className="flex shrink-0" style={{ color: CHANNEL_META[key].color }}><Icon className="size-4" /></span>{CHANNEL_META[key].label}</ItemLabel></Select.Item>;
+    return <Select.Item key={key} value={key}><ItemLabel><span className="flex shrink-0" style={{ color: CHANNEL_META[key].color }}><Icon className="size-4" /></span>{channelLabel(key)}</ItemLabel></Select.Item>;
   });
 }
 
@@ -151,6 +157,9 @@ function useQueueSummary() {
 }
 
 export function CrmActionsClient() {
+  const t = useTranslations("crmActions.queue");
+  const format = useFormatter();
+  const { categoryLabel, channelLabel, errorMessage } = useCrmText();
   const [actions, setActions] = useState<Action[]>([]);
   const [categories, setCategories] = useState<Data[]>([]);
   const [sequences, setSequences] = useState<Data[]>([]);
@@ -167,7 +176,7 @@ export function CrmActionsClient() {
       setCategories(asList<Data>(asObject(categoryResult).categories));
       setSequences(asList<Data>(sequenceResult, ["sequences"]));
     }).catch((cause) => setError(errorMessage(cause)));
-  }, []);
+  }, [errorMessage]);
   // Rebuilt only when a filter moves, so `load` stays stable across pages and
   // the scroll sentinel does not re-fire on every render.
   const query = useMemo(() => {
@@ -206,7 +215,7 @@ export function CrmActionsClient() {
       if (firstPage) setTotal(typeof body.total === "number" ? body.total : null);
       setLoaded(true);
     } catch (cause) { setError(errorMessage(cause)); } finally { setLoading(false); setLoadingMore(false); }
-  }, [query]);
+  }, [query, errorMessage]);
   // A filter change resets to the first page; `load` changes with the query.
   useEffect(() => { void load(0); }, [load]);
   const loadMore = useCallback(() => { void load(nextOffset); }, [load, nextOffset]);
@@ -228,50 +237,51 @@ export function CrmActionsClient() {
 
   const refresh = () => { void load(0); void reloadSummary(); };
   const shown = actions.length;
-  const detail = !loaded ? "Loading…"
-    : total !== null && !(postFiltered && hasMore) ? `${(postFiltered ? shown : total).toLocaleString()} ${(postFiltered ? shown : total) === 1 ? "item" : "items"}${activeFilterCount ? " match these filters" : ""} · newest reply first`
-    : `${shown}+ items · newest reply first`;
+  const detail = !loaded ? t("frame.detailLoading")
+    : total !== null && !(postFiltered && hasMore) ? t(activeFilterCount ? "frame.detailCountFiltered" : "frame.detailCount", { count: postFiltered ? shown : total })
+    : t("frame.detailMore", { count: shown });
+  const number = (value: number) => format.number(value);
 
   return <>
     <PageHeader
-      title="Action required"
-      description="Replies, drafts and follow-ups that need a person's decision before the CRM moves on."
+      title={t("header.title")}
+      description={t("header.description")}
       actions={<Button.Root variant="neutral" mode="stroke" size="small" onClick={refresh} disabled={loading}>
-        <Button.Icon as={RiRefreshLine} className={cn(loading && loaded && "animate-spin")} />Refresh
+        <Button.Icon as={RiRefreshLine} className={cn(loading && loaded && "animate-spin")} />{t("header.refresh")}
       </Button.Root>}
     />
 
     <KpiStrip className="mt-6" columns={4}>
-      <KpiCell icon={RiInboxLine} label="In the queue" value={summary ? summary.queue.toLocaleString() : "—"} context={summary ? `${summary.needsDecision.toLocaleString()} awaiting a decision` : undefined} hint="Every record waiting on a person: new replies, drafts to approve, AI changes to confirm, follow-ups past due and processing errors." selected={activeFilterCount === 0} onSelect={clearFilters} />
-      <KpiCell icon={RiDraftLine} label="Drafts to review" value={summary?.drafts != null ? summary.drafts.toLocaleString() : "—"} context="AI-written replies waiting for approval" hint="Drafts the AI has written that nobody has sent, edited or discarded yet. Hover a row's draft to read it, then Edit or Send." />
-      <KpiCell icon={RiTimerLine} label="Follow-ups due" value={summary ? summary.followUpsDue.toLocaleString() : "—"} context="Drafted or past their scheduled time" hint="Follow-ups waiting on a person: drafts to approve, and scheduled steps past their time with nothing drafted yet. Select to show only these." selected={filters.actionGroup === "follow_up"} onSelect={() => setFilter("actionGroup", filters.actionGroup === "follow_up" ? "" : "follow_up")} />
-      <KpiCell icon={RiErrorWarningLine} label="Errors" value={summary ? summary.errors.toLocaleString() : "—"} context={summary?.errors ? "Processing failed — open the record to retry" : "Nothing failed"} hint="Records whose classification, drafting or sending failed. Select to show only these." selected={Boolean(filters.error)} onSelect={() => setFilter("error", filters.error ? "" : "true")} />
+      <KpiCell icon={RiInboxLine} label={t("kpi.queueLabel")} value={summary ? number(summary.queue) : "—"} context={summary ? t("kpi.queueContext", { count: summary.needsDecision }) : undefined} hint={t("kpi.queueHint")} selected={activeFilterCount === 0} onSelect={clearFilters} />
+      <KpiCell icon={RiDraftLine} label={t("kpi.draftsLabel")} value={summary?.drafts != null ? number(summary.drafts) : "—"} context={t("kpi.draftsContext")} hint={t("kpi.draftsHint")} />
+      <KpiCell icon={RiTimerLine} label={t("kpi.followUpsLabel")} value={summary ? number(summary.followUpsDue) : "—"} context={t("kpi.followUpsContext")} hint={t("kpi.followUpsHint")} selected={filters.actionGroup === "follow_up"} onSelect={() => setFilter("actionGroup", filters.actionGroup === "follow_up" ? "" : "follow_up")} />
+      <KpiCell icon={RiErrorWarningLine} label={t("kpi.errorsLabel")} value={summary ? number(summary.errors) : "—"} context={summary?.errors ? t("kpi.errorsContextFailed") : t("kpi.errorsContextNone")} hint={t("kpi.errorsHint")} selected={Boolean(filters.error)} onSelect={() => setFilter("error", filters.error ? "" : "true")} />
     </KpiStrip>
 
     <Frame className="mt-5">
-      <FrameHeader title="Queue" description={detail} actions={<>
-          <CompactSelect label="Category" placeholder="All categories" value={filters.category} onChange={(value) => setFilter("category", value)}><Select.Item value="">All categories</Select.Item>{categoryItems()}</CompactSelect>
-          <CompactSelect label="Channel" placeholder="All channels" value={filters.channel} onChange={(value) => setFilter("channel", value)}><Select.Item value="">All channels</Select.Item>{channelItems()}</CompactSelect>
-          <CompactSelect label="Action type" placeholder="All action types" value={filters.actionGroup} onChange={(value) => setFilter("actionGroup", value)}><Select.Item value="">All action types</Select.Item>{CRM_ACTION_GROUPS.map((group) => <Select.Item key={group} value={group}>{CRM_ACTION_GROUP_LABELS[group]}</Select.Item>)}</CompactSelect>
-          <CompactSelect label="Due time" placeholder="Any due time" value={filters.due} onChange={(value) => setFilter("due", value)}><Select.Item value="">Any due time</Select.Item><Select.Item value="overdue">Overdue</Select.Item><Select.Item value="today">Due today</Select.Item><Select.Item value="upcoming">Upcoming</Select.Item></CompactSelect>
+      <FrameHeader title={t("frame.title")} description={detail} actions={<>
+          <CompactSelect label={t("filters.category")} placeholder={t("filters.allCategories")} value={filters.category} onChange={(value) => setFilter("category", value)}><Select.Item value="">{t("filters.allCategories")}</Select.Item>{categoryItems(categoryLabel)}</CompactSelect>
+          <CompactSelect label={t("filters.channel")} placeholder={t("filters.allChannels")} value={filters.channel} onChange={(value) => setFilter("channel", value)}><Select.Item value="">{t("filters.allChannels")}</Select.Item>{channelItems(channelLabel)}</CompactSelect>
+          <CompactSelect label={t("filters.actionType")} placeholder={t("filters.allActionTypes")} value={filters.actionGroup} onChange={(value) => setFilter("actionGroup", value)}><Select.Item value="">{t("filters.allActionTypes")}</Select.Item>{CRM_ACTION_GROUPS.map((group) => <Select.Item key={group} value={group}>{t(`actionGroup.${group}`)}</Select.Item>)}</CompactSelect>
+          <CompactSelect label={t("filters.dueTime")} placeholder={t("filters.anyDueTime")} value={filters.due} onChange={(value) => setFilter("due", value)}><Select.Item value="">{t("filters.anyDueTime")}</Select.Item><Select.Item value="overdue">{t("filters.overdue")}</Select.Item><Select.Item value="today">{t("filters.dueToday")}</Select.Item><Select.Item value="upcoming">{t("filters.upcoming")}</Select.Item></CompactSelect>
           <Popover.Root>
             <Popover.Trigger asChild>
               <Button.Root variant="neutral" mode="stroke" size="xsmall" className={cn(secondaryFilterCount > 0 && "text-text-strong-950")}>
-                <Button.Icon as={RiEqualizer2Line} />More filters
+                <Button.Icon as={RiEqualizer2Line} />{t("filters.moreFilters")}
                 {secondaryFilterCount > 0 && <span className="flex size-4 items-center justify-center rounded-full bg-primary-base text-label-xs text-static-white">{secondaryFilterCount}</span>}
               </Button.Root>
             </Popover.Trigger>
             <Popover.Content align="start" showArrow={false} sideOffset={8} className="w-80 max-w-[calc(100vw-2rem)] p-4">
-              <p className="text-label-sm text-text-strong-950">More filters</p>
+              <p className="text-label-sm text-text-strong-950">{t("filters.moreFilters")}</p>
               <div className="mt-3 grid gap-3">
-                <FilterField label="Subcategory"><CompactSelect label="Subcategory" placeholder="All subcategories" className="w-full" value={filters.subcategoryId} onChange={(value) => setFilter("subcategoryId", value)}><Select.Item value="">All subcategories</Select.Item>{subcategories.map((value) => <Select.Item key={String(value.id)} value={String(value.id)}><ItemLabel><CategoryDot categoryKey={String(value.categoryKey ?? "")} className="size-2" />{String(value.name)}</ItemLabel></Select.Item>)}</CompactSelect></FilterField>
-                <FilterField label="AI classification"><CompactSelect label="Classification review" placeholder="Any classification" className="w-full" value={filters.classificationReview} onChange={(value) => setFilter("classificationReview", value)}><Select.Item value="">Any classification</Select.Item><Select.Item value="true">Needs review</Select.Item><Select.Item value="false">Reviewed</Select.Item></CompactSelect></FilterField>
-                <FilterField label="Sequence"><CompactSelect label="Sequence" placeholder="All sequences" className="w-full" value={filters.sequenceId} onChange={(value) => setFilter("sequenceId", value)}><Select.Item value="">All sequences</Select.Item>{sequences.map((value) => <Select.Item key={String(value.id)} value={String(value.id)}>{String(value.name)}</Select.Item>)}</CompactSelect></FilterField>
-                <FilterField label="Errors"><CompactSelect label="Error state" placeholder="All states" className="w-full" value={filters.error} onChange={(value) => setFilter("error", value)}><Select.Item value="">All states</Select.Item><Select.Item value="true">Errors only</Select.Item></CompactSelect></FilterField>
+                <FilterField label={t("filters.subcategory")}><CompactSelect label={t("filters.subcategory")} placeholder={t("filters.allSubcategories")} className="w-full" value={filters.subcategoryId} onChange={(value) => setFilter("subcategoryId", value)}><Select.Item value="">{t("filters.allSubcategories")}</Select.Item>{subcategories.map((value) => <Select.Item key={String(value.id)} value={String(value.id)}><ItemLabel><CategoryDot categoryKey={String(value.categoryKey ?? "")} className="size-2" />{String(value.name)}</ItemLabel></Select.Item>)}</CompactSelect></FilterField>
+                <FilterField label={t("filters.aiClassification")}><CompactSelect label={t("filters.classificationReview")} placeholder={t("filters.anyClassification")} className="w-full" value={filters.classificationReview} onChange={(value) => setFilter("classificationReview", value)}><Select.Item value="">{t("filters.anyClassification")}</Select.Item><Select.Item value="true">{t("filters.needsReview")}</Select.Item><Select.Item value="false">{t("filters.reviewed")}</Select.Item></CompactSelect></FilterField>
+                <FilterField label={t("filters.sequence")}><CompactSelect label={t("filters.sequence")} placeholder={t("filters.allSequences")} className="w-full" value={filters.sequenceId} onChange={(value) => setFilter("sequenceId", value)}><Select.Item value="">{t("filters.allSequences")}</Select.Item>{sequences.map((value) => <Select.Item key={String(value.id)} value={String(value.id)}>{String(value.name)}</Select.Item>)}</CompactSelect></FilterField>
+                <FilterField label={t("filters.errors")}><CompactSelect label={t("filters.errorState")} placeholder={t("filters.allStates")} className="w-full" value={filters.error} onChange={(value) => setFilter("error", value)}><Select.Item value="">{t("filters.allStates")}</Select.Item><Select.Item value="true">{t("filters.errorsOnly")}</Select.Item></CompactSelect></FilterField>
               </div>
             </Popover.Content>
           </Popover.Root>
-          {activeFilterCount > 0 && <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={clearFilters}><Button.Icon as={RiCloseLine} />Clear {activeFilterCount === 1 ? "filter" : `${activeFilterCount} filters`}</Button.Root>}
+          {activeFilterCount > 0 && <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={clearFilters}><Button.Icon as={RiCloseLine} />{t("filters.clear", { count: activeFilterCount })}</Button.Root>}
       </>} />
       <FramePanel className="overflow-hidden p-0 sm:p-0">
         {!loaded && loading ? <RowsSkeleton rows={8} />
@@ -287,8 +297,8 @@ export function CrmActionsClient() {
               hasMore={hasMore && !loadingMore}
               onLoadMore={loadMore}
               empty={activeFilterCount
-                ? { icon: RiFilterOffLine, title: "Nothing matches these filters", detail: "The queue has items, just none that fit every filter you picked.", action: <Button.Root variant="neutral" mode="stroke" size="small" onClick={clearFilters}>Clear filters</Button.Root> }
-                : { icon: RiCheckDoubleLine, title: "You're all caught up", detail: "New replies, drafts to approve and due follow-ups will show up here." }}
+                ? { icon: RiFilterOffLine, title: t("empty.noMatchTitle"), detail: t("empty.noMatchDetail"), action: <Button.Root variant="neutral" mode="stroke" size="small" onClick={clearFilters}>{t("filters.clearFilters")}</Button.Root> }
+                : { icon: RiCheckDoubleLine, title: t("empty.caughtUpTitle"), detail: t("empty.caughtUpDetail") }}
             />
             {hasMore && <LoadMoreOnScroll onLoadMore={loadMore} busy={loadingMore} />}
           </>}
@@ -307,6 +317,7 @@ function FilterField({ label, children }: { label: string; children: React.React
  * (and for keyboard users, who never scroll the sentinel into view).
  */
 export function LoadMoreOnScroll({ onLoadMore, busy, className }: { onLoadMore: () => void; busy: boolean; className?: string }) {
+  const t = useTranslations("crmActions.queue");
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const node = sentinel.current;
@@ -323,7 +334,7 @@ export function LoadMoreOnScroll({ onLoadMore, busy, className }: { onLoadMore: 
   return <div className={cn("flex items-center justify-center border-t border-stroke-soft-200 p-3", className)}>
     <div ref={sentinel} aria-hidden="true" className="h-px w-px" />
     <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={onLoadMore} disabled={busy}>
-      {busy ? "Loading…" : "Load more"}
+      {busy ? t("loadMore.loading") : t("loadMore.label")}
     </Button.Root>
   </div>;
 }
@@ -349,6 +360,8 @@ export function useRowMutations({ onActionsChange, pipeline, onMutated, onRowGon
   onMutated?: () => void;
   onRowGone?: (id: string) => void;
 }) {
+  const t = useTranslations("crmActions.actions");
+  const { errorMessage } = useCrmText();
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
   const [notice, setNotice] = useState<Notice | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -370,7 +383,7 @@ export function useRowMutations({ onActionsChange, pipeline, onMutated, onRowGon
     try {
       await crmFetch(path, { method, body: JSON.stringify(body) });
       const fresh = await refreshRow(id);
-      setNotice({ tone: "success", text: fresh ? success : `${success} — this contact no longer needs attention.` });
+      setNotice({ tone: "success", text: fresh ? success : t("rowGone", { message: success }) });
       onMutated?.();
       return true;
     } catch (cause) {
@@ -379,7 +392,7 @@ export function useRowMutations({ onActionsChange, pipeline, onMutated, onRowGon
     } finally {
       setBusyIds((old) => { const next = new Set(old); next.delete(id); return next; });
     }
-  }, [refreshRow, onMutated]);
+  }, [refreshRow, onMutated, errorMessage, t]);
 
   // Reclassifying queues a fresh draft in the background, so the row read
   // straight after the call has no draft yet. A second read a few seconds
@@ -392,9 +405,9 @@ export function useRowMutations({ onActionsChange, pipeline, onMutated, onRowGon
   const classify = useCallback(async (action: Action, choice: { categoryKey: string; subcategoryId: string | null }) => {
     const id = actionId(action);
     const record = asObject(action.record);
-    const ok = await mutateRow(id, `/records/${id}/classification`, { ...choice, expectedContextVersion: record.contextVersion, classificationId: asObject(action.classification).id }, "PATCH", "Classification updated — a new draft is being written");
+    const ok = await mutateRow(id, `/records/${id}/classification`, { ...choice, expectedContextVersion: record.contextVersion, classificationId: asObject(action.classification).id }, "PATCH", t("classificationUpdated"));
     if (ok) refreshLater(id);
-  }, [mutateRow, refreshLater]);
+  }, [mutateRow, refreshLater, t]);
 
   return { busyIds, notice, setNotice, mutateRow, classify, refreshRow };
 }
@@ -418,6 +431,7 @@ export function useSyncRecordChanges(actions: Action[], refreshRow: (id: string)
  * from one lead to the next (see recordQueue.ts).
  */
 function usePublishRecordQueue(actions: Action[], hasMore = false, loadMore?: () => void) {
+  const { displayName } = useCrmText();
   const published = useRef<RecordQueue | null>(null);
   useEffect(() => {
     const queue: RecordQueue = {
@@ -435,16 +449,17 @@ function usePublishRecordQueue(actions: Action[], hasMore = false, loadMore?: ()
     };
     published.current = queue;
     publishRecordQueue(queue);
-  }, [actions, hasMore, loadMore]);
+  }, [actions, hasMore, loadMore, displayName]);
   useEffect(() => () => withdrawRecordQueue(published.current), []);
 }
 
 export function NoticeBar({ notice, onDismiss, className }: { notice: Notice | null; onDismiss: () => void; className?: string }) {
+  const t = useTranslations("crmActions.actions");
   if (!notice) return null;
   return <div role="status" className={cn("flex items-center gap-2 px-4 py-2 text-paragraph-sm", notice.tone === "error" ? "bg-error-lighter text-error-dark" : "bg-success-lighter text-success-dark", className)}>
     {notice.tone === "error" ? <RiCloseLine className="size-4 shrink-0" aria-hidden="true" /> : <RiCheckLine className="size-4 shrink-0" aria-hidden="true" />}
     <span className="min-w-0 flex-1 truncate">{notice.text}</span>
-    <button type="button" onClick={onDismiss} className="text-label-xs opacity-70 hover:opacity-100">Dismiss</button>
+    <button type="button" onClick={onDismiss} className="text-label-xs opacity-70 hover:opacity-100">{t("noticeDismiss")}</button>
   </div>;
 }
 
@@ -466,6 +481,7 @@ type RowsProps = {
 };
 
 export function ActionRows({ actions, categories, onActionsChange, pipeline, refreshing, onMutated, empty, hasMore, onLoadMore }: RowsProps) {
+  const t = useTranslations("crmActions.actions");
   const router = useRouter();
   const [editingId, setEditingId] = useState("");
   // Read once per mount so the "follow-up overdue" arithmetic stays pure.
@@ -497,15 +513,15 @@ export function ActionRows({ actions, categories, onActionsChange, pipeline, ref
     </div>
     <div aria-busy={refreshing || undefined} className={cn("hidden overflow-x-auto p-2 transition-opacity md:block", refreshing && "pointer-events-none opacity-60")}>
       <Table.Root className="min-w-[1000px]" style={{ tableLayout: "fixed" }}>
-        <caption className="sr-only">People and CRM actions requiring review</caption>
+        <caption className="sr-only">{t("table.caption")}</caption>
         <Table.Header>
           <Table.Row>
-            <Table.Head scope="col" className="w-[19%] px-4">Contact</Table.Head>
-            <Table.Head scope="col" className="w-[18%] px-4">Classification</Table.Head>
-            <Table.Head scope="col" className="w-[20%] px-4">Latest reply</Table.Head>
-            <Table.Head scope="col" className="w-[23%] px-4">Draft reply</Table.Head>
-            <Table.Head scope="col" className="w-[17%] px-3 text-right">{pipeline ? "Status" : "Due"}</Table.Head>
-            <Table.Head scope="col" className="w-12 px-2"><span className="sr-only">More actions</span></Table.Head>
+            <Table.Head scope="col" className="w-[19%] px-4">{t("table.contact")}</Table.Head>
+            <Table.Head scope="col" className="w-[18%] px-4">{t("table.classification")}</Table.Head>
+            <Table.Head scope="col" className="w-[20%] px-4">{t("table.latestReply")}</Table.Head>
+            <Table.Head scope="col" className="w-[23%] px-4">{t("table.draftReply")}</Table.Head>
+            <Table.Head scope="col" className="w-[17%] px-3 text-right">{pipeline ? t("table.status") : t("table.due")}</Table.Head>
+            <Table.Head scope="col" className="w-12 px-2"><span className="sr-only">{t("table.moreActions")}</span></Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body spacing={4}>{actions.map((action, index) => {
@@ -541,13 +557,15 @@ export function ActionRows({ actions, categories, onActionsChange, pipeline, ref
 
 /** Contact avatar with the reply channel's mark on its corner, in the channel's own colour. */
 export function ChannelAvatar({ src, name, channel, className }: { src: string | null; name: string; channel: string; className?: string }) {
-  const avatarText = name === "Unknown contact" ? "?" : name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const unknownContact = useTranslations("crmShared")("unknownContact");
+  const { channelLabel } = useCrmText();
+  const avatarText = name === unknownContact ? "?" : name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const meta = CHANNEL_META[channel as keyof typeof CHANNEL_META];
   const Icon = channel === "whatsapp" ? RiWhatsappFill : channel === "linkedin" ? RiLinkedinFill : RiMailFill;
   return <span className="relative shrink-0">
     <ContactAvatar src={src} fallback={avatarText} className={cn("size-9 bg-bg-weak-50 text-label-xs text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200", className)} />
-    {meta && <span title={meta.label} className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-static-white ring-2 ring-bg-white-0" style={{ backgroundColor: meta.color }}>
-      <Icon className="size-2.5" aria-hidden="true" /><span className="sr-only">{meta.label}</span>
+    {meta && <span title={channelLabel(channel)} className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-static-white ring-2 ring-bg-white-0" style={{ backgroundColor: meta.color }}>
+      <Icon className="size-2.5" aria-hidden="true" /><span className="sr-only">{channelLabel(channel)}</span>
     </span>}
   </span>;
 }
@@ -559,6 +577,7 @@ type IconType = React.ComponentType<{ className?: string }>;
  * state and an icon that says what the stage means at a glance: something to
  * do now, a wait, and a sequence that has run out.
  */
+// label, short and detail stay English here: CrmPipelineClient (its own batch) still reads them; nothing in this file renders them.
 export const STAGE_META = {
   needs_action: { label: "Needs action", short: "Needs action", color: HUE.amber, badge: "orange", icon: RiFlashlightFill as IconType, detail: "A reply, draft or follow-up is due" },
   waiting: { label: "Waiting on them", short: "Waiting", color: HUE.purple, badge: "purple", icon: RiHourglass2Fill as IconType, detail: "Replied to, or a follow-up is scheduled" },
@@ -591,30 +610,74 @@ const TONE_LABEL: Record<Tone, string> = {
   neutral: "text-text-sub-600",
 };
 
+/** The translator and the shared CRM text helpers, bundled so the plain functions below can use them. */
+function useActionText() {
+  const t = useTranslations("crmActions.actions");
+  const crm = useCrmText();
+  return useMemo(() => ({ t, crm }), [t, crm]);
+}
+type ActionText = ReturnType<typeof useActionText>;
+
+// The server's action-type labels (src/lib/crm/queries.ts) mapped to catalog keys. `_actionTypesCovered` fails tsc when the
+// catalog gains a type this map does not point to; a value the map does not know is shown as the server sent it.
+const ACTION_TYPE_KEYS = {
+  "All follow-ups sent": "allFollowUpsSent",
+  "Classifying reply": "classifyingReply",
+  "Paused": "paused",
+  "Follow-up scheduled": "followUpScheduled",
+  "Awaiting their reply": "awaitingTheirReply",
+  "Processing error": "processingError",
+  "Classification review": "classificationReview",
+  "Delivery reconciliation": "deliveryReconciliation",
+  "Follow-up review": "followUpReview",
+  "Reply review": "replyReview",
+  "WhatsApp follow-up": "whatsappFollowUp",
+  "Due follow-up": "dueFollowUp",
+  "No sequence assigned": "noSequenceAssigned",
+  "Human review": "humanReview",
+} as const;
+const _actionTypesCovered: Exclude<keyof Messages["crmActions"]["actions"]["actionType"], typeof ACTION_TYPE_KEYS[keyof typeof ACTION_TYPE_KEYS]> extends never ? true : false = true;
+void _actionTypesCovered;
+
+function actionTypeLabel(text: ActionText, value: string) {
+  return Object.hasOwn(ACTION_TYPE_KEYS, value) ? text.t(`actionType.${ACTION_TYPE_KEYS[value as keyof typeof ACTION_TYPE_KEYS]}`) : value;
+}
+
 /** Where the row's reply stands: one label, one colour, one icon — and what to do when it is not ready. */
 type DraftState = { label: string; tone: Tone; icon: IconType; hint?: string };
 
-function draftStateOf({ editable, draftFull, status, dnc, sendable, actionText }: { editable: boolean; draftFull: string; status: string; dnc: boolean; sendable: boolean; actionText: string }): DraftState {
+const DRAFT_STATUS_KEYS: Record<CrmDraftStatus, true> = { generating: true, awaiting_review: true, sending: true, sent: true, discarded: true, stale: true, failed: true, delivery_uncertain: true };
+
+/** What a draft's status is called; a status the code does not know is shown as stored. */
+function draftStatusLabel(text: ActionText, status: string) {
+  if (!status) return text.t("draftStatus.draft");
+  return Object.hasOwn(DRAFT_STATUS_KEYS, status) ? text.t(`draftStatus.${status as CrmDraftStatus}`) : humanize(status);
+}
+
+function draftStateOf({ editable, draftFull, status, dnc, sendable, actionText, text }: { editable: boolean; draftFull: string; status: string; dnc: boolean; sendable: boolean; actionText: string; text: ActionText }): DraftState {
+  const { t } = text;
   if (editable) {
-    if (status === "failed") return { label: "Draft failed", tone: "error", icon: RiErrorWarningFill, hint: "Edit it or regenerate" };
-    if (dnc) return { label: "Do not contact", tone: "error", icon: RiForbid2Line, hint: "Sending is blocked" };
-    if (!sendable) return { label: "Out of date", tone: "warning", icon: RiErrorWarningFill, hint: "A newer reply arrived — edit before sending" };
-    return { label: "Ready to send", tone: "success", icon: RiCheckboxCircleFill };
+    if (status === "failed") return { label: t("draftState.failed"), tone: "error", icon: RiErrorWarningFill, hint: t("draftState.failedHint") };
+    if (dnc) return { label: t("draftState.dnc"), tone: "error", icon: RiForbid2Line, hint: t("draftState.dncHint") };
+    if (!sendable) return { label: t("draftState.outOfDate"), tone: "warning", icon: RiErrorWarningFill, hint: t("draftState.outOfDateHint") };
+    return { label: t("draftState.ready"), tone: "success", icon: RiCheckboxCircleFill };
   }
-  if (draftFull) return { label: humanize(status || "draft"), tone: "neutral", icon: RiDraftLine };
+  if (draftFull) return { label: draftStatusLabel(text, status), tone: "neutral", icon: RiDraftLine };
+  // The cases are the server's own action types (see `actionType`), not text typed by a person.
   switch (actionText) {
-    case "Processing error": return { label: "Processing error", tone: "error", icon: RiErrorWarningFill, hint: "Open the record to retry" };
-    case "Classification review": return { label: "Needs classification", tone: "warning", icon: RiPriceTag3Line, hint: "Confirm the classification first" };
-    case "No sequence assigned": return { label: "No sequence", tone: "neutral", icon: RiLinkUnlink, hint: "Nothing runs for this classification" };
-    case "Delivery reconciliation": return { label: "Confirm delivery", tone: "warning", icon: RiQuestionLine, hint: "Open the record to confirm the last send" };
+    case "Processing error": return { label: t("draftState.processingError"), tone: "error", icon: RiErrorWarningFill, hint: t("draftState.processingErrorHint") };
+    case "Classification review": return { label: t("draftState.needsClassification"), tone: "warning", icon: RiPriceTag3Line, hint: t("draftState.needsClassificationHint") };
+    case "No sequence assigned": return { label: t("draftState.noSequence"), tone: "neutral", icon: RiLinkUnlink, hint: t("draftState.noSequenceHint") };
+    case "Delivery reconciliation": return { label: t("draftState.confirmDelivery"), tone: "warning", icon: RiQuestionLine, hint: t("draftState.confirmDeliveryHint") };
     case "Reply review":
-    case "Human review": return { label: "Needs a reply", tone: "info", icon: RiReplyLine, hint: "No draft yet — write one on the record" };
-    default: return { label: actionText, tone: "neutral", icon: RiTimeLine };
+    case "Human review": return { label: t("draftState.needsReply"), tone: "info", icon: RiReplyLine, hint: t("draftState.needsReplyHint") };
+    default: return { label: actionTypeLabel(text, actionText), tone: "neutral", icon: RiTimeLine };
   }
 }
 
 /** Everything a row or card shows about one action, computed once. */
-export function describeAction(action: Action, categories: Data[], pipeline: boolean | undefined, now: number) {
+export function describeAction(action: Action, categories: Data[], pipeline: boolean | undefined, now: number, text: ActionText) {
+  const { t, crm } = text;
   const record = asObject(action.record);
   const person = asObject(action.person);
   const company = asObject(action.company);
@@ -632,7 +695,7 @@ export function describeAction(action: Action, categories: Data[], pipeline: boo
   const proposedSubcategoryName = proposedSubcategoryId
     ? categories.flatMap((item) => asList<Data>(item.subcategories)).find((entry) => String(entry.id) === proposedSubcategoryId)?.name
     : null;
-  const proposedLabel = proposedSubcategoryName ? String(proposedSubcategoryName) : humanize(proposedCategoryKey);
+  const proposedLabel = proposedSubcategoryName ? String(proposedSubcategoryName) : categoryDisplayName(crm.categoryLabel, proposedCategoryKey);
   const keepCategoryKey = String(record.categoryKey ?? classification.category ?? "other");
   const keepSubcategoryId = record.subcategoryId ? String(record.subcategoryId) : null;
   const id = actionId(action);
@@ -651,15 +714,15 @@ export function describeAction(action: Action, categories: Data[], pipeline: boo
   // On the pipeline, a record off the queue has no due action to name; the
   // column says which stage it is in and the next or last thing that happened.
   const stage = (pipeline ? String(action.stage ?? "needs_action") : "needs_action") as PipelineStage;
-  const lastSent = record.lastOutboundAt ? `Sent ${timeAgo(record.lastOutboundAt)}` : "";
-  const dueLabel = stage === "exhausted" ? "Exhausted"
-    : stage === "waiting" ? "Waiting"
-    : followUpOverdue ? "Follow-up due" : CRM_DUE_STATE_LABELS[dueState];
+  const lastSent = record.lastOutboundAt ? t("sent", { when: crm.timeAgo(record.lastOutboundAt) }) : "";
+  const dueLabel = stage === "exhausted" ? t("dueLabel.exhausted")
+    : stage === "waiting" ? t("dueLabel.waiting")
+    : followUpOverdue ? t("dueLabel.followUpDue") : t(`dueState.${dueState}`);
   // "Immediate reply" is already the whole story; a timestamp next to it
   // just repeats "now". The scheduled states are the ones worth dating.
   const dueDetail = stage === "exhausted" ? lastSent
-    : stage === "waiting" ? due ? `Next ${relativeDate(due)}` : lastSent
-    : dueState === "past_due" || dueState === "follow_up" || followUpOverdue ? relativeDate(due) : "";
+    : stage === "waiting" ? due ? t("next", { when: crm.relativeDate(due) }) : lastSent
+    : dueState === "past_due" || dueState === "follow_up" || followUpOverdue ? crm.relativeDate(due) : "";
   const urgent = dueState === "immediate_reply" || dueState === "past_due" || followUpOverdue;
   const dueColor: React.ComponentProps<typeof Badge.Root>["color"] = stage === "exhausted" ? "gray"
     : stage === "waiting" ? "purple"
@@ -675,7 +738,7 @@ export function describeAction(action: Action, categories: Data[], pipeline: boo
     : dueState === "follow_up_ready" || dueState === "auto_follow_up" ? RiMailSendLine
     : dueState === "follow_up" ? RiCalendarScheduleLine
     : RiTimeLine;
-  const name = displayName({ ...action, ...record });
+  const name = crm.displayName({ ...action, ...record });
   // The channel already shows on the avatar, so the line under the name says
   // which company this is — its domain, or the email's when no company is
   // linked — rather than repeating the address or profile URL.
@@ -699,17 +762,17 @@ export function describeAction(action: Action, categories: Data[], pipeline: boo
   const stepLabel = action.draftStepLabel ? String(action.draftStepLabel) : step.name ? String(step.name) : "";
   const lastRun = asObject(action.lastRun);
   const sequenceLabel = sequence.name ? `${String(sequence.name)}${stepLabel ? ` · ${stepLabel}` : ""}`
-    : stage === "exhausted" && lastRun.sequenceName ? `${String(lastRun.sequenceName)} · completed` : "";
+    : stage === "exhausted" && lastRun.sequenceName ? t("sequenceCompleted", { name: String(lastRun.sequenceName) }) : "";
   // Send-as-written needs a draft the server will accept unchanged: not
   // stale against the conversation and not to a Do-Not-Contact person.
   const dnc = Boolean(asObject(action.contactPolicy).doNotContact);
   const sendableDraft = Boolean(editable) && !dnc && Number(editable?.expectedContextVersion) === Number(record.contextVersion);
   const actionText = actionType(action);
-  const draftState = draftStateOf({ editable: Boolean(editable), draftFull, status: String(draft.status ?? ""), dnc, sendable: sendableDraft, actionText });
+  const draftState = draftStateOf({ editable: Boolean(editable), draftFull, status: String(draft.status ?? ""), dnc, sendable: sendableDraft, actionText, text });
   return {
     id, href, record, person, activeRun, inbound, subcategory, classification, category, channel, stage,
     proposedCategoryKey, proposedSubcategoryId, proposedLabel, keepCategoryKey, keepSubcategoryId,
-    dueLabel, dueDetail, dueColor, dueIcon, actionText, name, companyDomain, companyLabel,
+    dueLabel, dueDetail, dueColor, dueIcon, actionText, actionLabel: actionTypeLabel(text, actionText), name, companyDomain, companyLabel,
     latestReplyFull, latestReply, draft, draftFull, draftReply, editable, repliedAt, sequenceLabel, stepLabel, sendableDraft, draftState,
     avatarUrl: person.profilePictureUrl ? String(person.profilePictureUrl) : null,
   };
@@ -740,16 +803,17 @@ export function useRecordPrefetch(id: string, href: string) {
  * the line under the classification instead of stacking three.
  */
 export function ProposalInline({ label, busy, onAccept, onKeep, className }: { label: string; busy: boolean; onAccept: () => void; onKeep: () => void; className?: string }) {
+  const t = useTranslations("crmActions.actions");
   const button = "flex h-full w-6 shrink-0 items-center justify-center transition hover:bg-bg-white-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stroke-strong-950 disabled:opacity-60";
   return <div className={cn("inline-flex h-6 max-w-full items-stretch overflow-hidden rounded-md bg-warning-lighter text-warning-dark ring-1 ring-inset ring-warning-light", className)}>
-    <span className="flex min-w-0 items-center gap-1 pl-1.5 pr-1.5 text-label-xs" title={`AI suggests: ${label}`}>
+    <span className="flex min-w-0 items-center gap-1 pl-1.5 pr-1.5 text-label-xs" title={t("proposal.suggestsTitle", { label })}>
       <RiSparklingFill className="size-3 shrink-0" aria-hidden="true" />
-      <span className="truncate"><span className="sr-only">AI suggests </span>{label}</span>
+      <span className="truncate"><span className="sr-only">{t("proposal.suggestsPrefix")} </span>{label}</span>
     </span>
-    <button type="button" disabled={busy} onClick={onAccept} aria-label={`Accept AI suggestion: ${label}`} title={`Accept: move to ${label}`} className={cn(button, "border-l border-warning-light")}>
+    <button type="button" disabled={busy} onClick={onAccept} aria-label={t("proposal.acceptAria", { label })} title={t("proposal.acceptTitle", { label })} className={cn(button, "border-l border-warning-light")}>
       <RiCheckLine className="size-3.5" aria-hidden="true" />
     </button>
-    <button type="button" disabled={busy} onClick={onKeep} aria-label="Keep the current classification" title="Keep current classification" className={cn(button, "border-l border-warning-light")}>
+    <button type="button" disabled={busy} onClick={onKeep} aria-label={t("proposal.keepAria")} title={t("proposal.keepTitle")} className={cn(button, "border-l border-warning-light")}>
       <RiCloseLine className="size-3.5" aria-hidden="true" />
     </button>
   </div>;
@@ -757,6 +821,7 @@ export function ProposalInline({ label, busy, onAccept, onKeep, className }: { l
 
 /** Classification chip — the cell centres it in the row — and, while the AI holds a proposal, the choice to accept it. */
 function ClassificationCell({ row, categories, busy, onClassify }: { row: Row; categories: Data[]; busy: boolean; onClassify: (choice: { categoryKey: string; subcategoryId: string | null }) => Promise<void> }) {
+  const t = useTranslations("crmActions.actions");
   const categoryKey = row.category === "unclassified" ? null : row.category;
   const subcategoryName = row.subcategory.name ? String(row.subcategory.name) : null;
   return <div className="min-w-0">
@@ -768,7 +833,7 @@ function ClassificationCell({ row, categories, busy, onClassify }: { row: Row; c
       subcategoryId={row.record.subcategoryId ? String(row.record.subcategoryId) : null}
       subcategoryName={subcategoryName}
       disabled={busy}
-      title="Fix classification — the AI misread this reply"
+      title={t("classificationTitle")}
       onChange={(choice) => void onClassify(choice)}
     />
     {row.classification.status === "proposed" && <ProposalInline
@@ -783,16 +848,19 @@ function ClassificationCell({ row, categories, busy, onClassify }: { row: Row; c
 
 /** The channel's own mark in its identity colour. */
 function ChannelMark({ channel, className }: { channel: string; className?: string }) {
+  const { channelLabel } = useCrmText();
   const meta = CHANNEL_META[channel as keyof typeof CHANNEL_META];
   if (!meta) return null;
   const Icon = meta.icon;
-  return <span className={cn("flex shrink-0", className)} style={{ color: meta.color }} title={meta.label}><Icon className="size-3.5" aria-hidden="true" /></span>;
+  return <span className={cn("flex shrink-0", className)} style={{ color: meta.color }} title={channelLabel(channel)}><Icon className="size-3.5" aria-hidden="true" /></span>;
 }
 
 /** Their last message as a quote, with where and when it arrived underneath. */
 function ReplyQuote({ row, lines = 1 }: { row: Row; lines?: 1 | 2 }) {
+  const t = useTranslations("crmActions.actions");
+  const { formatDate, timeAgo } = useCrmText();
   return <div className="min-w-0 border-l-2 border-stroke-soft-200 pl-2.5">
-    <p className={cn("text-paragraph-sm", lines === 1 ? "truncate" : "line-clamp-2", row.latestReply ? "text-text-strong-950" : "italic text-text-soft-400")}>{row.latestReply || "No message text"}</p>
+    <p className={cn("text-paragraph-sm", lines === 1 ? "truncate" : "line-clamp-2", row.latestReply ? "text-text-strong-950" : "italic text-text-soft-400")}>{row.latestReply || t("noMessageText")}</p>
     <p className="mt-0.5 flex items-center gap-1.5 text-paragraph-xs text-text-sub-600">
       <ChannelMark channel={row.channel} />
       <span title={formatDate(row.repliedAt)}>{timeAgo(row.repliedAt)}</span>
@@ -836,7 +904,8 @@ function DraftSummary({ row }: { row: Row }) {
 
 /** Due (or, on the pipeline, stage) as one chip with an icon; the when, if any, underneath. */
 function DueChip({ row, align = "end" }: { row: Row; align?: "start" | "end" }) {
-  if (row.dueLabel === "—") return <span className="text-paragraph-sm text-text-soft-400" title="Nothing scheduled">—</span>;
+  const t = useTranslations("crmActions.actions");
+  if (row.dueLabel === "—") return <span className="text-paragraph-sm text-text-soft-400" title={t("nothingScheduled")}>—</span>;
   return <div className={cn("flex min-w-0 flex-col gap-1", align === "end" ? "items-end" : "items-start")}>
     <Badge.Root variant="lighter" size="medium" color={row.dueColor} className="h-6 max-w-full shrink-0 gap-1 whitespace-nowrap px-2" title={row.dueLabel}>
       <Badge.Icon as={row.dueIcon} className="-ml-0.5 mr-0 size-3.5" /><span>{row.dueLabel}</span>
@@ -845,10 +914,10 @@ function DueChip({ row, align = "end" }: { row: Row; align?: "start" | "end" }) 
   </div>;
 }
 
-function sendDraft(row: Row, onMutate: RowMutation) {
+function sendDraft(row: Row, onMutate: RowMutation, success: string) {
   const editable = row.editable;
   if (!editable) return;
-  void onMutate(`/drafts/${String(editable.id)}/send`, { revision: Number(editable.revision ?? 1) }, "POST", "Reply queued for sending");
+  void onMutate(`/drafts/${String(editable.id)}/send`, { revision: Number(editable.revision ?? 1) }, "POST", success);
 }
 
 function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, onToggleEdit, onMutate, onClassify }: {
@@ -863,7 +932,10 @@ function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, o
   onMutate: RowMutation;
   onClassify: (choice: { categoryKey: string; subcategoryId: string | null }) => Promise<void>;
 }) {
-  const row = describeAction(action, categories, pipeline, now);
+  const text = useActionText();
+  const { t, crm } = text;
+  const moveSuccess = useMoveStageSuccessMessage();
+  const row = describeAction(action, categories, pipeline, now, text);
   const { id, href, record, editable } = row;
   const { arm, cancel } = useRecordPrefetch(id, href);
   const sendable = row.sendableDraft && !busy;
@@ -874,7 +946,7 @@ function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, o
     if (window.getSelection()?.toString()) return;
     onOpen();
   };
-  const sendTitle = sendable ? "Send this draft as written" : "This draft cannot be sent as-is; edit it first";
+  const sendTitle = sendable ? t("row.sendTitleOk") : t("row.sendTitleBlocked");
 
   return <>
     <Table.Row
@@ -903,7 +975,7 @@ function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, o
         <ClassificationCell row={row} categories={categories} busy={busy} onClassify={onClassify} />
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
-        <HoverPreview title={String(row.inbound.subject ?? "").trim() || row.name} meta={formatDate(row.inbound.sentAt ?? row.repliedAt)} body={row.latestReplyFull}>
+        <HoverPreview title={String(row.inbound.subject ?? "").trim() || row.name} meta={crm.formatDate(row.inbound.sentAt ?? row.repliedAt)} body={row.latestReplyFull}>
           <ReplyQuote row={row} />
         </HoverPreview>
       </Table.Cell>
@@ -913,21 +985,21 @@ function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, o
             hovered or focused, so a ready draft is one click from sent. */}
         <HoverPreview
           className="min-w-0"
-          title={String(row.draft.subject ?? "").trim() || (row.draftFull ? "Draft reply" : "")}
+          title={String(row.draft.subject ?? "").trim() || (row.draftFull ? t("table.draftReply") : "")}
           meta={row.draftState.label}
           body={row.draftFull}
           disabled={editing}
           onActivate={editable ? onToggleEdit : undefined}
           actions={editable && <>
-            <button type="button" className={cn(secondaryButtonClass, "h-8")} onClick={onToggleEdit}><RiPencilLine className="size-4" aria-hidden="true" />{editing ? "Close editor" : "Edit"}</button>
-            <button type="button" className={cn(primaryButtonClass, "h-8")} disabled={!sendable} onClick={() => sendDraft(row, onMutate)} title={sendTitle}><RiSendPlaneLine className="size-4" aria-hidden="true" />Send</button>
+            <button type="button" className={cn(secondaryButtonClass, "h-8")} onClick={onToggleEdit}><RiPencilLine className="size-4" aria-hidden="true" />{editing ? t("row.closeEditor") : t("row.edit")}</button>
+            <button type="button" className={cn(primaryButtonClass, "h-8")} disabled={!sendable} onClick={() => sendDraft(row, onMutate, t("replyQueued"))} title={sendTitle}><RiSendPlaneLine className="size-4" aria-hidden="true" />{t("row.send")}</button>
           </>}
         >
           <DraftSummary row={row} />
         </HoverPreview>
         {editable && !editing && <div data-row-tools className="pointer-events-none absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-lg bg-bg-white-0 p-1 opacity-0 shadow-regular-md ring-1 ring-inset ring-stroke-soft-200 transition-opacity group-hover/row:pointer-events-auto group-hover/row:opacity-100 group-focus-within/row:pointer-events-auto group-focus-within/row:opacity-100">
-          <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onToggleEdit} aria-label={`Edit the draft to ${row.name}`} title="Edit the draft here"><Button.Icon as={RiPencilLine} /></Button.Root>
-          <Button.Root variant="primary" mode="filled" size="xxsmall" disabled={!sendable} onClick={() => sendDraft(row, onMutate)} aria-label={`Send the draft to ${row.name}`} title={sendTitle}><Button.Icon as={RiSendPlaneFill} />Send</Button.Root>
+          <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onToggleEdit} aria-label={t("row.editDraftAria", { name: row.name })} title={t("row.editDraftTitle")}><Button.Icon as={RiPencilLine} /></Button.Root>
+          <Button.Root variant="primary" mode="filled" size="xxsmall" disabled={!sendable} onClick={() => sendDraft(row, onMutate, t("replyQueued"))} aria-label={t("row.sendDraftAria", { name: row.name })} title={sendTitle}><Button.Icon as={RiSendPlaneFill} />{t("row.send")}</Button.Root>
         </div>}
       </Table.Cell>
       <Table.Cell className="px-3 py-3 text-right">
@@ -944,8 +1016,8 @@ function ActionRow({ action, categories, busy, editing, pipeline, now, onOpen, o
           subcategoryId={record.subcategoryId ? String(record.subcategoryId) : null}
           contextVersion={Number(record.contextVersion)}
           onMutate={onMutate}
-          onMoveStage={(body) => onMutate(`/records/${id}/stage`, body, "POST", moveStageSuccessMessage(body))}
-          label={`More actions for ${row.name}`}
+          onMoveStage={(body) => onMutate(`/records/${id}/stage`, body, "POST", moveSuccess(body))}
+          label={t("row.moreActionsFor", { name: row.name })}
         />
       </Table.Cell>
     </Table.Row>
@@ -971,24 +1043,25 @@ export function RowMenu({ href, draft, hasRun, recordId, categories, categoryKey
   label: string;
   className?: string;
 }) {
+  const t = useTranslations("crmActions.actions");
   const tomorrow = () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const [moveStageOpen, setMoveStageOpen] = useState(false);
   return <>
-    {draft && <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} onSubmit={(feedback) => onMutate(`/drafts/${String(draft.id)}/regenerate`, { feedback }, "POST", "Draft rewritten with your notes")} />}
+    {draft && <RegenerateDraftDialog open={regenerateOpen} onOpenChange={setRegenerateOpen} onSubmit={(feedback) => onMutate(`/drafts/${String(draft.id)}/regenerate`, { feedback }, "POST", t("draftRewritten"))} />}
     <MoveStageDialog open={moveStageOpen} onOpenChange={setMoveStageOpen} categories={categories} categoryKey={categoryKey} subcategoryId={subcategoryId} contextVersion={contextVersion} onMove={onMoveStage} />
     <Dropdown.Root>
       <Dropdown.Trigger asChild>
         <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={label} className={className}><Button.Icon as={RiMoreLine} /></Button.Root>
       </Dropdown.Trigger>
       <Dropdown.Content align="end">
-        <Dropdown.Item asChild><Link href={href}><Dropdown.ItemIcon as={RiExternalLinkLine} />Open record</Link></Dropdown.Item>
-        <Dropdown.Item onSelect={() => setMoveStageOpen(true)}><Dropdown.ItemIcon as={RiArrowRightLine} />Move stage…</Dropdown.Item>
-        {hasRun && <Dropdown.Item onSelect={() => void onMutate(`/records/${recordId}/snooze`, { until: tomorrow() }, "POST", "Snoozed for a day")}><Dropdown.ItemIcon as={RiTimerLine} />Snooze a day</Dropdown.Item>}
+        <Dropdown.Item asChild><Link href={href}><Dropdown.ItemIcon as={RiExternalLinkLine} />{t("menu.openRecord")}</Link></Dropdown.Item>
+        <Dropdown.Item onSelect={() => setMoveStageOpen(true)}><Dropdown.ItemIcon as={RiArrowRightLine} />{t("menu.moveStage")}</Dropdown.Item>
+        {hasRun && <Dropdown.Item onSelect={() => void onMutate(`/records/${recordId}/snooze`, { until: tomorrow() }, "POST", t("snoozed"))}><Dropdown.ItemIcon as={RiTimerLine} />{t("menu.snooze")}</Dropdown.Item>}
         {draft && <>
           <Dropdown.Separator />
-          <Dropdown.Item onSelect={() => setRegenerateOpen(true)}><Dropdown.ItemIcon as={RiRefreshLine} />Regenerate draft…</Dropdown.Item>
-          <Dropdown.Item destructive onSelect={() => void onMutate(`/drafts/${String(draft.id)}/discard`, {}, "POST", "Draft discarded")}><Dropdown.ItemIcon as={RiDeleteBinLine} />Discard draft</Dropdown.Item>
+          <Dropdown.Item onSelect={() => setRegenerateOpen(true)}><Dropdown.ItemIcon as={RiRefreshLine} />{t("menu.regenerate")}</Dropdown.Item>
+          <Dropdown.Item destructive onSelect={() => void onMutate(`/drafts/${String(draft.id)}/discard`, {}, "POST", t("draftDiscarded"))}><Dropdown.ItemIcon as={RiDeleteBinLine} />{t("menu.discard")}</Dropdown.Item>
         </>}
       </Dropdown.Content>
     </Dropdown.Root>
@@ -1019,7 +1092,10 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
   onMutate: RowMutation;
   onClassify: (choice: { categoryKey: string; subcategoryId: string | null }) => Promise<void>;
 }) {
-  const row = describeAction(action, categories, pipeline, now);
+  const text = useActionText();
+  const { t, crm } = text;
+  const moveSuccess = useMoveStageSuccessMessage();
+  const row = describeAction(action, categories, pipeline, now, text);
   const { id, href, record, editable } = row;
   const { arm, cancel } = useRecordPrefetch(id, href);
   const sendable = row.sendableDraft && !busy;
@@ -1028,10 +1104,10 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
     if (window.getSelection()?.toString()) return;
     onOpen();
   };
-  const sendTitle = sendable ? "Send this draft as written" : "This draft cannot be sent as-is; edit it first";
+  const sendTitle = sendable ? t("row.sendTitleOk") : t("row.sendTitleBlocked");
   // Off the queue (pipeline Waiting / Exhausted) the chip names what the
   // record is waiting for rather than a due action it does not have.
-  const chipRow = row.stage === "needs_action" ? row : { ...row, dueLabel: row.actionText };
+  const chipRow = row.stage === "needs_action" ? row : { ...row, dueLabel: row.actionLabel };
 
   return <article
     tabIndex={0}
@@ -1064,8 +1140,8 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
           subcategoryId={record.subcategoryId ? String(record.subcategoryId) : null}
           contextVersion={Number(record.contextVersion)}
           onMutate={onMutate}
-          onMoveStage={(body) => onMutate(`/records/${id}/stage`, body, "POST", moveStageSuccessMessage(body))}
-          label={`More actions for ${row.name}`}
+          onMoveStage={(body) => onMutate(`/records/${id}/stage`, body, "POST", moveSuccess(body))}
+          label={t("row.moreActionsFor", { name: row.name })}
         />
       </div>
     </div>
@@ -1079,7 +1155,7 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
         subcategoryId={record.subcategoryId ? String(record.subcategoryId) : null}
         subcategoryName={row.subcategory.name ? String(row.subcategory.name) : null}
         disabled={busy}
-        title="Fix classification — the AI misread this reply"
+        title={t("classificationTitle")}
         onChange={(choice) => void onClassify(choice)}
       />
       {row.classification.status === "proposed" && <ProposalInline
@@ -1090,19 +1166,19 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
       />}
     </div>
 
-    {row.latestReply && <HoverPreview title={String(row.inbound.subject ?? "").trim() || row.name} meta={formatDate(row.inbound.sentAt ?? row.repliedAt)} body={row.latestReplyFull} className="mt-3">
+    {row.latestReply && <HoverPreview title={String(row.inbound.subject ?? "").trim() || row.name} meta={crm.formatDate(row.inbound.sentAt ?? row.repliedAt)} body={row.latestReplyFull} className="mt-3">
       <ReplyQuote row={row} lines={2} />
     </HoverPreview>}
 
     {row.draftReply ? <div className="mt-3 rounded-lg bg-bg-weak-50 p-2.5 ring-1 ring-inset ring-stroke-soft-200">
       <HoverPreview
-        title={String(row.draft.subject ?? "").trim() || "Draft reply"}
+        title={String(row.draft.subject ?? "").trim() || t("table.draftReply")}
         meta={row.draftState.label}
         body={row.draftFull}
         onActivate={onOpen}
         actions={editable && <>
-          <Link href={href} className={cn(secondaryButtonClass, "h-8")}>Open to edit</Link>
-          <button type="button" className={cn(primaryButtonClass, "h-8")} disabled={!sendable} onClick={() => sendDraft(row, onMutate)} title={sendTitle}><RiSendPlaneLine className="size-4" aria-hidden="true" />Send</button>
+          <Link href={href} className={cn(secondaryButtonClass, "h-8")}>{t("row.openToEdit")}</Link>
+          <button type="button" className={cn(primaryButtonClass, "h-8")} disabled={!sendable} onClick={() => sendDraft(row, onMutate, t("replyQueued"))} title={sendTitle}><RiSendPlaneLine className="size-4" aria-hidden="true" />{t("row.send")}</button>
         </>}
       >
         <p className="line-clamp-2 text-paragraph-xs text-text-sub-600">{row.draftReply}</p>
@@ -1110,8 +1186,8 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
       <div className="mt-2 flex items-center justify-between gap-2">
         <DraftStateLabel state={row.draftState} className="min-w-0 truncate" />
         {editable && <div data-row-tools className="flex shrink-0 items-center gap-1">
-          <Button.Root variant="neutral" mode="stroke" size="xxsmall" asChild><Link href={href} aria-label={`Open ${row.name} to edit the draft`}><Button.Icon as={RiPencilLine} />Edit</Link></Button.Root>
-          <Button.Root variant="primary" mode="filled" size="xxsmall" disabled={!sendable} onClick={() => sendDraft(row, onMutate)} aria-label={`Send the draft to ${row.name}`} title={sendTitle}><Button.Icon as={RiSendPlaneFill} />Send</Button.Root>
+          <Button.Root variant="neutral" mode="stroke" size="xxsmall" asChild><Link href={href} aria-label={t("row.openToEditAria", { name: row.name })}><Button.Icon as={RiPencilLine} />{t("row.edit")}</Link></Button.Root>
+          <Button.Root variant="primary" mode="filled" size="xxsmall" disabled={!sendable} onClick={() => sendDraft(row, onMutate, t("replyQueued"))} aria-label={t("row.sendDraftAria", { name: row.name })} title={sendTitle}><Button.Icon as={RiSendPlaneFill} />{t("row.send")}</Button.Root>
         </div>}
       </div>
     </div>
@@ -1119,10 +1195,10 @@ export function ActionCard({ action, categories, now, busy, onOpen, onMutate, on
 
     <div className="mt-3 flex items-center justify-between gap-2 border-t border-stroke-soft-200 pt-3">
       <Badge.Root variant="lighter" size="medium" color={chipRow.dueColor} className="h-6 min-w-0 shrink gap-1 px-2" title={chipRow.dueLabel}>
-        <Badge.Icon as={chipRow.dueIcon} className="-ml-0.5 mr-0 size-3.5" /><span className="truncate">{chipRow.dueLabel === "—" ? "Nothing due" : chipRow.dueLabel}</span>
+        <Badge.Icon as={chipRow.dueIcon} className="-ml-0.5 mr-0 size-3.5" /><span className="truncate">{chipRow.dueLabel === "—" ? t("row.nothingDue") : chipRow.dueLabel}</span>
       </Badge.Root>
       {/* The quote above already says when they replied; this is the when of the chip. */}
-      <span className="shrink-0 text-paragraph-xs tabular-nums text-text-sub-600" title={formatDate(row.repliedAt)}>{row.dueDetail && row.dueDetail !== "—" ? row.dueDetail : row.latestReply ? "" : timeAgo(row.repliedAt)}</span>
+      <span className="shrink-0 text-paragraph-xs tabular-nums text-text-sub-600" title={crm.formatDate(row.repliedAt)}>{row.dueDetail && row.dueDetail !== "—" ? row.dueDetail : row.latestReply ? "" : crm.timeAgo(row.repliedAt)}</span>
     </div>
     {row.sequenceLabel && <p className="mt-1.5 truncate text-paragraph-xs text-text-soft-400" title={row.sequenceLabel}>{row.sequenceLabel}</p>}
   </article>;

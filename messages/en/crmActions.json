@@ -1,3 +1,266 @@
 {
-  "crmActions": {}
+  "crmActions": {
+    "queue": {
+      "header": {
+        "title": "Action required",
+        "description": "Replies, drafts and follow-ups that need a person's decision before the CRM moves on.",
+        "refresh": "Refresh"
+      },
+      "kpi": {
+        "queueLabel": "In the queue",
+        "queueContext": "{count, number} awaiting a decision",
+        "queueHint": "Every record waiting on a person: new replies, drafts to approve, AI changes to confirm, follow-ups past due and processing errors.",
+        "draftsLabel": "Drafts to review",
+        "draftsContext": "AI-written replies waiting for approval",
+        "draftsHint": "Drafts the AI has written that nobody has sent, edited or discarded yet. Hover a row's draft to read it, then Edit or Send.",
+        "followUpsLabel": "Follow-ups due",
+        "followUpsContext": "Drafted or past their scheduled time",
+        "followUpsHint": "Follow-ups waiting on a person: drafts to approve, and scheduled steps past their time with nothing drafted yet. Select to show only these.",
+        "errorsLabel": "Errors",
+        "errorsContextFailed": "Processing failed — open the record to retry",
+        "errorsContextNone": "Nothing failed",
+        "errorsHint": "Records whose classification, drafting or sending failed. Select to show only these."
+      },
+      "frame": {
+        "title": "Queue",
+        "detailLoading": "Loading…",
+        "detailCount": "{count, plural, one {# item} other {# items}} · newest reply first",
+        "detailCountFiltered": "{count, plural, one {# item matches} other {# items match}} these filters · newest reply first",
+        "detailMore": "{count, number}+ items · newest reply first"
+      },
+      "filters": {
+        "category": "Category",
+        "allCategories": "All categories",
+        "channel": "Channel",
+        "allChannels": "All channels",
+        "actionType": "Action type",
+        "allActionTypes": "All action types",
+        "dueTime": "Due time",
+        "anyDueTime": "Any due time",
+        "overdue": "Overdue",
+        "dueToday": "Due today",
+        "upcoming": "Upcoming",
+        "moreFilters": "More filters",
+        "subcategory": "Subcategory",
+        "allSubcategories": "All subcategories",
+        "aiClassification": "AI classification",
+        "classificationReview": "Classification review",
+        "anyClassification": "Any classification",
+        "needsReview": "Needs review",
+        "reviewed": "Reviewed",
+        "sequence": "Sequence",
+        "allSequences": "All sequences",
+        "errors": "Errors",
+        "errorState": "Error state",
+        "allStates": "All states",
+        "errorsOnly": "Errors only",
+        "clear": "{count, plural, one {Clear filter} other {Clear # filters}}",
+        "clearFilters": "Clear filters"
+      },
+      "empty": {
+        "noMatchTitle": "Nothing matches these filters",
+        "noMatchDetail": "The queue has items, just none that fit every filter you picked.",
+        "caughtUpTitle": "You're all caught up",
+        "caughtUpDetail": "New replies, drafts to approve and due follow-ups will show up here."
+      },
+      "loadMore": {
+        "loading": "Loading…",
+        "label": "Load more"
+      },
+      "actionGroup": {
+        "reply": "Immediate reply",
+        "follow_up": "Follow-up due",
+        "classification": "Confirm classification",
+        "next_step": "Needs a next step",
+        "problem": "Error or failed"
+      }
+    },
+    "actions": {
+      "noticeDismiss": "Dismiss",
+      "rowGone": "{message} — this contact no longer needs attention.",
+      "classificationUpdated": "Classification updated — a new draft is being written",
+      "replyQueued": "Reply queued for sending",
+      "draftRewritten": "Draft rewritten with your notes",
+      "draftDiscarded": "Draft discarded",
+      "snoozed": "Snoozed for a day",
+      "classificationTitle": "Fix classification — the AI misread this reply",
+      "noMessageText": "No message text",
+      "nothingScheduled": "Nothing scheduled",
+      "sent": "Sent {when}",
+      "next": "Next {when}",
+      "sequenceCompleted": "{name} · completed",
+      "table": {
+        "caption": "People and CRM actions requiring review",
+        "contact": "Contact",
+        "classification": "Classification",
+        "latestReply": "Latest reply",
+        "draftReply": "Draft reply",
+        "status": "Status",
+        "due": "Due",
+        "moreActions": "More actions"
+      },
+      "dueLabel": {
+        "exhausted": "Exhausted",
+        "waiting": "Waiting",
+        "followUpDue": "Follow-up due"
+      },
+      "dueState": {
+        "immediate_reply": "Immediate reply",
+        "follow_up_ready": "Follow-up ready",
+        "auto_follow_up": "Sending automatically",
+        "past_due": "Past due",
+        "follow_up": "Follow-up",
+        "pending": "Pending",
+        "none": "—"
+      },
+      "draftStatus": {
+        "generating": "Generating",
+        "awaiting_review": "Pending approval",
+        "sending": "Sending",
+        "sent": "Sent",
+        "discarded": "Discarded",
+        "stale": "Out of date",
+        "failed": "Failed",
+        "delivery_uncertain": "Delivery uncertain",
+        "draft": "Draft"
+      },
+      "actionType": {
+        "allFollowUpsSent": "All follow-ups sent",
+        "classifyingReply": "Classifying reply",
+        "paused": "Paused",
+        "followUpScheduled": "Follow-up scheduled",
+        "awaitingTheirReply": "Awaiting their reply",
+        "processingError": "Processing error",
+        "classificationReview": "Classification review",
+        "deliveryReconciliation": "Delivery reconciliation",
+        "followUpReview": "Follow-up review",
+        "replyReview": "Reply review",
+        "whatsappFollowUp": "WhatsApp follow-up",
+        "dueFollowUp": "Due follow-up",
+        "noSequenceAssigned": "No sequence assigned",
+        "humanReview": "Human review"
+      },
+      "draftState": {
+        "failed": "Draft failed",
+        "failedHint": "Edit it or regenerate",
+        "dnc": "Do not contact",
+        "dncHint": "Sending is blocked",
+        "outOfDate": "Out of date",
+        "outOfDateHint": "A newer reply arrived — edit before sending",
+        "ready": "Ready to send",
+        "processingError": "Processing error",
+        "processingErrorHint": "Open the record to retry",
+        "needsClassification": "Needs classification",
+        "needsClassificationHint": "Confirm the classification first",
+        "noSequence": "No sequence",
+        "noSequenceHint": "Nothing runs for this classification",
+        "confirmDelivery": "Confirm delivery",
+        "confirmDeliveryHint": "Open the record to confirm the last send",
+        "needsReply": "Needs a reply",
+        "needsReplyHint": "No draft yet — write one on the record"
+      },
+      "proposal": {
+        "suggestsTitle": "AI suggests: {label}",
+        "suggestsPrefix": "AI suggests",
+        "acceptAria": "Accept AI suggestion: {label}",
+        "acceptTitle": "Accept: move to {label}",
+        "keepAria": "Keep the current classification",
+        "keepTitle": "Keep current classification"
+      },
+      "row": {
+        "closeEditor": "Close editor",
+        "edit": "Edit",
+        "send": "Send",
+        "sendTitleOk": "Send this draft as written",
+        "sendTitleBlocked": "This draft cannot be sent as-is; edit it first",
+        "editDraftAria": "Edit the draft to {name}",
+        "editDraftTitle": "Edit the draft here",
+        "sendDraftAria": "Send the draft to {name}",
+        "moreActionsFor": "More actions for {name}",
+        "openToEdit": "Open to edit",
+        "openToEditAria": "Open {name} to edit the draft",
+        "nothingDue": "Nothing due"
+      },
+      "menu": {
+        "openRecord": "Open record",
+        "moveStage": "Move stage…",
+        "snooze": "Snooze a day",
+        "regenerate": "Regenerate draft…",
+        "discard": "Discard draft"
+      }
+    },
+    "tools": {
+      "cancel": "Cancel",
+      "picker": {
+        "aria": "Classification",
+        "noSubcategory": "{category} · no subcategory",
+        "changeAria": "Classification: {label}. Change"
+      },
+      "regenerate": {
+        "title": "Regenerate this draft",
+        "description": "Tell the AI what to change. It rewrites the reply with your notes and the current draft in front of it.",
+        "textareaAria": "What should change",
+        "placeholder": "e.g. Too long and too salesy. They asked about pricing — answer that first, then offer the 20-minute call.",
+        "hints": {
+          "shorter": {
+            "label": "Shorter",
+            "text": "Make it shorter — three or four lines at most."
+          },
+          "lessFormal": {
+            "label": "Less formal",
+            "text": "Less formal, more like a person writing."
+          },
+          "answerQuestion": {
+            "label": "Answer their question",
+            "text": "Answer their actual question before anything else."
+          },
+          "lessSalesy": {
+            "label": "Less salesy",
+            "text": "Drop the sales pitch; just be helpful."
+          },
+          "oneNextStep": {
+            "label": "One next step",
+            "text": "Propose one concrete next step."
+          }
+        },
+        "shortcut": "⌘↵ to regenerate",
+        "rewriting": "Rewriting…",
+        "button": "Regenerate"
+      },
+      "moveStage": {
+        "successReply": "Stage moved — the first reply is being drafted",
+        "successFollowUp": "Stage moved — follow-ups scheduled",
+        "trigger": "Move stage",
+        "title": "Move stage",
+        "description": "Something happened outside the conversation — record it and move this lead on.",
+        "newStage": "New stage",
+        "choose": "Choose a stage…",
+        "when": "When did it happen?",
+        "whenAria": "When did it happen",
+        "what": "What happened? (optional)",
+        "whatPlaceholder": "e.g. They want pricing for 50 seats; loop in their CTO",
+        "explanation": "The AI's reading of the last reply stays as it was. <b>Add to follow-ups</b> treats the new stage's first reply as already handled and schedules its follow-ups; <b>Draft a reply now</b> writes that first reply for you to send. Either way, the drafts use this note.",
+        "moving": "Moving…",
+        "draftReplyNow": "Draft a reply now",
+        "addToFollowUps": "Add to follow-ups"
+      },
+      "editor": {
+        "theirMessage": "Their message",
+        "noMessageText": "No message text available.",
+        "blockedTitle": "Sending is blocked",
+        "blockedDetail": "This person is marked as Do Not Contact.",
+        "staleTitle": "This draft may be out of date",
+        "staleDetail": "A newer reply changed the conversation. Regenerate, or open the record to review before sending.",
+        "subjectAria": "Subject",
+        "subjectPlaceholder": "Email subject",
+        "replyAria": "Reply",
+        "replyPlaceholder": "{channel, select, linkedin {Write a LinkedIn reply…} whatsapp {Write a WhatsApp reply…} other {Write an email reply…}}",
+        "saveAndSend": "Save & send",
+        "approveAndSend": "Approve & send",
+        "save": "Save",
+        "draftSaved": "Draft saved",
+        "discard": "Discard"
+      }
+    }
+  }
 }

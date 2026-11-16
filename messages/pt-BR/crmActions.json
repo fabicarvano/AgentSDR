@@ -1,3 +1,266 @@
 {
-  "crmActions": {}
+  "crmActions": {
+    "queue": {
+      "header": {
+        "title": "Ação necessária",
+        "description": "Respostas, rascunhos e follow-ups que precisam da decisão de uma pessoa antes de o CRM avançar.",
+        "refresh": "Atualizar"
+      },
+      "kpi": {
+        "queueLabel": "Na fila",
+        "queueContext": "{count, number} aguardando decisão",
+        "queueHint": "Todos os registros que aguardam uma pessoa: novas respostas, rascunhos para aprovar, mudanças da IA para confirmar, follow-ups atrasados e erros de processamento.",
+        "draftsLabel": "Rascunhos para revisar",
+        "draftsContext": "Respostas escritas pela IA aguardando aprovação",
+        "draftsHint": "Rascunhos escritos pela IA que ninguém enviou, editou ou descartou. Passe o mouse sobre o rascunho de uma linha para lê-lo e depois use Editar ou Enviar.",
+        "followUpsLabel": "Follow-ups pendentes",
+        "followUpsContext": "Com rascunho ou após o horário agendado",
+        "followUpsHint": "Follow-ups aguardando uma pessoa: rascunhos para aprovar e passos agendados que já passaram do horário, sem rascunho. Selecione para ver só estes.",
+        "errorsLabel": "Erros",
+        "errorsContextFailed": "Falha no processamento — abra o registro para tentar de novo",
+        "errorsContextNone": "Nada falhou",
+        "errorsHint": "Registros em que a classificação, o rascunho ou o envio falhou. Selecione para ver só estes."
+      },
+      "frame": {
+        "title": "Fila",
+        "detailLoading": "Carregando…",
+        "detailCount": "{count, plural, one {# item} other {# itens}} · resposta mais recente primeiro",
+        "detailCountFiltered": "{count, plural, one {# item corresponde} other {# itens correspondem}} a estes filtros · resposta mais recente primeiro",
+        "detailMore": "{count, number}+ itens · resposta mais recente primeiro"
+      },
+      "filters": {
+        "category": "Categoria",
+        "allCategories": "Todas as categorias",
+        "channel": "Canal",
+        "allChannels": "Todos os canais",
+        "actionType": "Tipo de ação",
+        "allActionTypes": "Todos os tipos de ação",
+        "dueTime": "Prazo",
+        "anyDueTime": "Qualquer prazo",
+        "overdue": "Atrasado",
+        "dueToday": "Vence hoje",
+        "upcoming": "Próximos",
+        "moreFilters": "Mais filtros",
+        "subcategory": "Subcategoria",
+        "allSubcategories": "Todas as subcategorias",
+        "aiClassification": "Classificação da IA",
+        "classificationReview": "Revisão da classificação",
+        "anyClassification": "Qualquer classificação",
+        "needsReview": "Precisa de revisão",
+        "reviewed": "Revisado",
+        "sequence": "Sequência",
+        "allSequences": "Todas as sequências",
+        "errors": "Erros",
+        "errorState": "Estado de erro",
+        "allStates": "Todos os estados",
+        "errorsOnly": "Somente erros",
+        "clear": "{count, plural, one {Limpar filtro} other {Limpar # filtros}}",
+        "clearFilters": "Limpar filtros"
+      },
+      "empty": {
+        "noMatchTitle": "Nada corresponde a estes filtros",
+        "noMatchDetail": "A fila tem itens, mas nenhum atende a todos os filtros escolhidos.",
+        "caughtUpTitle": "Tudo em dia",
+        "caughtUpDetail": "Novas respostas, rascunhos para aprovar e follow-ups pendentes aparecerão aqui."
+      },
+      "loadMore": {
+        "loading": "Carregando…",
+        "label": "Carregar mais"
+      },
+      "actionGroup": {
+        "reply": "Resposta imediata",
+        "follow_up": "Follow-up pendente",
+        "classification": "Confirmar classificação",
+        "next_step": "Precisa de um próximo passo",
+        "problem": "Erro ou falha"
+      }
+    },
+    "actions": {
+      "noticeDismiss": "Dispensar",
+      "rowGone": "{message} — este contato não precisa mais de atenção.",
+      "classificationUpdated": "Classificação atualizada — um novo rascunho está sendo escrito",
+      "replyQueued": "Resposta na fila para envio",
+      "draftRewritten": "Rascunho reescrito com as suas notas",
+      "draftDiscarded": "Rascunho descartado",
+      "snoozed": "Adiado por um dia",
+      "classificationTitle": "Corrigir classificação — a IA leu esta resposta errado",
+      "noMessageText": "Sem texto na mensagem",
+      "nothingScheduled": "Nada agendado",
+      "sent": "Enviado {when}",
+      "next": "Próximo: {when}",
+      "sequenceCompleted": "{name} · concluída",
+      "table": {
+        "caption": "Pessoas e ações do CRM que precisam de revisão",
+        "contact": "Contato",
+        "classification": "Classificação",
+        "latestReply": "Última resposta",
+        "draftReply": "Rascunho de resposta",
+        "status": "Status",
+        "due": "Prazo",
+        "moreActions": "Mais ações"
+      },
+      "dueLabel": {
+        "exhausted": "Esgotado",
+        "waiting": "Aguardando",
+        "followUpDue": "Follow-up pendente"
+      },
+      "dueState": {
+        "immediate_reply": "Resposta imediata",
+        "follow_up_ready": "Follow-up pronto",
+        "auto_follow_up": "Envio automático",
+        "past_due": "Atrasado",
+        "follow_up": "Follow-up",
+        "pending": "Pendente",
+        "none": "—"
+      },
+      "draftStatus": {
+        "generating": "Gerando",
+        "awaiting_review": "Aguardando aprovação",
+        "sending": "Enviando",
+        "sent": "Enviado",
+        "discarded": "Descartado",
+        "stale": "Desatualizado",
+        "failed": "Falhou",
+        "delivery_uncertain": "Entrega incerta",
+        "draft": "Rascunho"
+      },
+      "actionType": {
+        "allFollowUpsSent": "Todos os follow-ups enviados",
+        "classifyingReply": "Classificando resposta",
+        "paused": "Pausado",
+        "followUpScheduled": "Follow-up agendado",
+        "awaitingTheirReply": "Aguardando resposta",
+        "processingError": "Erro de processamento",
+        "classificationReview": "Revisão da classificação",
+        "deliveryReconciliation": "Conferência de entrega",
+        "followUpReview": "Revisão de follow-up",
+        "replyReview": "Revisão de resposta",
+        "whatsappFollowUp": "Follow-up por WhatsApp",
+        "dueFollowUp": "Follow-up pendente",
+        "noSequenceAssigned": "Nenhuma sequência atribuída",
+        "humanReview": "Revisão humana"
+      },
+      "draftState": {
+        "failed": "Rascunho com falha",
+        "failedHint": "Edite ou gere de novo",
+        "dnc": "Não contatar",
+        "dncHint": "O envio está bloqueado",
+        "outOfDate": "Desatualizado",
+        "outOfDateHint": "Chegou uma resposta mais nova — edite antes de enviar",
+        "ready": "Pronto para enviar",
+        "processingError": "Erro de processamento",
+        "processingErrorHint": "Abra o registro para tentar de novo",
+        "needsClassification": "Precisa de classificação",
+        "needsClassificationHint": "Confirme a classificação primeiro",
+        "noSequence": "Sem sequência",
+        "noSequenceHint": "Nada roda para esta classificação",
+        "confirmDelivery": "Confirmar entrega",
+        "confirmDeliveryHint": "Abra o registro para confirmar o último envio",
+        "needsReply": "Precisa de resposta",
+        "needsReplyHint": "Ainda sem rascunho — escreva um no registro"
+      },
+      "proposal": {
+        "suggestsTitle": "A IA sugere: {label}",
+        "suggestsPrefix": "A IA sugere",
+        "acceptAria": "Aceitar sugestão da IA: {label}",
+        "acceptTitle": "Aceitar: mover para {label}",
+        "keepAria": "Manter a classificação atual",
+        "keepTitle": "Manter classificação atual"
+      },
+      "row": {
+        "closeEditor": "Fechar editor",
+        "edit": "Editar",
+        "send": "Enviar",
+        "sendTitleOk": "Enviar este rascunho como está",
+        "sendTitleBlocked": "Este rascunho não pode ser enviado como está; edite-o antes",
+        "editDraftAria": "Editar o rascunho para {name}",
+        "editDraftTitle": "Editar o rascunho aqui",
+        "sendDraftAria": "Enviar o rascunho para {name}",
+        "moreActionsFor": "Mais ações para {name}",
+        "openToEdit": "Abrir para editar",
+        "openToEditAria": "Abrir {name} para editar o rascunho",
+        "nothingDue": "Nada pendente"
+      },
+      "menu": {
+        "openRecord": "Abrir registro",
+        "moveStage": "Mover estágio…",
+        "snooze": "Adiar por um dia",
+        "regenerate": "Gerar rascunho de novo…",
+        "discard": "Descartar rascunho"
+      }
+    },
+    "tools": {
+      "cancel": "Cancelar",
+      "picker": {
+        "aria": "Classificação",
+        "noSubcategory": "{category} · sem subcategoria",
+        "changeAria": "Classificação: {label}. Alterar"
+      },
+      "regenerate": {
+        "title": "Gerar este rascunho de novo",
+        "description": "Diga à IA o que mudar. Ela reescreve a resposta com as suas notas e o rascunho atual em mãos.",
+        "textareaAria": "O que deve mudar",
+        "placeholder": "ex.: Longo demais e muito vendedor. A pessoa perguntou sobre preço: responda isso primeiro e depois ofereça a conversa de 20 minutos.",
+        "hints": {
+          "shorter": {
+            "label": "Mais curto",
+            "text": "Deixe mais curto: no máximo três ou quatro linhas."
+          },
+          "lessFormal": {
+            "label": "Menos formal",
+            "text": "Menos formal, mais como uma pessoa escrevendo."
+          },
+          "answerQuestion": {
+            "label": "Responder à pergunta",
+            "text": "Responda primeiro à pergunta que a pessoa fez."
+          },
+          "lessSalesy": {
+            "label": "Menos vendedor",
+            "text": "Tire o tom de venda; seja apenas útil."
+          },
+          "oneNextStep": {
+            "label": "Um próximo passo",
+            "text": "Proponha um próximo passo concreto."
+          }
+        },
+        "shortcut": "⌘↵ para gerar de novo",
+        "rewriting": "Reescrevendo…",
+        "button": "Gerar de novo"
+      },
+      "moveStage": {
+        "successReply": "Estágio movido — a primeira resposta está sendo escrita",
+        "successFollowUp": "Estágio movido — follow-ups agendados",
+        "trigger": "Mover estágio",
+        "title": "Mover estágio",
+        "description": "Algo aconteceu fora da conversa: registre e avance este lead.",
+        "newStage": "Novo estágio",
+        "choose": "Escolha um estágio…",
+        "when": "Quando aconteceu?",
+        "whenAria": "Quando aconteceu",
+        "what": "O que aconteceu? (opcional)",
+        "whatPlaceholder": "ex.: Querem preço para 50 licenças; incluir o CTO deles",
+        "explanation": "A leitura que a IA fez da última resposta continua como estava. <b>Adicionar aos follow-ups</b> trata a primeira resposta do novo estágio como já tratada e agenda os follow-ups dele; <b>Escrever resposta agora</b> escreve essa primeira resposta para você enviar. Nos dois casos, os rascunhos usam esta nota.",
+        "moving": "Movendo…",
+        "draftReplyNow": "Escrever resposta agora",
+        "addToFollowUps": "Adicionar aos follow-ups"
+      },
+      "editor": {
+        "theirMessage": "Mensagem do contato",
+        "noMessageText": "Nenhum texto de mensagem disponível.",
+        "blockedTitle": "O envio está bloqueado",
+        "blockedDetail": "Esta pessoa está marcada como Não contatar.",
+        "staleTitle": "Este rascunho pode estar desatualizado",
+        "staleDetail": "Uma resposta mais nova mudou a conversa. Gere de novo ou abra o registro para revisar antes de enviar.",
+        "subjectAria": "Assunto",
+        "subjectPlaceholder": "Assunto do e-mail",
+        "replyAria": "Resposta",
+        "replyPlaceholder": "{channel, select, linkedin {Escreva uma resposta no LinkedIn…} whatsapp {Escreva uma resposta no WhatsApp…} other {Escreva uma resposta por e-mail…}}",
+        "saveAndSend": "Salvar e enviar",
+        "approveAndSend": "Aprovar e enviar",
+        "save": "Salvar",
+        "draftSaved": "Rascunho salvo",
+        "discard": "Descartar"
+      }
+    }
+  }
 }
