@@ -4,13 +4,13 @@
   "private": true,
   "description": "Open-source AI sales development platform: lead database, email, LinkedIn and WhatsApp outreach, and an AI-assisted CRM, for teams that self-host.",
   "license": "MIT",
-  "homepage": "https://github.com/Kandid-ai/AgentSDR#readme",
+  "homepage": "https://github.com/fabicarvano/AgentSDR#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Kandid-ai/AgentSDR.git"
+    "url": "git+https://github.com/fabicarvano/AgentSDR.git"
   },
   "bugs": {
-    "url": "https://github.com/Kandid-ai/AgentSDR/issues"
+    "url": "https://github.com/fabicarvano/AgentSDR/issues"
   },
   "engines": {
     "node": ">=20.9.0",
@@ -42,8 +42,7 @@
     "rotate:integration-credentials": "bun scripts/rotate-integration-credentials.ts",
     "test:integrations:live": "bun --conditions=react-server scripts/test-integrations-live.ts",
     "build:recorder": "rm -rf extensions/whatsapp-recorder/dist && bun build extensions/whatsapp-recorder/src/background.ts extensions/whatsapp-recorder/src/wa-hook.ts extensions/whatsapp-recorder/src/wa-agent.ts extensions/whatsapp-recorder/src/bridge.ts extensions/whatsapp-recorder/src/options.ts extensions/whatsapp-recorder/src/update.ts --outdir extensions/whatsapp-recorder/dist --target browser --format iife && cp extensions/whatsapp-recorder/static/* extensions/whatsapp-recorder/dist/",
-    "package:recorder": "bun run build:recorder && bun extensions/whatsapp-recorder/package.ts",
-    "release:prepare": "bun scripts/release/prepare-public-repo.ts"
+    "package:recorder": "bun run build:recorder && bun extensions/whatsapp-recorder/package.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

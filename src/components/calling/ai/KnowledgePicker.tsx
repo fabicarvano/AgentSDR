@@ -76,7 +76,7 @@ export function KnowledgePicker({ value, onChange, disabled }: {
     onChange((options ?? []).filter((option) => next.has(option.id)).map((option) => option.id));
   };
 
-  // The closed dropdown names what is picked: each title as a short chip ("Kandid Dyna…").
+  // The closed dropdown names what is picked: each title as a short chip ("Case study: Acme…").
   const summary = options === null
     ? "Loading…"
     : !options.length

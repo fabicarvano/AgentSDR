@@ -4,7 +4,6 @@
 > App único Next.js + PostgreSQL, self-hosted.
 >
 > **Repositório:** `fabicarvano/AgentSDR` (independente desde nov/2026)
-> **Base original:** `Kandid-ai/AgentSDR` (MIT)
 > **Responsável:** Fabio Carvano
 >
 > **Regras de trabalho com IA:**

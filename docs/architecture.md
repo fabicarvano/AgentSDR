@@ -152,7 +152,7 @@ Each table is classified in `src/lib/tenancy/registry.ts` as scoped (has its own
 `organization_id`), inherited (scoped through a NOT NULL parent), global, auth
 or legacy, and `bun run db:check` fails if a table is unclassified. See
 [multi-tenancy/conventions.md](multi-tenancy/conventions.md) and
-[multi-tenancy/plan.md](https://github.com/Kandid-ai/AgentSDR/blob/main/docs/multi-tenancy/plan.md).
+[multi-tenancy/plan.md](https://github.com/fabicarvano/AgentSDR/blob/main/docs/multi-tenancy/plan.md).
 
 ## AI assistants (MCP)
 

@@ -1,6 +1,6 @@
 # CompanyEnrich
 
-[CompanyEnrich](https://companyenrich.com) provides company and professional-profile data for prospect research. This provider adds the three actions agreed in [#4](https://github.com/Kandid-ai/AgentSDR/issues/4): company enrichment by domain, company search, and people search. People search returns professional profiles; it does not find email addresses.
+[CompanyEnrich](https://companyenrich.com) provides company and professional-profile data for prospect research. This provider adds three actions: company enrichment by domain, company search, and people search. People search returns professional profiles; it does not find email addresses.
 
 ## Connect and run
 

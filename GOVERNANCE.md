@@ -1,8 +1,8 @@
 # Governance
 
-AgentSDR is an open-source project led by **Kandid** (the company that
-started it and runs it in production). This document describes how
-decisions are made and how people become maintainers.
+AgentSDR is led by its maintainer, [@fabicarvano](https://github.com/fabicarvano).
+This document describes how decisions are made and how people become
+maintainers.
 
 ## Roles
 
@@ -22,7 +22,7 @@ decisions are made and how people become maintainers.
   public APIs are discussed in an issue or Discussion first and need the
   agreement of at least two maintainers. Design records live in
   [`docs/design/`](docs/design/).
-- When maintainers disagree and a discussion does not converge, Kandid's
+- When maintainers disagree and a discussion does not converge, the
   project lead makes the final call and records the reasoning on the issue.
 
 ## Becoming a maintainer
@@ -33,9 +33,8 @@ project's direction can be invited by the existing maintainers. Maintainers
 who are inactive for six months may move to emeritus status; they are
 welcome back.
 
-## Code of conduct and security
+## Security
 
-Everyone in the project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 Security reports are handled privately by the maintainers as described in
 [SECURITY.md](SECURITY.md).
 

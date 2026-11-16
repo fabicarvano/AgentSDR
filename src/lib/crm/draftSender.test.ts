@@ -6,7 +6,7 @@ describe("draft sender name", () => {
     expect(usableSenderName("  Abha   Arora ")).toBe("Abha Arora");
     expect(usableSenderName("918076927945")).toBeNull();
     expect(usableSenderName("+91 80769 27945")).toBeNull();
-    expect(usableSenderName("roy@talktokandid.com")).toBeNull();
+    expect(usableSenderName("roy@example.com")).toBeNull();
     expect(usableSenderName("")).toBeNull();
     expect(usableSenderName(null)).toBeNull();
   });

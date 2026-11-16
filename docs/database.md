@@ -61,7 +61,7 @@ Conventions:
 
 The workflow is spelled out in [development.md](development.md#changing-the-database).
 The people-data migration scripts (`preflight-*`, `rollback-*`, `audit-*` and
-so on) belong to a one-time migration documented in [design/](https://github.com/Kandid-ai/AgentSDR/blob/main/docs/design/README.md).
+so on) belong to a one-time migration documented in [design/](https://github.com/fabicarvano/AgentSDR/blob/main/docs/design/README.md).
 
 ## drizzle-kit and `OWNED_TABLES`
 
@@ -90,7 +90,7 @@ table it does not know as drift and offers to **drop** it.
   came from a former Prisma schema and keep quoted PascalCase names, with
   `text` ids (cuid) rather than `uuid`, to avoid an `ALTER TYPE` across every id
   and foreign key. New rows use `$defaultFn(createId)`. The archived Prisma
-  migrations are in [prisma-history/](https://github.com/Kandid-ai/AgentSDR/blob/main/docs/prisma-history/README.md); nothing there
+  migrations are in [prisma-history/](https://github.com/fabicarvano/AgentSDR/blob/main/docs/prisma-history/README.md); nothing there
   runs.
 
 In practice, do not run `drizzle-kit push` against a database you care about.

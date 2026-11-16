@@ -19,7 +19,7 @@ How to run AgentSDR locally, test it, and change it. Read
 ## Local setup
 
 ```sh
-git clone https://github.com/Kandid-ai/AgentSDR.git
+git clone https://github.com/fabicarvano/AgentSDR.git
 cd AgentSDR
 bun install
 createdb agentsdr                  # or any empty database
@@ -78,7 +78,7 @@ All from `package.json`. `bun run <name>`.
 | `build:recorder` | Build the WhatsApp recorder extension into `extensions/whatsapp-recorder/dist`. |
 | `rotate:integration-credentials` | Re-encrypt stored integration credentials after a key change. |
 | `test:integrations:live` | Call real enrichment providers with a test person (needs `LIVE_TEST_PERSON` or `--person`); not part of the test suite. |
-| `preflight:people`, `postflight:people`, `snapshot:outreach`, `audit:*`, `replay:linkedin-webhooks`, `cleanup:crm-identity`, `resolve:legacy-linkedin`, `rollback:people`, `export:people-reconciliation` | Tooling from the unified-People data migration. Run only if you are reading [design/people-migration-cutover-rollback-runbook.md](https://github.com/Kandid-ai/AgentSDR/blob/main/docs/design/people-migration-cutover-rollback-runbook.md). |
+| `preflight:people`, `postflight:people`, `snapshot:outreach`, `audit:*`, `replay:linkedin-webhooks`, `cleanup:crm-identity`, `resolve:legacy-linkedin`, `rollback:people`, `export:people-reconciliation` | Tooling from the unified-People data migration. Run only if you are reading [design/people-migration-cutover-rollback-runbook.md](https://github.com/fabicarvano/AgentSDR/blob/main/docs/design/people-migration-cutover-rollback-runbook.md). |
 
 ## Testing
 

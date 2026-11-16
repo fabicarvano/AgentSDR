@@ -21,7 +21,7 @@ and date and start a fresh `Unreleased` section.
 
 The `docker.yml` workflow builds the image from the `Dockerfile` on pull
 requests (to prove it builds) and publishes it to
-`ghcr.io/kandid-ai/agentsdr` when a `v*` tag is pushed. The tag `vX.Y.Z`
+`ghcr.io/fabicarvano/agentsdr` when a `v*` tag is pushed. The tag `vX.Y.Z`
 produces the matching image tag.
 
 ## Release checklist
@@ -53,33 +53,6 @@ produces the matching image tag.
    workflow publishes the image.
 9. **GitHub release.** Create a release from the tag, paste the changelog
    section, and add the migration list and upgrade notes at the top.
-
-## Publishing the public repository
-
-The public repository starts from a fresh history: the private one holds
-material that is never published. `release:prepare` builds it from the
-committed tree at `HEAD`:
-
-```sh
-bun run release:prepare -- --out ../agentsdr-public --repo <owner>/<name> --message "AgentSDR 0.1.0"
-```
-
-It refuses a dirty working tree, an existing `--out` directory,
-sensitive-looking files (`.env*` other than `.env.example`, dumps, keys) and
-any gitleaks finding not listed in `.gitleaksignore`. `--repo` points every
-link (README, docs, issue templates, `package.json`) at the
-public repository. Pass `--exclude <path>` to leave something out. It never
-pushes; it prints the two commands to do so.
-
-After the first publish the two histories are unrelated, so pick one place
-to work. The simplest is to make the public repository the one everybody
-clones and commits to from then on, and archive the private one. Keeping both
-means re-running `release:prepare` for every release and opening a pull
-request from the new tree into the public repository.
-
-AgentSDR took the first route at 0.1.0: the public repository is the only
-one worked in and deployed from, and the private one is archived. Its
-history is never published or merged in.
 
 ## Security fixes
 

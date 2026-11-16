@@ -8,33 +8,34 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, InfoCallout, SecondaryButton, SubmitButton, linkClass, quietLinkClass } from "@/components/auth/fields";
 import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
 
-const ACCESS_REQUEST_TO = "pulkit@kandid.ai";
-
 /**
- * A mailto asking for an account on AgentSDR Managed, carrying the email typed into the form when there is one.
- * Deliberately left in English: it is written to the AgentSDR team, who read English, not shown to the person signing in.
+ * A mailto asking the instance's admin for an invite, carrying the email typed into the form when there is one.
+ * Deliberately left in English: it is written to the people who run the instance, not shown to the person signing in.
  */
-function accessRequestHref(email: string) {
+function accessRequestHref(to: string, email: string) {
   const body = [
-    "Hi Pulkit,",
+    "Hi,",
     "",
-    "I'd like to use AgentSDR Managed rather than self-host it. Could you send me an invite?",
+    "I'd like an account on your AgentSDR. Could you send me an invite?",
     "",
     `Work email: ${email.trim()}`,
   ].join("\n");
-  const subject = "I need access to AgentSDR Managed";
-  return `mailto:${ACCESS_REQUEST_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const subject = "I need access to AgentSDR";
+  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 export function SignInForm({
   googleEnabled,
   from,
   signupAvailable = true,
+  accessRequestEmail = null,
 }: {
   googleEnabled: boolean;
   from: string | null;
   /** False on an invite-only instance: accounts come from invitations, so "Create one" is not offered. */
   signupAvailable?: boolean;
+  /** Where "Need access?" writes to (ACCESS_REQUEST_EMAIL). Without it the sentence is shown without a link. */
+  accessRequestEmail?: string | null;
 }) {
   const t = useTranslations("auth.signIn");
   const tc = useTranslations("auth.common");
@@ -90,11 +91,14 @@ export function SignInForm({
               ),
             })
           : t.rich("needAccess", {
-              link: (chunks) => (
-                <a href={accessRequestHref(email)} className={linkClass}>
-                  {chunks}
-                </a>
-              ),
+              link: (chunks) =>
+                accessRequestEmail ? (
+                  <a href={accessRequestHref(accessRequestEmail, email)} className={linkClass}>
+                    {chunks}
+                  </a>
+                ) : (
+                  chunks
+                ),
             })
       }
     >

@@ -3,9 +3,9 @@ import { parseAddressHeader } from "./addressHeader";
 
 describe("parseAddressHeader", () => {
   test("keeps every To address", () => {
-    expect(parseAddressHeader("bhagya@skinbae.in, pulkit@getkandid.com").map((a) => a.email)).toEqual([
+    expect(parseAddressHeader("bhagya@skinbae.in, dana@example.com").map((a) => a.email)).toEqual([
       "bhagya@skinbae.in",
-      "pulkit@getkandid.com",
+      "dana@example.com",
     ]);
   });
 

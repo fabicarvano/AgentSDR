@@ -6,7 +6,7 @@ import { RiCloseLine, RiGithubFill, RiLockLine } from "@remixicon/react";
 
 import { DEMO_READ_ONLY_CODE } from "@/lib/demo/mode";
 
-const REPO = "https://github.com/Kandid-ai/AgentSDR";
+const REPO = "https://github.com/fabicarvano/AgentSDR";
 const SELF_HOST_DOCS = "https://docs.agentsdr.ai/self-hosting";
 
 /** A typographic separator, the same in every language. */

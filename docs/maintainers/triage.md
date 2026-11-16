@@ -38,7 +38,7 @@ For each `needs-triage` issue:
 ## Discussions
 
 Questions, ideas and show-and-tell live in
-[Discussions](https://github.com/Kandid-ai/AgentSDR/discussions), not issues.
+[Discussions](https://github.com/fabicarvano/AgentSDR/discussions), not issues.
 
 - **Q&A:** answer, or point to the docs page that answers it, and mark the
   answer. A question that reveals a gap in the docs gets a `documentation`

@@ -3,7 +3,7 @@
  * and the docs point at the same URLs. No imports.
  */
 
-const REPO = "https://github.com/Kandid-ai/AgentSDR";
+const REPO = "https://github.com/fabicarvano/AgentSDR";
 
 export const SUPPORT_LINKS = {
   docs: "https://docs.agentsdr.ai",

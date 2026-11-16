@@ -180,6 +180,17 @@ when configured.
 | **Example** | `AUTH_SIGNUP=open` |
 | **Read in** | `src/lib/auth/signup.ts` |
 
+### `ACCESS_REQUEST_EMAIL`
+
+| | |
+|---|---|
+| **Required?** | No. |
+| **Default** | Empty. |
+| **What it does** | On an `invite-only` instance the sign-in page says "Need access? Ask your admin for an invite". With this set, "Ask your admin for an invite" is a link that opens an email to this address, with the address typed in the form filled in. Empty: the sentence is shown without a link. Read at request time, so changing it needs a restart, not a rebuild. |
+| **How to get it** | The address of whoever sends invitations. |
+| **Example** | `ACCESS_REQUEST_EMAIL=admin@example.com` |
+| **Read in** | `src/app/sign-in/page.tsx` |
+
 ## Secrets
 
 ### `INTEGRATION_CREDENTIALS_KEY`

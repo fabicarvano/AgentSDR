@@ -128,7 +128,7 @@ it passes only the settings it lists by name. Before `docker compose up -d`:
   email service is needed to get started. The page closes for good once an
   account exists.
 - **Copy-and-run Docker Compose.** `docker-compose.yml` runs the published
-  image (`ghcr.io/kandid-ai/agentsdr`), with no repository checkout and no
+  image (`ghcr.io/fabicarvano/agentsdr`), with no repository checkout and no
   files to mount. Every setting is listed by name in the file; the ones to
   replace are marked `# CHANGEME` and can be edited in place or set in a
   `.env`. It starts as-is on `localhost`; on any other `APP_URL` it refuses
@@ -215,8 +215,8 @@ The first public release.
   before deploying). The `WHATSAPP_*` sending variables are no longer read —
   set those limits in Settings → WhatsApp → Sending rules.
 
-[Unreleased]: https://github.com/Kandid-ai/AgentSDR/compare/v0.3.1...HEAD
-[0.3.1]: https://github.com/Kandid-ai/AgentSDR/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/Kandid-ai/AgentSDR/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/Kandid-ai/AgentSDR/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/Kandid-ai/AgentSDR/releases/tag/v0.1.0
+[Unreleased]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/fabicarvano/AgentSDR/releases/tag/v0.1.0

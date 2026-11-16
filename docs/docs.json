@@ -30,7 +30,7 @@
     ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/Kandid-ai/AgentSDR"
+      "href": "https://github.com/fabicarvano/AgentSDR"
     }
   },
   "navigation": {
@@ -188,7 +188,7 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/Kandid-ai/AgentSDR",
+      "github": "https://github.com/fabicarvano/AgentSDR",
       "website": "https://agentsdr.ai"
     },
     "links": [
@@ -197,19 +197,19 @@
         "items": [
           {
             "label": "Ask a question",
-            "href": "https://github.com/Kandid-ai/AgentSDR/discussions"
+            "href": "https://github.com/fabicarvano/AgentSDR/discussions"
           },
           {
             "label": "Report a bug",
-            "href": "https://github.com/Kandid-ai/AgentSDR/issues/new?template=bug_report.yml"
+            "href": "https://github.com/fabicarvano/AgentSDR/issues/new?template=bug_report.yml"
           },
           {
             "label": "Request a feature",
-            "href": "https://github.com/Kandid-ai/AgentSDR/issues/new?template=feature_request.yml"
+            "href": "https://github.com/fabicarvano/AgentSDR/issues/new?template=feature_request.yml"
           },
           {
             "label": "Report a security issue",
-            "href": "https://github.com/Kandid-ai/AgentSDR/security/advisories/new"
+            "href": "https://github.com/fabicarvano/AgentSDR/security/advisories/new"
           }
         ]
       },
@@ -218,19 +218,15 @@
         "items": [
           {
             "label": "GitHub",
-            "href": "https://github.com/Kandid-ai/AgentSDR"
+            "href": "https://github.com/fabicarvano/AgentSDR"
           },
           {
             "label": "Changelog",
-            "href": "https://github.com/Kandid-ai/AgentSDR/blob/main/CHANGELOG.md"
-          },
-          {
-            "label": "Contributing",
-            "href": "https://github.com/Kandid-ai/AgentSDR/blob/main/CONTRIBUTING.md"
+            "href": "https://github.com/fabicarvano/AgentSDR/blob/main/CHANGELOG.md"
           },
           {
             "label": "License (MIT)",
-            "href": "https://github.com/Kandid-ai/AgentSDR/blob/main/LICENSE"
+            "href": "https://github.com/fabicarvano/AgentSDR/blob/main/LICENSE"
           }
         ]
       }

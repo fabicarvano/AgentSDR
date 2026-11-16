@@ -42,7 +42,6 @@ is its source (Mintlify, configured in [docs.json](docs.json)); see
 
 - [Releasing](maintainers/releasing.md): versioning, changelog, image publishing, release checklist.
 - [Issue triage](maintainers/triage.md): labels, response expectations, security reports, stale policy.
-- [Open-source readiness](maintainers/open-source-readiness.md): the plan and record of preparing the repository for release.
 
 ## Design history
 

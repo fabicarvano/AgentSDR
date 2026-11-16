@@ -320,8 +320,6 @@ Sim. Convide colegas em Configurações → Membros com o papel de proprietário
 
 AgentSDR é open source sob a [Licença MIT](LICENSE).
 
-Base original: [`Kandid-ai/AgentSDR`](https://github.com/Kandid-ai/AgentSDR) (MIT).
-
 <details>
 <summary>Agradecimentos</summary>
 <br>

@@ -16,7 +16,7 @@ This is the recommended install. You download one file, set a few secrets, and r
   <Step title="Create a folder and get docker-compose.yml">
     ```sh
     mkdir agentsdr && cd agentsdr
-    curl -O https://raw.githubusercontent.com/Kandid-ai/AgentSDR/main/docker-compose.yml
+    curl -O https://raw.githubusercontent.com/fabicarvano/AgentSDR/main/docker-compose.yml
     ```
 
     No `curl`? Create `docker-compose.yml` in the folder with your editor and paste the [full file](#the-full-docker-compose-yml) below.
@@ -52,7 +52,7 @@ This is the recommended install. You download one file, set a few secrets, and r
     docker compose up -d
     ```
 
-    This starts two containers from two images (`postgres:18-alpine` and `ghcr.io/kandid-ai/agentsdr`):
+    This starts two containers from two images (`postgres:18-alpine` and `ghcr.io/fabicarvano/agentsdr`):
 
     | Service | What it does |
     |---|---|
@@ -110,7 +110,7 @@ Every other variable in the [configuration reference](/configuration) can be add
 Back up first (see [Backups](#backups)), read the release notes for any migration, then download the new `docker-compose.yml` (it names the new release's image) and start it:
 
 ```sh
-curl -O https://raw.githubusercontent.com/Kandid-ai/AgentSDR/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/fabicarvano/AgentSDR/main/docker-compose.yml
 docker compose pull
 docker compose up -d --remove-orphans
 ```
@@ -161,7 +161,7 @@ Do not scale `app` to more than one replica: the outreach sender loop has no dis
 To use a PostgreSQL 16+ you already run (a hosted one, for example) instead of the bundled `db`, download the override file next to `docker-compose.yml`:
 
 ```sh
-curl -O https://raw.githubusercontent.com/Kandid-ai/AgentSDR/main/docker-compose.external-db.yml
+curl -O https://raw.githubusercontent.com/fabicarvano/AgentSDR/main/docker-compose.external-db.yml
 ```
 
 Add to `.env`:
@@ -240,7 +240,7 @@ x-agentsdr: &agentsdr
   # The release this file was written for. Not `latest`: a server that pulled
   # `latest` before would keep running that older image with this newer file.
   # To upgrade, download the new docker-compose.yml (it names the new release).
-  image: ghcr.io/kandid-ai/agentsdr:${AGENTSDR_VERSION:-0.3.1}
+  image: ghcr.io/fabicarvano/agentsdr:${AGENTSDR_VERSION:-0.3.1}
   environment:
     # ── Where people reach AgentSDR ──────────────────────────────────────────
     # Your public address, no trailing slash, e.g. https://sdr.example.com

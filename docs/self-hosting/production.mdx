@@ -181,7 +181,7 @@ Upgrading an existing install is **not** done with `db:setup`, and the app's sta
    git log --diff-filter=A --name-only --format= OLD..NEW -- scripts/
    ```
 
-   The release notes in [CHANGELOG.md](https://github.com/Kandid-ai/AgentSDR/blob/main/CHANGELOG.md) name any migration you must run.
+   The release notes in [CHANGELOG.md](https://github.com/fabicarvano/AgentSDR/blob/main/CHANGELOG.md) name any migration you must run.
 4. Run each new migration against your database, for example `bun scripts/<name>.ts` (older ones are plain JavaScript, run with `node scripts/<name>.js`). They load `.env.local` and connect with `DATABASE_URL`, are guarded with `IF NOT EXISTS` / `IF EXISTS`, and are safe to re-run. The Docker image contains only `scripts/db/setup.ts` and `scripts/create-scheduled-job-runs.ts`, so run other migrations from a checkout of the repository that can reach your database. For the scheduler's migration on Docker Compose:
 
    ```sh

@@ -64,7 +64,7 @@ export default function ResponsiveHeroBanner({
   titleLine2 = "to next action.",
   description = "Find companies, enrich account data, run email and LinkedIn campaigns, and review every reply in one workspace your team can inspect and change.",
   primaryButtonText = "View the source",
-  primaryButtonHref = "https://github.com/Kandid-ai/AgentSDR",
+  primaryButtonHref = "https://github.com/fabicarvano/AgentSDR",
   secondaryButtonText = "See the workflow",
   secondaryButtonHref = "#workflow",
   partnersTitle = "The infrastructure behind your outbound motion",
