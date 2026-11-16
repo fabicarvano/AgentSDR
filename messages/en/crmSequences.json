@@ -1,3 +1,185 @@
 {
-  "crmSequences": {}
+  "crmSequences": {
+    "list": {
+      "title": "Sequences",
+      "description": "Reusable reply flows for CRM subcategories. The immediate reply always waits for you; with Auto-send on, a sequence's follow-ups send themselves.",
+      "createSequence": "Create sequence",
+      "kpi": {
+        "published": "Published",
+        "publishedContext": "{draft} draft · {archived} archived",
+        "publishedHint": "Only a published version runs. Editing a sequence changes its draft until you publish again.",
+        "inUse": "In use",
+        "inUseContext": "Assigned to {count, plural, one {# subcategory} other {# subcategories}}",
+        "inUseHint": "Sequences assigned to at least one subcategory in CRM Settings. A reply classified into that subcategory starts it.",
+        "notAssigned": "Not assigned",
+        "notAssignedContext": "Built but not started by any subcategory"
+      },
+      "library": {
+        "title": "Sequence library",
+        "description": "Build once, publish a version, then assign it to subcategories from CRM Settings.",
+        "tabAll": "All",
+        "searchLabel": "Search sequences",
+        "searchPlaceholder": "Search sequences…",
+        "emptyTitle": "No sequences yet",
+        "emptyDescription": "Create a sequence, add its follow-up steps, publish it, then assign it from CRM Settings.",
+        "noMatchTitle": "No sequences match",
+        "noMatchDescription": "Try another status or search.",
+        "caption": "CRM sequence library",
+        "colSequence": "Sequence",
+        "colSteps": "Steps",
+        "colUsedFor": "Used for",
+        "colAutoSend": "Auto-send",
+        "colAutoSendHint": "Follow-ups drafted by the AI send themselves, one per account every 30 minutes, inside sending hours. The immediate reply always waits for you.",
+        "colStatus": "Status",
+        "colActions": "Actions"
+      },
+      "row": {
+        "unnamedSequence": "Unnamed sequence",
+        "updated": "Updated {when}",
+        "noDescription": "No description",
+        "more": "+{count} more",
+        "notAssigned": "Not assigned",
+        "autoSendLabel": "Send {name}'s follow-ups automatically",
+        "on": "On",
+        "off": "Off",
+        "archived": "Archived",
+        "noFollowUps": "No follow-ups",
+        "sendsOnItsOwn": "Sends on its own",
+        "waitsForYou": "Waits for you",
+        "liveVersion": "{version} live",
+        "liveLatest": "Latest live",
+        "notPublished": "Not published yet",
+        "archivedUpdated": "Archived · updated {when}",
+        "actionsFor": "Actions for {name}",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "steps": {
+        "none": "No steps yet",
+        "count": "{count, plural, one {# step} other {# steps}}",
+        "replyPlus": "Reply + {count, plural, one {# follow-up} other {# follow-ups}}",
+        "replyOnly": "Reply only"
+      },
+      "delete": {
+        "title": "Delete sequence?",
+        "withAssignments": "“{name}” will be permanently deleted and removed from {count, plural, one {# subcategory} other {# subcategories}}. Sequences with CRM activity history cannot be deleted.",
+        "simple": "“{name}” will be permanently deleted. This cannot be undone. Sequences with CRM activity history cannot be deleted.",
+        "confirm": "Delete sequence"
+      },
+      "errors": {
+        "unnamedSubcategory": "Unnamed subcategory",
+        "missingId": "The new sequence did not return an ID"
+      },
+      "create": {
+        "title": "New sequence",
+        "description": "Add the basics now, then shape the message steps on the next screen.",
+        "nameLabel": "Sequence name",
+        "namePlaceholder": "e.g. Demo requested",
+        "descriptionLabel": "Description <soft>(optional)</soft>",
+        "descriptionPlaceholder": "When should this sequence be used?",
+        "cancel": "Cancel",
+        "creating": "Creating…",
+        "submit": "Create and add steps"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      }
+    },
+    "editor": {
+      "backLabel": "Sequences",
+      "sequence": "Sequence",
+      "untitled": "Untitled sequence",
+      "unsaved": "Unsaved changes",
+      "description": "Runs on Email or LinkedIn — the inbound conversation decides which. Every message waits for approval.",
+      "saveDraft": "Save draft",
+      "saving": "Saving…",
+      "publish": "Publish",
+      "publishing": "Publishing…",
+      "actionsLabel": "Sequence actions",
+      "duplicate": "Duplicate",
+      "duplicating": "Duplicating…",
+      "archivedNotice": "This archived sequence cannot be published or assigned. Duplicate it to continue, or delete it from the sequence library.",
+      "notices": {
+        "autoOn": "Follow-ups will now send automatically.",
+        "autoOff": "Automatic follow-ups turned off. Waiting follow-ups are now in Action required.",
+        "saved": "Draft saved.",
+        "published": "Sequence published. Future CRM runs will use this version."
+      },
+      "errors": {
+        "nameRequired": "Sequence name is required.",
+        "addImmediate": "Add an immediate reply step before saving.",
+        "tooMany": "A sequence can contain at most {max} steps.",
+        "needsGoal": "{step} needs a message goal.",
+        "needsDelay": "{step} needs a positive whole-number delay.",
+        "missingId": "The duplicated sequence did not return an ID"
+      },
+      "stats": {
+        "steps": "Steps",
+        "followUps": "Follow-ups",
+        "runsOver": "Runs over",
+        "runsOverHint": "From the first reply to the last follow-up, if the lead never answers",
+        "immediateOnly": "Immediate only",
+        "liveVersion": "Live version",
+        "liveHint": "Only the published version runs. Edits change the draft until you publish again.",
+        "published": "Published",
+        "notPublished": "Not published"
+      },
+      "details": {
+        "title": "Details",
+        "description": "How this sequence shows up in the library and in CRM Settings.",
+        "nameLabel": "Sequence name",
+        "descriptionLabel": "Description <soft>(optional)</soft>",
+        "descriptionPlaceholder": "When should this sequence be used?",
+        "autoLabel": "Send follow-ups automatically",
+        "autoHelp": "After the immediate reply goes out from AgentSDR, this sequence's follow-ups are drafted by the AI and sent on their own — at most one every 30 minutes (by default; see Sending rules) from each mailbox, LinkedIn account or WhatsApp number, inside its sending hours. The immediate reply always waits for you. Turning this off moves waiting follow-ups to Action required."
+      },
+      "timeline": {
+        "title": "Timeline",
+        "description": "When each message is prepared.",
+        "immediately": "Immediately after classification",
+        "waitLegend": "Wait after previous message",
+        "delayAmountLabel": "{step} delay amount",
+        "delayUnitLabel": "{step} delay unit",
+        "footer": "A new inbound reply interrupts any pending follow-up. Every message waits for human approval; nothing sends on its own."
+      },
+      "units": {
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days"
+      },
+      "goals": {
+        "title": "Message goals",
+        "description": "AI writes each message from the conversation and the goal you set here.",
+        "upTo": "Up to {count, plural, one {# follow-up} other {# follow-ups}}",
+        "addFollowUp": "Add follow-up"
+      },
+      "span": {
+        "days": "{days, plural, one {# day} other {# days}}",
+        "daysHours": "{days, plural, one {# day} other {# days}} {hours, plural, one {# hour} other {# hours}}",
+        "hours": "{hours, plural, one {# hour} other {# hours}}",
+        "hoursMinutes": "{hours, plural, one {# hour} other {# hours}} {minutes, plural, one {# minute} other {# minutes}}",
+        "minutes": "{minutes, plural, one {# minute} other {# minutes}}"
+      },
+      "step": {
+        "immediateReply": "Immediate reply",
+        "followUp": "Follow-up {number}"
+      },
+      "stepEditor": {
+        "descImmediate": "Created as soon as a reply is classified.",
+        "descFollowUp": "Prepared only when there is no newer inbound reply.",
+        "remove": "Remove {step}",
+        "goalLabel": "Message goal",
+        "placeholderImmediate": "For example: Answer their question clearly and suggest a suitable next step.",
+        "placeholderFollowUp": "For example: Share one useful proof point and ask whether they want to continue.",
+        "goalHelp": "Describe the outcome and tone. AI will use the Person, company, thread, classification, and Knowledge context."
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      }
+    }
+  }
 }

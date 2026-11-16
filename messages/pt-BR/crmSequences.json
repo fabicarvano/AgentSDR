@@ -1,3 +1,185 @@
 {
-  "crmSequences": {}
+  "crmSequences": {
+    "list": {
+      "title": "Sequências",
+      "description": "Fluxos de resposta reutilizáveis para subcategorias do CRM. A resposta imediata sempre espera por você; com o envio automático ativado, os follow-ups da sequência saem sozinhos.",
+      "createSequence": "Criar sequência",
+      "kpi": {
+        "published": "Publicadas",
+        "publishedContext": "{draft} em rascunho · {archived} arquivadas",
+        "publishedHint": "Só a versão publicada é executada. Editar uma sequência altera o rascunho até você publicar de novo.",
+        "inUse": "Em uso",
+        "inUseContext": "Atribuída a {count, plural, one {# subcategoria} other {# subcategorias}}",
+        "inUseHint": "Sequências atribuídas a pelo menos uma subcategoria nas Configurações do CRM. Uma resposta classificada nessa subcategoria inicia a sequência.",
+        "notAssigned": "Sem atribuição",
+        "notAssignedContext": "Criadas, mas não iniciadas por nenhuma subcategoria"
+      },
+      "library": {
+        "title": "Biblioteca de sequências",
+        "description": "Crie uma vez, publique uma versão e atribua às subcategorias nas Configurações do CRM.",
+        "tabAll": "Todas",
+        "searchLabel": "Buscar sequências",
+        "searchPlaceholder": "Buscar sequências…",
+        "emptyTitle": "Nenhuma sequência ainda",
+        "emptyDescription": "Crie uma sequência, adicione os passos de follow-up, publique e atribua nas Configurações do CRM.",
+        "noMatchTitle": "Nenhuma sequência encontrada",
+        "noMatchDescription": "Tente outro status ou outra busca.",
+        "caption": "Biblioteca de sequências do CRM",
+        "colSequence": "Sequência",
+        "colSteps": "Passos",
+        "colUsedFor": "Usada em",
+        "colAutoSend": "Envio automático",
+        "colAutoSendHint": "Os follow-ups redigidos pela IA saem sozinhos, um por conta a cada 30 minutos, dentro do horário de envio. A resposta imediata sempre espera por você.",
+        "colStatus": "Status",
+        "colActions": "Ações"
+      },
+      "row": {
+        "unnamedSequence": "Sequência sem nome",
+        "updated": "Atualizada {when}",
+        "noDescription": "Sem descrição",
+        "more": "+{count}",
+        "notAssigned": "Sem atribuição",
+        "autoSendLabel": "Enviar automaticamente os follow-ups de {name}",
+        "on": "Ligado",
+        "off": "Desligado",
+        "archived": "Arquivada",
+        "noFollowUps": "Sem follow-ups",
+        "sendsOnItsOwn": "Envia sozinha",
+        "waitsForYou": "Espera por você",
+        "liveVersion": "{version} no ar",
+        "liveLatest": "Última versão no ar",
+        "notPublished": "Ainda não publicada",
+        "archivedUpdated": "Arquivada · atualizada {when}",
+        "actionsFor": "Ações de {name}",
+        "edit": "Editar",
+        "delete": "Excluir"
+      },
+      "steps": {
+        "none": "Nenhum passo ainda",
+        "count": "{count, plural, one {# passo} other {# passos}}",
+        "replyPlus": "Resposta + {count, plural, one {# follow-up} other {# follow-ups}}",
+        "replyOnly": "Só a resposta"
+      },
+      "delete": {
+        "title": "Excluir sequência?",
+        "withAssignments": "“{name}” será excluída permanentemente e removida de {count, plural, one {# subcategoria} other {# subcategorias}}. Sequências com histórico de atividade no CRM não podem ser excluídas.",
+        "simple": "“{name}” será excluída permanentemente. Esta ação não pode ser desfeita. Sequências com histórico de atividade no CRM não podem ser excluídas.",
+        "confirm": "Excluir sequência"
+      },
+      "errors": {
+        "unnamedSubcategory": "Subcategoria sem nome",
+        "missingId": "A nova sequência não retornou um ID"
+      },
+      "create": {
+        "title": "Nova sequência",
+        "description": "Informe o básico agora e monte os passos das mensagens na próxima tela.",
+        "nameLabel": "Nome da sequência",
+        "namePlaceholder": "ex.: Demonstração solicitada",
+        "descriptionLabel": "Descrição <soft>(opcional)</soft>",
+        "descriptionPlaceholder": "Quando esta sequência deve ser usada?",
+        "cancel": "Cancelar",
+        "creating": "Criando…",
+        "submit": "Criar e adicionar passos"
+      },
+      "status": {
+        "published": "Publicada",
+        "draft": "Rascunho",
+        "archived": "Arquivada"
+      }
+    },
+    "editor": {
+      "backLabel": "Sequências",
+      "sequence": "Sequência",
+      "untitled": "Sequência sem título",
+      "unsaved": "Alterações não salvas",
+      "description": "Funciona por e-mail ou LinkedIn: a conversa recebida define qual. Toda mensagem espera aprovação.",
+      "saveDraft": "Salvar rascunho",
+      "saving": "Salvando…",
+      "publish": "Publicar",
+      "publishing": "Publicando…",
+      "actionsLabel": "Ações da sequência",
+      "duplicate": "Duplicar",
+      "duplicating": "Duplicando…",
+      "archivedNotice": "Esta sequência arquivada não pode ser publicada nem atribuída. Duplique-a para continuar ou exclua-a na biblioteca de sequências.",
+      "notices": {
+        "autoOn": "Os follow-ups agora serão enviados automaticamente.",
+        "autoOff": "Follow-ups automáticos desativados. Os follow-ups em espera agora estão em Ação necessária.",
+        "saved": "Rascunho salvo.",
+        "published": "Sequência publicada. As próximas execuções do CRM usarão esta versão."
+      },
+      "errors": {
+        "nameRequired": "O nome da sequência é obrigatório.",
+        "addImmediate": "Adicione um passo de resposta imediata antes de salvar.",
+        "tooMany": "Uma sequência pode ter no máximo {max} passos.",
+        "needsGoal": "{step} precisa de um objetivo da mensagem.",
+        "needsDelay": "{step} precisa de um intervalo inteiro e positivo.",
+        "missingId": "A sequência duplicada não retornou um ID"
+      },
+      "stats": {
+        "steps": "Passos",
+        "followUps": "Follow-ups",
+        "runsOver": "Duração",
+        "runsOverHint": "Da primeira resposta ao último follow-up, se o lead nunca responder",
+        "immediateOnly": "Só imediata",
+        "liveVersion": "Versão no ar",
+        "liveHint": "Só a versão publicada é executada. As edições alteram o rascunho até você publicar de novo.",
+        "published": "Publicada",
+        "notPublished": "Não publicada"
+      },
+      "details": {
+        "title": "Detalhes",
+        "description": "Como esta sequência aparece na biblioteca e nas Configurações do CRM.",
+        "nameLabel": "Nome da sequência",
+        "descriptionLabel": "Descrição <soft>(opcional)</soft>",
+        "descriptionPlaceholder": "Quando esta sequência deve ser usada?",
+        "autoLabel": "Enviar follow-ups automaticamente",
+        "autoHelp": "Depois que a resposta imediata sai do AgentSDR, os follow-ups desta sequência são redigidos pela IA e enviados sozinhos: no máximo um a cada 30 minutos (por padrão; veja Regras de envio) por caixa de e-mail, conta do LinkedIn ou número de WhatsApp, dentro do horário de envio. A resposta imediata sempre espera por você. Ao desativar, os follow-ups em espera vão para Ação necessária."
+      },
+      "timeline": {
+        "title": "Linha do tempo",
+        "description": "Quando cada mensagem é preparada.",
+        "immediately": "Logo após a classificação",
+        "waitLegend": "Esperar após a mensagem anterior",
+        "delayAmountLabel": "Quantidade de intervalo: {step}",
+        "delayUnitLabel": "Unidade de intervalo: {step}",
+        "footer": "Uma nova resposta recebida interrompe qualquer follow-up pendente. Toda mensagem espera aprovação humana; nada é enviado sozinho."
+      },
+      "units": {
+        "minutes": "Minutos",
+        "hours": "Horas",
+        "days": "Dias"
+      },
+      "goals": {
+        "title": "Objetivos das mensagens",
+        "description": "A IA escreve cada mensagem a partir da conversa e do objetivo definido aqui.",
+        "upTo": "Até {count, plural, one {# follow-up} other {# follow-ups}}",
+        "addFollowUp": "Adicionar follow-up"
+      },
+      "span": {
+        "days": "{days, plural, one {# dia} other {# dias}}",
+        "daysHours": "{days, plural, one {# dia} other {# dias}} {hours, plural, one {# hora} other {# horas}}",
+        "hours": "{hours, plural, one {# hora} other {# horas}}",
+        "hoursMinutes": "{hours, plural, one {# hora} other {# horas}} {minutes, plural, one {# minuto} other {# minutos}}",
+        "minutes": "{minutes, plural, one {# minuto} other {# minutos}}"
+      },
+      "step": {
+        "immediateReply": "Resposta imediata",
+        "followUp": "Follow-up {number}"
+      },
+      "stepEditor": {
+        "descImmediate": "Criada assim que uma resposta é classificada.",
+        "descFollowUp": "Preparada só se não houver uma resposta recebida mais recente.",
+        "remove": "Remover {step}",
+        "goalLabel": "Objetivo da mensagem",
+        "placeholderImmediate": "Por exemplo: responda a pergunta com clareza e sugira um próximo passo adequado.",
+        "placeholderFollowUp": "Por exemplo: compartilhe uma prova útil e pergunte se a pessoa quer continuar.",
+        "goalHelp": "Descreva o resultado e o tom. A IA usa o contexto da pessoa, da empresa, da conversa, da classificação e do Conhecimento."
+      },
+      "status": {
+        "published": "Publicada",
+        "draft": "Rascunho",
+        "archived": "Arquivada"
+      }
+    }
+  }
 }

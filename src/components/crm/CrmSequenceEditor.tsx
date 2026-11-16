@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -25,7 +26,8 @@ import { StatRow } from "@/components/page/StatRow";
 import { cn } from "@/utils/cn";
 import { ErrorState, fieldClass } from "./CrmLayout";
 import { EditorBody } from "./CrmSkeletons";
-import { asList, asObject, crmFetch, errorMessage } from "./crm-utils";
+import { asList, asObject, crmFetch } from "./crm-utils";
+import { useCrmText } from "./useCrmText";
 
 type DelayUnit = "minutes" | "hours" | "days";
 
@@ -50,6 +52,7 @@ type StepPayload = {
 };
 
 const MAX_STEPS = 30;
+// The default goals and step names below are stored in the database (AI instructions and data, not interface): they stay English.
 const DEFAULT_IMMEDIATE_GOAL = "Respond to the latest inbound message and move the conversation forward naturally.";
 const DEFAULT_FOLLOW_UP_GOAL = "Follow up naturally, add value, and avoid repeating the previous message.";
 const inputClass = fieldClass;
@@ -99,7 +102,7 @@ function parseStep(value: Record<string, unknown>, index: number): EditorStep {
   const delay = splitDelay(Number(value.delayMinutes ?? 0));
   return {
     clientId: String(value.id ?? `${index}-${newClientId()}`),
-    storedName: String(value.name ?? stepLabel(index)),
+    storedName: String(value.name ?? storedStepName(index)),
     delayAmount: index === 0 ? 0 : delay.amount,
     delayUnit: index === 0 ? "minutes" : delay.unit,
     subjectTemplate: value.subjectTemplate == null ? null : String(value.subjectTemplate),
@@ -109,16 +112,19 @@ function parseStep(value: Record<string, unknown>, index: number): EditorStep {
   };
 }
 
-function stepLabel(index: number) {
+/** The name written to the database for a generated step: English on purpose (stored data). */
+function storedStepName(index: number) {
   return index === 0 ? "Immediate reply" : `Follow-up ${index}`;
 }
 
 function persistedStepName(step: EditorStep, index: number) {
   const generated = /^(immediate reply|follow-up(?: \d+)?)$/i.test(step.storedName.trim());
-  return generated ? stepLabel(index) : step.storedName.trim();
+  return generated ? storedStepName(index) : step.storedName.trim();
 }
 
 export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }) {
+  const t = useTranslations("crmSequences.editor");
+  const { errorMessage } = useCrmText();
   const router = useRouter();
   const [sequence, setSequence] = useState<Record<string, unknown>>({});
   const [name, setName] = useState("");
@@ -129,6 +135,11 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<"" | "save" | "publish" | "duplicate" | "auto">("");
   const [dirty, setDirty] = useState(false);
+
+  const stepLabel = useCallback(
+    (index: number) => (index === 0 ? t("step.immediateReply") : t("step.followUp", { number: index })),
+    [t],
+  );
 
   const load = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -147,7 +158,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [sequenceId]);
+  }, [sequenceId, errorMessage]);
 
   useEffect(() => {
     void load();
@@ -171,7 +182,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
         body: JSON.stringify({ autoSendFollowUps: value }),
       });
       setSequence((current) => ({ ...current, autoSendFollowUps: value }));
-      setNotice(value ? "Follow-ups will now send automatically." : "Automatic follow-ups turned off. Waiting follow-ups are now in Action required.");
+      setNotice(value ? t("notices.autoOn") : t("notices.autoOff"));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -202,15 +213,15 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
   };
 
   const validationError = useMemo(() => {
-    if (!name.trim()) return "Sequence name is required.";
-    if (!steps.length) return "Add an immediate reply step before saving.";
-    if (steps.length > MAX_STEPS) return `A sequence can contain at most ${MAX_STEPS} steps.`;
+    if (!name.trim()) return t("errors.nameRequired");
+    if (!steps.length) return t("errors.addImmediate");
+    if (steps.length > MAX_STEPS) return t("errors.tooMany", { max: MAX_STEPS });
     const missingGoal = steps.findIndex((step) => !step.messageGoal.trim());
-    if (missingGoal >= 0) return `${stepLabel(missingGoal)} needs a message goal.`;
+    if (missingGoal >= 0) return t("errors.needsGoal", { step: stepLabel(missingGoal) });
     const invalidDelay = steps.findIndex((step, index) => index > 0 && (!Number.isInteger(step.delayAmount) || step.delayAmount < 1));
-    if (invalidDelay >= 0) return `${stepLabel(invalidDelay)} needs a positive whole-number delay.`;
+    if (invalidDelay >= 0) return t("errors.needsDelay", { step: stepLabel(invalidDelay) });
     return "";
-  }, [name, steps]);
+  }, [name, steps, t, stepLabel]);
 
   const payload = useMemo(() => ({
     name: name.trim(),
@@ -240,7 +251,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
       });
       setSequence((current) => ({ ...current, name: payload.name, description: payload.description }));
       setDirty(false);
-      if (showNotice) setNotice("Draft saved.");
+      if (showNotice) setNotice(t("notices.saved"));
       return true;
     } catch (cause) {
       setError(errorMessage(cause));
@@ -266,7 +277,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
       await crmFetch(`/sequences/${sequenceId}/publish`, { method: "POST" });
       await load(false);
       setDirty(false);
-      setNotice("Sequence published. Future CRM runs will use this version.");
+      setNotice(t("notices.published"));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -285,10 +296,11 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
     try {
       const created = asObject(await crmFetch("/sequences", {
         method: "POST",
+        // " copy" is written into the stored name (data, not interface): stays English.
         body: JSON.stringify({ ...payload, name: `${payload.name} copy` }),
       }));
       const id = asObject(created.sequence).id;
-      if (!id) throw new Error("The duplicated sequence did not return an ID");
+      if (!id) throw new Error(t("errors.missingId"));
       router.push(`/crm/sequences/${String(id)}`);
     } catch (cause) {
       setError(errorMessage(cause));
@@ -296,24 +308,25 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
     }
   };
 
+  const back = { href: "/crm/sequences", label: t("backLabel") };
   if (loading) return <EditorBody />;
-  if (error && !sequence.id) return <div className="space-y-6"><PageHeader back={BACK} title="Sequence" /><ErrorState message={error} onRetry={() => void load()} /></div>;
+  if (error && !sequence.id) return <div className="space-y-6"><PageHeader back={back} title={t("sequence")} /><ErrorState message={error} onRetry={() => void load()} /></div>;
 
   const archived = sequence.status === "archived";
   const published = Boolean(sequence.latestPublishedVersionId);
   const publishedVersion = asList<Record<string, unknown>>(sequence.versions).find((version) => version.id === sequence.latestPublishedVersionId)?.version;
-  const status = archived ? { label: "Archived", color: "orange" as const } : published ? { label: "Published", color: "green" as const } : { label: "Draft", color: "gray" as const };
+  const status = archived ? { key: "archived" as const, color: "orange" as const } : published ? { key: "published" as const, color: "green" as const } : { key: "draft" as const, color: "gray" as const };
   const spanMinutes = steps.reduce((sum, step, index) => sum + (index === 0 ? 0 : delayInMinutes(step.delayAmount || 0, step.delayUnit)), 0);
   return (
     <div className="space-y-5">
       <PageHeader
-        back={BACK}
-        title={name.trim() || "Untitled sequence"}
+        back={back}
+        title={name.trim() || t("untitled")}
         badge={<>
-          <Badge.Root variant="lighter" size="medium" color={status.color}><Badge.Dot />{status.label}</Badge.Root>
-          {dirty && <Badge.Root variant="lighter" size="medium" color="yellow"><Badge.Dot />Unsaved changes</Badge.Root>}
+          <Badge.Root variant="lighter" size="medium" color={status.color}><Badge.Dot />{t(`status.${status.key}`)}</Badge.Root>
+          {dirty && <Badge.Root variant="lighter" size="medium" color="yellow"><Badge.Dot />{t("unsaved")}</Badge.Root>}
         </>}
-        description="Runs on Email or LinkedIn — the inbound conversation decides which. Every message waits for approval."
+        description={t("description")}
         actions={<>
           <Button.Root
             variant="neutral"
@@ -323,7 +336,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
             onClick={() => void save()}
           >
             <Button.Icon as={RiSaveLine} />
-            {busy === "save" ? "Saving…" : "Save draft"}
+            {busy === "save" ? t("saving") : t("saveDraft")}
           </Button.Root>
           <Button.Root
             variant="primary"
@@ -333,11 +346,11 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
             onClick={() => void publish()}
           >
             <Button.Icon as={RiSendPlaneLine} />
-            {busy === "publish" ? "Publishing…" : "Publish"}
+            {busy === "publish" ? t("publishing") : t("publish")}
           </Button.Root>
           <Dropdown.Root>
             <Dropdown.Trigger asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={Boolean(busy)} aria-label="Sequence actions">
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={Boolean(busy)} aria-label={t("actionsLabel")}>
                 <Button.Icon as={RiMoreLine} />
               </Button.Root>
             </Dropdown.Trigger>
@@ -347,7 +360,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
                 onSelect={() => void duplicate()}
               >
                 <Dropdown.ItemIcon as={RiFileCopyLine} />
-                {busy === "duplicate" ? "Duplicating…" : "Duplicate"}
+                {busy === "duplicate" ? t("duplicating") : t("duplicate")}
               </Dropdown.Item>
             </Dropdown.Content>
           </Dropdown.Root>
@@ -364,23 +377,23 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
       </div>
       {archived && (
         <div className="rounded-xl bg-warning-lighter px-4 py-2.5 text-paragraph-sm text-warning-dark ring-1 ring-inset ring-warning-light">
-          This archived sequence cannot be published or assigned. Duplicate it to continue, or delete it from the sequence library.
+          {t("archivedNotice")}
         </div>
       )}
 
       <StatRow items={[
-        { label: "Steps", value: `${steps.length}`, icon: RiListOrdered2 },
-        { label: "Follow-ups", value: `${Math.max(steps.length - 1, 0)}`, icon: RiRepeatLine },
-        { label: "Runs over", value: spanMinutes ? formatSpan(spanMinutes) : "Immediate only", icon: RiTimeLine, hint: "From the first reply to the last follow-up, if the lead never answers" },
-        { label: "Live version", value: publishedVersion ? `v${String(publishedVersion)}` : published ? "Published" : "Not published", icon: RiSendPlaneLine, hint: "Only the published version runs. Edits change the draft until you publish again." },
+        { label: t("stats.steps"), value: `${steps.length}`, icon: RiListOrdered2 },
+        { label: t("stats.followUps"), value: `${Math.max(steps.length - 1, 0)}`, icon: RiRepeatLine },
+        { label: t("stats.runsOver"), value: spanMinutes ? formatSpan(spanMinutes, t) : t("stats.immediateOnly"), icon: RiTimeLine, hint: t("stats.runsOverHint") },
+        { label: t("stats.liveVersion"), value: publishedVersion ? `v${String(publishedVersion)}` : published ? t("stats.published") : t("stats.notPublished"), icon: RiSendPlaneLine, hint: t("stats.liveHint") },
       ]} />
 
       <Frame>
-        <FrameHeader title="Details" description="How this sequence shows up in the library and in CRM Settings." />
+        <FrameHeader title={t("details.title")} description={t("details.description")} />
         <FramePanel className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-paragraph-sm">
-              <span className="mb-1.5 block text-label-xs text-text-sub-600">Sequence name</span>
+              <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("details.nameLabel")}</span>
               <input
                 required
                 maxLength={160}
@@ -392,7 +405,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
             </label>
             <label className="text-paragraph-sm">
               <span className="mb-1.5 block text-label-xs text-text-sub-600">
-                Description <span className="font-normal text-text-soft-400">(optional)</span>
+                {t.rich("details.descriptionLabel", { soft: (chunks) => <span className="font-normal text-text-soft-400">{chunks}</span> })}
               </span>
               <input
                 maxLength={4000}
@@ -400,7 +413,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
                 value={description}
                 onChange={(event) => updateMetadata("description", event.target.value)}
                 className={inputClass}
-                placeholder="When should this sequence be used?"
+                placeholder={t("details.descriptionPlaceholder")}
               />
             </label>
           </div>
@@ -412,8 +425,8 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
               onCheckedChange={(checked) => void toggleAutoSend(checked === true)}
             />
             <span>
-              <span className="block text-label-sm text-text-strong-950">Send follow-ups automatically</span>
-              <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">After the immediate reply goes out from AgentSDR, this sequence&apos;s follow-ups are drafted by the AI and sent on their own — at most one every 30 minutes (by default; see Sending rules) from each mailbox, LinkedIn account or WhatsApp number, inside its sending hours. The immediate reply always waits for you. Turning this off moves waiting follow-ups to Action required.</span>
+              <span className="block text-label-sm text-text-strong-950">{t("details.autoLabel")}</span>
+              <span className="mt-0.5 block text-paragraph-xs text-text-sub-600">{t("details.autoHelp")}</span>
             </span>
           </label>
           {validationError && <p role="alert" className="text-label-xs text-error-base">{validationError}</p>}
@@ -422,7 +435,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12 lg:gap-5">
         <Frame className="lg:sticky lg:top-5 lg:col-span-4">
-          <FrameHeader title="Timeline" description="When each message is prepared." />
+          <FrameHeader title={t("timeline.title")} description={t("timeline.description")} />
           <FramePanel className="p-0 sm:p-0">
             <ol className="relative px-4 py-2">
               {steps.map((step, index) => (
@@ -434,13 +447,13 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
                   <div className="min-w-0 flex-1">
                     <p className="text-label-sm text-text-strong-950">{stepLabel(index)}</p>
                     {index === 0 ? (
-                      <p className="mt-0.5 text-paragraph-xs text-text-sub-600">Immediately after classification</p>
+                      <p className="mt-0.5 text-paragraph-xs text-text-sub-600">{t("timeline.immediately")}</p>
                     ) : (
                       <fieldset disabled={Boolean(busy)} className="mt-2">
-                        <legend className="mb-1.5 text-paragraph-xs text-text-sub-600">Wait after previous message</legend>
+                        <legend className="mb-1.5 text-paragraph-xs text-text-sub-600">{t("timeline.waitLegend")}</legend>
                         <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-1.5">
                           <input
-                            aria-label={`${stepLabel(index)} delay amount`}
+                            aria-label={t("timeline.delayAmountLabel", { step: stepLabel(index) })}
                             type="number"
                             min={1}
                             step={1}
@@ -453,13 +466,13 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
                             value={step.delayUnit}
                             onValueChange={(value) => updateStep(index, { delayUnit: value as DelayUnit })}
                           >
-                            <Select.Trigger aria-label={`${stepLabel(index)} delay unit`} className="w-full">
+                            <Select.Trigger aria-label={t("timeline.delayUnitLabel", { step: stepLabel(index) })} className="w-full">
                               <Select.Value />
                             </Select.Trigger>
                             <Select.Content>
-                              <Select.Item value="minutes">Minutes</Select.Item>
-                              <Select.Item value="hours">Hours</Select.Item>
-                              <Select.Item value="days">Days</Select.Item>
+                              <Select.Item value="minutes">{t("units.minutes")}</Select.Item>
+                              <Select.Item value="hours">{t("units.hours")}</Select.Item>
+                              <Select.Item value="days">{t("units.days")}</Select.Item>
                             </Select.Content>
                           </Select.Root>
                         </div>
@@ -470,22 +483,23 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
               ))}
             </ol>
           </FramePanel>
-          <FrameFooter>A new inbound reply interrupts any pending follow-up. Every message waits for human approval; nothing sends on its own.</FrameFooter>
+          <FrameFooter>{t("timeline.footer")}</FrameFooter>
         </Frame>
 
         <div className="min-w-0 space-y-4 lg:col-span-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-label-md text-text-strong-950">Message goals</h2>
-              <p className="mt-0.5 text-paragraph-sm text-text-sub-600">AI writes each message from the conversation and the goal you set here.</p>
+              <h2 className="text-label-md text-text-strong-950">{t("goals.title")}</h2>
+              <p className="mt-0.5 text-paragraph-sm text-text-sub-600">{t("goals.description")}</p>
             </div>
-            <span className="text-paragraph-xs text-text-soft-400">Up to {MAX_STEPS - 1} follow-ups</span>
+            <span className="text-paragraph-xs text-text-soft-400">{t("goals.upTo", { count: MAX_STEPS - 1 })}</span>
           </div>
           {steps.map((step, index) => (
             <StepEditor
               key={step.clientId}
               step={step}
               index={index}
+              label={stepLabel(index)}
               busy={Boolean(busy)}
               onChange={(patch) => updateStep(index, patch)}
               onRemove={() => removeFollowUp(index)}
@@ -500,7 +514,7 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
             onClick={addFollowUp}
           >
             <Button.Icon as={RiAddLine} />
-            Add follow-up
+            {t("goals.addFollowUp")}
           </Button.Root>
         </div>
       </div>
@@ -508,33 +522,32 @@ export default function CrmSequenceEditor({ sequenceId }: { sequenceId: string }
   );
 }
 
-const BACK = { href: "/crm/sequences", label: "Sequences" };
-
-/** "9 days", "1 day 4 hours", "45 minutes" — how long the whole sequence spans. */
-function formatSpan(minutes: number) {
+/** "9 days", "1 day 4 hours", "45 minutes": how long the whole sequence spans. */
+function formatSpan(minutes: number, t: ReturnType<typeof useTranslations<"crmSequences.editor">>) {
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const rest = minutes % 60;
-  const part = (value: number, unit: string) => `${value} ${unit}${value === 1 ? "" : "s"}`;
-  if (days) return hours ? `${part(days, "day")} ${part(hours, "hour")}` : part(days, "day");
-  if (hours) return rest ? `${part(hours, "hour")} ${part(rest, "minute")}` : part(hours, "hour");
-  return part(rest, "minute");
+  if (days) return hours ? t("span.daysHours", { days, hours }) : t("span.days", { days });
+  if (hours) return rest ? t("span.hoursMinutes", { hours, minutes: rest }) : t("span.hours", { hours });
+  return t("span.minutes", { minutes: rest });
 }
 
 function StepEditor({
   step,
   index,
+  label,
   busy,
   onChange,
   onRemove,
 }: {
   step: EditorStep;
   index: number;
+  label: string;
   busy: boolean;
   onChange: (patch: Partial<EditorStep>) => void;
   onRemove: () => void;
 }) {
-  const label = stepLabel(index);
+  const t = useTranslations("crmSequences.editor");
   return (
     <Frame>
       <FrameHeader
@@ -542,16 +555,16 @@ function StepEditor({
           <span className={cn("flex size-5 items-center justify-center rounded-full text-label-xs", index === 0 ? "bg-primary-base text-static-white" : "bg-bg-white-0 text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200")}>{index + 1}</span>
           {label}
         </span>}
-        description={index === 0 ? "Created as soon as a reply is classified." : "Prepared only when there is no newer inbound reply."}
+        description={index === 0 ? t("stepEditor.descImmediate") : t("stepEditor.descFollowUp")}
         actions={index > 0 && (
-          <Button.Root variant="error" mode="ghost" size="xsmall" disabled={busy} onClick={onRemove} aria-label={`Remove ${label}`}>
+          <Button.Root variant="error" mode="ghost" size="xsmall" disabled={busy} onClick={onRemove} aria-label={t("stepEditor.remove", { step: label })}>
             <Button.Icon as={RiDeleteBinLine} />
           </Button.Root>
         )}
       />
       <FramePanel>
         <label className="block text-paragraph-sm">
-          <span className="mb-1.5 block text-label-xs text-text-sub-600">Message goal</span>
+          <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("stepEditor.goalLabel")}</span>
           <textarea
             required
             maxLength={8000}
@@ -560,12 +573,10 @@ function StepEditor({
             value={step.messageGoal}
             onChange={(event) => onChange({ messageGoal: event.target.value })}
             className={`${inputClass} resize-y`}
-            placeholder={index === 0
-              ? "For example: Answer their question clearly and suggest a suitable next step."
-              : "For example: Share one useful proof point and ask whether they want to continue."}
+            placeholder={index === 0 ? t("stepEditor.placeholderImmediate") : t("stepEditor.placeholderFollowUp")}
           />
           <span className="mt-1 block text-paragraph-xs text-text-soft-400">
-            Describe the outcome and tone. AI will use the Person, company, thread, classification, and Knowledge context.
+            {t("stepEditor.goalHelp")}
           </span>
         </label>
       </FramePanel>
