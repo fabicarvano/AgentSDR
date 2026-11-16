@@ -1,7 +1,8 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { TriageTabs, type TriageTab } from "./shell/InboxShell";
-import { INBOX_SECTIONS, SECTION_COUNT_HINT, type InboxSectionKey } from "./inboxSections";
+import { INBOX_SECTIONS, SECTION_COUNT_HINT_KEY, type InboxSectionKey } from "./inboxSections";
 
 type Counts = Partial<Record<InboxSectionKey, number>>;
 
@@ -9,32 +10,12 @@ type Counts = Partial<Record<InboxSectionKey, number>>;
 const PRIMARY: InboxSectionKey[] = ["inbox", "replied", "pendingApproval"];
 
 /** Shorter names for the tab bar, where space is tight. */
-const TAB_LABEL: Partial<Record<InboxSectionKey, string>> = {
-  replied: "Replies",
-  pendingApproval: "To approve",
+const TAB_SHORT: Partial<Record<InboxSectionKey, "replied" | "pendingApproval">> = {
+  replied: "replied",
+  pendingApproval: "pendingApproval",
 };
 
-const TAB_TITLE: Partial<Record<InboxSectionKey, string>> = {
-  inbox: "Every email received",
-  replied: "Replies from leads, without out-of-office auto-replies",
-  pendingApproval: "AI-drafted replies waiting for your review",
-  outOfOffice: "Auto-replies and out-of-office notices",
-  important: "Messages you starred",
-  scheduled: "Queued to send",
-};
-
-function toTab(key: InboxSectionKey, counts: Counts): TriageTab {
-  const section = INBOX_SECTIONS.find((s) => s.key === key)!;
-  const count = counts[key];
-  const hint = SECTION_COUNT_HINT[key];
-  return {
-    key,
-    label: TAB_LABEL[key] ?? section.label,
-    count: count ?? null,
-    countTitle: count !== undefined ? `${count.toLocaleString("en-US")}${hint ? ` ${hint}` : ""}` : undefined,
-    title: TAB_TITLE[key],
-  };
-}
+const TAB_TITLED: InboxSectionKey[] = ["inbox", "replied", "pendingApproval", "outOfOffice", "important", "scheduled"];
 
 /**
  * Master Inbox folders as the list's tab bar: Inbox, Replies and To approve
@@ -50,12 +31,30 @@ export default function InboxFolderTabs({
   onSelect: (key: InboxSectionKey) => void;
   counts: Counts;
 }) {
+  const t = useTranslations("inboxMain.nav");
+  const tSections = useTranslations("inboxMain.sections");
+  const format = useFormatter();
+
+  function toTab(key: InboxSectionKey): TriageTab {
+    const section = INBOX_SECTIONS.find((s) => s.key === key)!;
+    const count = counts[key];
+    const hintKey = key in SECTION_COUNT_HINT_KEY ? SECTION_COUNT_HINT_KEY[key as keyof typeof SECTION_COUNT_HINT_KEY] : undefined;
+    const shortKey = TAB_SHORT[key];
+    return {
+      key,
+      label: shortKey ? t(`tabShort.${shortKey}`) : tSections(section.labelKey),
+      count: count ?? null,
+      countTitle: count !== undefined ? (hintKey ? t(hintKey, { count }) : format.number(count)) : undefined,
+      title: TAB_TITLED.includes(key) ? t(`tabTitle.${key as "inbox" | "replied" | "pendingApproval" | "outOfOffice" | "important" | "scheduled"}`) : undefined,
+    };
+  }
+
   const more = INBOX_SECTIONS.map((s) => s.key).filter((key) => !PRIMARY.includes(key));
   return (
     <TriageTabs
-      label="Folders"
-      tabs={PRIMARY.map((key) => toTab(key, counts))}
-      more={more.map((key) => toTab(key, counts))}
+      label={t("folders")}
+      tabs={PRIMARY.map((key) => toTab(key))}
+      more={more.map((key) => toTab(key))}
       value={active}
       onChange={(key) => onSelect(key as InboxSectionKey)}
     />

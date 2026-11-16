@@ -1,3 +1,146 @@
 {
-  "inboxMain": {}
+  "inboxMain": {
+    "page": {
+      "title": "Master Inbox"
+    },
+    "sections": {
+      "inbox": "Inbox",
+      "replied": "Replied",
+      "outOfOffice": "Out of office",
+      "pendingApproval": "Pending approval",
+      "sent": "Sent",
+      "important": "Important",
+      "scheduled": "Scheduled"
+    },
+    "nav": {
+      "folders": "Folders",
+      "tabShort": {
+        "replied": "Replies",
+        "pendingApproval": "To approve"
+      },
+      "tabTitle": {
+        "inbox": "Every email received",
+        "replied": "Replies from leads, without out-of-office auto-replies",
+        "pendingApproval": "AI-drafted replies waiting for your review",
+        "outOfOffice": "Auto-replies and out-of-office notices",
+        "important": "Messages you starred",
+        "scheduled": "Queued to send"
+      },
+      "countUnread": "{count} unread",
+      "countStarred": "{count} starred",
+      "countQueued": "{count} waiting to send"
+    },
+    "emailList": {
+      "scheduledTime": "Scheduled",
+      "you": "You: ",
+      "noSubject": "(no subject)",
+      "noContent": "(no content)",
+      "mailbox": "Mailbox: {mailbox}",
+      "important": "Important",
+      "stackTitle": "{count} messages from this lead in a row",
+      "stackCount": "{count, plural, one {# message} other {# messages}}",
+      "aiDraft": "AI draft",
+      "automated": "Automated",
+      "automatedHint": "DMARC reports, no-reply and delivery notices",
+      "automatedHintUnread": "DMARC reports, no-reply and delivery notices · {count} unread"
+    },
+    "filters": {
+      "leads": "Leads",
+      "campaigns": "Campaigns",
+      "mailboxes": "Mailboxes",
+      "leadStatus": "Lead status",
+      "statusGroup": "Status group",
+      "time": "Time",
+      "statusGroups": {
+        "interested": "Interested",
+        "not_interested": "Not interested",
+        "wrong_poc": "Wrong POC",
+        "other": "Other"
+      },
+      "timeModes": {
+        "all": "All time",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "custom": "Custom"
+      },
+      "selected": "{count} selected",
+      "searchLabel": "Search {title}",
+      "searchPlaceholder": "Search…",
+      "noResults": "No results",
+      "cancel": "Cancel",
+      "apply": "Apply filters",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "to": "to"
+    },
+    "quickCreate": {
+      "newTask": "New task",
+      "newNote": "New note",
+      "descriptionTaskFor": "For {name}. It shows up under Tasks.",
+      "descriptionTask": "It shows up under Tasks.",
+      "descriptionNoteFor": "For {name}. It shows up under Notes.",
+      "descriptionNote": "It shows up under Notes.",
+      "taskName": "Task name",
+      "noteTitle": "Note title",
+      "descriptionPlaceholder": "Description…",
+      "descriptionLabel": "Description",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "createTask": "Create task",
+      "createNote": "Create note"
+    },
+    "client": {
+      "title": "Master Inbox",
+      "description": "Every email reply across your mailboxes, in one place.",
+      "tasks": "Tasks",
+      "notes": "Notes",
+      "sectionEmpty": {
+        "inbox": "Replies to your campaigns land here as they arrive.",
+        "replied": "Replies from leads, without the out-of-office auto-replies.",
+        "outOfOffice": "Auto-replies and out-of-office notices collect here.",
+        "pendingApproval": "AI-drafted replies waiting for your review show up here.",
+        "sent": "Emails sent from your mailboxes show up here.",
+        "important": "Star a message in a thread to keep it here.",
+        "scheduled": "Nothing is queued to send right now."
+      },
+      "listLabel": "{section} emails",
+      "searchPlaceholder": "Search emails, leads…",
+      "searchLabel": "Search emails",
+      "emailNoun": "{count, plural, one {email} other {emails}}",
+      "clearFilters": "Clear filters",
+      "noMatchTitle": "No emails match",
+      "noMatchDescription": "Try another search, or clear the filters.",
+      "noRepliesTitle": "No replies yet",
+      "nothingInTitle": "Nothing in {section}",
+      "loadingMore": "Loading more…",
+      "endOfList": "That's everything in {section}",
+      "backToEmails": "Back to emails",
+      "scheduledBadge": "Scheduled — not yet sent",
+      "scheduledSubtitle": "To {to} · from {from}",
+      "unassignedMailbox": "unassigned mailbox",
+      "noSubject": "(no subject)",
+      "queuedNote": "Queued in the campaign — edit or cancel it from the campaign.",
+      "selectEmailTitle": "Select an email",
+      "selectEmailDescription": "Pick a conversation from the list to read the thread and reply.",
+      "ccLine": "Cc: {list}",
+      "noMailbox": "No sending mailbox is linked to this lead, so replies can't be sent from here.",
+      "dismiss": "Dismiss",
+      "usingDraft": "Sending as the CRM draft — your edits are kept",
+      "sendFailed": "Could not send (HTTP {status})",
+      "facts": {
+        "mailbox": "Mailbox",
+        "leadStatus": "Lead status",
+        "messages": "Messages",
+        "cc": "Cc"
+      },
+      "addTitle": "Add a task or note",
+      "add": "Add",
+      "task": "Task",
+      "note": "Note",
+      "openRecord": "Open CRM record",
+      "record": "Record",
+      "hideDetails": "Hide details",
+      "showDetails": "Show details"
+    }
+  }
 }

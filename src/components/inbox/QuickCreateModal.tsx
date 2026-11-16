@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiStickyNoteLine, RiTaskLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
@@ -22,6 +23,7 @@ export default function QuickCreateModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const t = useTranslations("inboxMain.quickCreate");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -48,10 +50,15 @@ export default function QuickCreateModal({
     <Modal.Root open onOpenChange={(open) => !open && onClose()}>
       <Modal.Content>
         <Modal.Header icon={isTask ? RiTaskLine : RiStickyNoteLine}>
-          <Modal.Title>{isTask ? "New task" : "New note"}</Modal.Title>
+          <Modal.Title>{isTask ? t("newTask") : t("newNote")}</Modal.Title>
           <Modal.Description>
-            {leadName ? `For ${leadName}. ` : ""}
-            {isTask ? "It shows up under Tasks." : "It shows up under Notes."}
+            {isTask
+              ? leadName
+                ? t("descriptionTaskFor", { name: leadName })
+                : t("descriptionTask")
+              : leadName
+                ? t("descriptionNoteFor", { name: leadName })
+                : t("descriptionNote")}
           </Modal.Description>
         </Modal.Header>
         <form
@@ -67,20 +74,20 @@ export default function QuickCreateModal({
                 <Input.Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={isTask ? "Task name" : "Note title"}
-                  aria-label={isTask ? "Task name" : "Note title"}
+                  placeholder={isTask ? t("taskName") : t("noteTitle")}
+                  aria-label={isTask ? t("taskName") : t("noteTitle")}
                   autoFocus
                 />
               </Input.Wrapper>
             </Input.Root>
-            <Textarea.Root simple rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description…" aria-label="Description" />
+            <Textarea.Root simple rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} aria-label={t("descriptionLabel")} />
           </Modal.Body>
           <Modal.Footer>
             <Button.Root type="button" variant="neutral" mode="stroke" size="small" onClick={onClose}>
-              Cancel
+              {t("cancel")}
             </Button.Root>
             <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={saving || !name.trim()}>
-              {saving ? "Saving…" : isTask ? "Create task" : "Create note"}
+              {saving ? t("saving") : isTask ? t("createTask") : t("createNote")}
             </Button.Root>
           </Modal.Footer>
         </form>

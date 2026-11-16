@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
 import { RiArrowDownSLine, RiSearchLine } from "@remixicon/react";
 import * as Badge from "@/components/alignui/badge";
 import * as Button from "@/components/alignui/button";
@@ -46,20 +48,15 @@ type LeadOption = { id: string; name: string; subtitle: string | null };
 type CampaignOption = { id: string; name: string };
 type StatusOption = { statusKey: string; label: string; statusGroup: string };
 
-const LEAD_STATUS_GROUPS: { key: string; label: string }[] = [
-  { key: "interested", label: "Interested" },
-  { key: "not_interested", label: "Not interested" },
-  { key: "wrong_poc", label: "Wrong POC" },
-  { key: "other", label: "Other" },
-];
+type StatusGroupKey = keyof Messages["inboxMain"]["filters"]["statusGroups"];
+// Group keys are stored values (lead status groups), shown through the catalog.
+const LEAD_STATUS_GROUPS: StatusGroupKey[] = ["interested", "not_interested", "wrong_poc", "other"];
 
 type TimeMode = "all" | "today" | "yesterday" | "custom";
-const TIME_MODES: { key: TimeMode; label: string }[] = [
-  { key: "all", label: "All time" },
-  { key: "today", label: "Today" },
-  { key: "yesterday", label: "Yesterday" },
-  { key: "custom", label: "Custom" },
-];
+const TIME_MODES: TimeMode[] = ["all", "today", "yesterday", "custom"];
+// Compile-time exhaustiveness: a time mode without a label fails tsc here.
+const _timeModesCovered: Exclude<TimeMode, keyof Messages["inboxMain"]["filters"]["timeModes"]> extends never ? true : false = true;
+void _timeModesCovered;
 
 /** A collapsible checklist: the section title with how many are ticked, the options when open. */
 function CollapsibleMultiSelect<T extends { id: string; label: string; subtitle?: string | null }>({
@@ -77,6 +74,7 @@ function CollapsibleMultiSelect<T extends { id: string; label: string; subtitle?
   searchable?: boolean;
   onSearch?: (q: string) => void;
 }) {
+  const t = useTranslations("inboxMain.filters");
   const [open, setOpen] = useState(false);
   const baseId = useId();
   return (
@@ -91,7 +89,7 @@ function CollapsibleMultiSelect<T extends { id: string; label: string; subtitle?
         <span className="flex items-center gap-2">
           {selected.length > 0 && (
             <Badge.Root size="medium" variant="lighter" color="blue">
-              {selected.length} selected
+              {t("selected", { count: selected.length })}
             </Badge.Root>
           )}
           <RiArrowDownSLine className={cn("size-4 text-text-soft-400 transition-transform", open && "rotate-180")} aria-hidden="true" />
@@ -104,13 +102,13 @@ function CollapsibleMultiSelect<T extends { id: string; label: string; subtitle?
               <Input.Root size="xsmall">
                 <Input.Wrapper>
                   <Input.Icon as={RiSearchLine} />
-                  <Input.Input type="search" aria-label={`Search ${title.toLowerCase()}`} placeholder="Search…" onChange={(e) => onSearch?.(e.target.value)} />
+                  <Input.Input type="search" aria-label={t("searchLabel", { title: title.toLowerCase() })} placeholder={t("searchPlaceholder")} onChange={(e) => onSearch?.(e.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
             </div>
           )}
           <div className="max-h-44 overflow-y-auto p-1">
-            {options.length === 0 && <p className="px-2 py-2 text-paragraph-xs text-text-soft-400">No results</p>}
+            {options.length === 0 && <p className="px-2 py-2 text-paragraph-xs text-text-soft-400">{t("noResults")}</p>}
             {options.map((opt) => {
               const id = `${baseId}-${opt.id}`;
               return (
@@ -142,6 +140,7 @@ export default function FilterPanel({
   value: InboxFilterState;
   onApply: (next: InboxFilterState) => void;
 }) {
+  const t = useTranslations("inboxMain.filters");
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<InboxFilterState>(value);
   const [loaded, setLoaded] = useState(false);
@@ -223,7 +222,7 @@ export default function FilterPanel({
       footer={
         <div className="flex items-center justify-end gap-2">
           <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => setOpen(false)}>
-            Cancel
+            {t("cancel")}
           </Button.Root>
           <Button.Root
             variant="primary"
@@ -235,7 +234,7 @@ export default function FilterPanel({
               setOpen(false);
             }}
           >
-            Apply filters
+            {t("apply")}
           </Button.Root>
         </div>
       }
@@ -243,7 +242,7 @@ export default function FilterPanel({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <CollapsibleMultiSelect
-            title="Leads"
+            title={t("leads")}
             searchable
             onSearch={searchLeads}
             options={leads.map((l) => ({ id: l.id, label: l.name, subtitle: l.subtitle }))}
@@ -251,13 +250,13 @@ export default function FilterPanel({
             onToggle={(id) => toggle("leadIds", id)}
           />
           <CollapsibleMultiSelect
-            title="Campaigns"
+            title={t("campaigns")}
             options={campaigns.map((c) => ({ id: c.id, label: c.name }))}
             selected={draft.campaignIds}
             onToggle={(id) => toggle("campaignIds", id)}
           />
           <CollapsibleMultiSelect
-            title="Mailboxes"
+            title={t("mailboxes")}
             options={accounts.map((a) => ({ id: a, label: a }))}
             selected={draft.accounts}
             onToggle={(id) => toggle("accounts", id)}
@@ -265,26 +264,26 @@ export default function FilterPanel({
         </div>
         <div className="flex flex-col gap-2">
           <CollapsibleMultiSelect
-            title="Lead status"
+            title={t("leadStatus")}
             options={statuses.map((s) => ({ id: s.statusKey, label: s.label }))}
             selected={draft.statusKeys}
             onToggle={(id) => toggle("statusKeys", id)}
           />
           <CollapsibleMultiSelect
-            title="Status group"
-            options={LEAD_STATUS_GROUPS.map((g) => ({ id: g.key, label: g.label }))}
+            title={t("statusGroup")}
+            options={LEAD_STATUS_GROUPS.map((g) => ({ id: g, label: t(`statusGroups.${g}`) }))}
             selected={draft.statusGroups}
             onToggle={(id) => toggle("statusGroups", id)}
           />
         </div>
       </div>
 
-      <FilterField label="Time">
+      <FilterField label={t("time")}>
         <SegmentedControl.Root value={timeMode} onValueChange={(v) => applyTimeMode(v as TimeMode)}>
           <SegmentedControl.List>
             {TIME_MODES.map((mode) => (
-              <SegmentedControl.Trigger key={mode.key} value={mode.key}>
-                {mode.label}
+              <SegmentedControl.Trigger key={mode} value={mode}>
+                {t(`timeModes.${mode}`)}
               </SegmentedControl.Trigger>
             ))}
           </SegmentedControl.List>
@@ -295,17 +294,17 @@ export default function FilterPanel({
               <Input.Wrapper>
                 <Input.Input
                   type="date"
-                  aria-label="From date"
+                  aria-label={t("fromDate")}
                   onChange={(e) => setDraft((p) => ({ ...p, startDate: e.target.value ? new Date(e.target.value).toISOString() : null }))}
                 />
               </Input.Wrapper>
             </Input.Root>
-            <span className="text-paragraph-xs text-text-soft-400">to</span>
+            <span className="text-paragraph-xs text-text-soft-400">{t("to")}</span>
             <Input.Root size="xsmall" className="flex-1">
               <Input.Wrapper>
                 <Input.Input
                   type="date"
-                  aria-label="To date"
+                  aria-label={t("toDate")}
                   onChange={(e) => setDraft((p) => ({ ...p, endDate: e.target.value ? new Date(e.target.value).toISOString() : null }))}
                 />
               </Input.Wrapper>

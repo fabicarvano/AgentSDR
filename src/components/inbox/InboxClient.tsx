@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RiAddLine,
@@ -15,7 +16,6 @@ import {
 import * as Button from "@/components/alignui/button";
 import * as Dropdown from "@/components/alignui/dropdown";
 import { CallButton } from "@/components/calls/CallButton";
-import { humanize } from "@/components/crm/ActionRowTools";
 import { EmptyState } from "@/components/page/EmptyState";
 import { PageHeader } from "@/components/page/PageHeader";
 import { cn } from "@/utils/cn";
@@ -43,16 +43,17 @@ import {
   type BadgeTone,
 } from "./shell/InboxShell";
 import { ComposerDock } from "./shell/Conversation";
-import { ContactDetails, DetailsPanel, useCrmRecordSummary, useDetailsPanel, workflowLabel } from "./shell/DetailsPanel";
+import { ContactDetails, DetailsPanel, useCrmRecordSummary, useDetailsPanel, useWorkflowLabel } from "./shell/DetailsPanel";
 import { useInboxHotkeys } from "./shell/hotkeys";
 import {
   CrmCategoryControl,
   CrmDraftCard,
   DoNotContactNotice,
-  crmCategoryLabel,
   type CrmCategoryOption,
 } from "@/components/crm/InboxCrmStrip";
 import { crmFetch } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
+import type { Messages } from "@/i18n/catalog";
 import type { InboxMessageRow } from "@/lib/inbox/queries";
 import { inboxCrmStepLabel, type InboxCrmContext } from "@/lib/linkedin/messages/crmContext";
 
@@ -81,18 +82,15 @@ const PAGE_SIZE = 25;
 
 const STATUS_GROUP_TONE: Record<string, BadgeTone> = { interested: "green", not_interested: "red", wrong_poc: "orange" };
 
-/** What an empty folder means, when no search or filter is narrowing it. */
-const SECTION_EMPTY: Record<InboxSectionKey, string> = {
-  inbox: "Replies to your campaigns land here as they arrive.",
-  replied: "Replies from leads, without the out-of-office auto-replies.",
-  outOfOffice: "Auto-replies and out-of-office notices collect here.",
-  pendingApproval: "AI-drafted replies waiting for your review show up here.",
-  sent: "Emails sent from your mailboxes show up here.",
-  important: "Star a message in a thread to keep it here.",
-  scheduled: "Nothing is queued to send right now.",
-};
+// Compile-time exhaustiveness: a folder without an empty-state text fails tsc here.
+const _emptyCovered: Exclude<InboxSectionKey, keyof Messages["inboxMain"]["client"]["sectionEmpty"]> extends never ? true : false = true;
+void _emptyCovered;
 
 export default function InboxClient() {
+  const t = useTranslations("inboxMain.client");
+  const tSections = useTranslations("inboxMain.sections");
+  const workflowLabel = useWorkflowLabel();
+  const { categoryLabel } = useCrmText();
   const [section, setSection] = useState<InboxSectionKey>("inbox");
   const [rows, setRows] = useState<InboxMessageRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -120,8 +118,8 @@ export default function InboxClient() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 400);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
   }, [search]);
 
   useEffect(() => {
@@ -314,7 +312,7 @@ export default function InboxClient() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      const message = typeof data?.error === "string" && data.error ? data.error : `Could not send (HTTP ${res.status})`;
+      const message = typeof data?.error === "string" && data.error ? data.error : t("sendFailed", { status: res.status });
       setSendError(message);
       void loadCrmContext(leadId);
       throw new Error(message);
@@ -326,7 +324,7 @@ export default function InboxClient() {
   const leadName = thread ? leadDisplayName(thread.lead.firstName, thread.lead.lastName, thread.lead.email) : "";
   const lastMessage = thread?.messages[thread.messages.length - 1];
   const doNotContact = crmContext?.doNotContact === true;
-  const sectionLabel = INBOX_SECTIONS.find((s) => s.key === section)?.label ?? "Inbox";
+  const sectionLabel = tSections(INBOX_SECTIONS.find((s) => s.key === section)?.labelKey ?? "inbox");
   const narrowing = Boolean(debouncedSearch) || filtersActive(filters);
   const firstLoad = loading && rows.length === 0;
   // A refetch (new folder, search or filter) keeps the old rows, dimmed; paging in more does not dim.
@@ -342,20 +340,20 @@ export default function InboxClient() {
 
   const header = (
     <PageHeader
-      title="Master Inbox"
-      description="Every email reply across your mailboxes, in one place."
+      title={t("title")}
+      description={t("description")}
       actions={
         <>
           <Button.Root variant="neutral" mode="stroke" size="small" asChild>
             <Link href="/outreach/tasks">
               <Button.Icon as={RiTaskLine} />
-              Tasks
+              {t("tasks")}
             </Link>
           </Button.Root>
           <Button.Root variant="neutral" mode="stroke" size="small" asChild>
             <Link href="/outreach/notes">
               <Button.Icon as={RiStickyNoteLine} />
-              Notes
+              {t("notes")}
             </Link>
           </Button.Root>
         </>
@@ -383,7 +381,7 @@ export default function InboxClient() {
               ? {
                   recordId,
                   categoryKey: crmContext?.categoryKey ?? record?.categoryKey ?? null,
-                  categoryLabel: crmContext ? crmCategoryLabel(crmContext) : (record?.subcategory ?? (record?.categoryKey ? humanize(record.categoryKey) : "Unclassified")),
+                  categoryLabel: crmContext ? (crmContext.subcategoryName ?? categoryLabel(crmContext.categoryKey)) : (record?.subcategory ?? categoryLabel(record?.categoryKey)),
                   stage: workflowLabel(crmContext?.workflowState ?? record?.workflowState),
                   sequence: crmContext?.sequenceName ?? record?.sequence,
                   step: crmContext ? inboxCrmStepLabel(crmContext) : null,
@@ -396,10 +394,10 @@ export default function InboxClient() {
           }
           crmLoading={Boolean(recordId) && recordLoading && !crmContext}
           facts={[
-            ...(thread?.lead.mailbox ? [{ label: "Mailbox", value: thread.lead.mailbox, title: thread.lead.mailbox }] : []),
-            ...(thread?.statusConfig ? [{ label: "Lead status", value: thread.statusConfig.label }] : []),
-            ...(thread ? [{ label: "Messages", value: String(thread.messages.length) }] : []),
-            ...(thread && thread.ccs.length > 0 ? [{ label: "Cc", value: thread.ccs.join(", "), title: thread.ccs.join(", ") }] : []),
+            ...(thread?.lead.mailbox ? [{ label: t("facts.mailbox"), value: thread.lead.mailbox, title: thread.lead.mailbox }] : []),
+            ...(thread?.statusConfig ? [{ label: t("facts.leadStatus"), value: thread.statusConfig.label }] : []),
+            ...(thread ? [{ label: t("facts.messages"), value: String(thread.messages.length) }] : []),
+            ...(thread && thread.ccs.length > 0 ? [{ label: t("facts.cc"), value: thread.ccs.join(", "), title: thread.ccs.join(", ") }] : []),
           ]}
           actions={record?.personId && record.phone ? <CallButton personId={record.personId} crmRecordId={recordId} phone={record.phone} numberMenu={false} /> : undefined}
         />
@@ -410,54 +408,54 @@ export default function InboxClient() {
     <>
       <Dropdown.Root>
         <Dropdown.Trigger asChild>
-          <Button.Root variant="neutral" mode="stroke" size="xsmall" className="@max-3xl:w-8 @max-3xl:px-0" title="Add a task or note" aria-label="Add a task or note">
+          <Button.Root variant="neutral" mode="stroke" size="xsmall" className="@max-3xl:w-8 @max-3xl:px-0" title={t("addTitle")} aria-label={t("addTitle")}>
             <Button.Icon as={RiAddLine} />
-            <span className="hidden @3xl:inline">Add</span>
+            <span className="hidden @3xl:inline">{t("add")}</span>
           </Button.Root>
         </Dropdown.Trigger>
         <Dropdown.Content align="end">
           <Dropdown.Item onSelect={() => setQuickCreate({ type: "task", leadId })}>
             <Dropdown.ItemIcon as={RiTaskLine} className="size-4 text-text-sub-600" />
-            Task
+            {t("task")}
           </Dropdown.Item>
           <Dropdown.Item onSelect={() => setQuickCreate({ type: "note", leadId })}>
             <Dropdown.ItemIcon as={RiStickyNoteLine} className="size-4 text-text-sub-600" />
-            Note
+            {t("note")}
           </Dropdown.Item>
         </Dropdown.Content>
       </Dropdown.Root>
       {recordId && (
-        <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title="Open CRM record">
-          <Link href={`/crm/records/${recordId}`} aria-label="Open CRM record">
+        <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title={t("openRecord")}>
+          <Link href={`/crm/records/${recordId}`} aria-label={t("openRecord")}>
             <Button.Icon as={RiUserSearchLine} />
-            <span className="hidden @3xl:inline">Record</span>
+            <span className="hidden @3xl:inline">{t("record")}</span>
           </Link>
         </Button.Root>
       )}
-      <HeaderAction icon={RiLayoutRightLine} label={details.open ? "Hide details" : "Show details"} onClick={details.toggle} pressed={details.open} iconOnly />
+      <HeaderAction icon={RiLayoutRightLine} label={details.open ? t("hideDetails") : t("showDetails")} onClick={details.toggle} pressed={details.open} iconOnly />
     </>
   );
 
   return (
     <InboxLayout header={header} threadOpen={selected !== null}>
       <ListPane
-        label={`${sectionLabel} emails`}
+        label={t("listLabel", { section: sectionLabel })}
         hidden={selected !== null}
         busy={refetching}
         scrollRef={listRef}
         toolbar={
           <div className="flex items-center gap-2">
-            <ListSearch value={search} onChange={setSearch} placeholder="Search emails, leads…" label="Search emails" />
+            <ListSearch value={search} onChange={setSearch} placeholder={t("searchPlaceholder")} label={t("searchLabel")} />
             <FilterPanel value={filters} onApply={setFilters} />
           </div>
         }
         tabs={<InboxFolderTabs active={section} onSelect={setSection} counts={counts} />}
         footer={
           <>
-            <ListCount shown={rows.length} total={total} noun={total === 1 ? "email" : "emails"} loading={firstLoad} />
+            <ListCount shown={rows.length} total={total} noun={t("emailNoun", { count: total })} loading={firstLoad} />
             {filtersActive(filters) && (
               <button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="text-label-xs text-primary-base outline-none hover:underline focus-visible:underline">
-                Clear filters
+                {t("clearFilters")}
               </button>
             )}
           </>
@@ -468,12 +466,12 @@ export default function InboxClient() {
             <EmptyState
               compact
               icon={RiSearchLine}
-              title="No emails match"
-              description="Try another search, or clear the filters."
+              title={t("noMatchTitle")}
+              description={t("noMatchDescription")}
               action={
                 filtersActive(filters) ? (
                   <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => setFilters(EMPTY_FILTERS)}>
-                    Clear filters
+                    {t("clearFilters")}
                   </Button.Root>
                 ) : undefined
               }
@@ -482,8 +480,8 @@ export default function InboxClient() {
             <EmptyState
               compact
               icon={RiInboxLine}
-              title={section === "inbox" ? "No replies yet" : `Nothing in ${sectionLabel}`}
-              description={SECTION_EMPTY[section]}
+              title={section === "inbox" ? t("noRepliesTitle") : t("nothingInTitle", { section: sectionLabel })}
+              description={t(`sectionEmpty.${section}`)}
             />
           )
         ) : (
@@ -497,8 +495,8 @@ export default function InboxClient() {
               bundleAutomated={section === "inbox" || section === "replied"}
             />
             <div ref={sentinelRef} className="h-4" />
-            {loading && rows.length > 0 && page > 1 && <ListEnd>Loading more…</ListEnd>}
-            {!loading && rows.length >= total && rows.length > 0 && <ListEnd>That&apos;s everything in {sectionLabel}</ListEnd>}
+            {loading && rows.length > 0 && page > 1 && <ListEnd>{t("loadingMore")}</ListEnd>}
+            {!loading && rows.length >= total && rows.length > 0 && <ListEnd>{t("endOfList", { section: sectionLabel })}</ListEnd>}
           </>
         )}
       </ListPane>
@@ -508,34 +506,34 @@ export default function InboxClient() {
           <>
             <ThreadHeader
               onBack={closeThread}
-              backLabel="Back to emails"
+              backLabel={t("backToEmails")}
               avatar={<InboxAvatar name={rowName} />}
               title={rowName}
               badges={
                 <RowBadge tone="orange" dot={false}>
-                  Scheduled — not yet sent
+                  {t("scheduledBadge")}
                 </RowBadge>
               }
               channel="email"
-              subtitle={`To ${selected.toEmail} · from ${selected.fromEmail ?? "unassigned mailbox"}`}
+              subtitle={t("scheduledSubtitle", { to: selected.toEmail ?? "—", from: selected.fromEmail ?? t("unassignedMailbox") })}
             />
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6">
-                <h2 className="mb-4 text-label-lg text-text-strong-950">{selected.subject || "(no subject)"}</h2>
+                <h2 className="mb-4 text-label-lg text-text-strong-950">{selected.subject || t("noSubject")}</h2>
                 <article className="rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200 sm:px-5">
-                  <p className="text-paragraph-xs text-text-soft-400">Queued in the campaign — edit or cancel it from the campaign.</p>
+                  <p className="text-paragraph-xs text-text-soft-400">{t("queuedNote")}</p>
                   <p className="mt-3 whitespace-pre-wrap wrap-break-word text-paragraph-sm leading-6 text-text-strong-950">{selected.bodyText}</p>
                 </article>
               </div>
             </div>
           </>
         ) : !selected ? (
-          <ReadingEmpty icon={RiMailOpenLine} title="Select an email" description="Pick a conversation from the list to read the thread and reply." />
+          <ReadingEmpty icon={RiMailOpenLine} title={t("selectEmailTitle")} description={t("selectEmailDescription")} />
         ) : !thread || (threadLoading && !threadRefreshing) ? (
           <>
             <ThreadHeader
               onBack={closeThread}
-              backLabel="Back to emails"
+              backLabel={t("backToEmails")}
               avatar={<InboxAvatar name={rowName} />}
               title={rowName}
               channel="email"
@@ -548,7 +546,7 @@ export default function InboxClient() {
           <>
             <ThreadHeader
               onBack={closeThread}
-              backLabel="Back to emails"
+              backLabel={t("backToEmails")}
               avatar={<InboxAvatar name={leadName} src={record?.profilePictureUrl} />}
               title={leadName}
               badges={
@@ -569,7 +567,7 @@ export default function InboxClient() {
               }
               channel="email"
               subtitle={[thread.lead.company, thread.lead.email].filter(Boolean).join(" · ")}
-              extra={thread.ccs.length > 0 ? `Cc: ${thread.ccs.join(", ")}` : undefined}
+              extra={thread.ccs.length > 0 ? t("ccLine", { list: thread.ccs.join(", ") }) : undefined}
               actions={headerActions(thread.lead.id)}
             />
             <div aria-busy={threadRefreshing || undefined} className={cn("min-h-0 flex-1 overflow-y-auto transition-opacity", threadRefreshing && "opacity-60")}>
@@ -580,7 +578,7 @@ export default function InboxClient() {
               {doNotContact ? (
                 <DoNotContactNotice />
               ) : !thread.lead.mailbox ? (
-                <p className="py-1 text-center text-paragraph-xs text-text-soft-400">No sending mailbox is linked to this lead, so replies can&apos;t be sent from here.</p>
+                <p className="py-1 text-center text-paragraph-xs text-text-soft-400">{t("noMailbox")}</p>
               ) : (
                 <>
                   {crmContext?.draft && (
@@ -597,7 +595,7 @@ export default function InboxClient() {
                     <InlineError>
                       <span className="flex items-start gap-2">
                         {sendError}
-                        <button type="button" onClick={() => setSendError(null)} className="text-error-dark/70 hover:text-error-dark" aria-label="Dismiss">
+                        <button type="button" onClick={() => setSendError(null)} className="text-error-dark/70 hover:text-error-dark" aria-label={t("dismiss")}>
                           ×
                         </button>
                       </span>
@@ -618,7 +616,7 @@ export default function InboxClient() {
                     onSend={handleSendReply}
                     onCancel={activeDraft ? () => setActiveDraftId(null) : undefined}
                   />
-                  {activeDraft && <p className="text-right text-paragraph-xs text-text-soft-400">Sending as the CRM draft — your edits are kept</p>}
+                  {activeDraft && <p className="text-right text-paragraph-xs text-text-soft-400">{t("usingDraft")}</p>}
                 </>
               )}
             </ComposerDock>

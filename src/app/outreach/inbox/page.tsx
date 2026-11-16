@@ -1,8 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import InboxClient from "@/components/inbox/InboxClient";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Master Inbox" };
+export async function generateMetadata() {
+  const t = await getTranslations("inboxMain.page");
+  return { title: t("title") };
+}
 
 export default function InboxPage() {
   return (

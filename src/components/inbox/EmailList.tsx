@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiArrowDownSLine, RiRobot2Line, RiStarFill } from "@remixicon/react";
 import type { InboxMessageRow } from "@/lib/inbox/queries";
-import { crmCategoryLabel } from "@/components/crm/InboxCrmStrip";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { cn } from "@/utils/cn";
 import {
   CategoryChip,
@@ -13,9 +14,7 @@ import {
   InboxAvatar,
   RowBadge,
   RowsSkeleton,
-  fullTime,
-  rowTime,
-  withRecencyBreaks,
+  useInboxTime,
   type BadgeTone,
 } from "./shell/InboxShell";
 
@@ -59,19 +58,22 @@ function stackRows(rows: InboxMessageRow[]): { row: InboxMessageRow; stackCount:
   return stacks;
 }
 
-function previewOf(row: InboxMessageRow): string {
+function previewOf(row: InboxMessageRow, emptyText: string): string {
   const body = (row.bodyText ?? "").replace(/\s+/g, " ").trim();
-  return body || "(no content)";
+  return body || emptyText;
 }
 
 function EmailRow({ row, stackCount, selected, onSelect }: { row: InboxMessageRow; stackCount: number; selected: boolean; onSelect: () => void }) {
+  const t = useTranslations("inboxMain.emailList");
+  const { categoryLabel } = useCrmText();
+  const { fullTime, rowTime } = useInboxTime();
   const name = leadDisplayName(row.leadFirstName, row.leadLastName, row.leadEmail);
   const isUnread = row.direction === "inbound" && !row.openedAt;
   const sentAt = row.sentAt ? new Date(row.sentAt) : null;
   const outbound = row.direction === "outbound";
   const hasDraft = row.hasDraft || row.crm?.hasDraft === true;
   const category = row.crm ? (
-    <CategoryChip categoryKey={row.crm.categoryKey} label={crmCategoryLabel(row.crm)} />
+    <CategoryChip categoryKey={row.crm.categoryKey} label={row.crm.subcategoryName ?? categoryLabel(row.crm.categoryKey)} />
   ) : row.statusLabel ? (
     <RowBadge tone={GROUP_TONE[row.statusGroup ?? ""] ?? "gray"}>{row.statusLabel}</RowBadge>
   ) : null;
@@ -84,26 +86,26 @@ function EmailRow({ row, stackCount, selected, onSelect }: { row: InboxMessageRo
       avatar={<InboxAvatar name={name} />}
       title={name}
       subtitle={row.leadCompany && row.leadCompany !== name ? row.leadCompany : undefined}
-      time={sentAt ? rowTime(sentAt) : "Scheduled"}
+      time={sentAt ? rowTime(sentAt) : t("scheduledTime")}
       timeTitle={fullTime(sentAt)}
       headline={
         <>
-          {outbound && row.sentAt && <span className="text-text-soft-400">You: </span>}
-          {row.subject?.trim() || "(no subject)"}
+          {outbound && row.sentAt && <span className="text-text-soft-400">{t("you")}</span>}
+          {row.subject?.trim() || t("noSubject")}
         </>
       }
-      snippet={previewOf(row)}
-      hint={row.leadMailbox ? `Mailbox: ${row.leadMailbox}` : undefined}
+      snippet={previewOf(row, t("noContent"))}
+      hint={row.leadMailbox ? t("mailbox", { mailbox: row.leadMailbox }) : undefined}
       meta={
         category || hasDraft || row.important || stackCount > 1 ? (
           <>
-            {hasDraft && <DraftChip />}
+            {hasDraft && <DraftChip label={t("aiDraft")} />}
             {category}
             <span className="flex-1" />
-            {row.important && <RiStarFill className="size-3.5 shrink-0 text-warning-base" aria-label="Important" />}
+            {row.important && <RiStarFill className="size-3.5 shrink-0 text-warning-base" aria-label={t("important")} />}
             {stackCount > 1 && (
-              <span className="shrink-0 text-paragraph-xs tabular-nums text-text-soft-400" title={`${stackCount} messages from this lead in a row`}>
-                {stackCount} messages
+              <span className="shrink-0 text-paragraph-xs tabular-nums text-text-soft-400" title={t("stackTitle", { count: stackCount })}>
+                {t("stackCount", { count: stackCount })}
               </span>
             )}
           </>
@@ -134,6 +136,9 @@ export default function EmailList({
   suppressDateDividers?: boolean;
   bundleAutomated?: boolean;
 }) {
+  const t = useTranslations("inboxMain.emailList");
+  const format = useFormatter();
+  const { withRecencyBreaks } = useInboxTime();
   const [automatedOpen, setAutomatedOpen] = useState<boolean | null>(null);
   const { people, automated } = useMemo(() => {
     if (!bundleAutomated) return { people: rows, automated: [] as InboxMessageRow[] };
@@ -145,7 +150,7 @@ export default function EmailList({
   const stacks = useMemo(() => stackRows(people), [people]);
   const grouped = useMemo(
     () => withRecencyBreaks(stacks, (s) => (suppressDateDividers || !s.row.sentAt ? null : new Date(s.row.sentAt))),
-    [stacks, suppressDateDividers],
+    [stacks, suppressDateDividers, withRecencyBreaks],
   );
   const automatedStacks = useMemo(() => stackRows(automated), [automated]);
   const automatedUnread = automated.filter((row) => !row.openedAt).length;
@@ -170,11 +175,11 @@ export default function EmailList({
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5 text-label-sm text-text-strong-950">
-                Automated
-                <span className="text-paragraph-xs tabular-nums text-text-soft-400">{automated.length.toLocaleString("en-US")}</span>
+                {t("automated")}
+                <span className="text-paragraph-xs tabular-nums text-text-soft-400">{format.number(automated.length)}</span>
               </span>
               <span className="block truncate text-paragraph-xs text-text-soft-400">
-                DMARC reports, no-reply and delivery notices{automatedUnread ? ` · ${automatedUnread} unread` : ""}
+                {automatedUnread ? t("automatedHintUnread", { count: automatedUnread }) : t("automatedHint")}
               </span>
             </span>
             <RiArrowDownSLine className={cn("size-4 shrink-0 text-text-soft-400 transition-transform", bundleOpen && "rotate-180")} aria-hidden="true" />

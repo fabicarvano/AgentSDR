@@ -1,3 +1,146 @@
 {
-  "inboxMain": {}
+  "inboxMain": {
+    "page": {
+      "title": "Caixa de entrada geral"
+    },
+    "sections": {
+      "inbox": "Caixa de entrada",
+      "replied": "Respondidos",
+      "outOfOffice": "Fora do escritório",
+      "pendingApproval": "Aguardando aprovação",
+      "sent": "Enviados",
+      "important": "Importantes",
+      "scheduled": "Agendados"
+    },
+    "nav": {
+      "folders": "Pastas",
+      "tabShort": {
+        "replied": "Respostas",
+        "pendingApproval": "Aprovar"
+      },
+      "tabTitle": {
+        "inbox": "Todos os e-mails recebidos",
+        "replied": "Respostas de leads, sem as respostas automáticas de ausência",
+        "pendingApproval": "Respostas redigidas pela IA aguardando sua revisão",
+        "outOfOffice": "Respostas automáticas e avisos de ausência",
+        "important": "Mensagens que você marcou com estrela",
+        "scheduled": "Na fila para envio"
+      },
+      "countUnread": "{count} não lidos",
+      "countStarred": "{count} com estrela",
+      "countQueued": "{count} aguardando envio"
+    },
+    "emailList": {
+      "scheduledTime": "Agendado",
+      "you": "Você: ",
+      "noSubject": "(sem assunto)",
+      "noContent": "(sem conteúdo)",
+      "mailbox": "Caixa de e-mail: {mailbox}",
+      "important": "Importante",
+      "stackTitle": "{count} mensagens seguidas deste lead",
+      "stackCount": "{count, plural, one {# mensagem} other {# mensagens}}",
+      "aiDraft": "Rascunho da IA",
+      "automated": "Automáticos",
+      "automatedHint": "Relatórios DMARC, no-reply e avisos de entrega",
+      "automatedHintUnread": "Relatórios DMARC, no-reply e avisos de entrega · {count} não lidos"
+    },
+    "filters": {
+      "leads": "Leads",
+      "campaigns": "Campanhas",
+      "mailboxes": "Caixas de e-mail",
+      "leadStatus": "Status do lead",
+      "statusGroup": "Grupo de status",
+      "time": "Período",
+      "statusGroups": {
+        "interested": "Interessado",
+        "not_interested": "Sem interesse",
+        "wrong_poc": "Contato errado",
+        "other": "Outro"
+      },
+      "timeModes": {
+        "all": "Todo o período",
+        "today": "Hoje",
+        "yesterday": "Ontem",
+        "custom": "Personalizado"
+      },
+      "selected": "{count, plural, one {# selecionado} other {# selecionados}}",
+      "searchLabel": "Buscar em {title}",
+      "searchPlaceholder": "Buscar…",
+      "noResults": "Nenhum resultado",
+      "cancel": "Cancelar",
+      "apply": "Aplicar filtros",
+      "fromDate": "Data inicial",
+      "toDate": "Data final",
+      "to": "até"
+    },
+    "quickCreate": {
+      "newTask": "Nova tarefa",
+      "newNote": "Nova nota",
+      "descriptionTaskFor": "Para {name}. Aparece em Tarefas.",
+      "descriptionTask": "Aparece em Tarefas.",
+      "descriptionNoteFor": "Para {name}. Aparece em Notas.",
+      "descriptionNote": "Aparece em Notas.",
+      "taskName": "Nome da tarefa",
+      "noteTitle": "Título da nota",
+      "descriptionPlaceholder": "Descrição…",
+      "descriptionLabel": "Descrição",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "createTask": "Criar tarefa",
+      "createNote": "Criar nota"
+    },
+    "client": {
+      "title": "Caixa de entrada geral",
+      "description": "Todas as respostas por e-mail das suas caixas de e-mail, em um só lugar.",
+      "tasks": "Tarefas",
+      "notes": "Notas",
+      "sectionEmpty": {
+        "inbox": "As respostas às suas campanhas chegam aqui.",
+        "replied": "Respostas de leads, sem as respostas automáticas de ausência.",
+        "outOfOffice": "Respostas automáticas e avisos de ausência ficam aqui.",
+        "pendingApproval": "Respostas redigidas pela IA aguardando sua revisão aparecem aqui.",
+        "sent": "Os e-mails enviados das suas caixas de e-mail aparecem aqui.",
+        "important": "Marque uma mensagem com estrela para mantê-la aqui.",
+        "scheduled": "Nada na fila para envio no momento."
+      },
+      "listLabel": "E-mails de {section}",
+      "searchPlaceholder": "Buscar e-mails, leads…",
+      "searchLabel": "Buscar e-mails",
+      "emailNoun": "{count, plural, one {e-mail} other {e-mails}}",
+      "clearFilters": "Limpar filtros",
+      "noMatchTitle": "Nenhum e-mail encontrado",
+      "noMatchDescription": "Tente outra busca ou limpe os filtros.",
+      "noRepliesTitle": "Nenhuma resposta ainda",
+      "nothingInTitle": "Nada em {section}",
+      "loadingMore": "Carregando mais…",
+      "endOfList": "Isso é tudo em {section}",
+      "backToEmails": "Voltar aos e-mails",
+      "scheduledBadge": "Agendado — ainda não enviado",
+      "scheduledSubtitle": "Para {to} · de {from}",
+      "unassignedMailbox": "caixa de e-mail sem atribuição",
+      "noSubject": "(sem assunto)",
+      "queuedNote": "Na fila da campanha — edite ou cancele pela campanha.",
+      "selectEmailTitle": "Selecione um e-mail",
+      "selectEmailDescription": "Escolha uma conversa da lista para ler o histórico e responder.",
+      "ccLine": "Cc: {list}",
+      "noMailbox": "Nenhuma caixa de e-mail de envio está vinculada a este lead, então não dá para responder por aqui.",
+      "dismiss": "Fechar",
+      "usingDraft": "Enviando como o rascunho do CRM — suas edições são mantidas",
+      "sendFailed": "Não foi possível enviar (HTTP {status})",
+      "facts": {
+        "mailbox": "Caixa de e-mail",
+        "leadStatus": "Status do lead",
+        "messages": "Mensagens",
+        "cc": "Cc"
+      },
+      "addTitle": "Adicionar tarefa ou nota",
+      "add": "Adicionar",
+      "task": "Tarefa",
+      "note": "Nota",
+      "openRecord": "Abrir registro do CRM",
+      "record": "Registro",
+      "hideDetails": "Ocultar detalhes",
+      "showDetails": "Mostrar detalhes"
+    }
+  }
 }
