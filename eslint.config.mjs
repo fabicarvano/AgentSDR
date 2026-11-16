@@ -75,6 +75,14 @@ const TRANSLATED = [
   "src/components/crm/CrmAiInstructions.tsx",
   "src/components/crm/CrmSettingsClient.tsx",
   "src/components/calling/ai/StationHoursEditor.tsx",
+  // Batch D: the CRM and the Inbox.
+  "src/components/crm/**/*.tsx",
+  "src/components/inbox/**/*.tsx",
+  "src/app/crm/**/*.tsx",
+  "src/app/@modal/(.)crm/**/*.tsx",
+  "src/app/outreach/inbox/**/*.tsx",
+  "src/app/outreach/tasks/**/*.tsx",
+  "src/app/outreach/notes/**/*.tsx",
 ];
 
 /**
@@ -91,10 +99,10 @@ export const literalStringOptions = {
   mode: "jsx-only",
   "jsx-attributes": { include: ["placeholder", "title", "aria-label", "alt", "label", "description", "hint", "subtitle", "tooltip"] },
   // Also not words: typographic symbols used as separators and icons-in-text, and brand names.
-  words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧]+", "AgentSDR", "Google", "⌘K"] },
+  words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧⏎]+", "AgentSDR", "Google", "WhatsApp", "⌘K", "⌘⏎ / Ctrl\\+Enter", "https?://\\S*", "_blank", "noopener noreferrer"] },
   callees: {
     // `t.rich(...)` and `t.has(...)` are the same translator, as a member call.
-    exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "t[A-Z][A-Za-z]*", "t[A-Z][A-Za-z]*\\.(rich|has|raw|markup)", "ruleText", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
+    exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "t[A-Z][A-Za-z]*", "t[A-Z][A-Za-z]*\\.(rich|has|raw|markup)", "ruleText", "channelIcon", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
   },
 };
 

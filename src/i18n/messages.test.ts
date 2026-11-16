@@ -15,6 +15,7 @@ const DIR = join(import.meta.dir, "../../messages");
 /** Strings that are legitimately the same in every language (names, loanwords). Say why. */
 const IDENTICAL_OK = new Set<string>([
   "auth.common.google", // brand name
+  "crmPipeline.client.board.countTitle", // "lead" is the kept product term (GLOSSARY.md), so the plural reads the same
 ]);
 
 function readDomain(locale: Locale, domain: string): Record<string, unknown> {
