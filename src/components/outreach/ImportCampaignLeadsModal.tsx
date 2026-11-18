@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import CampaignCsvMappingDialog from "@/components/leads/CampaignCsvMappingDialog";
 
 type ImportResult = {
@@ -22,6 +23,7 @@ export default function ImportCampaignLeadsModal({
   onClose: () => void;
   onImported: () => void;
 }) {
+  const t = useTranslations("emailLeads.importModal");
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [mappingFile, setMappingFile] = useState<File | null>(null);
@@ -31,7 +33,7 @@ export default function ImportCampaignLeadsModal({
   function handleImport() {
     const file = fileRef.current?.files?.[0];
     if (!file) {
-      setError("Choose a file first");
+      setError(t("chooseFirst"));
       return;
     }
     setError(null);
@@ -59,8 +61,8 @@ export default function ImportCampaignLeadsModal({
       <div className="relative bg-bg-white-0 rounded-2xl shadow-2xl w-full max-w-md p-6 z-10">
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h2 className="text-base font-bold text-text-strong-950">Import Leads</h2>
-            <p className="text-sm text-text-strong-950/60 mt-0.5">Upload a .csv or .xlsx file</p>
+            <h2 className="text-base font-bold text-text-strong-950">{t("title")}</h2>
+            <p className="text-sm text-text-strong-950/60 mt-0.5">{t("subtitle")}</p>
           </div>
           <button
             onClick={onClose}
@@ -73,8 +75,7 @@ export default function ImportCampaignLeadsModal({
         </div>
 
         <p className="text-xs text-text-strong-950/45 mb-4">
-          After selecting a file, map its columns to Email, name, company and other canonical fields.
-          Unmapped columns remain available as template variables, and suppressed recipients are skipped.
+          {t("mappingHelp")}
         </p>
 
         <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-stroke-soft-200 rounded-xl px-4 py-8 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-colors">
@@ -88,7 +89,7 @@ export default function ImportCampaignLeadsModal({
           <svg className="w-6 h-6 text-text-strong-950/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13.5V6.75m0 0l-3 3m3-3l3 3M6 20.25h12A2.25 2.25 0 0020.25 18v-9a2.25 2.25 0 00-2.25-2.25H15" />
           </svg>
-          <span className="text-sm text-text-strong-950/60">{fileName ?? "Click to choose a file"}</span>
+          <span className="text-sm text-text-strong-950/60">{fileName ?? t("chooseFile")}</span>
         </label>
 
         {error && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{error}</p>}
@@ -96,25 +97,23 @@ export default function ImportCampaignLeadsModal({
         {result && (
           <div className="mt-4 rounded-lg bg-bg-weak-50 border border-stroke-soft-200 px-3 py-3 text-sm">
             <p className="text-text-strong-950">
-              <span className="font-semibold">{result.total}</span> rows —{" "}
-              <span className="text-emerald-700 dark:text-emerald-400 font-medium">{result.imported} imported</span>
-              {result.skippedDuplicate > 0 && `, ${result.skippedDuplicate} duplicate`}
-              {result.skippedSuppressed > 0 && (
-                <>
-                  , <span className="text-amber-700 dark:text-amber-400 font-medium">{result.skippedSuppressed} suppressed</span>
-                </>
-              )}
-              {result.failed.length > 0 && (
-                <>
-                  , <span className="text-red-700 dark:text-red-400 font-medium">{result.failed.length} failed</span>
-                </>
-              )}
+              {t.rich("summary", {
+                total: result.total,
+                imported: result.imported,
+                duplicates: result.skippedDuplicate,
+                suppressed: result.skippedSuppressed,
+                failed: result.failed.length,
+                b: (c) => <span className="font-semibold">{c}</span>,
+                ok: (c) => <span className="text-emerald-700 dark:text-emerald-400 font-medium">{c}</span>,
+                warn: (c) => <span className="text-amber-700 dark:text-amber-400 font-medium">{c}</span>,
+                bad: (c) => <span className="text-red-700 dark:text-red-400 font-medium">{c}</span>,
+              })}
             </p>
             {result.failed.length > 0 && (
               <ul className="mt-2 flex flex-col gap-1 max-h-32 overflow-y-auto">
                 {result.failed.map((f) => (
                   <li key={f.row} className="text-xs text-red-600 dark:text-red-400">
-                    Row {f.row} ({f.email || "unknown"}): {f.error}
+                    {t("failedRow", { row: f.row, email: f.email || t("unknown"), error: f.error })}
                   </li>
                 ))}
               </ul>
@@ -127,7 +126,7 @@ export default function ImportCampaignLeadsModal({
             onClick={onClose}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-text-strong-950/70 border border-stroke-soft-200 rounded-lg hover:bg-bg-weak-50 transition-colors"
           >
-            {result ? "Close" : "Cancel"}
+            {result ? t("close") : t("cancel")}
           </button>
           {!result && (
             <button
@@ -135,7 +134,7 @@ export default function ImportCampaignLeadsModal({
               disabled={!fileName}
               className="flex-1 px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Map columns
+              {t("mapColumns")}
             </button>
           )}
         </div>

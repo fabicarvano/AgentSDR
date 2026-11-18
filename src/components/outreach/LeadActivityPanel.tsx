@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiBuilding2Line,
   RiCloseLine,
@@ -18,7 +19,7 @@ import type { RemixiconComponentType } from "@remixicon/react";
 import * as Avatar from "@/components/alignui/avatar";
 import * as Badge from "@/components/alignui/badge";
 import { cn } from "@/utils/cn";
-import { relativeTime } from "@/lib/format/contact";
+import type { Messages } from "@/i18n/catalog";
 import type { outreachLeads, outreachEmails, OutreachLeadStatus, SequenceStep } from "@/lib/outreach/schema";
 
 type Lead = Omit<typeof outreachLeads.$inferSelect, "email" | "customFields"> & {
@@ -37,16 +38,32 @@ const STATUS_COLOR: Record<OutreachLeadStatus, React.ComponentProps<typeof Badge
   bounced: "red",
   suppressed: "orange",
 };
-const STATUS_LABEL: Record<OutreachLeadStatus, string> = {
-  pending: "Pending",
-  initial_sent: "In sequence",
-  in_follow_up: "In sequence",
-  reply_processing: "Processing reply",
-  sequence_completed: "Completed",
-  reply_received: "Replied",
-  bounced: "Bounced",
-  suppressed: "Suppressed",
+// Every status has a label key (the Record fails tsc when a status is added without one);
+// a value the code does not know yet falls back to the raw status at render time.
+type StatusKey = keyof Messages["emailLeads"]["status"];
+const STATUS_KEY: Record<OutreachLeadStatus, StatusKey> = {
+  pending: "pending",
+  initial_sent: "initial_sent",
+  in_follow_up: "in_follow_up",
+  reply_processing: "reply_processing",
+  sequence_completed: "sequence_completed",
+  reply_received: "reply_received",
+  bounced: "bounced",
+  suppressed: "suppressed",
 };
+
+type T = ReturnType<typeof useTranslations<"emailLeads.activity">>;
+type TStatus = ReturnType<typeof useTranslations<"emailLeads.status">>;
+type Formatter = ReturnType<typeof useFormatter>;
+
+function statusLabel(tStatus: TStatus, status: OutreachLeadStatus): string {
+  return STATUS_KEY[status] ? tStatus(STATUS_KEY[status]) : status;
+}
+
+function relativeTime(at: string | Date | null, format: Formatter): string {
+  if (!at) return "—";
+  return format.relativeTime(new Date(at));
+}
 
 type TimelineEvent = {
   id: string;
@@ -65,7 +82,7 @@ type TimelineEvent = {
  * sequenceStatus — there's no dedicated event log for outreach leads (unlike
  * CRM audit history, so this is reconstructed rather than read directly.
  */
-function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
+function buildTimeline(lead: Lead, emails: Email[], t: T, format: Formatter): TimelineEvent[] {
   const events: TimelineEvent[] = [];
 
   for (const email of emails) {
@@ -74,10 +91,10 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
         id: email.id,
         icon: RiMailSendLine,
         tone: "bg-primary-alpha-10 text-primary-base",
-        title: email.stepNumber === 1 ? "Initial email sent" : "Follow-up email sent",
-        subtitle: `Email sequence: ${email.stepNumber}`,
+        title: email.stepNumber === 1 ? t("initialSent") : t("followUpSent"),
+        subtitle: t("emailSequence", { step: email.stepNumber }),
         message: {
-          from: email.fromAddress ?? "Your mailbox",
+          from: email.fromAddress ?? t("yourMailbox"),
           to: lead.email,
           subject: email.subject,
           body: email.body,
@@ -90,16 +107,18 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
         id: email.id,
         icon: RiTimeLine,
         tone: "bg-away-lighter text-away-base",
-        title: `Step ${email.stepNumber} scheduled`,
+        title: t("stepScheduled", { step: email.stepNumber }),
         subtitle: null,
         message: null,
         detail: lead.nextSendAt
-          ? `Queued for ${new Date(lead.nextSendAt).toLocaleString(undefined, {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}`
+          ? t("queuedFor", {
+              date: format.dateTime(new Date(lead.nextSendAt), {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              }),
+            })
           : null,
         at: null,
       });
@@ -108,7 +127,7 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
         id: email.id,
         icon: RiErrorWarningLine,
         tone: "bg-error-lighter text-error-base",
-        title: `Step ${email.stepNumber} failed to send`,
+        title: t("stepFailed", { step: email.stepNumber }),
         subtitle: null,
         message: null,
         detail: email.error,
@@ -122,7 +141,7 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
       id: "reply",
       icon: RiReplyLine,
       tone: "bg-success-lighter text-success-base",
-      title: "Lead replied to your email",
+      title: t("leadReplied"),
       subtitle: null,
       message: null,
       detail: null,
@@ -134,7 +153,7 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
       id: "bounced",
       icon: RiErrorWarningLine,
       tone: "bg-error-lighter text-error-base",
-      title: "Email bounced",
+      title: t("emailBounced"),
       subtitle: null,
       message: null,
       detail: null,
@@ -146,7 +165,7 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
       id: "suppressed",
       icon: RiForbid2Line,
       tone: "bg-bg-weak-50 text-text-sub-600",
-      title: "Suppressed from sending",
+      title: t("suppressed"),
       subtitle: null,
       message: null,
       detail: null,
@@ -158,7 +177,7 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
     id: "imported",
     icon: RiUserAddLine,
     tone: "bg-bg-weak-50 text-text-sub-600",
-    title: "Lead imported",
+    title: t("leadImported"),
     subtitle: null,
     message: null,
     detail: null,
@@ -187,12 +206,12 @@ function buildTimeline(lead: Lead, emails: Email[]): TimelineEvent[] {
  * seeing which merge field a column maps to, and which ones are empty for this
  * lead and would therefore render blank in a sequence.
  */
-function importedFields(lead: Lead): { label: string; value: string; token?: string }[] {
+function importedFields(lead: Lead, t: T): { label: string; value: string; token?: string }[] {
   const rows = [
-    { label: "Email", value: lead.email },
-    { label: "First name", value: lead.firstName ?? "", token: "firstName" },
-    { label: "Last name", value: lead.lastName ?? "", token: "lastName" },
-    { label: "Company", value: lead.company ?? "", token: "company" },
+    { label: t("fieldEmail"), value: lead.email },
+    { label: t("fieldFirstName"), value: lead.firstName ?? "", token: "firstName" },
+    { label: t("fieldLastName"), value: lead.lastName ?? "", token: "lastName" },
+    { label: t("fieldCompany"), value: lead.company ?? "", token: "company" },
   ];
   for (const [key, value] of Object.entries(lead.customFields ?? {})) {
     rows.push({ label: humanizeKey(key), value: value ?? "", token: key });
@@ -206,9 +225,9 @@ function humanizeKey(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 }
 
-function fullDate(at: string | Date | null): string {
+function fullDate(at: string | Date | null, format: Formatter): string {
   if (!at) return "—";
-  return new Date(at).toLocaleString("en-US", {
+  return format.dateTime(new Date(at), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -218,9 +237,9 @@ function fullDate(at: string | Date | null): string {
 }
 
 const TABS = [
-  { id: "timeline", label: "Activity timeline" },
-  { id: "sequence", label: "Sequence" },
-  { id: "details", label: "Imported data" },
+  { id: "timeline", labelKey: "tabTimeline" },
+  { id: "sequence", labelKey: "tabSequence" },
+  { id: "details", labelKey: "tabDetails" },
 ] as const;
 
 type StepState = "sent" | "scheduled" | "failed" | "upcoming" | "cancelled";
@@ -236,13 +255,13 @@ type SequenceRow = {
   error: string | null;
 };
 
-const STEP_STATE_LABEL: Record<StepState, string> = {
-  sent: "Sent",
-  scheduled: "Scheduled",
-  failed: "Failed",
-  upcoming: "Upcoming",
-  cancelled: "Not sending",
-};
+const STEP_STATE_KEY = {
+  sent: "stepStateSent",
+  scheduled: "stepStateScheduled",
+  failed: "stepStateFailed",
+  upcoming: "stepStateUpcoming",
+  cancelled: "stepStateCancelled",
+} as const satisfies Record<StepState, keyof Messages["emailLeads"]["activity"]>;
 
 const STEP_STATE_COLOR: Record<StepState, React.ComponentProps<typeof Badge.Root>["color"]> = {
   sent: "green",
@@ -263,7 +282,7 @@ const STEP_STATE_COLOR: Record<StepState, React.ComponentProps<typeof Badge.Root
  * previous step actually sends, so projecting further ahead would be inventing
  * dates that working-hours and rate limits will move anyway.
  */
-function buildSequence(lead: Lead, emails: Email[], sequence: SequenceStep[]): SequenceRow[] {
+function buildSequence(lead: Lead, emails: Email[], sequence: SequenceStep[], t: T): SequenceRow[] {
   const byStep = new Map(emails.map((e) => [e.stepNumber, e]));
 
   // A lead that replied, bounced, or was suppressed stops here — its remaining
@@ -275,7 +294,7 @@ function buildSequence(lead: Lead, emails: Email[], sequence: SequenceStep[]): S
 
   return sequence.map((step) => {
     const email = byStep.get(step.stepNumber);
-    const subject = email?.subject || step.subject || "(no subject)";
+    const subject = email?.subject || step.subject || t("noSubject");
 
     if (email?.status === "sent") {
       return { stepNumber: step.stepNumber, subject, state: "sent" as const, at: email.sentAt, waitDays: step.waitDays, error: null };
@@ -306,10 +325,13 @@ function buildSequence(lead: Lead, emails: Email[], sequence: SequenceStep[]): S
 
 /** The Sequence tab: every step of the campaign as it applies to this lead. */
 function SequenceView({ rows, status }: { rows: SequenceRow[]; status: OutreachLeadStatus }) {
+  const t = useTranslations("emailLeads.activity");
+  const tStatus = useTranslations("emailLeads.status");
+  const format = useFormatter();
   if (rows.length === 0) {
     return (
       <p className="text-paragraph-sm text-text-soft-400">
-        This campaign has no sequence steps yet.
+        {t("noSteps")}
       </p>
     );
   }
@@ -321,11 +343,11 @@ function SequenceView({ rows, status }: { rows: SequenceRow[]; status: OutreachL
     <div>
       <div className="mb-4 flex items-baseline justify-between gap-2">
         <p className="text-paragraph-sm text-text-sub-600">
-          {sentCount} of {rows.length} step{rows.length === 1 ? "" : "s"} sent
+          {t("stepsSent", { sent: sentCount, total: rows.length })}
         </p>
         {halted && (
           <p className="text-paragraph-xs text-text-soft-400">
-            Stopped — {STATUS_LABEL[status].toLowerCase()}
+            {t("stoppedStatus", { status: statusLabel(tStatus, status).toLowerCase() })}
           </p>
         )}
       </div>
@@ -357,10 +379,10 @@ function SequenceView({ rows, status }: { rows: SequenceRow[]; status: OutreachL
 
               <div className="min-w-0 flex-1 pb-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-label-sm text-text-strong-950">Step {row.stepNumber}</p>
+                  <p className="text-label-sm text-text-strong-950">{t("step", { step: row.stepNumber })}</p>
                   <Badge.Root size="medium" variant="lighter" color={STEP_STATE_COLOR[row.state]}>
                     <Badge.Dot />
-                    {STEP_STATE_LABEL[row.state]}
+                    {t(STEP_STATE_KEY[row.state])}
                   </Badge.Root>
                 </div>
 
@@ -368,16 +390,20 @@ function SequenceView({ rows, status }: { rows: SequenceRow[]; status: OutreachL
 
                 <p className="mt-1.5 text-paragraph-xs text-text-soft-400">
                   {row.at
-                    ? `${row.state === "scheduled" ? "Queued for" : row.state === "failed" ? "Attempted" : "Sent"} ${fullDate(row.at)}`
+                    ? row.state === "scheduled"
+                      ? t("queuedFor", { date: fullDate(row.at, format) })
+                      : row.state === "failed"
+                        ? t("attemptedAt", { date: fullDate(row.at, format) })
+                        : t("sentAt", { date: fullDate(row.at, format) })
                     : row.state === "cancelled"
-                      ? "Will not be sent"
+                      ? t("willNotSend")
                       : row.waitDays > 0
-                        ? `Sends ${row.waitDays} day${row.waitDays === 1 ? "" : "s"} after the previous step`
-                        : "Sends immediately after the previous step"}
+                        ? t("sendsAfterDays", { days: row.waitDays })
+                        : t("sendsImmediately")}
                 </p>
 
                 {row.at && row.state !== "scheduled" && (
-                  <p className="mt-0.5 text-paragraph-xs text-text-soft-400">{relativeTime(row.at)}</p>
+                  <p className="mt-0.5 text-paragraph-xs text-text-soft-400">{relativeTime(row.at, format)}</p>
                 )}
                 {row.error && (
                   <p className="mt-1 text-paragraph-sm text-error-base">{row.error}</p>
@@ -403,6 +429,7 @@ function MessageCard({
   subject: string | null;
   body: string | null;
 }) {
+  const t = useTranslations("emailLeads.activity");
   const [expanded, setExpanded] = useState(false);
   const text = (body ?? "").trim();
   const isLong = text.length > 180;
@@ -415,7 +442,7 @@ function MessageCard({
         </Avatar.Root>
         <div className="min-w-0">
           <p className="truncate text-label-xs text-text-strong-950">{from}</p>
-          <p className="truncate text-paragraph-xs text-text-soft-400">To: {to}</p>
+          <p className="truncate text-paragraph-xs text-text-soft-400">{t("toLine", { to })}</p>
         </div>
       </div>
       <div className="px-3 py-2.5">
@@ -428,7 +455,7 @@ function MessageCard({
             !expanded && isLong && "line-clamp-3",
           )}
         >
-          {text || "(no body)"}
+          {text || t("noBody")}
         </p>
         {isLong && (
           <button
@@ -436,7 +463,7 @@ function MessageCard({
             onClick={() => setExpanded((v) => !v)}
             className="mt-1.5 text-label-xs text-primary-base hover:text-primary-darker"
           >
-            {expanded ? "Show less" : "Show full message"}
+            {expanded ? t("showLess") : t("showFull")}
           </button>
         )}
       </div>
@@ -453,6 +480,9 @@ export default function LeadActivityPanel({
   leadId: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("emailLeads.activity");
+  const tStatus = useTranslations("emailLeads.status");
+  const format = useFormatter();
   const [lead, setLead] = useState<Lead | null>(null);
   const [emails, setEmails] = useState<Email[]>([]);
   const [sequence, setSequence] = useState<SequenceStep[]>([]);
@@ -485,8 +515,8 @@ export default function LeadActivityPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const timeline = lead ? buildTimeline(lead, emails) : [];
-  const sequenceRows = lead ? buildSequence(lead, emails, sequence) : [];
+  const timeline = lead ? buildTimeline(lead, emails, t, format) : [];
+  const sequenceRows = lead ? buildSequence(lead, emails, sequence, t) : [];
   const name = lead
     ? [lead.firstName, lead.lastName].filter(Boolean).join(" ") || lead.email
     : "";
@@ -500,7 +530,7 @@ export default function LeadActivityPanel({
       />
       <div className="relative flex h-full w-135 max-w-full flex-col bg-bg-white-0 shadow-regular-md">
         {loading || !lead ? (
-          <div className="p-6 text-paragraph-sm text-text-soft-400">Loading…</div>
+          <div className="p-6 text-paragraph-sm text-text-soft-400">{t("loading")}</div>
         ) : (
           <>
             {/* Header */}
@@ -525,12 +555,12 @@ export default function LeadActivityPanel({
                     color={STATUS_COLOR[lead.sequenceStatus]}
                   >
                     <Badge.Dot />
-                    {STATUS_LABEL[lead.sequenceStatus]}
+                    {statusLabel(tStatus, lead.sequenceStatus)}
                   </Badge.Root>
                   <button
                     type="button"
                     onClick={onClose}
-                    aria-label="Close panel"
+                    aria-label={t("closePanel")}
                     className="flex size-8 items-center justify-center rounded-lg text-text-sub-600 transition duration-200 ease-out hover:bg-bg-weak-50 hover:text-text-strong-950"
                   >
                     <RiCloseLine className="size-5" />
@@ -540,13 +570,13 @@ export default function LeadActivityPanel({
 
               {/* Tabs */}
               <nav className="mt-5 flex items-center gap-6 border-b border-stroke-soft-200">
-                {TABS.map((t) => {
-                  const active = tab === t.id;
+                {TABS.map((tabItem) => {
+                  const active = tab === tabItem.id;
                   return (
                     <button
-                      key={t.id}
+                      key={tabItem.id}
                       type="button"
-                      onClick={() => setTab(t.id)}
+                      onClick={() => setTab(tabItem.id)}
                       className={cn(
                         "-mb-px border-b-2 pb-3 text-label-sm transition-colors duration-200 ease-out",
                         active
@@ -554,7 +584,7 @@ export default function LeadActivityPanel({
                           : "border-transparent text-text-sub-600 hover:text-text-strong-950",
                       )}
                     >
-                      {t.label}
+                      {t(tabItem.labelKey)}
                     </button>
                   );
                 })}
@@ -565,7 +595,7 @@ export default function LeadActivityPanel({
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {tab === "timeline" ? (
                 timeline.length === 0 ? (
-                  <p className="text-paragraph-sm text-text-soft-400">No activity yet.</p>
+                  <p className="text-paragraph-sm text-text-soft-400">{t("noActivity")}</p>
                 ) : (
                   <ol className="flex flex-col">
                     {timeline.map((e, i) => {
@@ -590,7 +620,7 @@ export default function LeadActivityPanel({
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
                               <p className="text-label-sm text-text-strong-950">{e.title}</p>
                               <p className="shrink-0 text-paragraph-xs text-text-soft-400">
-                                {e.at ? fullDate(e.at) : "Not sent yet"}
+                                {e.at ? fullDate(e.at, format) : t("notSentYet")}
                               </p>
                             </div>
                             {e.subtitle && (
@@ -606,7 +636,7 @@ export default function LeadActivityPanel({
                             {e.message && <MessageCard {...e.message} />}
                             {e.at && (
                               <p className="mt-1.5 text-paragraph-xs text-text-soft-400">
-                                {relativeTime(e.at)}
+                                {relativeTime(e.at, format)}
                               </p>
                             )}
                           </div>
@@ -620,7 +650,7 @@ export default function LeadActivityPanel({
               ) : (
                 <table className="w-full">
                   <tbody>
-                    {importedFields(lead).map(({ label, value, token }) => (
+                    {importedFields(lead, t).map(({ label, value, token }) => (
                       <tr
                         key={label}
                         className="border-b border-stroke-soft-200 align-top last:border-0"
@@ -641,7 +671,7 @@ export default function LeadActivityPanel({
                             value ? "text-text-strong-950" : "italic text-text-soft-400",
                           )}
                         >
-                          {value || "empty"}
+                          {value || t("empty")}
                         </td>
                       </tr>
                     ))}

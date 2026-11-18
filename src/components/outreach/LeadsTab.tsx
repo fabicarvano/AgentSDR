@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RiAddLine, RiSearchLine, RiUploadCloud2Line } from "@remixicon/react";
+import { useFormatter, useTranslations } from "next-intl";
 
 import * as Avatar from "@/components/alignui/avatar";
 import * as Badge from "@/components/alignui/badge";
@@ -17,6 +18,7 @@ import { CHANNEL_META } from "@/components/analytics/theme";
 import { cn } from "@/utils/cn";
 import type { OutreachLeadStatus } from "@/lib/outreach/schema";
 import type { LeadPage } from "@/lib/outreach/campaigns";
+import type { Messages } from "@/i18n/catalog";
 
 const STATUS_COLOR: Record<OutreachLeadStatus, React.ComponentProps<typeof Badge.Root>["color"]> = {
   pending: "gray",
@@ -28,25 +30,29 @@ const STATUS_COLOR: Record<OutreachLeadStatus, React.ComponentProps<typeof Badge
   bounced: "red",
   suppressed: "orange",
 };
-const STATUS_LABEL: Record<OutreachLeadStatus, string> = {
-  pending: "Pending",
-  initial_sent: "In sequence",
-  in_follow_up: "In sequence",
-  reply_processing: "Processing reply",
-  sequence_completed: "Completed",
-  reply_received: "Replied",
-  bounced: "Bounced",
-  suppressed: "Suppressed",
+// Every status has a label key (the Record fails tsc when a status is added without one);
+// a value the code does not know yet falls back to the raw status at render time.
+type StatusKey = keyof Messages["emailLeads"]["status"];
+const STATUS_KEY: Record<OutreachLeadStatus, StatusKey> = {
+  pending: "pending",
+  initial_sent: "initial_sent",
+  in_follow_up: "in_follow_up",
+  reply_processing: "reply_processing",
+  sequence_completed: "sequence_completed",
+  reply_received: "reply_received",
+  bounced: "bounced",
+  suppressed: "suppressed",
 };
 
-const FILTERS: { id: string; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "pending", label: "Pending" },
-  { id: "in_sequence", label: "In sequence" },
-  { id: "replied", label: "Replied" },
-  { id: "completed", label: "Completed" },
-  { id: "bounced", label: "Bounced" },
-  { id: "suppressed", label: "Suppressed" },
+type FilterKey = keyof Messages["emailLeads"]["leadsTab"]["filters"];
+const FILTERS: { id: string; labelKey: FilterKey }[] = [
+  { id: "all", labelKey: "all" },
+  { id: "pending", labelKey: "pending" },
+  { id: "in_sequence", labelKey: "in_sequence" },
+  { id: "replied", labelKey: "replied" },
+  { id: "completed", labelKey: "completed" },
+  { id: "bounced", labelKey: "bounced" },
+  { id: "suppressed", labelKey: "suppressed" },
 ];
 
 /** Avatar tint is derived from the email so a lead keeps the same colour. */
@@ -72,9 +78,9 @@ function snippet(text: string | null, max = 60): string {
   return flat.length > max ? `${flat.slice(0, max)}…` : flat;
 }
 
-function nextSend(date: Date | string | null): string {
+function nextSend(date: Date | string | null, format: ReturnType<typeof useFormatter>): string {
   if (!date) return "—";
-  return new Date(date).toLocaleString("en-US", {
+  return format.dateTime(new Date(date), {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -91,6 +97,10 @@ export default function LeadsTab({
   initialPage: LeadPage;
   onImported: () => void;
 }) {
+  const t = useTranslations("emailLeads.leadsTab");
+  const tFilters = useTranslations("emailLeads.leadsTab.filters");
+  const tStatus = useTranslations("emailLeads.status");
+  const format = useFormatter();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
@@ -163,8 +173,8 @@ export default function LeadsTab({
       firstRender.current = false;
       return;
     }
-    const t = setTimeout(() => void load({ page: 1 }), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => void load({ page: 1 }), 300);
+    return () => clearTimeout(timer);
   }, [search, filter, load]);
 
   const counts = meta.counts;
@@ -195,17 +205,17 @@ export default function LeadsTab({
     <div>
       <Frame>
         <FrameHeader
-          title="Leads"
-          description={filtering ? `${meta.total.toLocaleString("en-US")} ${meta.total === 1 ? "lead matches" : "leads match"}. Select a lead to see its emails.` : "Select a lead to see its emails and replies."}
+          title={t("title")}
+          description={filtering ? t("descriptionFiltering", { count: meta.total }) : t("descriptionDefault")}
           actions={
             <>
               <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => setShowPeople(true)}>
                 <Button.Icon as={RiAddLine} />
-                Add from People
+                {t("addFromPeople")}
               </Button.Root>
               <Button.Root variant="primary" mode="filled" size="xsmall" onClick={() => setShowImport(true)}>
                 <Button.Icon as={RiUploadCloud2Line} />
-                Upload CSV
+                {t("uploadCsv")}
               </Button.Root>
             </>
           }
@@ -217,8 +227,8 @@ export default function LeadsTab({
                 <SegmentedControl.List className="w-auto">
                   {FILTERS.map((f) => (
                     <SegmentedControl.Trigger key={f.id} value={f.id} className="gap-1.5 whitespace-nowrap px-3">
-                      {f.label}
-                      <span className="tabular-nums text-text-soft-400">{(counts[f.id] ?? 0).toLocaleString("en-US")}</span>
+                      {tFilters(f.labelKey)}
+                      <span className="tabular-nums text-text-soft-400">{format.number(counts[f.id] ?? 0)}</span>
                     </SegmentedControl.Trigger>
                   ))}
                 </SegmentedControl.List>
@@ -227,26 +237,26 @@ export default function LeadsTab({
             <Input.Root size="small" className="w-full sm:w-72">
               <Input.Wrapper>
                 <Input.Icon as={RiSearchLine} />
-                <Input.Input type="search" aria-label="Search leads" placeholder="Search name, email or company…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input.Input type="search" aria-label={t("searchLabel")} placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
               </Input.Wrapper>
             </Input.Root>
           </div>
 
           {leads.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-label-sm text-text-strong-950">{meta.total === 0 && !filtering ? "No leads yet" : "No leads match"}</p>
-              <p className="mt-1 text-paragraph-sm text-text-sub-600">{meta.total === 0 && !filtering ? "Upload a CSV or add people to get started." : "Try another status or search."}</p>
+              <p className="text-label-sm text-text-strong-950">{meta.total === 0 && !filtering ? t("emptyTitleNone") : t("emptyTitleNoMatch")}</p>
+              <p className="mt-1 text-paragraph-sm text-text-sub-600">{meta.total === 0 && !filtering ? t("emptyHintNone") : t("emptyHintNoMatch")}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table.Root className="min-w-[880px]">
                 <Table.Header>
                   <Table.Row>
-                    <Table.Head scope="col" className="px-4">Lead</Table.Head>
-                    <Table.Head scope="col" className="w-72 px-4">Last message</Table.Head>
-                    <Table.Head scope="col" className="w-48 px-4">Progress</Table.Head>
-                    <Table.Head scope="col" className="w-40 px-4">Next send</Table.Head>
-                    <Table.Head scope="col" className="w-40 px-4">Status</Table.Head>
+                    <Table.Head scope="col" className="px-4">{t("colLead")}</Table.Head>
+                    <Table.Head scope="col" className="w-72 px-4">{t("colLastMessage")}</Table.Head>
+                    <Table.Head scope="col" className="w-48 px-4">{t("colProgress")}</Table.Head>
+                    <Table.Head scope="col" className="w-40 px-4">{t("colNextSend")}</Table.Head>
+                    <Table.Head scope="col" className="w-40 px-4">{t("colStatus")}</Table.Head>
                   </Table.Row>
                 </Table.Header>
 
@@ -285,11 +295,11 @@ export default function LeadsTab({
                             <span className="shrink-0 text-paragraph-xs tabular-nums text-text-sub-600">{done}/{steps}</span>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="whitespace-nowrap px-4 text-paragraph-sm text-text-sub-600">{nextSend(lead.nextSendAt)}</Table.Cell>
+                        <Table.Cell className="whitespace-nowrap px-4 text-paragraph-sm text-text-sub-600">{nextSend(lead.nextSendAt, format)}</Table.Cell>
                         <Table.Cell className="px-4">
                           <Badge.Root size="medium" variant="lighter" color={STATUS_COLOR[lead.sequenceStatus]}>
                             <Badge.Dot />
-                            {STATUS_LABEL[lead.sequenceStatus]}
+                            {STATUS_KEY[lead.sequenceStatus] ? tStatus(STATUS_KEY[lead.sequenceStatus]) : lead.sequenceStatus}
                           </Badge.Root>
                         </Table.Cell>
                       </Table.Row>
@@ -307,15 +317,15 @@ export default function LeadsTab({
               <div className="mt-2 flex items-center justify-center gap-3 border-t border-stroke-soft-200 pt-3">
                 <p className="text-paragraph-xs text-text-sub-600">
                   {loading
-                    ? "Loading more…"
+                    ? t("loadingMore")
                     : hasMore
-                      ? `Showing ${leads.length.toLocaleString("en-US")} of ${meta.total.toLocaleString("en-US")}`
-                      : `All ${meta.total.toLocaleString("en-US")} ${meta.total === 1 ? "lead" : "leads"} loaded`}
+                      ? t("showing", { shown: format.number(leads.length), total: format.number(meta.total) })
+                      : t("allLoaded", { count: meta.total })}
                 </p>
                 {/* Keyboard and no-JS-observer fallback for reaching the next page. */}
                 {hasMore && !loading && (
                   <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => void load({ page: meta.page + 1, append: true })}>
-                    Load more
+                    {t("loadMore")}
                   </Button.Root>
                 )}
               </div>
