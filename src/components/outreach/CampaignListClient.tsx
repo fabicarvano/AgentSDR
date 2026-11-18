@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiDeleteBinLine,
@@ -31,6 +32,7 @@ import { PageContainer, PageHeader } from "@/components/page/PageHeader";
 import { cn } from "@/utils/cn";
 import CampaignProgressRing from "./CampaignProgressRing";
 import type { outreachCampaigns } from "@/lib/outreach/schema";
+import type { Messages } from "@/i18n/catalog";
 
 type Campaign = typeof outreachCampaigns.$inferSelect & {
   leadCount: number;
@@ -41,49 +43,40 @@ type Campaign = typeof outreachCampaigns.$inferSelect & {
   lastActivityAt: string | Date | null;
 };
 
-const STATUS_COLOR: Record<string, React.ComponentProps<typeof Badge.Root>["color"]> = {
+type StatusKey = keyof Messages["emailCampaigns"]["status"];
+
+// Record<StatusKey, …> fails to compile when a status gets a label but no colour.
+const STATUS_COLOR: Record<StatusKey, React.ComponentProps<typeof Badge.Root>["color"]> = {
   active: "green",
   paused: "orange",
   draft: "gray",
   completed: "purple",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  active: "Active",
-  paused: "Paused",
-  draft: "Draft",
-  completed: "Completed",
-};
+const isStatusKey = (status: string): status is StatusKey => status in STATUS_COLOR;
 
 const TABS = ["all", "active", "paused", "draft", "completed"] as const;
 type Tab = (typeof TABS)[number];
 
-const TAB_LABEL: Record<Tab, string> = {
-  all: "All",
-  active: "Active",
-  paused: "Paused",
-  draft: "Draft",
-  completed: "Completed",
-};
+type Translator = ReturnType<typeof useTranslations<"emailCampaigns.list">>;
+type Formatter = ReturnType<typeof useFormatter>;
 
 const EMAIL = CHANNEL_META.email.color;
 
 const toDate = (date: string | Date) => (typeof date === "string" ? new Date(date) : date);
 
 /** "Sep 14" — the created-at line under each campaign name. */
-function shortDate(date: string | Date | null): string {
+function shortDate(date: string | Date | null, format: Formatter): string {
   if (!date) return "—";
-  return toDate(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return format.dateTime(toDate(date), { month: "short", day: "numeric" });
 }
 
-/** "3h ago" / "2d ago" — when the campaign last sent. */
-function ago(date: string | Date | null, now: number): string {
-  if (!date) return "Never";
+/** "3 hours ago" — when the campaign last sent. */
+function ago(date: string | Date | null, now: number, t: Translator, format: Formatter): string {
+  if (!date) return t("never");
   const minutes = Math.round((now - toDate(date).getTime()) / 60_000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (minutes < 60 * 24) return `${Math.round(minutes / 60)}h ago`;
-  return `${Math.round(minutes / (60 * 24))}d ago`;
+  if (minutes < 1) return t("justNow");
+  return format.relativeTime(toDate(date), now);
 }
 
 const num = "text-paragraph-sm tabular-nums text-text-strong-950";
@@ -94,6 +87,7 @@ const num = "text-paragraph-sm tabular-nums text-text-strong-950";
  * a confirm, since there is no undo.
  */
 function RowActions({ campaign }: { campaign: Campaign }) {
+  const t = useTranslations("emailCampaigns.list");
   const dialogs = useDialogs();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -112,8 +106,8 @@ function RowActions({ campaign }: { campaign: Campaign }) {
     setBusy(false);
     if (!res.ok) {
       await dialogs.alert({
-        title: `Could not ${status === "paused" ? "pause" : "resume"} the campaign`,
-        description: "Something went wrong. Please try again.",
+        title: status === "paused" ? t("pauseFailedTitle") : t("resumeFailedTitle"),
+        description: t("failedDescription"),
         variant: "error",
       });
       return;
@@ -123,11 +117,9 @@ function RowActions({ campaign }: { campaign: Campaign }) {
 
   async function remove() {
     const confirmed = await dialogs.confirm({
-      title: "Delete campaign?",
-      description: `“${campaign.name}” and its ${campaign.leadCount.toLocaleString()} lead${
-        campaign.leadCount === 1 ? "" : "s"
-      } and send history will be permanently deleted. This cannot be undone.`,
-      confirmLabel: "Delete campaign",
+      title: t("deleteTitle"),
+      description: t("deleteDescription", { name: campaign.name, count: campaign.leadCount }),
+      confirmLabel: t("deleteConfirm"),
       variant: "error",
     });
     if (!confirmed) return;
@@ -137,8 +129,8 @@ function RowActions({ campaign }: { campaign: Campaign }) {
     setBusy(false);
     if (!res.ok) {
       await dialogs.alert({
-        title: "Could not delete campaign",
-        description: "Something went wrong. Please try again.",
+        title: t("deleteFailedTitle"),
+        description: t("failedDescription"),
         variant: "error",
       });
       return;
@@ -154,7 +146,7 @@ function RowActions({ campaign }: { campaign: Campaign }) {
           mode="ghost"
           size="xsmall"
           disabled={busy || pending}
-          aria-label={`More actions for ${campaign.name}`}
+          aria-label={t("moreActions", { name: campaign.name })}
         >
           <Button.Icon as={RiMoreLine} />
         </Button.Root>
@@ -163,19 +155,19 @@ function RowActions({ campaign }: { campaign: Campaign }) {
       <Dropdown.Content>
         <Dropdown.Item onSelect={() => router.push(`/outreach/campaigns/${campaign.id}`)}>
           <Dropdown.ItemIcon as={RiPencilLine} />
-          Edit campaign
+          {t("actionEdit")}
         </Dropdown.Item>
 
         {canPause && (
           <Dropdown.Item onSelect={() => setStatus("paused")}>
             <Dropdown.ItemIcon as={RiPauseCircleLine} />
-            Pause campaign
+            {t("actionPause")}
           </Dropdown.Item>
         )}
         {canResume && (
           <Dropdown.Item onSelect={() => setStatus("active")}>
             <Dropdown.ItemIcon as={RiPlayCircleLine} />
-            Resume campaign
+            {t("actionResume")}
           </Dropdown.Item>
         )}
 
@@ -183,7 +175,7 @@ function RowActions({ campaign }: { campaign: Campaign }) {
 
         <Dropdown.Item destructive onSelect={remove}>
           <Dropdown.ItemIcon as={RiDeleteBinLine} />
-          Delete campaign
+          {t("actionDelete")}
         </Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
@@ -191,6 +183,11 @@ function RowActions({ campaign }: { campaign: Campaign }) {
 }
 
 export default function CampaignListClient({ campaigns }: { campaigns: Campaign[] }) {
+  const t = useTranslations("emailCampaigns.list");
+  const tStatus = useTranslations("emailCampaigns.status");
+  const format = useFormatter();
+  const locale = useLocale();
+  const statusLabel = (status: string) => (isStatusKey(status) ? tStatus(status) : status);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
@@ -230,37 +227,37 @@ export default function CampaignListClient({ campaigns }: { campaigns: Campaign[
   return (
     <PageContainer>
       <PageHeader
-        title="Send campaigns"
-        description="Email sequences sent from your mailboxes, and how each one is landing."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button.Root variant="primary" mode="filled" size="small" asChild>
             <Link href="/outreach/campaigns/new">
               <Button.Icon as={RiAddLine} />
-              Create campaign
+              {t("create")}
             </Link>
           </Button.Root>
         }
       />
 
       <KpiStrip className="mt-6" columns={4}>
-        <KpiCell icon={RiSendPlaneLine} label="Active campaigns" value={formatCompact(counts.active ?? 0)} context={`${counts.paused ?? 0} paused · ${counts.draft ?? 0} draft · ${counts.completed ?? 0} completed`} />
-        <KpiCell icon={RiTeamLine} label="Leads" value={formatCompact(totals.leads)} context={`across ${campaigns.length} ${campaigns.length === 1 ? "campaign" : "campaigns"}`} />
-        <KpiCell icon={RiMailSendLine} label="Emails sent" value={formatCompact(totals.sent)} context={totals.lastSend ? `Last send ${ago(new Date(totals.lastSend), now)}` : "Nothing sent yet"} />
-        <KpiCell icon={RiReplyLine} label="Replies" value={formatCompact(totals.replied)} context={totals.leads > 0 ? `${formatPercent(totals.replied / totals.leads, 2)} of leads replied` : undefined} hint="Leads who replied to any email in the campaign, all time." />
+        <KpiCell icon={RiSendPlaneLine} label={t("kpiActive")} value={formatCompact(counts.active ?? 0, locale)} context={t("kpiActiveContext", { paused: counts.paused ?? 0, draft: counts.draft ?? 0, completed: counts.completed ?? 0 })} />
+        <KpiCell icon={RiTeamLine} label={t("kpiLeads")} value={formatCompact(totals.leads, locale)} context={t("kpiLeadsContext", { count: campaigns.length })} />
+        <KpiCell icon={RiMailSendLine} label={t("kpiSent")} value={formatCompact(totals.sent, locale)} context={totals.lastSend ? t("kpiLastSend", { when: ago(new Date(totals.lastSend), now, t, format) }) : t("kpiNothingSent")} />
+        <KpiCell icon={RiReplyLine} label={t("kpiReplies")} value={formatCompact(totals.replied, locale)} context={totals.leads > 0 ? t("kpiRepliesContext", { rate: formatPercent(totals.replied / totals.leads, 2, locale) }) : undefined} hint={t("kpiRepliesHint")} />
       </KpiStrip>
 
       <Frame className="mt-5">
         <FrameHeader
-          title="Campaigns"
-          description="All time. Select a campaign to see its sends, leads and sequence."
+          title={t("frameTitle")}
+          description={t("frameDescription")}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <SegmentedControl.Root value={tab} onValueChange={(v) => setTab(v as Tab)}>
                 <SegmentedControl.List className="w-auto">
-                  {TABS.map((t) => (
-                    <SegmentedControl.Trigger key={t} value={t} className="gap-1.5 px-3">
-                      {TAB_LABEL[t]}
-                      <span className="tabular-nums text-text-soft-400">{counts[t] ?? 0}</span>
+                  {TABS.map((tab_) => (
+                    <SegmentedControl.Trigger key={tab_} value={tab_} className="gap-1.5 px-3">
+                      {tab_ === "all" ? t("tabAll") : tStatus(tab_)}
+                      <span className="tabular-nums text-text-soft-400">{counts[tab_] ?? 0}</span>
                     </SegmentedControl.Trigger>
                   ))}
                 </SegmentedControl.List>
@@ -268,7 +265,7 @@ export default function CampaignListClient({ campaigns }: { campaigns: Campaign[
               <Input.Root size="small" className="w-56">
                 <Input.Wrapper>
                   <Input.Icon as={RiSearchLine} />
-                  <Input.Input type="search" aria-label="Search campaigns" placeholder="Search campaigns…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <Input.Input type="search" aria-label={t("searchLabel")} placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
             </div>
@@ -277,19 +274,19 @@ export default function CampaignListClient({ campaigns }: { campaigns: Campaign[
         <FramePanel className="overflow-x-auto p-2 sm:p-2">
           {filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-label-sm text-text-strong-950">{campaigns.length === 0 ? "No campaigns yet" : "No campaigns match"}</p>
-              <p className="mt-1 text-paragraph-sm text-text-sub-600">{campaigns.length === 0 ? "Create one to start sending." : "Try another status or search."}</p>
+              <p className="text-label-sm text-text-strong-950">{campaigns.length === 0 ? t("emptyNone") : t("emptyNoMatch")}</p>
+              <p className="mt-1 text-paragraph-sm text-text-sub-600">{campaigns.length === 0 ? t("emptyNoneHint") : t("emptyNoMatchHint")}</p>
             </div>
           ) : (
             <Table.Root className="min-w-[860px]">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Campaign</Table.Head>
-                  <Table.Head scope="col" className="w-28 px-4 text-right">Leads</Table.Head>
-                  <Table.Head scope="col" className="w-28 px-4 text-right">Sent</Table.Head>
-                  <Table.Head scope="col" className="w-64 px-4">Replies</Table.Head>
-                  <Table.Head scope="col" className="w-32 px-4">Last send</Table.Head>
-                  <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">Actions</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("colCampaign")}</Table.Head>
+                  <Table.Head scope="col" className="w-28 px-4 text-right">{t("colLeads")}</Table.Head>
+                  <Table.Head scope="col" className="w-28 px-4 text-right">{t("colSent")}</Table.Head>
+                  <Table.Head scope="col" className="w-64 px-4">{t("colReplies")}</Table.Head>
+                  <Table.Head scope="col" className="w-32 px-4">{t("colLastSend")}</Table.Head>
+                  <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">{t("colActions")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>
@@ -307,29 +304,29 @@ export default function CampaignListClient({ campaigns }: { campaigns: Campaign[
                         <div className="min-w-0">
                           <div className="flex min-w-0 items-center gap-2">
                             <span className="truncate text-label-sm text-text-strong-950" title={c.name}>{c.name}</span>
-                            <Badge.Root size="small" variant="lighter" color={STATUS_COLOR[c.status] ?? "gray"} className="shrink-0">
+                            <Badge.Root size="small" variant="lighter" color={isStatusKey(c.status) ? STATUS_COLOR[c.status] : "gray"} className="shrink-0">
                               <Badge.Dot />
-                              {STATUS_LABEL[c.status] ?? c.status}
+                              {statusLabel(c.status)}
                             </Badge.Root>
                           </div>
                           <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">
-                            {c.sequence.length} {c.sequence.length === 1 ? "step" : "steps"} · Created {shortDate(c.createdAt)}
+                            {t("stepsCreated", { steps: c.sequence.length, date: shortDate(c.createdAt, format) })}
                           </p>
                         </div>
                       </div>
                     </Table.Cell>
-                    <Table.Cell className={cn("px-4 text-right", num)}>{c.leadCount.toLocaleString("en-US")}</Table.Cell>
-                    <Table.Cell className={cn("px-4 text-right", num)}>{c.sentCount.toLocaleString("en-US")}</Table.Cell>
+                    <Table.Cell className={cn("px-4 text-right", num)}>{format.number(c.leadCount)}</Table.Cell>
+                    <Table.Cell className={cn("px-4 text-right", num)}>{format.number(c.sentCount)}</Table.Cell>
                     <Table.Cell className="px-4">
                       <div className="flex items-center gap-3">
-                        <span className={cn("w-10 text-right", num)}>{c.repliedCount.toLocaleString("en-US")}</span>
-                        <span className="w-12 text-paragraph-xs tabular-nums text-text-sub-600">{formatPercent(c.replyRate, 2)}</span>
+                        <span className={cn("w-10 text-right", num)}>{format.number(c.repliedCount)}</span>
+                        <span className="w-12 text-paragraph-xs tabular-nums text-text-sub-600">{formatPercent(c.replyRate, 2, locale)}</span>
                         <span aria-hidden="true" className="h-1.5 w-20 rounded-full bg-bg-weak-50">
                           <span className="block h-full rounded-full" style={{ width: `${((c.replyRate ?? 0) / maxRate) * 100}%`, backgroundColor: EMAIL }} />
                         </span>
                       </div>
                     </Table.Cell>
-                    <Table.Cell className="whitespace-nowrap px-4 text-paragraph-sm text-text-sub-600">{ago(c.lastActivityAt, now)}</Table.Cell>
+                    <Table.Cell className="whitespace-nowrap px-4 text-paragraph-sm text-text-sub-600">{ago(c.lastActivityAt, now, t, format)}</Table.Cell>
                     <Table.Cell className="px-4" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                       <div className="flex justify-end">
                         <RowActions campaign={c} />

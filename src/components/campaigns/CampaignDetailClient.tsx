@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
 import type { QualificationDebugTrace } from "@/lib/qualification";
 
 interface CampaignInfo {
@@ -58,14 +60,36 @@ const STATUS_TONE: Record<string, string> = {
   pending: "bg-bg-weak-50 text-text-strong-950/50",
 };
 
+type DomainStatusKey = keyof Messages["emailCampaigns"]["legacyDetail"]["domainStatus"];
+type CampaignStatusKey = keyof Messages["emailCampaigns"]["legacyStatus"];
+
+// Raw domain status (snake_case, stored in the database) -> catalog key. Unknown values fall back to the raw text.
+const DOMAIN_STATUS_KEY: Record<string, DomainStatusKey> = {
+  qualified: "qualified",
+  apollo_no_data: "apolloNoData",
+  apollo_has_data: "apolloHasData",
+  not_live: "notLive",
+  no_ads: "noAds",
+  pending: "pending",
+};
+// Fails to compile when a key is added to the catalog without a mapping above.
+const _domainStatusCovered: Record<DomainStatusKey, true> = {
+  qualified: true, apolloNoData: true, apolloHasData: true, notLive: true, noAds: true, pending: true,
+};
+void _domainStatusCovered;
+
+const CAMPAIGN_STATUS_KEYS: Record<CampaignStatusKey, true> = { building: true, ready: true, paused: true, done: true };
+
 function StatusBadge({ status }: { status: string }) {
+  const tDomain = useTranslations("emailCampaigns.legacyDetail.domainStatus");
+  const key = DOMAIN_STATUS_KEY[status];
   return (
     <span
       className={`text-[10px] px-2 py-0.5 rounded font-medium uppercase tracking-wide ${
         STATUS_TONE[status] ?? "bg-bg-weak-50 text-text-strong-950/60"
       }`}
     >
-      {status.replace(/_/g, " ")}
+      {key ? tDomain(key) : status.replace(/_/g, " ")}
     </span>
   );
 }
@@ -78,25 +102,28 @@ function sortDomainRows(rows: DomainRow[]) {
   });
 }
 
-function formatRevenue(value: string | null) {
+type Formatter = ReturnType<typeof useFormatter>;
+
+function formatRevenue(value: string | null, format: Formatter) {
   if (value === null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
-  return `$${Math.round(n).toLocaleString()}`;
+  return `$${format.number(Math.round(n))}`;
 }
 
-function formatTimestamp(value: string | null) {
+function formatTimestamp(value: string | null, format: Formatter) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat(undefined, {
+  return format.dateTime(new Date(value), {
     month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  }).format(new Date(value));
+  });
 }
 
 function ParentCell({ domain, campaignId }: { domain: DomainRow; campaignId: string }) {
+  const t = useTranslations("emailCampaigns.legacyDetail");
   if (domain.parentDomain) {
     const previouslyAdded =
       domain.parentPreviouslyAdded ||
@@ -111,18 +138,18 @@ function ParentCell({ domain, campaignId }: { domain: DomainRow; campaignId: str
             onClick={(event) => event.stopPropagation()}
             className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            (previously added)
+            {t("previouslyAdded")}
           </Link>
         ) : previouslyAdded ? (
-          <span className="text-[10px] text-text-strong-950/40">(previously added)</span>
+          <span className="text-[10px] text-text-strong-950/40">{t("previouslyAdded")}</span>
         ) : null}
       </span>
     );
   }
   if (domain.parentPending) {
-    return <span className="text-amber-700 dark:text-amber-400">Needs research</span>;
+    return <span className="text-amber-700 dark:text-amber-400">{t("needsResearch")}</span>;
   }
-  return <span className="text-text-strong-950/35">No parent found</span>;
+  return <span className="text-text-strong-950/35">{t("noParent")}</span>;
 }
 
 function Stat({ label, value, pulse }: { label: string; value: string; pulse?: boolean }) {
@@ -151,6 +178,7 @@ function DebugSidePanel({
   domain: DomainRow;
   onClose: () => void;
 }) {
+  const t = useTranslations("emailCampaigns.legacyDetail");
   const debug = domain.qualificationDebug;
   return (
     <div className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-stroke-soft-200 bg-bg-white-0 shadow-2xl">
@@ -158,12 +186,12 @@ function DebugSidePanel({
         <div className="flex items-start justify-between gap-3 border-b border-stroke-soft-200 px-5 py-4">
           <div className="min-w-0">
             <p className="font-mono text-sm font-semibold text-text-strong-950 truncate">{domain.domain}</p>
-            <p className="mt-1 text-xs text-text-strong-950/45">{domain.reason ?? "No reason saved"}</p>
+            <p className="mt-1 text-xs text-text-strong-950/45">{domain.reason ?? t("noReason")}</p>
           </div>
           <button
             onClick={onClose}
             className="h-8 w-8 shrink-0 rounded-lg border border-stroke-soft-200 text-text-strong-950/50 hover:bg-bg-weak-50"
-            aria-label="Close debug panel"
+            aria-label={t("closePanel")}
           >
             ×
           </button>
@@ -171,26 +199,26 @@ function DebugSidePanel({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!debug ? (
-            <p className="text-sm text-text-strong-950/45">No debug trace saved for this row yet.</p>
+            <p className="text-sm text-text-strong-950/45">{t("noTrace")}</p>
           ) : (
             <div className="flex flex-col gap-5">
               <section>
                 <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-strong-950/45">
-                  AI parent lookup
+                  {t("aiParentLookup")}
                 </h2>
                 <JsonBlock value={debug.parentLookup ?? null} />
               </section>
 
               <section>
                 <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-strong-950/45">
-                  Apollo child lookup
+                  {t("apolloChildLookup")}
                 </h2>
                 <JsonBlock value={debug.apollo?.child ?? null} />
               </section>
 
               <section>
                 <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-strong-950/45">
-                  Apollo parent lookup
+                  {t("apolloParentLookup")}
                 </h2>
                 <JsonBlock value={debug.apollo?.parent ?? null} />
               </section>
@@ -211,6 +239,9 @@ export default function CampaignDetailClient({
   activeJob: ActiveJobInfo | null;
   domains: DomainRow[];
 }) {
+  const t = useTranslations("emailCampaigns.legacyDetail");
+  const tStatus = useTranslations("emailCampaigns.legacyStatus");
+  const format = useFormatter();
   const [running, setRunning] = useState(Boolean(activeJob));
   const [stopping, setStopping] = useState(false);
   const [limit, setLimit] = useState("200");
@@ -252,7 +283,7 @@ export default function CampaignDetailClient({
       a.click();
       URL.revokeObjectURL(a.href);
     } catch {
-      setError("Export failed. Please try again.");
+      setError(t("exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -301,8 +332,8 @@ export default function CampaignDetailClient({
             failed?: boolean;
           };
           if (link) setApolloLink(link);
-          if (stopped) setNotice("Job stopped. Progress from completed domains was saved.");
-          if (failed) setError("Job failed. Completed domain progress was saved.");
+          if (stopped) setNotice(t("jobStopped"));
+          if (failed) setError(t("jobFailed"));
           setRunning(false);
           setStopping(false);
           setCurrentDomain(null);
@@ -323,13 +354,15 @@ export default function CampaignDetailClient({
     };
 
     es.onerror = () => {
-      setError("Connection lost. The job may still be running — refresh to check.");
+      setError(t("connectionLost"));
       setRunning(false);
       setStopping(false);
       setCurrentDomain(null);
       es.close();
       esRef.current = null;
     };
+    // t is deliberately left out: a changed identity would reopen the stream.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaign.id]);
 
   useEffect(() => {
@@ -355,7 +388,7 @@ export default function CampaignDetailClient({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      setError(data?.error ?? "Could not start the job.");
+      setError(data?.error ?? t("startFailed"));
       setRunning(false);
       return;
     }
@@ -372,7 +405,7 @@ export default function CampaignDetailClient({
     const res = await fetch(`/api/campaigns/${campaign.id}/stop`, { method: "POST" });
     if (!res.ok) {
       setStopping(false);
-      setError("Could not stop the job. Please try again.");
+      setError(t("stopFailed"));
     }
   }
 
@@ -408,33 +441,33 @@ export default function CampaignDetailClient({
     <div className="flex flex-col gap-5 max-w-5xl">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
-        <Stat label="Status" value={displayStatus} pulse={running} />
+        <Stat label={t("statStatus")} value={displayStatus in CAMPAIGN_STATUS_KEYS ? tStatus(displayStatus as CampaignStatusKey) : displayStatus} pulse={running} />
         {campaign.targetMode === "domains" ? (
           <Stat
-            label="Domains analyzed"
-            value={`${displayTargetedDomainsProcessed.toLocaleString()} / ${(campaign.targetDomainCount ?? 0).toLocaleString()}`}
+            label={t("statDomains")}
+            value={`${format.number(displayTargetedDomainsProcessed)} / ${format.number(campaign.targetDomainCount ?? 0)}`}
             pulse={running}
           />
         ) : (
           <Stat
-            label="Leads"
-            value={`${displayAccumulated.toLocaleString()} / ${campaign.targetLeadCount.toLocaleString()}`}
+            label={t("statLeads")}
+            value={`${format.number(displayAccumulated)} / ${format.number(campaign.targetLeadCount)}`}
             pulse={running}
           />
         )}
-        <Stat label="Qualified" value={String(displayQualified)} pulse={running} />
-        <Stat label="Processed" value={String(displayProcessed)} pulse={running} />
+        <Stat label={t("statQualified")} value={String(displayQualified)} pulse={running} />
+        <Stat label={t("statProcessed")} value={String(displayProcessed)} pulse={running} />
       </div>
 
       {/* Run controls */}
       <div className="bg-bg-white-0 border border-stroke-soft-200 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
         {campaign.targetMode === "domains" ? (
           <span className="text-sm text-text-strong-950/60">
-            Analyzes the top {(campaign.targetDomainCount ?? 0).toLocaleString()} candidate domains
+            {t("analyzesTop", { count: campaign.targetDomainCount ?? 0 })}
           </span>
         ) : (
           <>
-            <span className="text-sm text-text-strong-950/60">Process up to</span>
+            <span className="text-sm text-text-strong-950/60">{t("processUpTo")}</span>
             <input
               type="number"
               value={limit}
@@ -442,7 +475,7 @@ export default function CampaignDetailClient({
               disabled={running}
               className="w-24 h-9 border border-stroke-soft-200 rounded-lg px-3 text-sm text-text-strong-950 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
             />
-            <span className="text-sm text-text-strong-950/60">candidates</span>
+            <span className="text-sm text-text-strong-950/60">{t("candidates")}</span>
           </>
         )}
 
@@ -457,7 +490,7 @@ export default function CampaignDetailClient({
           disabled={exporting || domains.length === 0}
           className="ml-auto h-9 px-4 border border-stroke-soft-200 text-text-strong-950/70 text-sm font-semibold rounded-lg hover:bg-bg-weak-50 transition-colors disabled:opacity-50 flex items-center gap-2"
         >
-          {exporting ? "Exporting…" : "Export CSV"}
+          {exporting ? t("exporting") : t("exportCsv")}
         </button>
 
         <button
@@ -468,7 +501,7 @@ export default function CampaignDetailClient({
           {running && (
             <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
           )}
-          {running ? "Running…" : "Run qualification"}
+          {running ? t("running") : t("run")}
         </button>
         {running && (
           <button
@@ -476,7 +509,7 @@ export default function CampaignDetailClient({
             disabled={stopping}
             className="h-9 px-4 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 text-sm font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-500/15 transition-colors disabled:opacity-60"
           >
-            {stopping ? "Stopping…" : "Stop job"}
+            {stopping ? t("stopping") : t("stop")}
           </button>
         )}
       </div>
@@ -487,7 +520,7 @@ export default function CampaignDetailClient({
       {apolloLink && (
         <div className="bg-bg-white-0 border border-stroke-soft-200 rounded-xl px-4 py-3">
           <p className="text-[10px] text-text-strong-950/40 uppercase tracking-widest mb-1.5">
-            Apollo link (qualified domains)
+            {t("apolloLink")}
           </p>
           <div className="flex items-center gap-2">
             <a
@@ -502,7 +535,7 @@ export default function CampaignDetailClient({
               onClick={copyLink}
               className="shrink-0 h-8 px-3 text-xs font-medium text-text-strong-950/70 border border-stroke-soft-200 rounded-lg hover:bg-bg-weak-50"
             >
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t("copied") : t("copy")}
             </button>
           </div>
         </div>
@@ -512,7 +545,7 @@ export default function CampaignDetailClient({
       {pendingParents.length > 0 && (
         <div className="bg-amber-50/50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-4 py-3">
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-2">
-            Parent research needed ({pendingParents.length})
+            {t("parentResearchNeeded", { count: pendingParents.length })}
           </p>
           <div className="flex flex-col gap-2">
             {pendingParents.map((d) => (
@@ -527,22 +560,22 @@ export default function CampaignDetailClient({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-bg-weak-50 text-left text-[10px] text-text-strong-950/50 uppercase tracking-widest">
-              <th className="px-4 py-2.5 font-semibold">Domain</th>
-              <th className="px-4 py-2.5 font-semibold">Timestamp</th>
-              <th className="px-4 py-2.5 font-semibold">Status</th>
-              <th className="px-4 py-2.5 font-semibold">Parent Company</th>
-              <th className="px-4 py-2.5 font-semibold">Revenue</th>
-              <th className="px-4 py-2.5 font-semibold">All Leads</th>
-              <th className="px-4 py-2.5 font-semibold">Verified</th>
-              <th className="px-4 py-2.5 font-semibold">Parent</th>
-              <th className="px-4 py-2.5 font-semibold">Reason</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colDomain")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colTimestamp")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colStatus")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colParentCompany")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colRevenue")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colAllLeads")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colVerified")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colParent")}</th>
+              <th className="px-4 py-2.5 font-semibold">{t("colReason")}</th>
             </tr>
           </thead>
           <tbody>
             {domains.length === 0 && !running ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-text-strong-950/40">
-                  No domains processed yet. Run the qualification above.
+                  {t("emptyDomains")}
                 </td>
               </tr>
             ) : domains.length === 0 && running ? (
@@ -550,7 +583,7 @@ export default function CampaignDetailClient({
                 <td colSpan={9} className="px-4 py-6 text-center text-text-strong-950/40 text-sm">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-3 h-3 border-2 border-stroke-sub-300 border-t-indigo-400 rounded-full animate-spin" />
-                    Processing…
+                    {t("processing")}
                   </div>
                 </td>
               </tr>
@@ -567,16 +600,16 @@ export default function CampaignDetailClient({
                     {d.domain}
                   </td>
                   <td className="px-4 py-2.5 text-xs text-text-strong-950/50">
-                    {formatTimestamp(d.checkedAt)}
+                    {formatTimestamp(d.checkedAt, format)}
                   </td>
                   <td className="px-4 py-2.5">
                     <StatusBadge status={d.status} />
                   </td>
                   <td className="px-4 py-2.5 text-xs text-text-strong-950/60">
-                    {d.isParentCompany ? "Yes" : "No"}
+                    {d.isParentCompany ? t("yes") : t("no")}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-text-strong-950/70">
-                    {formatRevenue(d.revenue)}
+                    {formatRevenue(d.revenue, format)}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-text-strong-950/70">
                     {d.allLeadCount ?? "—"}
@@ -609,6 +642,7 @@ function ParentResearchRow({
   domain: string;
   onSubmit: (child: string, parent: string) => void;
 }) {
+  const t = useTranslations("emailCampaigns.legacyDetail");
   const [value, setValue] = useState("");
   return (
     <div className="flex items-center gap-2">
@@ -616,6 +650,8 @@ function ParentResearchRow({
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        // Example domain, not interface text.
+        // eslint-disable-next-line i18next/no-literal-string
         placeholder="parent-domain.com"
         className="flex-1 h-9 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 text-sm text-text-strong-950 bg-bg-white-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
       />
@@ -623,7 +659,7 @@ function ParentResearchRow({
         onClick={() => onSubmit(domain, value)}
         className="h-9 px-3 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700"
       >
-        Set parent
+        {t("setParent")}
       </button>
     </div>
   );

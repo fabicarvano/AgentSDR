@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import CampaignDetailClient from "@/components/campaigns/CampaignDetailClient";
 import { requirePageOrgContext } from "@/lib/auth/context";
@@ -13,6 +14,9 @@ export default async function CampaignDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const t = await getTranslations("emailCampaigns.legacyPage");
+  const tStatus = await getTranslations("emailCampaigns.legacyStatus");
+  const tMode = await getTranslations("emailCampaigns.legacyInputMode");
   const { id } = await params;
   const ctx = await requirePageOrgContext();
   const { campaign, domains, activeJob } = await runInOrganization(ctx.organizationId, async () => {
@@ -34,7 +38,13 @@ export default async function CampaignDetailPage({
           <div>
             <h1 className="text-base font-bold text-text-strong-950">{campaign.name}</h1>
             <p className="text-xs text-text-strong-950/50">
-              {campaign.inputMode} campaign · {campaign.status}
+              {t("subtitle", {
+                mode: campaign.inputMode === "filters" || campaign.inputMode === "manual" ? tMode(campaign.inputMode) : campaign.inputMode,
+                status:
+                  campaign.status === "building" || campaign.status === "ready" || campaign.status === "paused" || campaign.status === "done"
+                    ? tStatus(campaign.status)
+                    : campaign.status,
+              })}
             </p>
           </div>
         </div>

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 
 interface CampaignRow {
@@ -16,7 +18,15 @@ interface CampaignRow {
   accumulatedLeadCount: number;
 }
 
+type StatusKey = keyof Messages["emailCampaigns"]["legacyStatus"];
+type ModeKey = keyof Messages["emailCampaigns"]["legacyInputMode"];
+
+// Record<…> fails to compile when a value gets a label here but no entry (and the reverse).
+const STATUS_KEYS: Record<StatusKey, true> = { building: true, ready: true, paused: true, done: true };
+const MODE_KEYS: Record<ModeKey, true> = { filters: true, manual: true };
+
 function StatusBadge({ status }: { status: string }) {
+  const tBadge = useTranslations("emailCampaigns.legacyStatus");
   const tone =
     status === "ready"
       ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
@@ -25,12 +35,15 @@ function StatusBadge({ status }: { status: string }) {
       : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400";
   return (
     <span className={`text-[10px] px-2 py-0.5 rounded font-medium uppercase tracking-wide ${tone}`}>
-      {status}
+      {status in STATUS_KEYS ? tBadge(status as StatusKey) : status}
     </span>
   );
 }
 
 export default function CampaignListClient({ campaigns }: { campaigns: CampaignRow[] }) {
+  const t = useTranslations("emailCampaigns.legacyList");
+  const tMode = useTranslations("emailCampaigns.legacyInputMode");
+  const format = useFormatter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const allSelected = campaigns.length > 0 && selected.size === campaigns.length;
@@ -56,7 +69,7 @@ export default function CampaignListClient({ campaigns }: { campaigns: CampaignR
   if (campaigns.length === 0) {
     return (
       <div className="text-sm text-text-strong-950/50 border border-dashed border-stroke-soft-200 rounded-xl px-6 py-12 text-center">
-        No campaigns yet. Create one on the left to get started.
+        {t("empty")}
       </div>
     );
   }
@@ -71,17 +84,17 @@ export default function CampaignListClient({ campaigns }: { campaigns: CampaignR
             onChange={toggleAll}
             className="w-4 h-4 rounded border-stroke-sub-300"
           />
-          Select all
+          {t("selectAll")}
         </label>
 
         {selected.size > 0 && (
           <>
-            <span className="text-xs text-text-strong-950/40">{selected.size} selected</span>
+            <span className="text-xs text-text-strong-950/40">{t("selected", { count: selected.size })}</span>
             <a
               href={downloadHref ?? undefined}
               className="ml-auto h-8 px-3 flex items-center bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              Download selected ({selected.size}) as CSV
+              {t("download", { count: selected.size })}
             </a>
           </>
         )}
@@ -105,18 +118,17 @@ export default function CampaignListClient({ campaigns }: { campaigns: CampaignR
                 <StatusBadge status={c.status} />
               </div>
               <p className="text-xs text-text-strong-950/50 mt-0.5">
-                {c.inputMode} · target{" "}
                 {c.targetMode === "domains"
-                  ? `${(c.targetDomainCount ?? 0).toLocaleString()} domains`
-                  : `${c.targetLeadCount.toLocaleString()} leads`}
+                  ? t("metaDomains", { mode: c.inputMode in MODE_KEYS ? tMode(c.inputMode as ModeKey) : c.inputMode, count: c.targetDomainCount ?? 0 })
+                  : t("metaLeads", { mode: c.inputMode in MODE_KEYS ? tMode(c.inputMode as ModeKey) : c.inputMode, count: c.targetLeadCount })}
                 {(c.jobTitles?.length ?? 0) > 0 && ` · ${c.jobTitles!.join(", ")}`}
               </p>
             </Link>
             <div className="text-right shrink-0">
               <p className="text-sm font-mono font-semibold text-text-strong-950">
-                {c.accumulatedLeadCount.toLocaleString()}
+                {format.number(c.accumulatedLeadCount)}
               </p>
-              <p className="text-[10px] text-text-strong-950/40 uppercase tracking-wide">leads</p>
+              <p className="text-[10px] text-text-strong-950/40 uppercase tracking-wide">{t("leads")}</p>
             </div>
             <DeleteCampaignButton campaignId={c.id} />
           </div>
