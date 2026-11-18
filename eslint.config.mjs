@@ -11,6 +11,10 @@ import i18next from "eslint-plugin-i18next";
  */
 const TRANSLATED = [
   "src/app/sign-in/**/*.tsx",
+  "src/components/outreach/**/*.tsx",
+  "src/components/campaigns/**/*.tsx",
+  "src/app/campaigns/**/*.tsx",
+  "src/app/outreach/campaigns/**/*.tsx",
   "src/app/settings/appearance/**/*.tsx",
   "src/components/auth/AuthShell.tsx",
   "src/components/auth/fields.tsx",
@@ -99,7 +103,7 @@ export const literalStringOptions = {
   mode: "jsx-only",
   "jsx-attributes": { include: ["placeholder", "title", "aria-label", "alt", "label", "description", "hint", "subtitle", "tooltip"] },
   // Also not words: typographic symbols used as separators and icons-in-text, and brand names.
-  words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧⏎]+", "AgentSDR", "Google", "WhatsApp", "⌘K", "⌘⏎ / Ctrl\\+Enter", "https?://\\S*", "_blank", "noopener noreferrer"] },
+  words: { exclude: ["[0-9!-/:-@[-`{-~]+", "[A-Z_-]+", "[—–›‹…×·•→←↑↓✓✕⌘⌥⇧⏎↳]+", "AgentSDR", "Google", "WhatsApp", "⌘K", "⌘⏎ / Ctrl\\+Enter", "https?://\\S*", "_blank", "noopener noreferrer"] },
   callees: {
     // `t.rich(...)` and `t.has(...)` are the same translator, as a member call.
     exclude: ["i18n(ext)?", "t[a-z]?", "t[a-z]?\\.(rich|has|raw|markup)", "t[A-Z][A-Za-z]*", "t[A-Z][A-Za-z]*\\.(rich|has|raw|markup)", "ruleText", "channelIcon", "require", "addEventListener", "removeEventListener", "postMessage", "getElementById", "dispatch", "commit", "includes", "indexOf", "endsWith", "startsWith"],
