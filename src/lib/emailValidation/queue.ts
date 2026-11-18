@@ -125,6 +125,11 @@ export async function processEmailValidationQueue(now: Date = new Date()): Promi
           .update(emailValidations)
           .set({ status: "invalido", resolvedAt: at, lastEvent: QUEUE_EVENT.rejected, lastEventAt: at, updatedAt: at })
           .where(and(inOrg(emailValidations), eq(emailValidations.id, row.id)));
+        // An address Resend refuses as malformed is as unusable as a hard bounce: keep every campaign from trying it.
+        await db
+          .insert(suppressionList)
+          .values({ organizationId: row.organizationId, email: row.email, reason: "bounced", note: "email validation: rejected by Resend" })
+          .onConflictDoNothing({ target: [suppressionList.organizationId, suppressionList.email] });
         return "rejected" as const;
       }
       if (result.failure === "transient") {
