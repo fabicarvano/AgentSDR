@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiPenNibLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -21,6 +22,7 @@ export default function SignatureModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("emailSequence.signature");
   const [value, setValue] = useState(initial ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +37,13 @@ export default function SignatureModal({
         body: JSON.stringify({ signatureHtml: value }),
       });
       if (!res.ok) {
-        setError("The signature was not saved. Please try again.");
+        setError(t("saveFailed"));
         return;
       }
       onSaved();
       onClose();
     } catch {
-      setError("Could not reach the server. Please try again.");
+      setError(t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -51,17 +53,19 @@ export default function SignatureModal({
     <Modal.Root open onOpenChange={(open) => !open && onClose()}>
       <Modal.Content size="max-w-lg">
         <Modal.Header icon={RiPenNibLine}>
-          <Modal.Title>Signature</Modal.Title>
-          <Modal.Description>{mailboxAddress ? `For ${mailboxAddress}.` : "For this mailbox."}</Modal.Description>
+          <Modal.Title>{t("title")}</Modal.Title>
+          <Modal.Description>{mailboxAddress ? t("forAddress", { address: mailboxAddress }) : t("forThisMailbox")}</Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-4">
           <Field
-            label="Signature"
+            label={t("fieldLabel")}
             htmlFor={`signature-${mailboxId}`}
             description={
-              <>
-                Appended to every send from this mailbox. Put <code className="rounded bg-bg-weak-50 px-1 font-mono text-text-strong-950">%signature%</code> in a sequence step to place it exactly where you want instead.
-              </>
+              t.rich("fieldDescription", {
+                token: () => (
+                  <code className="rounded bg-bg-weak-50 px-1 font-mono text-text-strong-950">%signature%</code>
+                ),
+              })
             }
           >
             <Textarea.Root
@@ -70,7 +74,7 @@ export default function SignatureModal({
               autoFocus
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={"Jane Doe\nHead of Sales, Acme Inc."}
+              placeholder={t("placeholder")}
               rows={6}
             />
           </Field>
@@ -78,10 +82,10 @@ export default function SignatureModal({
         </Modal.Body>
         <Modal.Footer>
           <Button.Root variant="neutral" mode="stroke" size="small" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button.Root>
           <Button.Root variant="primary" mode="filled" size="small" disabled={saving} onClick={handleSave}>
-            {saving ? "Saving…" : "Save signature"}
+            {saving ? t("saving") : t("save")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>
