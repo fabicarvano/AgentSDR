@@ -1,8 +1,9 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { organizations } from "@/lib/auth/schema";
 import { people } from "@/lib/leads/schema";
 
 export type EmailValidationStatus =
+  | "na_fila"
   | "validando"
   | "invalido"
   | "temporario"
@@ -34,6 +35,9 @@ export const emailValidations = pgTable(
     lastEvent: text("last_event"),
     lastEventAt: timestamp("last_event_at", { withTimezone: true }),
     bounceType: text("bounce_type"),
+    /** Queue: failed send attempts, and the earliest time the next one may run (also how a quota pause is stored). */
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -43,5 +47,6 @@ export const emailValidations = pgTable(
     index("email_validations_person_idx").on(t.personId),
     index("email_validations_resend_email_idx").on(t.resendEmailId),
     index("email_validations_expires_idx").on(t.expiresAt),
+    index("email_validations_queue_idx").on(t.status, t.nextAttemptAt),
   ],
 );

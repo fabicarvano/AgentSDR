@@ -37,6 +37,7 @@ export function verifyResendSignature(rawBody: string, headers: Headers): boolea
 
 // opened only upgrades "valido"; it never overrides a bounce.
 const RANK: Record<EmailValidationStatus, number> = {
+  na_fila: 0,
   validando: 0,
   valido_presumido: 1,
   temporario: 1,

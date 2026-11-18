@@ -5,7 +5,7 @@
  *
  * Run with:  bun run scripts/create-email-validations.ts
  *
- * - status: validando | invalido | temporario | indeterminado | valido | valido_ativo | valido_presumido
+ * - status: na_fila | validando | invalido | temporario | indeterminado | valido | valido_ativo | valido_presumido
  * - person_id is unique: one validation per person.
  * - resend_email_id is how the (public) webhook finds the row and its organization.
  *
@@ -27,6 +27,8 @@ const STATEMENTS = [
      last_event text,
      last_event_at timestamptz,
      bounce_type text,
+     attempts integer NOT NULL DEFAULT 0,
+     next_attempt_at timestamptz,
      created_at timestamptz NOT NULL DEFAULT now(),
      updated_at timestamptz NOT NULL DEFAULT now()
    )`,
@@ -35,6 +37,10 @@ const STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS email_validations_person_idx ON email_validations (person_id)`,
   `CREATE INDEX IF NOT EXISTS email_validations_resend_email_idx ON email_validations (resend_email_id)`,
   `CREATE INDEX IF NOT EXISTS email_validations_expires_idx ON email_validations (expires_at)`,
+  // Queue (added after the first version of the table): safe on tables that already exist.
+  `ALTER TABLE email_validations ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0`,
+  `ALTER TABLE email_validations ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz`,
+  `CREATE INDEX IF NOT EXISTS email_validations_queue_idx ON email_validations (status, next_attempt_at)`,
 ];
 
 async function main() {

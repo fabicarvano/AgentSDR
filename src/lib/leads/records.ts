@@ -8,7 +8,7 @@ import { personProfile } from "./variables";
 import { crmProjectionForPeople } from "@/lib/crm/queries";
 import { crmClassifications, crmRecords } from "@/lib/crm/schema";
 import { currentOrganizationId, inOrg } from "@/lib/tenancy/scope";
-import { queueEmailValidation } from "@/lib/emailValidation/sender";
+import { enqueueEmailValidation } from "@/lib/emailValidation/queue";
 
 export type LeadTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type LeadExecutor = Pick<LeadTransaction, "select" | "insert" | "update" | "delete" | "execute">;
@@ -232,13 +232,13 @@ export async function upsertPerson(tx: LeadExecutor, input: CanonicalPersonInput
       .where(and(inOrg(people), eq(people.id, existing.id)))
       .returning();
     context?.personCache?.set(updated.id, updated);
-    if (!existing.email && updated.email) queueEmailValidation(updated.id, currentOrganizationId());
+    if (!existing.email && updated.email) await enqueueEmailValidation(tx, { personId: updated.id, organizationId: currentOrganizationId(), email: updated.email });
     return updated;
   }
 
   const [created] = await tx.insert(people).values({ organizationId: currentOrganizationId(), ...next, source: input.source }).returning();
   context?.personCache?.set(created.id, created);
-  if (created.email) queueEmailValidation(created.id, currentOrganizationId());
+  if (created.email) await enqueueEmailValidation(tx, { personId: created.id, organizationId: currentOrganizationId(), email: created.email });
   return created;
 }
 
@@ -332,7 +332,7 @@ export async function enrichPersonById(tx: LeadExecutor, personId: string, input
     updatedAt: new Date(),
   }).where(and(inOrg(people), eq(people.id, personId))).returning();
   context?.personCache?.set(updated.id, updated);
-  if (!existing.email && updated.email) queueEmailValidation(updated.id, currentOrganizationId());
+  if (!existing.email && updated.email) await enqueueEmailValidation(tx, { personId: updated.id, organizationId: currentOrganizationId(), email: updated.email });
   return updated;
 }
 

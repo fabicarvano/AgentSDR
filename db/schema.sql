@@ -2119,7 +2119,9 @@ CREATE TABLE public.email_validations (
     last_event_at timestamp with time zone,
     bounce_type text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    next_attempt_at timestamp with time zone
 );
 
 --
@@ -4339,6 +4341,12 @@ CREATE INDEX email_validations_person_idx ON public.email_validations USING btre
 --
 
 CREATE UNIQUE INDEX email_validations_person_uq ON public.email_validations USING btree (person_id);
+
+--
+-- Name: email_validations_queue_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_validations_queue_idx ON public.email_validations USING btree (status, next_attempt_at);
 
 --
 -- Name: email_validations_resend_email_idx; Type: INDEX; Schema: public; Owner: -
