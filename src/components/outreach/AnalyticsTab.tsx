@@ -94,7 +94,7 @@ export default function AnalyticsTab({ stats, stepBreakdown, dailySends }: { sta
       <KpiStrip className="lg:col-span-12" columns={6}>
         <KpiCell icon={RiTeamLine} label={t("kpiLeads")} value={formatCompact(stats.totalLeads)} context={t("kpiLeadsContext")} />
         <KpiCell icon={RiMailCheckLine} label={t("kpiContacted")} value={formatCompact(stats.contacted)} context={pct(stats.contacted, stats.totalLeads) ? t("ofLeads", { pct: pct(stats.contacted, stats.totalLeads)! }) : undefined} />
-        <KpiCell icon={RiMailSendLine} label={t("kpiEmailsSent")} value={formatCompact(stats.emailsSent)} context={stats.emailsScheduled > 0 ? t("stillScheduled", { count: fmt.number(stats.emailsScheduled) }) : t("nothingScheduled")} />
+        <KpiCell icon={RiMailSendLine} label={t("kpiEmailsSent")} value={formatCompact(stats.emailsSent)} context={stats.emailsScheduled > 0 ? t("stillScheduled", { count: stats.emailsScheduled }) : t("nothingScheduled")} />
         <KpiCell icon={RiReplyLine} label={t("kpiReplied")} value={formatCompact(stats.replied)} context={pct(stats.replied, stats.contacted, 2) ? t("ofContacted", { pct: pct(stats.replied, stats.contacted, 2)! }) : undefined} hint={t("repliedHint")} />
         <KpiCell icon={RiForbid2Line} label={t("kpiBounced")} value={formatCompact(stats.bounced)} context={pct(stats.bounced, stats.contacted, 1) ? t("ofContacted", { pct: pct(stats.bounced, stats.contacted, 1)! }) : undefined} />
         <KpiCell icon={RiErrorWarningLine} label={t("kpiFailedSends")} value={formatCompact(stats.emailsFailed)} context={stats.emailsFailed > 0 ? t("failedContext") : t("none")} />

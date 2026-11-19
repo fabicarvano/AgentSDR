@@ -64,3 +64,8 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Something went wrong. Please try again. | Algo deu errado. Tente novamente. |
 | Required / Optional | Obrigatório / Opcional |
 | Connected / Not connected | Conectado / Não conectado |
+| Bounced / Bounce | Bounce / Bounces (termo de e-mail mantido em inglês, igual ao Analytics) |
+| Suppressed | Suprimido (lista de supressão) |
+| Step (sequence) | Passo |
+| Launch campaign / Launching… | Iniciar campanha / Iniciando… |
+| Send campaigns | Campanhas de envio |

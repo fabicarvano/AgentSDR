@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   RiArrowLeftLine,
   RiDraftLine,
@@ -35,7 +35,6 @@ export default function StepReview({
   onDone: (campaignId: string) => void;
 }) {
   const t = useTranslations("emailWizard.stepReview");
-  const format = useFormatter();
   const [connectedMailboxes, setConnectedMailboxes] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState<"draft" | "launch" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +80,7 @@ export default function StepReview({
 
   const cards = [
     { id: "campaign", label: t("cardCampaign"), value: name, icon: RiDraftLine },
-    { id: "leads", label: t("cardLeads"), value: t("leadsEnrolled", { count: format.number(leadCount) }), icon: RiTeamLine },
+    { id: "leads", label: t("cardLeads"), value: t("leadsEnrolled", { count: leadCount }), icon: RiTeamLine },
     { id: "sequence", label: t("cardSequence"), value: t("sequenceSteps", { count: sequence.length }), icon: RiStackLine },
   ];
 

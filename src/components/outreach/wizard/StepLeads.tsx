@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -35,7 +35,6 @@ export default function StepLeads({
   onContinue: (leadCount: number) => void;
 }) {
   const t = useTranslations("emailWizard.stepLeads");
-  const format = useFormatter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -101,7 +100,7 @@ export default function StepLeads({
         </div>
         <Badge.Root variant="lighter" color={leadCount > 0 ? "green" : "gray"}>
           {loadingCount ? <RiLoader4Line className="size-3.5 animate-spin" /> : <Badge.Dot />}
-          {t("enrolled", { count: format.number(leadCount) })}
+          {t("enrolled", { count: leadCount })}
         </Badge.Root>
       </div>
 
@@ -172,19 +171,17 @@ export default function StepLeads({
       {result && (
         <div className="mt-4 rounded-xl bg-bg-weak-50 px-4 py-3 text-paragraph-sm ring-1 ring-inset ring-stroke-soft-200">
           <p className="text-text-strong-950">
-            <span className="font-semibold">{t("resultRows", { count: result.total })}</span> —{" "}
-            <span className="font-medium text-success-base">{t("resultImported", { count: result.imported })}</span>
-            {result.skippedDuplicate > 0 && `, ${t("resultDuplicate", { count: result.skippedDuplicate })}`}
-            {result.skippedSuppressed > 0 && (
-              <>
-                , <span className="font-medium text-away-base">{t("resultSuppressed", { count: result.skippedSuppressed })}</span>
-              </>
-            )}
-            {result.failed.length > 0 && (
-              <>
-                , <span className="font-medium text-error-base">{t("resultFailed", { count: result.failed.length })}</span>
-              </>
-            )}
+            {t.rich("resultSummary", {
+              total: result.total,
+              imported: result.imported,
+              duplicates: result.skippedDuplicate,
+              suppressed: result.skippedSuppressed,
+              failed: result.failed.length,
+              b: (c) => <span className="font-semibold">{c}</span>,
+              ok: (c) => <span className="font-medium text-success-base">{c}</span>,
+              warn: (c) => <span className="font-medium text-away-base">{c}</span>,
+              bad: (c) => <span className="font-medium text-error-base">{c}</span>,
+            })}
           </p>
         </div>
       )}
