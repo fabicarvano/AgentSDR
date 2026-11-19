@@ -1521,7 +1521,11 @@ async function runRecord(env: Env, p: Plan): Promise<void> {
     const [classification] = await db.select({ id: crmClassifications.id }).from(crmClassifications)
       .where(eq(crmClassifications.crmRecordId, recordId)).orderBy(desc(crmClassifications.createdAt)).limit(1);
     if (classification) await phase(p, tSkip, () => acknowledgeClassification({ classificationId: classification.id, actorRef: actor }));
-    await phase(p, new Date(tSkip.getTime() + 20_000), () => skipCurrentSequenceStep({ recordId, actorRef: actor }));
+    // Only a record that still has a follow-up running has a step to skip: an out-of-office only resumes
+    // what was already there, and a person who replied with no follow-up pending has none.
+    const [activeRun] = await db.select({ id: crmSequenceRuns.id }).from(crmSequenceRuns)
+      .where(and(eq(crmSequenceRuns.crmRecordId, recordId), eq(crmSequenceRuns.status, "active"))).limit(1);
+    if (activeRun) await phase(p, new Date(tSkip.getTime() + 20_000), () => skipCurrentSequenceStep({ recordId, actorRef: actor }));
     const tAfter = new Date(tSkip.getTime() + 20_000);
     await fixSchedule(ctx, recordId, tAfter);
     await drive(env, p, cursor, tAfter, new Date(ctx.now.getTime() - 20 * MINUTE), actor, { n: 0 });
