@@ -9,6 +9,7 @@ import { crmProjectionForPeople } from "@/lib/crm/queries";
 import { crmClassifications, crmRecords } from "@/lib/crm/schema";
 import { currentOrganizationId, inOrg } from "@/lib/tenancy/scope";
 import { enqueueEmailValidation } from "@/lib/emailValidation/queue";
+import { emailValidationStatuses } from "@/lib/emailValidation/status";
 
 export type LeadTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type LeadExecutor = Pick<LeadTransaction, "select" | "insert" | "update" | "delete" | "execute">;
@@ -444,8 +445,8 @@ export async function listPeoplePage(input: PersonListInput = {}) {
       .leftJoin(companies, and(eq(people.companyId, companies.id), inOrg(companies)))
       .where(where),
   ]);
-  const memberships = await campaignMemberships(rows.map((row) => row.person.id));
-  const crm = await crmProjectionForPeople(rows.map((row) => row.person.id));
+  const ids = rows.map((row) => row.person.id);
+  const [memberships, crm, emailStatus] = await Promise.all([campaignMemberships(ids), crmProjectionForPeople(ids), emailValidationStatuses(rows.map((row) => ({ id: row.person.id, email: row.person.email })))]);
   return {
     total,
     rows: rows.map(({ person, company }) => {
@@ -455,6 +456,7 @@ export async function listPeoplePage(input: PersonListInput = {}) {
       company,
       campaigns: memberships.get(person.id) ?? [],
       crm: crm.get(person.id) ?? null,
+      emailStatus: emailStatus.get(person.id) ?? null,
     };
     }),
   };

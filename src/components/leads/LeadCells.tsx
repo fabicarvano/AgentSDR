@@ -3,11 +3,12 @@
 
 import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { RiGlobalLine, RiLinkedinBoxFill, RiMailFill, RiPhoneFill, RiSparkling2Fill } from "@remixicon/react";
+import { RiCheckLine, RiCloseLine, RiGlobalLine, RiLinkedinBoxFill, RiMailFill, RiPhoneFill, RiQuestionMark, RiSparkling2Fill, RiTimeLine } from "@remixicon/react";
 import * as Tooltip from "@/components/alignui/tooltip";
 import { CHANNEL_META, CRM_CATEGORY_COLOR, HUE } from "@/components/analytics/theme";
 import { categoryColor } from "@/components/crm/crm-utils";
 import { cn } from "@/utils/cn";
+import { emailReach, type EmailBadge } from "./reachEmail";
 import { CRM_CATEGORIES, CRM_STATES, isFuture, linkedInPersonHref, shortDate, type Campaign, type PersonRow } from "./leadTypes";
 
 /** Stops a click on a control inside a clickable row from also opening the row. */
@@ -38,7 +39,36 @@ export function TwoLine({ primary, secondary, primaryTitle }: { primary: ReactNo
 // ------------------------------------------------------------ reachability
 
 /** `missing` and `action` arrive already translated (ReachIcons builds them): the phrasing differs per channel. */
-type Reach = { key: string; missing: string; action: string; icon: ComponentType<{ className?: string }>; color: string; value: string | null; href?: string; copy?: boolean };
+type Reach = {
+  key: string; missing: string; action: string; icon: ComponentType<{ className?: string }>; color: string; value: string | null; href?: string; copy?: boolean;
+  /** Email only: the validation state. Replaces the channel colour with a status colour and adds a badge and a second tooltip line. */
+  colorClass?: string; badge?: EmailBadge | null; status?: string;
+};
+
+/** The "hot" seal is an emoji, not words: a constant keeps it out of the literal-text rule. */
+const FIRE = "\u{1F525}";
+
+const BADGE_ICON: Record<Exclude<EmailBadge, "fire">, ComponentType<{ className?: string }>> = { clock: RiTimeLine, check: RiCheckLine, x: RiCloseLine, question: RiQuestionMark };
+
+/** Small seal at the icon's lower-right corner; the second signal besides colour. Decorative: the label carries the meaning. */
+function Badge({ kind }: { kind: EmailBadge }) {
+  const Glyph = kind === "fire" ? null : BADGE_ICON[kind];
+  return (
+    <span aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 flex size-3 items-center justify-center rounded-full bg-bg-white-0 ring-1 ring-stroke-soft-200">
+      {Glyph ? <Glyph className="size-2.5" /> : <span className="text-[8px] leading-none">{FIRE}</span>}
+    </span>
+  );
+}
+
+/** Thin circle with a soft red slash: "this channel does not exist", clearly unlike the solid red icon of an invalid email. */
+function NoChannelMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="pointer-events-none absolute size-5 text-stroke-sub-300" fill="none">
+      <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1" />
+      <line x1="3.6" y1="3.6" x2="16.4" y2="16.4" stroke={HUE.red} strokeOpacity="0.55" strokeWidth="1.25" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 /**
  * One icon per channel, always in the same slot so they line up down the
@@ -54,18 +84,29 @@ function ReachIcon({ item }: { item: Reach }) {
   const Icon = item.icon;
   const present = Boolean(item.value);
   const base = "flex size-7 items-center justify-center rounded-md outline-none transition focus-visible:ring-2 focus-visible:ring-stroke-strong-950";
-  const tip = !present ? item.missing : copied ? t("copied") : item.copy ? t("clickToCopy", { value: item.value ?? "" }) : item.action;
+  const firstLine = item.copy ? t("clickToCopy", { value: item.value ?? "" }) : item.action;
+  // Two lines for an email with a validation state: the address (and "click to copy"), then the state.
+  const label = !present ? item.missing : item.status ? `${firstLine}\n${item.status}` : firstLine;
+  const tip = !present ? item.missing : copied ? (item.status ? `${t("copied")}\n${item.status}` : t("copied")) : label;
+  const statusAria = present && item.status ? label : item.action;
+  const glyph = (
+    <span className="relative flex items-center justify-center">
+      <Icon className={cn("size-4", item.colorClass)} />
+      {item.badge && <Badge kind={item.badge} />}
+    </span>
+  );
+  const colorStyle = item.colorClass ? undefined : { color: item.color };
 
   const trigger = !present ? (
-    <span tabIndex={0} aria-label={tip} className={cn(base, "text-text-disabled-300")} onClick={stop}><Icon className="size-4" /></span>
+    <span tabIndex={0} aria-label={tip} className={cn(base, "relative text-text-disabled-300")} onClick={stop}><Icon className="size-4" /><NoChannelMark /></span>
   ) : item.href ? (
-    <a href={item.href} target="_blank" rel="noreferrer" aria-label={item.action} onClick={stop} onKeyDown={stop} className={cn(base, "hover:bg-bg-soft-200")} style={{ color: item.color }}>
-      <Icon className="size-4" />
+    <a href={item.href} target="_blank" rel="noreferrer" aria-label={item.action} onClick={stop} onKeyDown={stop} className={cn(base, "hover:bg-bg-soft-200")} style={colorStyle}>
+      {glyph}
     </a>
   ) : (
     <button
       type="button"
-      aria-label={item.action}
+      aria-label={statusAria}
       onKeyDown={stop}
       onClick={(event) => {
         event.stopPropagation();
@@ -78,24 +119,25 @@ function ReachIcon({ item }: { item: Reach }) {
         }).catch(() => undefined);
       }}
       className={cn(base, "hover:bg-bg-soft-200")}
-      style={{ color: item.color }}
+      style={colorStyle}
     >
-      <Icon className="size-4" />
+      {glyph}
     </button>
   );
 
   return (
     <Tooltip.Root open={open} onOpenChange={(next) => setOpen(next || copied)}>
       <Tooltip.Trigger asChild>{trigger}</Tooltip.Trigger>
-      <Tooltip.Content size="xsmall" className="max-w-72 truncate">{tip}</Tooltip.Content>
+      <Tooltip.Content size="xsmall" className="max-w-72 whitespace-pre-line break-all">{tip}</Tooltip.Content>
     </Tooltip.Root>
   );
 }
 
-export function ReachIcons({ person }: { person: PersonRow["person"] }) {
+export function ReachIcons({ person, emailStatus }: { person: PersonRow["person"]; emailStatus?: string | null }) {
   const t = useTranslations("leads.cells.reach");
+  const mail = emailReach(emailStatus);
   const items: Reach[] = [
-    { key: "email", missing: t("noEmail"), action: t("copyEmail", { value: person.email ?? "" }), icon: RiMailFill, color: CHANNEL_META.email.color, value: person.email, copy: true },
+    { key: "email", missing: t("noEmail"), action: t("copyEmail", { value: person.email ?? "" }), icon: RiMailFill, color: CHANNEL_META.email.color, value: person.email, copy: true, colorClass: mail.colorClass, badge: mail.badge, status: t(`status.${mail.statusKey}`) },
     { key: "linkedin", missing: t("noLinkedin"), action: t("openLinkedin"), icon: RiLinkedinBoxFill, color: CHANNEL_META.linkedin.color, value: person.linkedinUrl, href: person.linkedinUrl ? linkedInPersonHref(person.linkedinUrl) : undefined },
     // The number WhatsApp calls and messages go to, hence WhatsApp's colour.
     { key: "phone", missing: t("noPhone"), action: t("copyPhone", { value: person.phone ?? "" }), icon: RiPhoneFill, color: CHANNEL_META.whatsapp.color, value: person.phone ?? null, copy: true },

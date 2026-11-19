@@ -7,6 +7,8 @@ export type PersonRow = {
   person: { id: string; email: string | null; linkedinUrl: string | null; fullName: string | null; title: string | null; profilePictureUrl?: string | null; phone?: string | null; source: string; raw?: Record<string, unknown>; updatedAt: string | Date | null };
   company: { name: string | null; domain: string } | null;
   campaigns: Campaign[];
+  /** email_validations.status for this person, or null when there is no record (or the table does not exist). */
+  emailStatus?: string | null;
   crm: { recordId: string; categoryKey: string | null; subcategory: string | null; workflowState: string; activeChannel: string | null; activeSequence: string | null; currentStep: string | null; lastInboundAt: string | Date | null; lastOutboundAt: string | Date | null; lastInteractionAt: string | Date | null; nextActionAt: string | Date | null; unacknowledgedAiChange: boolean } | null;
 };
 

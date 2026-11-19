@@ -35,7 +35,7 @@ function SkeletonRow({ index }: { index: number }) {
 function PersonTableRow({ row }: { row: PersonRow }) {
   const t = useTranslations("leads.peopleTable");
   const router = useRouter();
-  const { person, company, campaigns, crm } = row;
+  const { person, company, campaigns, crm, emailStatus } = row;
   const href = crm ? `/crm/records/${crm.recordId}` : null;
   const name = person.fullName || t("unnamed");
   const companyName = company ? company.name || company.domain : null;
@@ -65,7 +65,7 @@ function PersonTableRow({ row }: { row: PersonRow }) {
           </div>
         ) : <Empty label={t("noCompany")} />}
       </Table.Cell>
-      <Table.Cell className={rowCell}><ReachIcons person={person} /></Table.Cell>
+      <Table.Cell className={rowCell}><ReachIcons person={person} emailStatus={emailStatus} /></Table.Cell>
       <Table.Cell className={rowCell}><CampaignSummary campaigns={campaigns} /></Table.Cell>
       <Table.Cell className={rowCell}><CrmSummary crm={crm} /></Table.Cell>
       <Table.Cell className={cn(rowCell, "pl-0 pr-2")} onClick={stop} onKeyDown={stop}>
