@@ -19,6 +19,7 @@ import { cn } from "@/utils/cn";
 import type { OutreachLeadStatus } from "@/lib/outreach/schema";
 import type { LeadPage } from "@/lib/outreach/campaigns";
 import type { Messages } from "@/i18n/catalog";
+import { STATUS_KEY } from "./leadStatus";
 
 const STATUS_COLOR: Record<OutreachLeadStatus, React.ComponentProps<typeof Badge.Root>["color"]> = {
   pending: "gray",
@@ -29,19 +30,6 @@ const STATUS_COLOR: Record<OutreachLeadStatus, React.ComponentProps<typeof Badge
   reply_received: "green",
   bounced: "red",
   suppressed: "orange",
-};
-// Every status has a label key (the Record fails tsc when a status is added without one);
-// a value the code does not know yet falls back to the raw status at render time.
-type StatusKey = keyof Messages["emailLeads"]["status"];
-const STATUS_KEY: Record<OutreachLeadStatus, StatusKey> = {
-  pending: "pending",
-  initial_sent: "initial_sent",
-  in_follow_up: "in_follow_up",
-  reply_processing: "reply_processing",
-  sequence_completed: "sequence_completed",
-  reply_received: "reply_received",
-  bounced: "bounced",
-  suppressed: "suppressed",
 };
 
 type FilterKey = keyof Messages["emailLeads"]["leadsTab"]["filters"];
