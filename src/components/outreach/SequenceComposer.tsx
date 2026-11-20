@@ -30,7 +30,7 @@ function emptyStep(stepNumber: number): SequenceStep {
 
 function sequenceError(
   steps: SequenceStep[],
-  t: ReturnType<typeof useTranslations>,
+  t: ReturnType<typeof useTranslations<"emailSequence.composer">>,
 ): string | null {
   if (!steps[0]?.subject.trim()) return t("subjectRequired");
   const emptyBody = steps.findIndex((step) => !step.body.trim());
