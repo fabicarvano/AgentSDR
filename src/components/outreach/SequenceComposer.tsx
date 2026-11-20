@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowLeftLine,
@@ -27,10 +28,13 @@ function emptyStep(stepNumber: number): SequenceStep {
   };
 }
 
-function sequenceError(steps: SequenceStep[]): string | null {
-  if (!steps[0]?.subject.trim()) return "The initial email needs a subject.";
+function sequenceError(
+  steps: SequenceStep[],
+  t: ReturnType<typeof useTranslations<"emailSequence.composer">>,
+): string | null {
+  if (!steps[0]?.subject.trim()) return t("subjectRequired");
   const emptyBody = steps.findIndex((step) => !step.body.trim());
-  if (emptyBody >= 0) return `Email step ${emptyBody + 1} needs a message body.`;
+  if (emptyBody >= 0) return t("bodyRequired", { step: emptyBody + 1 });
   return null;
 }
 
@@ -39,8 +43,8 @@ export default function SequenceComposer({
   initialSequence,
   onBack,
   onSaved,
-  saveLabel = "Save",
-  savingLabel = "Saving…",
+  saveLabel,
+  savingLabel,
 }: {
   campaignId: string;
   initialSequence: SequenceStep[];
@@ -49,6 +53,7 @@ export default function SequenceComposer({
   saveLabel?: string;
   savingLabel?: string;
 }) {
+  const t = useTranslations("emailSequence.composer");
   const [steps, setSteps] = useState<SequenceStep[]>(() =>
     initialSequence.length > 0 ? initialSequence : [emptyStep(1)],
   );
@@ -97,7 +102,7 @@ export default function SequenceComposer({
   }
 
   async function handleSave() {
-    const validationError = sequenceError(steps);
+    const validationError = sequenceError(steps, t);
     if (validationError) {
       setError(validationError);
       return;
@@ -113,14 +118,14 @@ export default function SequenceComposer({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? "Failed to save sequence");
+        setError(data.error ?? t("saveFailed"));
         return;
       }
       setSavedAt(Date.now());
       setSavedSteps(steps);
       onSaved?.(steps);
     } catch {
-      setError("Failed to save sequence. Check your connection and try again.");
+      setError(t("saveFailedNetwork"));
     } finally {
       setSaving(false);
     }
@@ -131,8 +136,8 @@ export default function SequenceComposer({
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
         <Frame>
           <FrameHeader
-            title="Sequence flow"
-            description={`${steps.length} ${steps.length === 1 ? "email" : "emails"}, in order. Select one to edit it.`}
+            title={t("flowTitle")}
+            description={t("flowDescription", { count: steps.length })}
           />
           <FramePanel className="p-2 sm:p-3">
             <div className="flex flex-col">
@@ -143,7 +148,7 @@ export default function SequenceComposer({
                       <span className="h-6 w-px bg-stroke-soft-200" />
                       <span className="flex items-center gap-1.5 text-paragraph-xs text-text-sub-600">
                         <RiTimeLine className="size-3.5 text-text-soft-400" />
-                        Wait
+                        {t("waitBefore")}
                         <input
                           type="number"
                           min={1}
@@ -155,9 +160,9 @@ export default function SequenceComposer({
                             })
                           }
                           className="h-6 w-11 rounded-md bg-bg-weak-50 px-1 text-center text-paragraph-xs text-text-strong-950 outline-none ring-1 ring-inset ring-stroke-soft-200 focus:ring-primary-base"
-                          aria-label={`Wait days before email step ${item.stepNumber}`}
+                          aria-label={t("waitAria", { step: item.stepNumber })}
                         />
-                        days
+                        {t("waitAfter")}
                       </span>
                     </div>
                   )}
@@ -185,17 +190,17 @@ export default function SequenceComposer({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-label-sm text-text-strong-950">
-                        Email step {item.stepNumber}
+                        {t("stepLabel", { step: item.stepNumber })}
                       </span>
                       <span className="mt-0.5 block truncate text-paragraph-xs text-text-soft-400">
-                        {item.subject.trim() || (i === 0 ? "No subject yet" : "Same thread")}
+                        {item.subject.trim() || (i === 0 ? t("noSubjectYet") : t("sameThread"))}
                       </span>
                     </span>
                     {steps.length > 1 && (
                       <span
                         role="button"
                         tabIndex={0}
-                        aria-label={`Remove step ${item.stepNumber}`}
+                        aria-label={t("removeStep", { step: item.stepNumber })}
                         onClick={(event) => {
                           event.stopPropagation();
                           removeStep(i);
@@ -225,18 +230,18 @@ export default function SequenceComposer({
               onClick={addStep}
             >
               <Button.Icon as={RiAddLine} />
-              Add follow-up
+              {t("addFollowUp")}
             </Button.Root>
           </FramePanel>
         </Frame>
 
         <Frame>
           <FrameHeader
-            title={index === 0 ? "Initial email" : `Follow-up ${index}`}
+            title={index === 0 ? t("initialEmail") : t("followUp", { number: index })}
             description={
               index === 0
-                ? "Sends as soon as the campaign starts."
-                : `Sends ${step.waitDays} day${step.waitDays === 1 ? "" : "s"} after the previous step.`
+                ? t("sendsOnStart")
+                : t("sendsAfter", { days: step.waitDays })
             }
             actions={
               <Button.Root
@@ -246,7 +251,7 @@ export default function SequenceComposer({
                 onClick={() => setPreviewStep(step)}
               >
                 <Button.Icon as={RiEyeLine} />
-                Preview
+                {t("preview")}
               </Button.Root>
             }
           />
@@ -256,14 +261,14 @@ export default function SequenceComposer({
                 htmlFor={`subject-${index}`}
                 className="mb-1.5 block text-label-sm text-text-strong-950"
               >
-                Subject
+                {t("subject")}
               </label>
               <Input.Root size="small">
                 <Input.Wrapper>
                   <Input.Input
                     id={`subject-${index}`}
                     placeholder={
-                      index === 0 ? "Subject" : "Leave blank to continue the same thread"
+                      index === 0 ? t("subjectPlaceholder") : t("followUpSubjectPlaceholder")
                     }
                     value={step.subject}
                     onChange={(event) => updateStep(index, { subject: event.target.value })}
@@ -277,7 +282,7 @@ export default function SequenceComposer({
                 htmlFor={`body-${index}`}
                 className="mb-1.5 block text-label-sm text-text-strong-950"
               >
-                Email body
+                {t("body")}
               </label>
               <MergeFieldChips
                 campaignId={campaignId}
@@ -291,7 +296,7 @@ export default function SequenceComposer({
                   ref={bodyRef}
                   simple
                   rows={12}
-                  placeholder="Write your email — {A|B} picks one at random, {{firstName}} merges a field"
+                  placeholder={t("bodyPlaceholder", { spin: "{A|B}", merge: "{{firstName}}" })}
                   value={step.body}
                   onChange={(event) => updateStep(index, { body: event.target.value })}
                   className="min-h-64"
@@ -316,15 +321,15 @@ export default function SequenceComposer({
           {onBack && (
             <Button.Root variant="neutral" mode="stroke" size="small" onClick={onBack}>
               <Button.Icon as={RiArrowLeftLine} />
-              Back
+              {t("back")}
             </Button.Root>
           )}
         </div>
         <div className="flex items-center gap-3">
           {dirty && !saving ? (
-            <span className="text-paragraph-xs text-text-sub-600">Unsaved changes</span>
+            <span className="text-paragraph-xs text-text-sub-600">{t("unsaved")}</span>
           ) : (
-            savedAt && !saving && <span className="text-paragraph-xs text-success-base">Saved</span>
+            savedAt && !saving && <span className="text-paragraph-xs text-success-base">{t("saved")}</span>
           )}
           <Button.Root
             variant="primary"
@@ -333,7 +338,7 @@ export default function SequenceComposer({
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? savingLabel : saveLabel}
+            {saving ? (savingLabel ?? t("saving")) : (saveLabel ?? t("save"))}
           </Button.Root>
         </div>
       </div>

@@ -1,0 +1,85 @@
+{
+  "emailMailboxes": {
+    "table": {
+      "status": {
+        "connected": "Conectada",
+        "failed": "Com falha",
+        "disabled": "Desativada",
+        "connecting": "Conectando"
+      },
+      "days": {
+        "monday": "Seg",
+        "tuesday": "Ter",
+        "wednesday": "Qua",
+        "thursday": "Qui",
+        "friday": "Sex",
+        "saturday": "Sáb",
+        "sunday": "Dom"
+      },
+      "hours": {
+        "none": "Nenhum dia ativo",
+        "everyDay": "Todos os dias",
+        "weekdays": "Seg–Sex"
+      },
+      "noDisplayName": "Sem nome de exibição",
+      "sendTest": {
+        "title": "Enviar e-mail de teste",
+        "description": "De {address}. O resultado aparece abaixo da caixa de e-mail.",
+        "label": "Enviar para",
+        "confirm": "Enviar teste",
+        "sent": "Teste enviado para {to}",
+        "failed": "Falha no teste: {error}",
+        "networkError": "Falha no teste: erro de rede"
+      },
+      "remove": {
+        "title": "Remover caixa de e-mail?",
+        "description": "{address} deixará de enviar. Os e-mails agendados por ela não serão enviados.",
+        "confirm": "Remover caixa de e-mail"
+      },
+      "testAgain": "Testar de novo",
+      "sentTodayMeter": "E-mails enviados hoje por {address}",
+      "moreActions": "Mais ações para {address}",
+      "testConnection": "Testar conexão",
+      "sendTestEmail": "Enviar e-mail de teste",
+      "sendingHours": "Horário de envio",
+      "signature": "Assinatura",
+      "removeMailbox": "Remover caixa de e-mail",
+      "columns": {
+        "mailbox": "Caixa de e-mail",
+        "status": "Status",
+        "sentToday": "Enviados hoje",
+        "sendingHours": "Horário de envio",
+        "actions": "Ações"
+      }
+    },
+    "connect": {
+      "failedFallback": "Não foi possível conectar a caixa de e-mail",
+      "networkError": "Erro de rede. Tente novamente.",
+      "title": "Adicionar caixa de e-mail",
+      "description": "Um endereço do Google Workspace já autorizado para envio. Ele é testado antes de ser salvo.",
+      "email": {
+        "label": "Endereço de e-mail",
+        "description": "Deve estar autorizado para o ID de cliente do nosso app no console de administração do Workspace (delegação em todo o domínio).",
+        "placeholder": "rep@yourcompany.com"
+      },
+      "displayName": {
+        "label": "Nome de exibição",
+        "description": "O nome que os destinatários veem ao lado do endereço.",
+        "placeholder": "Ana da Acme"
+      },
+      "signature": {
+        "label": "Assinatura",
+        "description": "Incluída em todos os envios desta caixa de e-mail. Você pode alterá-la depois na ação Assinatura da caixa.",
+        "placeholder": "Ana Souza\nGerente de Vendas, Acme Ltda."
+      },
+      "failedTitle": "O teste de conexão falhou",
+      "cancel": "Cancelar",
+      "tryAgain": "Tentar de novo",
+      "connectTest": "Conectar e testar",
+      "testing": "Testando a conexão com {address}…",
+      "connected": "Caixa de e-mail conectada",
+      "ready": "{address} está pronta para enviar.",
+      "done": "Concluir"
+    }
+  }
+}

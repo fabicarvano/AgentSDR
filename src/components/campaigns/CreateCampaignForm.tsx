@@ -2,31 +2,37 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
 import Select from "../ui/Select";
 import CategoryFilter from "../CategoryFilter";
 import AppFilter from "../AppFilter";
 
-const MODE_OPTIONS = [
-  { value: "filters", label: "From filters" },
-  { value: "manual", label: "Manual domain list" },
+type CreateKey = keyof Messages["emailCampaigns"]["legacyCreate"];
+
+// Option labels are keys, rendered with t() inside the component. The values are what the API receives.
+const MODE_OPTIONS: { value: string; labelKey: CreateKey }[] = [
+  { value: "filters", labelKey: "sourceFilters" },
+  { value: "manual", labelKey: "sourceManual" },
 ];
 
-const TARGET_MODE_OPTIONS = [
-  { value: "leads", label: "Number of leads" },
-  { value: "domains", label: "Top N domains" },
+const TARGET_MODE_OPTIONS: { value: string; labelKey: CreateKey }[] = [
+  { value: "leads", labelKey: "targetLeads" },
+  { value: "domains", labelKey: "targetDomains" },
 ];
 
-const COUNTRY_OPTIONS = [
-  { value: "US", label: "🇺🇸 United States" },
-  { value: "GB", label: "🇬🇧 United Kingdom" },
-  { value: "CA", label: "🇨🇦 Canada" },
-  { value: "AU", label: "🇦🇺 Australia" },
-  { value: "IN", label: "🇮🇳 India" },
-  { value: "DE", label: "🇩🇪 Germany" },
+const COUNTRY_OPTIONS: { value: string; labelKey: CreateKey }[] = [
+  { value: "US", labelKey: "countryUS" },
+  { value: "GB", labelKey: "countryGB" },
+  { value: "CA", labelKey: "countryCA" },
+  { value: "AU", labelKey: "countryAU" },
+  { value: "IN", labelKey: "countryIN" },
+  { value: "DE", labelKey: "countryDE" },
 ];
 
-const PLATFORM_OPTIONS = [
-  { value: "", label: "All Platforms" },
+// Platform names are products, so they stay in English; only the "all" entry is translated.
+const PLATFORM_OPTIONS: { value: string; labelKey?: CreateKey; label?: string }[] = [
+  { value: "", labelKey: "platformAll" },
   { value: "Shopify", label: "Shopify" },
   { value: "WooCommerce", label: "WooCommerce" },
   { value: "BigCommerce", label: "BigCommerce" },
@@ -44,6 +50,11 @@ const inputCls =
   "w-full h-10 border border-stroke-soft-200 rounded-lg px-3 text-sm text-text-strong-950 placeholder-text-soft-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent";
 
 export default function CreateCampaignForm() {
+  const t = useTranslations("emailCampaigns.legacyCreate");
+  const modeOptions = MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const targetModeOptions = TARGET_MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const countryOptions = COUNTRY_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const platformOptions = PLATFORM_OPTIONS.map((o) => ({ value: o.value, label: o.labelKey ? t(o.labelKey) : (o.label ?? o.value) }));
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +86,7 @@ export default function CreateCampaignForm() {
       inputMode,
       jobTitles: jobTitles
         .split(",")
-        .map((t) => t.trim())
+        .map((title) => title.trim())
         .filter(Boolean),
       targetMode,
       ...(targetMode === "domains"
@@ -108,10 +119,10 @@ export default function CreateCampaignForm() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to create campaign");
+      if (!res.ok) throw new Error(data.error ?? t("createFailed"));
       router.push(`/campaigns/${data.campaign.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create campaign");
+      setError(e instanceof Error ? e.message : t("createFailed"));
       setSubmitting(false);
     }
   }
@@ -119,18 +130,18 @@ export default function CreateCampaignForm() {
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
       <div className="flex flex-col gap-1.5">
-        <Label>Source</Label>
-        <Select value={inputMode} onChange={setInputMode} options={MODE_OPTIONS} variant="primary" />
+        <Label>{t("labelSource")}</Label>
+        <Select value={inputMode} onChange={setInputMode} options={modeOptions} variant="primary" />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Target by</Label>
-        <Select value={targetMode} onChange={setTargetMode} options={TARGET_MODE_OPTIONS} />
+        <Label>{t("labelTargetBy")}</Label>
+        <Select value={targetMode} onChange={setTargetMode} options={targetModeOptions} />
       </div>
 
       {targetMode === "domains" ? (
         <div className="flex flex-col gap-1.5">
-          <Label>Top domains</Label>
+          <Label>{t("labelTopDomains")}</Label>
           <input
             type="number"
             value={targetDomainCount}
@@ -139,13 +150,12 @@ export default function CreateCampaignForm() {
             className={inputCls}
           />
           <p className="text-[11px] text-text-strong-950/45">
-            Fetches this many top domains (highest revenue first) and runs qualification on all of
-            them, whatever fraction ends up qualified.
+            {t("hintTopDomains")}
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <Label>Lead target</Label>
+          <Label>{t("labelLeadTarget")}</Label>
           <input
             type="number"
             value={targetLeadCount}
@@ -153,15 +163,17 @@ export default function CreateCampaignForm() {
             placeholder="3000"
             className={inputCls}
           />
-          <p className="text-[11px] text-text-strong-950/45">Stops once qualified leads reach this number.</p>
+          <p className="text-[11px] text-text-strong-950/45">{t("hintLeadTarget")}</p>
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label>Job titles (for Apollo link)</Label>
+        <Label>{t("labelJobTitles")}</Label>
         <input
           value={jobTitles}
           onChange={(e) => setJobTitles(e.target.value)}
+          // Example titles stay in English: Apollo job-title filters are English.
+          // eslint-disable-next-line i18next/no-literal-string
           placeholder="CEO, Founder, Head of Marketing"
           className={inputCls}
         />
@@ -172,19 +184,19 @@ export default function CreateCampaignForm() {
       {inputMode === "filters" ? (
         <>
           <div className="flex flex-col gap-1.5">
-            <Label>Country</Label>
-            <Select value={countryCode} onChange={setCountryCode} options={COUNTRY_OPTIONS} />
+            <Label>{t("labelCountry")}</Label>
+            <Select value={countryCode} onChange={setCountryCode} options={countryOptions} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Platform</Label>
-            <Select value={platform} onChange={setPlatform} options={PLATFORM_OPTIONS} />
+            <Label>{t("labelPlatform")}</Label>
+            <Select value={platform} onChange={setPlatform} options={platformOptions} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Revenue Range ($)</Label>
+            <Label>{t("labelRevenue")}</Label>
             <div className="flex items-center gap-1.5">
               <input
                 type="number"
-                placeholder="Min"
+                placeholder={t("placeholderMin")}
                 value={minRevenue}
                 onChange={(e) => setMinRevenue(e.target.value)}
                 className={inputCls}
@@ -192,7 +204,7 @@ export default function CreateCampaignForm() {
               <span className="text-text-strong-950/30 text-sm shrink-0">–</span>
               <input
                 type="number"
-                placeholder="Max"
+                placeholder={t("placeholderMax")}
                 value={maxRevenue}
                 onChange={(e) => setMaxRevenue(e.target.value)}
                 className={inputCls}
@@ -200,7 +212,7 @@ export default function CreateCampaignForm() {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Industry / Category</Label>
+            <Label>{t("labelCategory")}</Label>
             <CategoryFilter
               countryCode={countryCode}
               c1={c1}
@@ -214,16 +226,18 @@ export default function CreateCampaignForm() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Installed App</Label>
+            <Label>{t("labelApp")}</Label>
             <AppFilter value={app} onChange={setApp} />
           </div>
         </>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <Label>Domains (one per line)</Label>
+          <Label>{t("labelDomains")}</Label>
           <textarea
             value={domainsText}
             onChange={(e) => setDomainsText(e.target.value)}
+            // Example domains, not interface text.
+            // eslint-disable-next-line i18next/no-literal-string
             placeholder={"brand-one.com\nbrand-two.com"}
             rows={6}
             className="w-full border border-stroke-soft-200 rounded-lg px-3 py-2 text-sm text-text-strong-950 placeholder-text-soft-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y"
@@ -241,7 +255,7 @@ export default function CreateCampaignForm() {
         {submitting && (
           <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
         )}
-        {submitting ? "Creating…" : "Create campaign"}
+        {submitting ? t("creating") : t("create")}
       </button>
     </div>
   );

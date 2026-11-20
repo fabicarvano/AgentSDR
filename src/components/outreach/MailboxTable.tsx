@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiCheckboxCircleLine,
   RiClockwiseLine,
@@ -37,12 +38,9 @@ const STATUS_COLOR: Record<string, React.ComponentProps<typeof Badge.Root>["colo
   disabled: "gray",
   connecting: "orange",
 };
-const STATUS_LABEL: Record<string, string> = {
-  connected: "Connected",
-  failed: "Failed",
-  disabled: "Disabled",
-  connecting: "Connecting",
-};
+const STATUS_LABEL_KEYS = ["connected", "failed", "disabled", "connecting"] as const;
+type StatusKey = (typeof STATUS_LABEL_KEYS)[number];
+const isKnownStatus = (s: string): s is StatusKey => (STATUS_LABEL_KEYS as readonly string[]).includes(s);
 
 function initialsFor(mailbox: Mailbox) {
   const source = mailbox.displayName?.trim() || mailbox.emailAddress;
@@ -51,34 +49,28 @@ function initialsFor(mailbox: Mailbox) {
   return letters.toUpperCase() || "?";
 }
 
+type T = ReturnType<typeof useTranslations<"emailMailboxes.table">>;
+
 /** Summarizes the enabled days into a compact string, e.g. "Mon–Fri, 9:00–18:00". */
-function hoursSummary(mailbox: Mailbox) {
+function hoursSummary(mailbox: Mailbox, t: T) {
   const days = mailbox.workingHours.days;
   const order: (keyof typeof days)[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-  const labels: Record<keyof typeof days, string> = {
-    monday: "Mon",
-    tuesday: "Tue",
-    wednesday: "Wed",
-    thursday: "Thu",
-    friday: "Fri",
-    saturday: "Sat",
-    sunday: "Sun",
-  };
   const enabled = order.filter((k) => days[k].enabled);
-  if (enabled.length === 0) return "No days enabled";
+  if (enabled.length === 0) return t("hours.none");
 
   const dayLabel =
     enabled.length === 7
-      ? "Every day"
+      ? t("hours.everyDay")
       : enabled.length === 5 && enabled.every((k) => k !== "saturday" && k !== "sunday")
-        ? "Mon–Fri"
-        : enabled.map((k) => labels[k]).join(", ");
+        ? t("hours.weekdays")
+        : enabled.map((k) => t(`days.${k}`)).join(", ");
 
   const first = days[enabled[0]];
   return `${dayLabel}, ${first.from}–${first.to}`;
 }
 
 function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
+  const t = useTranslations("emailMailboxes.table");
   const dialogs = useDialogs();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -99,11 +91,11 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
   async function handleSendTest() {
     const to = (
       await dialogs.prompt({
-        title: "Send a test email",
-        description: `From ${mailbox.emailAddress}. The result shows under the mailbox.`,
-        label: "Send to",
+        title: t("sendTest.title"),
+        description: t("sendTest.description", { address: mailbox.emailAddress }),
+        label: t("sendTest.label"),
         defaultValue: mailbox.emailAddress,
-        confirmLabel: "Send test",
+        confirmLabel: t("sendTest.confirm"),
       })
     )?.trim();
     if (!to) return;
@@ -116,9 +108,9 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
         body: JSON.stringify({ to }),
       });
       const data = await res.json();
-      setTestSendResult(data.ok ? { ok: true, text: `Test sent to ${to}` } : { ok: false, text: `Test failed: ${data.error}` });
+      setTestSendResult(data.ok ? { ok: true, text: t("sendTest.sent", { to }) } : { ok: false, text: t("sendTest.failed", { error: data.error }) });
     } catch {
-      setTestSendResult({ ok: false, text: "Test failed: network error" });
+      setTestSendResult({ ok: false, text: t("sendTest.networkError") });
     } finally {
       setBusy(false);
     }
@@ -126,9 +118,9 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
 
   async function handleDelete() {
     const ok = await dialogs.confirm({
-      title: "Remove mailbox?",
-      description: `${mailbox.emailAddress} will stop sending. Scheduled emails from it will not go out.`,
-      confirmLabel: "Remove mailbox",
+      title: t("remove.title"),
+      description: t("remove.description", { address: mailbox.emailAddress }),
+      confirmLabel: t("remove.confirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -167,7 +159,7 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
               {mailbox.emailAddress}
             </span>
           }
-          detail={mailbox.displayName || "No display name"}
+          detail={mailbox.displayName || t("noDisplayName")}
           extra={
             note && (
               <p
@@ -190,7 +182,7 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
         <div className="flex flex-col items-start gap-1">
           <Badge.Root size="medium" variant="lighter" color={STATUS_COLOR[mailbox.status] ?? "gray"}>
             <Badge.Dot />
-            {STATUS_LABEL[mailbox.status] ?? mailbox.status}
+            {isKnownStatus(mailbox.status) ? t(`status.${mailbox.status}`) : mailbox.status}
           </Badge.Root>
           {failed && (
             <button
@@ -200,20 +192,20 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
               className="inline-flex items-center gap-1 rounded text-label-xs text-text-strong-950 underline decoration-stroke-sub-300 underline-offset-2 outline-none transition hover:decoration-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base disabled:text-text-disabled-300"
             >
               <RiClockwiseLine className="size-3.5" aria-hidden="true" />
-              Test again
+              {t("testAgain")}
             </button>
           )}
         </div>
       </Table.Cell>
 
       <Table.Cell className="px-4">
-        <Meter value={mailbox.todayEmailsSent} max={mailbox.dailySendLimit} color={EMAIL} label={`Emails sent today from ${mailbox.emailAddress}`} />
+        <Meter value={mailbox.todayEmailsSent} max={mailbox.dailySendLimit} color={EMAIL} label={t("sentTodayMeter", { address: mailbox.emailAddress })} />
       </Table.Cell>
 
       <Table.Cell className="px-4">
         <p className="flex items-center gap-1.5 whitespace-nowrap text-paragraph-sm text-text-strong-950">
           <RiTimeLine className="size-4 shrink-0 text-text-soft-400" aria-hidden="true" />
-          {hoursSummary(mailbox)}
+          {hoursSummary(mailbox, t)}
         </p>
         <p className="mt-0.5 truncate pl-5.5 text-paragraph-xs text-text-sub-600">{mailbox.workingHours.timezone}</p>
       </Table.Cell>
@@ -227,7 +219,7 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
                 mode="ghost"
                 size="xsmall"
                 disabled={busy}
-                aria-label={`More actions for ${mailbox.emailAddress}`}
+                aria-label={t("moreActions", { address: mailbox.emailAddress })}
               >
                 <Button.Icon as={RiMoreLine} />
               </Button.Root>
@@ -236,28 +228,28 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
             <Dropdown.Content align="end">
               <Dropdown.Item onSelect={handleRetest}>
                 <Dropdown.ItemIcon as={RiClockwiseLine} />
-                Test connection
+                {t("testConnection")}
               </Dropdown.Item>
               {connected && (
                 <Dropdown.Item onSelect={() => void handleSendTest()}>
                   <Dropdown.ItemIcon as={RiMailSendLine} />
-                  Send test email
+                  {t("sendTestEmail")}
                 </Dropdown.Item>
               )}
               <Dropdown.Item onSelect={() => setShowHours(true)}>
                 <Dropdown.ItemIcon as={RiTimeLine} />
-                Sending hours
+                {t("sendingHours")}
               </Dropdown.Item>
               <Dropdown.Item onSelect={() => setShowSignature(true)}>
                 <Dropdown.ItemIcon as={RiPenNibLine} />
-                Signature
+                {t("signature")}
               </Dropdown.Item>
 
               <Dropdown.Separator />
 
               <Dropdown.Item destructive onSelect={handleDelete}>
                 <Dropdown.ItemIcon as={RiDeleteBinLine} />
-                Remove mailbox
+                {t("removeMailbox")}
               </Dropdown.Item>
             </Dropdown.Content>
           </Dropdown.Root>
@@ -287,15 +279,16 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
 }
 
 export default function MailboxTable({ mailboxes }: { mailboxes: Mailbox[] }) {
+  const t = useTranslations("emailMailboxes.table");
   return (
     <Table.Root className="min-w-190 [&>table]:table-fixed">
       <Table.Header>
         <Table.Row>
-          <Table.Head scope="col" className="px-4">Mailbox</Table.Head>
-          <Table.Head scope="col" className="w-32 px-4">Status</Table.Head>
-          <Table.Head scope="col" className="w-40 px-4">Sent today</Table.Head>
-          <Table.Head scope="col" className="w-52 px-4">Sending hours</Table.Head>
-          <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">Actions</span></Table.Head>
+          <Table.Head scope="col" className="px-4">{t("columns.mailbox")}</Table.Head>
+          <Table.Head scope="col" className="w-32 px-4">{t("columns.status")}</Table.Head>
+          <Table.Head scope="col" className="w-40 px-4">{t("columns.sentToday")}</Table.Head>
+          <Table.Head scope="col" className="w-52 px-4">{t("columns.sendingHours")}</Table.Head>
+          <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">{t("columns.actions")}</span></Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body spacing={4}>

@@ -1,0 +1,85 @@
+{
+  "emailSequence": {
+    "composer": {
+      "subjectRequired": "The initial email needs a subject.",
+      "bodyRequired": "Email step {step} needs a message body.",
+      "saveFailed": "Failed to save sequence",
+      "saveFailedNetwork": "Failed to save sequence. Check your connection and try again.",
+      "flowTitle": "Sequence flow",
+      "flowDescription": "{count, plural, one {# email} other {# emails}}, in order. Select one to edit it.",
+      "waitBefore": "Wait",
+      "waitAfter": "days",
+      "waitAria": "Wait days before email step {step}",
+      "stepLabel": "Email step {step}",
+      "noSubjectYet": "No subject yet",
+      "sameThread": "Same thread",
+      "removeStep": "Remove step {step}",
+      "addFollowUp": "Add follow-up",
+      "initialEmail": "Initial email",
+      "followUp": "Follow-up {number}",
+      "sendsOnStart": "Sends as soon as the campaign starts.",
+      "sendsAfter": "Sends {days, plural, one {# day} other {# days}} after the previous step.",
+      "preview": "Preview",
+      "subject": "Subject",
+      "subjectPlaceholder": "Subject",
+      "followUpSubjectPlaceholder": "Leave blank to continue the same thread",
+      "body": "Email body",
+      "bodyPlaceholder": "Write your email — {spin} picks one at random, {merge} merges a field",
+      "back": "Back",
+      "unsaved": "Unsaved changes",
+      "saved": "Saved",
+      "saving": "Saving…",
+      "save": "Save"
+    },
+    "wizardStep": {
+      "title": "Build your sequence",
+      "description": "Each step sends after the previous one, spaced by wait days.",
+      "saveContinue": "Save & continue"
+    },
+    "signature": {
+      "saveFailed": "The signature was not saved. Please try again.",
+      "networkError": "Could not reach the server. Please try again.",
+      "title": "Signature",
+      "forAddress": "For {address}.",
+      "forThisMailbox": "For this mailbox.",
+      "fieldLabel": "Signature",
+      "fieldDescription": "Appended to every send from this mailbox. Put <token>%signature%</token> in a sequence step to place it exactly where you want instead.",
+      "placeholder": "Jane Doe\nHead of Sales, Acme Inc.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save signature"
+    },
+    "mergeFields": {
+      "defaults": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "company": "Company"
+      },
+      "insert": "Insert field",
+      "searchPlaceholder": "Search fields…",
+      "searchAria": "Search merge fields",
+      "noMatch": "No field matches “{query}”.",
+      "signatureTitle": "Replaced with the sending mailbox's signature",
+      "signature": "Signature",
+      "spinHint": "<token></token> picks one variant per lead"
+    },
+    "preview": {
+      "renderFailed": "Failed to render preview",
+      "title": "Preview · step {step}",
+      "noLeads": "No leads imported",
+      "noMailboxes": "No mailboxes",
+      "noSignature": "(no signature)",
+      "rerollTitle": "Re-roll spin-text variants",
+      "rerenderTitle": "Re-render",
+      "reload": "↻ Reload",
+      "rerollHint": "reload re-rolls {token} variants",
+      "unresolved": "<b>Empty for this lead:</b> <fields></fields> — these render as blank. Check another lead or pick a different column.",
+      "from": "From",
+      "noMailboxConnected": "No mailbox connected · <link>Add a mailbox</link>",
+      "to": "To",
+      "subject": "Subject",
+      "blankSubject": "(blank — will continue the previous thread)",
+      "body": "Body"
+    }
+  }
+}

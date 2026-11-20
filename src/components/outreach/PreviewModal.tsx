@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { SequenceStep } from "@/lib/outreach/schema";
 import * as Select from "@/components/alignui/select";
 
@@ -33,6 +34,7 @@ export default function PreviewModal({
   step: SequenceStep;
   onClose: () => void;
 }) {
+  const t = useTranslations("emailSequence.preview");
   const [leads, setLeads] = useState<PreviewLead[]>([]);
   const [mailboxes, setMailboxes] = useState<PreviewMailbox[]>([]);
   const [leadId, setLeadId] = useState<string | undefined>();
@@ -54,18 +56,18 @@ export default function PreviewModal({
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setError(data.error ?? "Failed to render preview");
+          setError(data.error ?? t("renderFailed"));
           setPreview(null);
           return;
         }
         setPreview(data as Preview);
       } catch {
-        setError("Failed to render preview");
+        setError(t("renderFailed"));
       } finally {
         setLoading(false);
       }
     },
-    [campaignId, step, leadId, mailboxId],
+    [campaignId, step, leadId, mailboxId, t],
   );
 
   // One bootstrap on open: fill the pickers, then render with their defaults.
@@ -110,7 +112,7 @@ export default function PreviewModal({
       <div className="relative bg-bg-white-0 rounded-2xl shadow-2xl w-full max-w-2xl z-10 flex flex-col max-h-[85vh]">
         <div className="p-5 border-b border-stroke-soft-200">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-text-strong-950">Preview · step {step.stepNumber}</h2>
+            <h2 className="text-base font-bold text-text-strong-950">{t("title", { step: step.stepNumber })}</h2>
             <button onClick={onClose} type="button" className="text-text-strong-950/35 hover:text-text-strong-950 transition-colors text-lg leading-none">
               ×
             </button>
@@ -120,7 +122,7 @@ export default function PreviewModal({
             <Select.Root size="xsmall" value={leadId ?? ""} onValueChange={(value) => { setLeadId(value); void render({ leadId: value }); }}>
               <Select.Trigger className="max-w-60"><Select.Value /></Select.Trigger>
               <Select.Content>
-                {leads.length === 0 && <Select.Item value="">No leads imported</Select.Item>}
+                {leads.length === 0 && <Select.Item value="">{t("noLeads")}</Select.Item>}
                 {leads.map((l) => (
                   <Select.Item key={l.id} value={l.id}>
                     {l.firstName ? `${l.firstName} · ${l.email}` : l.email}
@@ -132,11 +134,11 @@ export default function PreviewModal({
             <Select.Root size="xsmall" value={mailboxId ?? ""} onValueChange={(value) => { setMailboxId(value); void render({ mailboxId: value }); }}>
               <Select.Trigger className="max-w-60"><Select.Value /></Select.Trigger>
               <Select.Content>
-                {mailboxes.length === 0 && <Select.Item value="">No mailboxes</Select.Item>}
+                {mailboxes.length === 0 && <Select.Item value="">{t("noMailboxes")}</Select.Item>}
                 {mailboxes.map((m) => (
                   <Select.Item key={m.id} value={m.id}>
                     {m.emailAddress}
-                    {m.hasSignature ? "" : " (no signature)"}
+                    {m.hasSignature ? "" : ` ${t("noSignature")}`}
                   </Select.Item>
                 ))}
               </Select.Content>
@@ -146,13 +148,13 @@ export default function PreviewModal({
               onClick={() => void render()}
               type="button"
               disabled={loading}
-              title={hasSpinText ? "Re-roll spin-text variants" : "Re-render"}
+              title={hasSpinText ? t("rerollTitle") : t("rerenderTitle")}
               className="h-8 px-2.5 rounded-lg border border-stroke-soft-200 text-xs font-semibold text-text-strong-950/70 hover:bg-bg-weak-50 disabled:opacity-50 transition-colors"
             >
-              {loading ? "…" : "↻ Reload"}
+              {loading ? "…" : t("reload")}
             </button>
 
-            {hasSpinText && <span className="text-[11px] text-text-strong-950/35">reload re-rolls {"{A|B}"} variants</span>}
+            {hasSpinText && <span className="text-[11px] text-text-strong-950/35">{t("rerollHint", { token: "{A|B}" })}</span>}
           </div>
         </div>
 
@@ -164,36 +166,42 @@ export default function PreviewModal({
               {preview.unresolved.length > 0 && (
                 <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-3 py-2">
                   <p className="text-xs text-amber-800 dark:text-amber-400">
-                    <span className="font-semibold">Empty for this lead:</span>{" "}
-                    <span className="font-mono">{preview.unresolved.map((t) => `{{${t}}}`).join(", ")}</span> — these render as
-                    blank. Check another lead or pick a different column.
+                    {t.rich("unresolved", {
+                      b: (chunks) => <span className="font-semibold">{chunks}</span>,
+                      fields: () => (
+                        <span className="font-mono">
+                          {preview.unresolved.map((name) => `{{${name}}}`).join(", ")}
+                        </span>
+                      ),
+                    })}
                   </p>
                 </div>
               )}
 
-              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">From</div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">{t("from")}</div>
               <p className="text-sm text-text-strong-950 mb-3">
                 {preview.mailbox
                   ? `${preview.mailbox.displayName ? `${preview.mailbox.displayName} · ` : ""}${preview.mailbox.emailAddress}`
                   : (
-                    <>
-                      No mailbox connected ·{" "}
-                      <Link href="/settings/email-accounts" className="text-primary-base underline-offset-2 hover:underline">
-                        Add a mailbox
-                      </Link>
-                    </>
+                    t.rich("noMailboxConnected", {
+                      link: (chunks) => (
+                        <Link href="/settings/email-accounts" className="text-primary-base underline-offset-2 hover:underline">
+                          {chunks}
+                        </Link>
+                      ),
+                    })
                   )}
               </p>
 
-              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">To</div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">{t("to")}</div>
               <p className="text-sm text-text-strong-950 mb-3">{preview.lead?.email ?? "—"}</p>
 
-              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">Subject</div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">{t("subject")}</div>
               <p className={`text-sm mb-4 ${preview.subject.trim() ? "text-text-strong-950 font-semibold" : "text-text-strong-950/35 italic"}`}>
-                {preview.subject.trim() || "(blank — will continue the previous thread)"}
+                {preview.subject.trim() || t("blankSubject")}
               </p>
 
-              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">Body</div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-text-strong-950/35">{t("body")}</div>
               {/* Rendered as HTML because that is the part recipients actually
                   see — it is how you confirm links arrive clickable. The markup
                   is built by toHtmlBody(), which escapes the text first. */}

@@ -1,0 +1,85 @@
+{
+  "emailSequence": {
+    "composer": {
+      "subjectRequired": "O primeiro e-mail precisa de um assunto.",
+      "bodyRequired": "O passo {step} precisa de uma mensagem.",
+      "saveFailed": "Não foi possível salvar a sequência",
+      "saveFailedNetwork": "Não foi possível salvar a sequência. Verifique sua conexão e tente novamente.",
+      "flowTitle": "Fluxo da sequência",
+      "flowDescription": "{count, plural, one {# e-mail} other {# e-mails}}, em ordem. Selecione um para editar.",
+      "waitBefore": "Aguardar",
+      "waitAfter": "dias",
+      "waitAria": "Dias de espera antes do passo {step}",
+      "stepLabel": "Passo {step}",
+      "noSubjectYet": "Sem assunto ainda",
+      "sameThread": "Mesma conversa",
+      "removeStep": "Remover passo {step}",
+      "addFollowUp": "Adicionar follow-up",
+      "initialEmail": "Primeiro e-mail",
+      "followUp": "Follow-up {number}",
+      "sendsOnStart": "Enviado assim que a campanha começa.",
+      "sendsAfter": "Enviado {days, plural, one {# dia} other {# dias}} após o passo anterior.",
+      "preview": "Pré-visualizar",
+      "subject": "Assunto",
+      "subjectPlaceholder": "Assunto",
+      "followUpSubjectPlaceholder": "Deixe em branco para continuar a mesma conversa",
+      "body": "Corpo do e-mail",
+      "bodyPlaceholder": "Escreva seu e-mail — {spin} escolhe uma opção ao acaso, {merge} insere um campo",
+      "back": "Voltar",
+      "unsaved": "Alterações não salvas",
+      "saved": "Salvo",
+      "saving": "Salvando…",
+      "save": "Salvar"
+    },
+    "wizardStep": {
+      "title": "Monte sua sequência",
+      "description": "Cada passo é enviado depois do anterior, respeitando os dias de espera.",
+      "saveContinue": "Salvar e continuar"
+    },
+    "signature": {
+      "saveFailed": "A assinatura não foi salva. Tente novamente.",
+      "networkError": "Não foi possível acessar o servidor. Tente novamente.",
+      "title": "Assinatura",
+      "forAddress": "Para {address}.",
+      "forThisMailbox": "Para esta caixa de e-mail.",
+      "fieldLabel": "Assinatura",
+      "fieldDescription": "Adicionada a todos os envios desta caixa de e-mail. Use <token>%signature%</token> em um passo da sequência para posicioná-la exatamente onde quiser.",
+      "placeholder": "Maria Silva\nGerente de Vendas, Acme Ltda.",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "save": "Salvar assinatura"
+    },
+    "mergeFields": {
+      "defaults": {
+        "firstName": "Nome",
+        "lastName": "Sobrenome",
+        "company": "Empresa"
+      },
+      "insert": "Inserir campo",
+      "searchPlaceholder": "Buscar campos…",
+      "searchAria": "Buscar campos de mesclagem",
+      "noMatch": "Nenhum campo corresponde a “{query}”.",
+      "signatureTitle": "Substituída pela assinatura da caixa de e-mail de envio",
+      "signature": "Assinatura",
+      "spinHint": "<token></token> escolhe uma variante por lead"
+    },
+    "preview": {
+      "renderFailed": "Não foi possível gerar a pré-visualização",
+      "title": "Pré-visualização · passo {step}",
+      "noLeads": "Nenhum lead importado",
+      "noMailboxes": "Nenhuma caixa de e-mail",
+      "noSignature": "(sem assinatura)",
+      "rerollTitle": "Sortear as variantes do texto de novo",
+      "rerenderTitle": "Gerar de novo",
+      "reload": "↻ Recarregar",
+      "rerollHint": "recarregar sorteia as variantes {token} de novo",
+      "unresolved": "<b>Vazio para este lead:</b> <fields></fields> — serão exibidos em branco. Verifique outro lead ou escolha outra coluna.",
+      "from": "De",
+      "noMailboxConnected": "Nenhuma caixa de e-mail conectada · <link>Adicionar caixa de e-mail</link>",
+      "to": "Para",
+      "subject": "Assunto",
+      "blankSubject": "(em branco — continua a conversa anterior)",
+      "body": "Corpo"
+    }
+  }
+}

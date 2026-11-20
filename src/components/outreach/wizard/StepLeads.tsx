@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -33,6 +34,7 @@ export default function StepLeads({
   onBack: () => void;
   onContinue: (leadCount: number) => void;
 }) {
+  const t = useTranslations("emailWizard.stepLeads");
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -46,20 +48,20 @@ export default function StepLeads({
   const fetchLeadCount = useCallback(async () => {
     const response = await fetch(`/api/outreach/campaigns/${campaignId}/leads?page=1&pageSize=1`);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error ?? "Could not refresh campaign leads");
+    if (!response.ok) throw new Error(data.error ?? t("refreshFailed"));
     return Number(data.total ?? 0);
-  }, [campaignId]);
+  }, [campaignId, t]);
 
   const refreshLeadCount = useCallback(async () => {
     setLoadingCount(true);
     try {
       setLeadCount(await fetchLeadCount());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not refresh campaign leads");
+      setError(cause instanceof Error ? cause.message : t("refreshFailed"));
     } finally {
       setLoadingCount(false);
     }
-  }, [fetchLeadCount]);
+  }, [fetchLeadCount, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +71,7 @@ export default function StepLeads({
       })
       .catch((cause) => {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : "Could not refresh campaign leads");
+          setError(cause instanceof Error ? cause.message : t("refreshFailed"));
         }
       })
       .finally(() => {
@@ -78,7 +80,7 @@ export default function StepLeads({
     return () => {
       cancelled = true;
     };
-  }, [fetchLeadCount]);
+  }, [fetchLeadCount, t]);
 
   async function handleFile(file: File) {
     setFileName(file.name);
@@ -91,14 +93,14 @@ export default function StepLeads({
     <div className="mx-auto max-w-3xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-title-h5 text-text-strong-950">Add campaign leads</h2>
+          <h2 className="text-title-h5 text-text-strong-950">{t("title")}</h2>
           <p className="mt-1 text-paragraph-sm text-text-sub-600">
-            Select existing people or upload a spreadsheet and map every important column.
+            {t("subtitle")}
           </p>
         </div>
         <Badge.Root variant="lighter" color={leadCount > 0 ? "green" : "gray"}>
           {loadingCount ? <RiLoader4Line className="size-3.5 animate-spin" /> : <Badge.Dot />}
-          {leadCount.toLocaleString()} enrolled
+          {t("enrolled", { count: leadCount })}
         </Badge.Root>
       </div>
 
@@ -111,11 +113,11 @@ export default function StepLeads({
           <span className="flex size-10 items-center justify-center rounded-xl bg-primary-alpha-10 text-primary-base">
             <RiDatabase2Line className="size-5" />
           </span>
-          <span className="mt-5 text-label-md text-text-strong-950">Add from People</span>
+          <span className="mt-5 text-label-md text-text-strong-950">{t("fromPeopleTitle")}</span>
           <span className="mt-1 text-paragraph-sm text-text-sub-600">
-            Reuse verified contacts already stored in your CRM. Existing campaign members are skipped.
+            {t("fromPeopleBody")}
           </span>
-          <span className="mt-auto pt-4 text-label-sm text-primary-base">Browse people →</span>
+          <span className="mt-auto pt-4 text-label-sm text-primary-base">{t("browsePeople")}</span>
         </button>
 
         <label
@@ -150,18 +152,18 @@ export default function StepLeads({
             {fileName ? <RiFileExcel2Line className="size-5" /> : <RiUploadCloud2Line className="size-5" />}
           </span>
           <span className="mt-5 text-label-md text-text-strong-950">
-            {fileName ?? "Upload CSV or XLSX"}
+            {fileName ?? t("uploadTitle")}
           </span>
           <span className="mt-1 text-paragraph-sm text-text-sub-600">
-            Drop a file here or browse. You will review column mapping before anything is imported.
+            {t("uploadBody")}
           </span>
-          <span className="mt-auto pt-4 text-label-sm text-primary-base">Choose spreadsheet →</span>
+          <span className="mt-auto pt-4 text-label-sm text-primary-base">{t("chooseSpreadsheet")}</span>
         </label>
       </div>
 
       <div className="mt-4 flex items-start gap-2 rounded-xl bg-information-lighter px-4 py-3 text-paragraph-xs text-information-dark">
         <RiInformationLine className="mt-0.5 size-4 shrink-0" />
-        Email is required. Mapped profile fields update People and Company; every unmapped column remains available as a merge variable.
+        {t("emailRequiredNote")}
       </div>
 
       {error && <p className="mt-3 rounded-xl bg-error-lighter px-4 py-3 text-paragraph-sm text-error-base">{error}</p>}
@@ -169,29 +171,27 @@ export default function StepLeads({
       {result && (
         <div className="mt-4 rounded-xl bg-bg-weak-50 px-4 py-3 text-paragraph-sm ring-1 ring-inset ring-stroke-soft-200">
           <p className="text-text-strong-950">
-            <span className="font-semibold">{result.total}</span> rows —{" "}
-            <span className="font-medium text-success-base">{result.imported} imported</span>
-            {result.skippedDuplicate > 0 && `, ${result.skippedDuplicate} duplicate`}
-            {result.skippedSuppressed > 0 && (
-              <>
-                , <span className="font-medium text-away-base">{result.skippedSuppressed} suppressed</span>
-              </>
-            )}
-            {result.failed.length > 0 && (
-              <>
-                , <span className="font-medium text-error-base">{result.failed.length} failed</span>
-              </>
-            )}
+            {t.rich("resultSummary", {
+              total: result.total,
+              imported: result.imported,
+              duplicates: result.skippedDuplicate,
+              suppressed: result.skippedSuppressed,
+              failed: result.failed.length,
+              b: (c) => <span className="font-semibold">{c}</span>,
+              ok: (c) => <span className="font-medium text-success-base">{c}</span>,
+              warn: (c) => <span className="font-medium text-away-base">{c}</span>,
+              bad: (c) => <span className="font-medium text-error-base">{c}</span>,
+            })}
           </p>
         </div>
       )}
 
       <div className="mt-8 flex items-center justify-between border-t border-stroke-soft-200 pt-5">
         <Button.Root variant="neutral" mode="ghost" size="medium" onClick={onBack}>
-          <Button.Icon as={RiArrowLeftLine} />Back
+          <Button.Icon as={RiArrowLeftLine} />{t("back")}
         </Button.Root>
         <Button.Root onClick={() => onContinue(leadCount)} disabled={loadingCount}>
-          Continue<Button.Icon as={RiArrowRightLine} />
+          {t("continue")}<Button.Icon as={RiArrowRightLine} />
         </Button.Root>
       </div>
       {showPeople && (

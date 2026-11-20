@@ -1,0 +1,85 @@
+{
+  "emailMailboxes": {
+    "table": {
+      "status": {
+        "connected": "Connected",
+        "failed": "Failed",
+        "disabled": "Disabled",
+        "connecting": "Connecting"
+      },
+      "days": {
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun"
+      },
+      "hours": {
+        "none": "No days enabled",
+        "everyDay": "Every day",
+        "weekdays": "Mon–Fri"
+      },
+      "noDisplayName": "No display name",
+      "sendTest": {
+        "title": "Send a test email",
+        "description": "From {address}. The result shows under the mailbox.",
+        "label": "Send to",
+        "confirm": "Send test",
+        "sent": "Test sent to {to}",
+        "failed": "Test failed: {error}",
+        "networkError": "Test failed: network error"
+      },
+      "remove": {
+        "title": "Remove mailbox?",
+        "description": "{address} will stop sending. Scheduled emails from it will not go out.",
+        "confirm": "Remove mailbox"
+      },
+      "testAgain": "Test again",
+      "sentTodayMeter": "Emails sent today from {address}",
+      "moreActions": "More actions for {address}",
+      "testConnection": "Test connection",
+      "sendTestEmail": "Send test email",
+      "sendingHours": "Sending hours",
+      "signature": "Signature",
+      "removeMailbox": "Remove mailbox",
+      "columns": {
+        "mailbox": "Mailbox",
+        "status": "Status",
+        "sentToday": "Sent today",
+        "sendingHours": "Sending hours",
+        "actions": "Actions"
+      }
+    },
+    "connect": {
+      "failedFallback": "Failed to connect mailbox",
+      "networkError": "Network error — please try again",
+      "title": "Add a mailbox",
+      "description": "A Google Workspace address already authorised for sending. It is tested before it is saved.",
+      "email": {
+        "label": "Email address",
+        "description": "Must be authorised for our app's client ID in the Workspace admin console (domain-wide delegation).",
+        "placeholder": "rep@yourcompany.com"
+      },
+      "displayName": {
+        "label": "Display name",
+        "description": "The name recipients see beside the address.",
+        "placeholder": "Jane from Acme"
+      },
+      "signature": {
+        "label": "Signature",
+        "description": "Appended to every send from this mailbox. You can change it later from the mailbox's Signature action.",
+        "placeholder": "Jane Doe\nHead of Sales, Acme Inc."
+      },
+      "failedTitle": "The connection test failed",
+      "cancel": "Cancel",
+      "tryAgain": "Try again",
+      "connectTest": "Connect & test",
+      "testing": "Testing the connection to {address}…",
+      "connected": "Mailbox connected",
+      "ready": "{address} is ready to send.",
+      "done": "Done"
+    }
+  }
+}

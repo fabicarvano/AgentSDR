@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { RiArrowRightLine, RiInformationLine, RiMailLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -18,12 +19,13 @@ export default function StepName({
   onNameChange: (name: string) => void;
   onContinue: (campaignId: string) => void;
 }) {
+  const t = useTranslations("emailWizard.stepName");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleContinue() {
     if (!name.trim()) {
-      setError("Give your campaign a name");
+      setError(t("nameRequired"));
       return;
     }
     setSubmitting(true);
@@ -39,12 +41,12 @@ export default function StepName({
       );
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Failed to create campaign");
+        setError(data.error ?? t("createFailed"));
         return;
       }
       onContinue(campaignId ?? data.campaign.id);
     } catch {
-      setError("Could not save the campaign. Check your connection and try again.");
+      setError(t("saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -55,11 +57,11 @@ export default function StepName({
       <div className="flex size-11 items-center justify-center rounded-xl bg-primary-alpha-10 text-primary-base">
         <RiMailLine className="size-5" />
       </div>
-      <h2 className="mt-5 text-title-h5 text-text-strong-950">Name your campaign</h2>
-      <p className="mt-1 text-paragraph-sm text-text-sub-600">Use a clear internal name so your team can find it later.</p>
+      <h2 className="mt-5 text-title-h5 text-text-strong-950">{t("title")}</h2>
+      <p className="mt-1 text-paragraph-sm text-text-sub-600">{t("subtitle")}</p>
 
       <div className="mt-7 rounded-2xl bg-bg-white-0 p-5 ring-1 ring-inset ring-stroke-soft-200">
-        <label htmlFor="campaign-name" className="mb-1.5 block text-label-sm text-text-strong-950">Campaign name</label>
+        <label htmlFor="campaign-name" className="mb-1.5 block text-label-sm text-text-strong-950">{t("nameLabel")}</label>
         <Input.Root hasError={Boolean(error)}>
           <Input.Wrapper>
             <Input.Input
@@ -68,23 +70,23 @@ export default function StepName({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void handleContinue()}
-              placeholder="e.g. Q3 Enterprise Outbound"
+              placeholder={t("namePlaceholder")}
             />
           </Input.Wrapper>
         </Input.Root>
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-bg-weak-50 px-3 py-2.5 text-paragraph-xs text-text-sub-600">
           <RiInformationLine className="mt-0.5 size-4 shrink-0 text-text-soft-400" />
-          A draft is saved when you continue. Going back edits the same draft instead of creating another campaign.
+          {t("draftNote")}
         </div>
         {error && <p className="mt-2 text-paragraph-xs text-error-base">{error}</p>}
       </div>
 
       <div className="mt-8 flex items-center justify-between border-t border-stroke-soft-200 pt-5">
         <Button.Root asChild variant="neutral" mode="ghost" size="medium">
-          <Link href="/outreach/campaigns">Cancel</Link>
+          <Link href="/outreach/campaigns">{t("cancel")}</Link>
         </Button.Root>
         <Button.Root onClick={() => void handleContinue()} disabled={submitting || !name.trim()}>
-          {submitting ? (campaignId ? "Saving…" : "Creating…") : "Continue"}
+          {submitting ? (campaignId ? t("saving") : t("creating")) : t("continue")}
           <Button.Icon as={RiArrowRightLine} />
         </Button.Root>
       </div>

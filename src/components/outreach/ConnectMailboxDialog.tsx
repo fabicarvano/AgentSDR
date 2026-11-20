@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiCheckLine, RiLoader4Line, RiMailAddLine } from "@remixicon/react";
 
 import * as Button from "@/components/alignui/button";
@@ -19,6 +20,7 @@ type Stage = "form" | "testing" | "success" | "failed";
  * all belong to the top dialog.
  */
 export default function ConnectMailboxDialog({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("emailMailboxes.connect");
   const router = useRouter();
   const [emailAddress, setEmailAddress] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -42,14 +44,14 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
       });
       const data = await res.json();
       if (!res.ok || data.ok === false) {
-        setError(data.error ?? "Failed to connect mailbox");
+        setError(data.error ?? t("failedFallback"));
         setStage("failed");
         return;
       }
       setStage("success");
       router.refresh();
     } catch {
-      setError("Network error — please try again");
+      setError(t("networkError"));
       setStage("failed");
     }
   }
@@ -60,8 +62,8 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
     <Modal.Root open onOpenChange={(open) => { if (!open && !testing) onClose(); }}>
       <Modal.Content size="max-w-lg" hideClose={testing} onEscapeKeyDown={(event) => testing && event.preventDefault()}>
         <Modal.Header icon={RiMailAddLine}>
-          <Modal.Title>Add a mailbox</Modal.Title>
-          <Modal.Description>A Google Workspace address already authorised for sending. It is tested before it is saved.</Modal.Description>
+          <Modal.Title>{t("title")}</Modal.Title>
+          <Modal.Description>{t("description")}</Modal.Description>
           <DocsLink page="email/connect#add-a-mailbox" appearance="inline" className="mt-1.5 text-paragraph-xs" />
         </Modal.Header>
 
@@ -69,10 +71,10 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
           <form onSubmit={handleConnect} className="flex min-h-0 flex-col">
             <Modal.Body className="space-y-4">
               <Field
-                label="Email address"
+                label={t("email.label")}
                 htmlFor="mailbox-email"
                 required
-                description="Must be authorised for our app's client ID in the Workspace admin console (domain-wide delegation)."
+                description={t("email.description")}
               >
                 <Input.Root size="medium">
                   <Input.Wrapper>
@@ -83,13 +85,13 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
                       autoFocus
                       value={emailAddress}
                       onChange={(e) => setEmailAddress(e.target.value)}
-                      placeholder="rep@yourcompany.com"
+                      placeholder={t("email.placeholder")}
                     />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
 
-              <Field label="Display name" htmlFor="mailbox-name" optional description="The name recipients see beside the address.">
+              <Field label={t("displayName.label")} htmlFor="mailbox-name" optional description={t("displayName.description")}>
                 <Input.Root size="medium">
                   <Input.Wrapper>
                     <Input.Input
@@ -97,30 +99,30 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Jane from Acme"
+                      placeholder={t("displayName.placeholder")}
                     />
                   </Input.Wrapper>
                 </Input.Root>
               </Field>
 
               <Field
-                label="Signature"
+                label={t("signature.label")}
                 htmlFor="mailbox-signature"
                 optional
-                description="Appended to every send from this mailbox. You can change it later from the mailbox's Signature action."
+                description={t("signature.description")}
               >
                 <Textarea.Root
                   id="mailbox-signature"
                   simple
                   value={signatureHtml}
                   onChange={(e) => setSignatureHtml(e.target.value)}
-                  placeholder={"Jane Doe\nHead of Sales, Acme Inc."}
+                  placeholder={t("signature.placeholder")}
                   rows={4}
                 />
               </Field>
 
               {stage === "failed" && error && (
-                <Callout tone="error" title="The connection test failed">
+                <Callout tone="error" title={t("failedTitle")}>
                   {error}
                 </Callout>
               )}
@@ -128,10 +130,10 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
 
             <Modal.Footer>
               <Button.Root type="button" variant="neutral" mode="stroke" size="small" onClick={onClose}>
-                Cancel
+                {t("cancel")}
               </Button.Root>
               <Button.Root type="submit" variant="primary" mode="filled" size="small" disabled={!emailAddress}>
-                {stage === "failed" ? "Try again" : "Connect & test"}
+                {stage === "failed" ? t("tryAgain") : t("connectTest")}
               </Button.Root>
             </Modal.Footer>
           </form>
@@ -141,7 +143,7 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
           <Modal.Body>
             <div role="status" className="flex flex-col items-center justify-center gap-3 py-10 text-center">
               <RiLoader4Line className="size-6 animate-spin text-text-sub-600" aria-hidden="true" />
-              <p className="text-paragraph-sm text-text-sub-600">Testing the connection to {emailAddress}…</p>
+              <p className="text-paragraph-sm text-text-sub-600">{t("testing", { address: emailAddress })}</p>
             </div>
           </Modal.Body>
         )}
@@ -154,14 +156,14 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
                   <RiCheckLine className="size-6 text-success-base" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-label-sm text-text-strong-950">Mailbox connected</p>
-                  <p className="mt-0.5 text-paragraph-sm text-text-sub-600">{emailAddress} is ready to send.</p>
+                  <p className="text-label-sm text-text-strong-950">{t("connected")}</p>
+                  <p className="mt-0.5 text-paragraph-sm text-text-sub-600">{t("ready", { address: emailAddress })}</p>
                 </div>
               </div>
             </Modal.Body>
             <Modal.Footer>
               <Button.Root variant="primary" mode="filled" size="small" onClick={onClose}>
-                Done
+                {t("done")}
               </Button.Root>
             </Modal.Footer>
           </>

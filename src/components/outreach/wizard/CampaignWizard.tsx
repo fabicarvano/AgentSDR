@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiCheckLine,
   RiDraftLine,
@@ -18,10 +19,10 @@ import StepSequence from "./StepSequence";
 import StepReview from "./StepReview";
 
 const STEPS = [
-  { id: "name", label: "Campaign details", hint: "Name this campaign", icon: RiDraftLine },
-  { id: "leads", label: "Add leads", hint: "People or spreadsheet", icon: RiTeamLine },
-  { id: "sequence", label: "Build sequence", hint: "Write and preview emails", icon: RiStackLine },
-  { id: "review", label: "Review & launch", hint: "Confirm send readiness", icon: RiCheckLine },
+  { id: "name", labelKey: "steps.nameLabel", hintKey: "steps.nameHint", icon: RiDraftLine },
+  { id: "leads", labelKey: "steps.leadsLabel", hintKey: "steps.leadsHint", icon: RiTeamLine },
+  { id: "sequence", labelKey: "steps.sequenceLabel", hintKey: "steps.sequenceHint", icon: RiStackLine },
+  { id: "review", labelKey: "steps.reviewLabel", hintKey: "steps.reviewHint", icon: RiCheckLine },
 ] as const;
 
 type StepId = (typeof STEPS)[number]["id"];
@@ -52,6 +53,8 @@ function StepDot({ index, active, done }: { index: number; active: boolean; done
 
 export default function CampaignWizard() {
   const router = useRouter();
+  const t = useTranslations("emailWizard.campaignWizard");
+  const format = useFormatter();
   const [stepIndex, setStepIndex] = useState(0);
   const [state, setState] = useState<WizardState>({
     campaignId: null,
@@ -73,14 +76,14 @@ export default function CampaignWizard() {
   return (
     <div>
       <PageHeader
-        back={{ href: "/outreach/campaigns", label: "Send campaigns" }}
-        title="Create a send campaign"
-        description="Add recipients, build the sequence, preview it with real lead data, then launch."
+        back={{ href: "/outreach/campaigns", label: t("backLabel") }}
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-5">
         <Frame>
-          <FrameHeader title="Steps" description={`Step ${stepIndex + 1} of ${STEPS.length}`} />
+          <FrameHeader title={t("stepsTitle")} description={t("stepProgress", { current: stepIndex + 1, total: STEPS.length })} />
           <FramePanel className="p-2 sm:p-2">
           <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
             {STEPS.map((item, index) => {
@@ -102,8 +105,8 @@ export default function CampaignWizard() {
                   >
                     <StepDot index={index} active={active} done={done} />
                     <span className="min-w-0">
-                      <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{item.label}</span>
-                      <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{item.hint}</span>
+                      <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{t(item.labelKey)}</span>
+                      <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{t(item.hintKey)}</span>
                     </span>
                     <Icon className="ml-auto hidden size-4 text-text-soft-400 sm:block lg:hidden" />
                   </button>
@@ -113,19 +116,19 @@ export default function CampaignWizard() {
           </ol>
 
           <div className="mx-1 mb-1 mt-3 hidden border-t border-stroke-soft-200 px-2 pt-3 lg:block">
-            <p className="text-paragraph-xs text-text-soft-400">Summary</p>
+            <p className="text-paragraph-xs text-text-soft-400">{t("summary")}</p>
             <dl className="mt-2 space-y-2 text-paragraph-sm">
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-text-sub-600">Name</dt>
-                <dd className="min-w-0 truncate text-label-sm text-text-strong-950">{state.name || "Not named yet"}</dd>
+                <dt className="text-text-sub-600">{t("summaryName")}</dt>
+                <dd className="min-w-0 truncate text-label-sm text-text-strong-950">{state.name || t("notNamed")}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-text-sub-600">Leads</dt>
-                <dd className="text-label-sm tabular-nums text-text-strong-950">{state.leadCount.toLocaleString()}</dd>
+                <dt className="text-text-sub-600">{t("summaryLeads")}</dt>
+                <dd className="text-label-sm tabular-nums text-text-strong-950">{format.number(state.leadCount)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-text-sub-600">Sequence</dt>
-                <dd className="text-label-sm tabular-nums text-text-strong-950">{state.sequence.length} step{state.sequence.length === 1 ? "" : "s"}</dd>
+                <dt className="text-text-sub-600">{t("summarySequence")}</dt>
+                <dd className="text-label-sm tabular-nums text-text-strong-950">{t("sequenceSteps", { count: state.sequence.length })}</dd>
               </div>
             </dl>
           </div>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiBarChart2Line,
   RiListOrdered2,
@@ -24,6 +25,7 @@ import LeadsTab from "./LeadsTab";
 import SequenceTab from "./SequenceTab";
 import type { outreachCampaigns, mailboxes } from "@/lib/outreach/schema";
 import type { LeadPage, DailySends, CampaignPulse } from "@/lib/outreach/campaigns";
+import type { Messages } from "@/i18n/catalog";
 
 type Campaign = typeof outreachCampaigns.$inferSelect;
 type Mailbox = typeof mailboxes.$inferSelect;
@@ -43,43 +45,42 @@ type Stats = {
 };
 type StepBreakdown = { stepNumber: number; sent: number }[];
 
-const STATUS_COLOR: Record<string, React.ComponentProps<typeof Badge.Root>["color"]> = {
+type StatusKey = keyof Messages["emailCampaigns"]["status"];
+
+// Record<StatusKey, …> fails to compile when a status gets a label but no colour.
+const STATUS_COLOR: Record<StatusKey, React.ComponentProps<typeof Badge.Root>["color"]> = {
   active: "green",
   paused: "orange",
   draft: "gray",
   completed: "purple",
 };
-const STATUS_LABEL: Record<string, string> = {
-  active: "Active",
-  paused: "Paused",
-  draft: "Draft",
-  completed: "Completed",
-};
+
+const isStatusKey = (status: string): status is StatusKey => status in STATUS_COLOR;
 
 type TabId = "analytics" | "leads" | "sequence";
 
-function createdAt(date: string | Date | null): string {
+type Translator = ReturnType<typeof useTranslations<"emailCampaigns.detail">>;
+type Formatter = ReturnType<typeof useFormatter>;
+
+function createdAt(date: string | Date | null, format: Formatter): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleString("en-US", {
+  return format.dateTime(d, {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
   });
 }
 
-/** "In 13m" / "In 2h" / "Overdue" — the countdown to the next queued send. */
-function untilNext(date: Date | string | null): string {
-  if (!date) return "Nothing queued";
+/** "in 13 minutes" / "Due now" — the countdown to the next queued send. */
+function untilNext(date: Date | string | null, t: Translator, format: Formatter): string {
+  if (!date) return t("nothingQueued");
   const d = typeof date === "string" ? new Date(date) : date;
   const mins = Math.round((d.getTime() - Date.now()) / 60000);
-  if (mins <= 0) return "Due now";
-  if (mins < 60) return `In ${mins}m`;
-  if (mins < 60 * 24) return `In ${Math.round(mins / 60)}h`;
-  return `In ${Math.round(mins / (60 * 24))}d`;
+  if (mins <= 0) return t("dueNow");
+  return format.relativeTime(d, Date.now());
 }
 
 export default function CampaignDetailClient({
@@ -99,6 +100,9 @@ export default function CampaignDetailClient({
   dailySends: DailySends;
   pulse: CampaignPulse;
 }) {
+  const t = useTranslations("emailCampaigns.detail");
+  const tStatus = useTranslations("emailCampaigns.status");
+  const format = useFormatter();
   const router = useRouter();
   const [tab, setTab] = useState<TabId>("analytics");
   // The sequence editor stays mounted once opened: unmounting it on a tab
@@ -128,7 +132,7 @@ export default function CampaignDetailClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        setLaunchError(data.error ?? "Failed to launch");
+        setLaunchError(data.error ?? t("launchFailed"));
         return;
       }
       router.refresh();
@@ -150,7 +154,7 @@ export default function CampaignDetailClient({
     campaign.status === "active" ? (
       <Button.Root variant="neutral" mode="stroke" size="small" onClick={handlePause}>
         <Button.Icon as={RiPauseCircleLine} />
-        Pause
+        {t("pause")}
       </Button.Root>
     ) : campaign.status !== "completed" ? (
       <Button.Root
@@ -159,25 +163,25 @@ export default function CampaignDetailClient({
         size="small"
         onClick={handleLaunch}
         disabled={!canLaunch || launching}
-        title={!canLaunch ? "Needs a connected mailbox, a complete sequence, and at least one lead" : undefined}
+        title={!canLaunch ? t("launchHint") : undefined}
       >
         <Button.Icon as={RiPlayCircleLine} />
-        {launching ? "Launching…" : campaign.status === "paused" ? "Resume" : "Launch campaign"}
+        {launching ? t("launching") : campaign.status === "paused" ? t("resume") : t("launch")}
       </Button.Root>
     ) : null;
 
   return (
     <PageContainer>
       <PageHeader
-        back={{ href: "/outreach/campaigns", label: "Send campaigns" }}
+        back={{ href: "/outreach/campaigns", label: t("back") }}
         title={campaign.name}
         badge={
-          <Badge.Root size="medium" variant="lighter" color={STATUS_COLOR[campaign.status] ?? "gray"}>
+          <Badge.Root size="medium" variant="lighter" color={isStatusKey(campaign.status) ? STATUS_COLOR[campaign.status] : "gray"}>
             <Badge.Dot />
-            {STATUS_LABEL[campaign.status] ?? campaign.status}
+            {isStatusKey(campaign.status) ? tStatus(campaign.status) : campaign.status}
           </Badge.Root>
         }
-        description={`Created ${createdAt(campaign.createdAt)} · ${campaign.sequence.length} ${campaign.sequence.length === 1 ? "step" : "steps"}`}
+        description={t("subtitle", { date: createdAt(campaign.createdAt, format), steps: campaign.sequence.length })}
         actions={actions}
       />
       {launchError && <p role="alert" className="mt-2 text-paragraph-sm text-error-base">{launchError}</p>}
@@ -186,22 +190,22 @@ export default function CampaignDetailClient({
       <StatRow
         className="mt-5"
         items={[
-          { label: "Follow-ups today", value: pulse.followUpsToday.toLocaleString("en-US"), icon: RiMailSendLine, hint: "Later steps due to send today" },
-          { label: "New leads reached today", value: pulse.newLeadsReachedToday.toLocaleString("en-US"), icon: RiUserAddLine, hint: "First emails sent today" },
-          { label: "Sequence steps", value: String(pulse.activeSequences), icon: RiStackLine },
-          { label: "Next email", value: untilNext(pulse.nextSendAt), icon: RiTimeLine, hint: campaign.status === "active" ? "The next queued send" : "Sends run while the campaign is active" },
+          { label: t("followUpsToday"), value: format.number(pulse.followUpsToday), icon: RiMailSendLine, hint: t("followUpsTodayHint") },
+          { label: t("newLeadsToday"), value: format.number(pulse.newLeadsReachedToday), icon: RiUserAddLine, hint: t("newLeadsTodayHint") },
+          { label: t("sequenceSteps"), value: String(pulse.activeSequences), icon: RiStackLine },
+          { label: t("nextEmail"), value: untilNext(pulse.nextSendAt, t, format), icon: RiTimeLine, hint: campaign.status === "active" ? t("nextEmailHintActive") : t("nextEmailHintInactive") },
         ]}
       />
 
       <PageTabs
         className="mt-6"
-        label="Campaign sections"
+        label={t("tabsLabel")}
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "analytics", label: "Analytics", icon: RiBarChart2Line },
-          { value: "leads", label: "Leads", icon: RiTeamLine, count: leadPage.total },
-          { value: "sequence", label: "Sequence", icon: RiListOrdered2, count: campaign.sequence.length },
+          { value: "analytics", label: t("tabAnalytics"), icon: RiBarChart2Line },
+          { value: "leads", label: t("tabLeads"), icon: RiTeamLine, count: leadPage.total },
+          { value: "sequence", label: t("tabSequence"), icon: RiListOrdered2, count: campaign.sequence.length },
         ]}
       />
 

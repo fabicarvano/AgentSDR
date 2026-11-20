@@ -1,0 +1,80 @@
+{
+  "emailWizard": {
+    "campaignWizard": {
+      "backLabel": "Send campaigns",
+      "title": "Create a send campaign",
+      "description": "Add recipients, build the sequence, preview it with real lead data, then launch.",
+      "stepsTitle": "Steps",
+      "stepProgress": "Step {current} of {total}",
+      "steps": {
+        "nameLabel": "Campaign details",
+        "nameHint": "Name this campaign",
+        "leadsLabel": "Add leads",
+        "leadsHint": "People or spreadsheet",
+        "sequenceLabel": "Build sequence",
+        "sequenceHint": "Write and preview emails",
+        "reviewLabel": "Review & launch",
+        "reviewHint": "Confirm send readiness"
+      },
+      "summary": "Summary",
+      "summaryName": "Name",
+      "summaryLeads": "Leads",
+      "summarySequence": "Sequence",
+      "notNamed": "Not named yet",
+      "sequenceSteps": "{count, plural, one {# step} other {# steps}}"
+    },
+    "stepName": {
+      "nameRequired": "Give your campaign a name",
+      "createFailed": "Failed to create campaign",
+      "saveFailed": "Could not save the campaign. Check your connection and try again.",
+      "title": "Name your campaign",
+      "subtitle": "Use a clear internal name so your team can find it later.",
+      "nameLabel": "Campaign name",
+      "namePlaceholder": "e.g. Q3 Enterprise Outbound",
+      "draftNote": "A draft is saved when you continue. Going back edits the same draft instead of creating another campaign.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "creating": "Creating…",
+      "continue": "Continue"
+    },
+    "stepLeads": {
+      "refreshFailed": "Could not refresh campaign leads",
+      "title": "Add campaign leads",
+      "subtitle": "Select existing people or upload a spreadsheet and map every important column.",
+      "enrolled": "{count, number} enrolled",
+      "fromPeopleTitle": "Add from People",
+      "fromPeopleBody": "Reuse verified contacts already stored in your CRM. Existing campaign members are skipped.",
+      "browsePeople": "Browse people →",
+      "uploadTitle": "Upload CSV or XLSX",
+      "uploadBody": "Drop a file here or browse. You will review column mapping before anything is imported.",
+      "chooseSpreadsheet": "Choose spreadsheet →",
+      "emailRequiredNote": "Email is required. Mapped profile fields update People and Company; every unmapped column remains available as a merge variable.",
+      "resultSummary": "<b>{total, plural, one {# row} other {# rows}}</b> — <ok>{imported, number} imported</ok>{duplicates, plural, =0 {} other {, # duplicate}}{suppressed, plural, =0 {} other {, <warn># suppressed</warn>}}{failed, plural, =0 {} other {, <bad># failed</bad>}}",
+      "back": "Back",
+      "continue": "Continue"
+    },
+    "stepReview": {
+      "saveFailed": "Failed to save",
+      "updateFailed": "Could not update the campaign. Check your connection and try again.",
+      "cardCampaign": "Campaign",
+      "cardLeads": "Leads",
+      "cardSequence": "Sequence",
+      "leadsEnrolled": "{count, number} enrolled",
+      "sequenceSteps": "{count, plural, one {# step} other {# steps}}",
+      "finalWait": "{days, plural, one {Final follow-up waits # day} other {Final follow-up waits # days}}",
+      "title": "Review and launch",
+      "subtitle": "Confirm the audience, sequence and sending readiness before the campaign goes live.",
+      "checkingMailboxes": "Checking mailboxes…",
+      "mailboxesReady": "{count, plural, one {# mailbox connected and ready to send — round-robin assignment} other {# mailboxes connected and ready to send — round-robin assignment}}",
+      "noMailboxes": "No connected mailboxes — connect one before launching",
+      "addMailbox": "Add a mailbox",
+      "noLeads": "No leads are enrolled yet. Save as draft, or go back and add recipients before launching.",
+      "back": "Back",
+      "saving": "Saving…",
+      "saveDraft": "Save as draft",
+      "launching": "Launching…",
+      "launch": "Launch campaign",
+      "launchBlocked": "Needs a connected mailbox, a complete sequence, and at least one lead"
+    }
+  }
+}
