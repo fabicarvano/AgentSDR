@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 /**
  * WhatsApp Calling pages share the LinkedIn section's padded, scrolling
@@ -9,13 +10,13 @@ import type { Metadata } from "next";
  * calling station's), and a station's number also messages without Unipile.
  * What still needs Unipile (syncing Unipile numbers) says so where it is used.
  */
-export const metadata: Metadata = {
-  title: {
-    default: "WhatsApp Calling · AgentSDR",
-    template: "%s · WhatsApp Calling · AgentSDR",
-  },
-  description: "Call leads over WhatsApp and follow up",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("serverMeta.calling");
+  return {
+    title: { default: `${t("title")} · AgentSDR`, template: `%s · ${t("title")} · AgentSDR` },
+    description: t("description"),
+  };
+}
 
 export default function CallingLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { RequiresPlatform } from "@/components/settings/RequiresPlatform";
 import { docsPageUrl } from "@/lib/support";
 
 /** WhatsApp message campaigns share the padded, scrolling surface of the calling pages. */
-export const metadata: Metadata = {
-  title: {
-    default: "WhatsApp · AgentSDR",
-    template: "%s · WhatsApp · AgentSDR",
-  },
-  description: "Message leads over WhatsApp and follow up",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("serverMeta.whatsapp");
+  return {
+    // "WhatsApp" is a brand name, so the title stays the same in every language.
+    title: { default: "WhatsApp · AgentSDR", template: "%s · WhatsApp · AgentSDR" },
+    description: t("description"),
+  };
+}
 
 // Reads the database (is Unipile connected?), so the segment renders per request.
 export const dynamic = "force-dynamic";
