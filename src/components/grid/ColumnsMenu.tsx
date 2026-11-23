@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { RiEyeLine, RiEyeOffLine, RiSearchLine, RiSortAsc } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import type { GridColumn } from "@/lib/grid/schema";
 import { columnTypeMeta } from "./columnTypes";
 import { effectiveColumnType } from "@/lib/grid/value-types";
@@ -21,6 +22,7 @@ export default function ColumnsMenu({
   hidden: string[];
   onChange: (nextHidden: string[]) => void;
 }) {
+  const t = useTranslations("gridColumns.columnsMenu");
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -41,7 +43,7 @@ export default function ColumnsMenu({
             autoFocus
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search"
+            placeholder={t("search")}
             className="min-w-0 flex-1 bg-transparent text-[13px] text-text-strong-950 outline-none placeholder:text-text-soft-400"
           />
         </div>
@@ -54,7 +56,7 @@ export default function ColumnsMenu({
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-text-strong-950 transition hover:bg-bg-weak-50 disabled:text-text-disabled-300"
       >
         <RiEyeLine className="size-[18px] shrink-0 text-text-soft-400" />
-        Show all columns
+        {t("showAll")}
       </button>
       <button
         type="button"
@@ -63,14 +65,14 @@ export default function ColumnsMenu({
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-text-strong-950 transition hover:bg-bg-weak-50 disabled:text-text-disabled-300"
       >
         <RiSortAsc className="size-[18px] shrink-0 text-text-soft-400" />
-        Hide all columns
+        {t("hideAll")}
       </button>
 
       <div className="my-1.5 h-px bg-bg-weak-50" />
 
       <div className="max-h-[320px] overflow-y-auto">
         {filtered.length === 0 && (
-          <p className="px-3 py-3 text-[13px] text-text-soft-400">No columns match.</p>
+          <p className="px-3 py-3 text-[13px] text-text-soft-400">{t("noMatch")}</p>
         )}
         {filtered.map((c) => {
           const isHidden = hiddenSet.has(c.key);

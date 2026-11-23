@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiFileExcel2Line, RiLoader4Line, RiTableLine } from "@remixicon/react";
 import * as Modal from "@/components/alignui/modal";
 import WorkbookIcon from "./WorkbookIcon";
@@ -20,6 +21,7 @@ export default function NewWorkbookDialog({
   onClose: () => void;
   onCreated: (workbookId: string) => void;
 }) {
+  const t = useTranslations("gridMain.newWorkbook");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ workbookId: string; tableId: string; file: File } | null>(null);
@@ -37,7 +39,7 @@ export default function NewWorkbookDialog({
       body: JSON.stringify({ name, folderId: folderId ?? null }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error ?? "Could not create workbook");
+    if (!response.ok) throw new Error(data.error ?? t("createFailed"));
     return data;
   }
 
@@ -45,10 +47,11 @@ export default function NewWorkbookDialog({
     setBusy(true);
     setError(null);
     try {
+      // The default name is stored as the workbook name (user data), so it is not translated.
       const created = await createWorkbook("Untitled workbook");
       onCreated(created.workbook.id);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not create workbook");
+      setError(cause instanceof Error ? cause.message : t("createFailed"));
     } finally {
       setBusy(false);
     }
@@ -67,7 +70,7 @@ export default function NewWorkbookDialog({
       const created = await createWorkbook(name);
       setPending({ workbookId: created.workbook.id, tableId: created.table.id, file });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not create workbook");
+      setError(cause instanceof Error ? cause.message : t("createFailed"));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -88,11 +91,11 @@ export default function NewWorkbookDialog({
     <Modal.Root open={open && !pending} onOpenChange={(next) => { if (!next && !busy) onClose(); }}>
       <Modal.Content size="max-w-lg">
         <Modal.Header icon={WorkbookIcon}>
-          <Modal.Title>Create a workbook</Modal.Title>
+          <Modal.Title>{t("title")}</Modal.Title>
           <Modal.Description>
             {folderId
-              ? "It will be created in the folder you are viewing."
-              : "Start empty or import an existing spreadsheet."}
+              ? t("descriptionInFolder")
+              : t("descriptionRoot")}
           </Modal.Description>
         </Modal.Header>
 
@@ -107,9 +110,9 @@ export default function NewWorkbookDialog({
               <span className="mb-4 flex size-10 items-center justify-center rounded-10 bg-primary-alpha-10 text-primary-base">
                 <RiTableLine className="size-5" />
               </span>
-              <span className="block text-label-sm text-text-strong-950">Blank workbook</span>
+              <span className="block text-label-sm text-text-strong-950">{t("blankTitle")}</span>
               <span className="mt-1 block text-paragraph-xs text-text-sub-600">
-                Start with an empty custom table.
+                {t("blankDescription")}
               </span>
             </button>
 
@@ -122,9 +125,9 @@ export default function NewWorkbookDialog({
               <span className="mb-4 flex size-10 items-center justify-center rounded-10 bg-success-lighter text-success-base">
                 <RiFileExcel2Line className="size-5" />
               </span>
-              <span className="block text-label-sm text-text-strong-950">CSV or Excel</span>
+              <span className="block text-label-sm text-text-strong-950">{t("fileTitle")}</span>
               <span className="mt-1 block text-paragraph-xs text-text-sub-600">
-                Create a workbook from a spreadsheet.
+                {t("fileDescription")}
               </span>
             </button>
           </div>
@@ -139,7 +142,7 @@ export default function NewWorkbookDialog({
 
           {busy && (
             <p className="mt-4 flex items-center gap-2 text-paragraph-sm text-text-sub-600">
-              <RiLoader4Line className="size-4 animate-spin" />Creating your workbook…
+              <RiLoader4Line className="size-4 animate-spin" />{t("creating")}
             </p>
           )}
           {error && (
