@@ -61,7 +61,7 @@ export function WhatsappCampaignOverview({ funnel: f, campaign }: { funnel: Camp
         <KpiCell icon={RiSendPlaneLine} label={t("kpiMessaged")} value={formatCompact(f.messaged)} context={pct(f.messaged, f.total) ? t("kpiMessagedOfLeads", { percent: pct(f.messaged, f.total)! }) : undefined} hint={t("kpiMessagedHint")} />
         <KpiCell icon={RiChat1Line} label={t("kpiReplied")} value={formatCompact(f.replied)} context={f.replyRate !== null ? t("kpiRepliedOfMessaged", { percent: formatPercent(f.replyRate) }) : undefined} hint={t("kpiRepliedHint")} />
         <KpiCell icon={RiMailSendLine} label={t("kpiSent")} value={formatCompact(f.messagesSent)} context={t("kpiSentContext", { count: campaign.stepCount })} hint={t("kpiSentHint")} />
-        <KpiCell icon={RiErrorWarningLine} label={t("kpiFailed")} value={formatCompact(f.failed)} context={f.stopped > 0 ? t("kpiFailedStopped", { count: formatCompact(f.stopped) }) : f.failed > 0 ? t("kpiFailedRefused") : t("kpiFailedNone")} hint={t("kpiFailedHint")} />
+        <KpiCell icon={RiErrorWarningLine} label={t("kpiFailed")} value={formatCompact(f.failed)} context={f.stopped > 0 ? t("kpiFailedStopped", { count: f.stopped, shown: formatCompact(f.stopped) }) : f.failed > 0 ? t("kpiFailedRefused") : t("kpiFailedNone")} hint={t("kpiFailedHint")} />
       </KpiStrip>
 
       <Frame className="self-start lg:col-span-5">
