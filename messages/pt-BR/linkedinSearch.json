@@ -1,0 +1,273 @@
+{
+  "linkedinSearch": {
+    "status": {
+      "queued": "Na fila",
+      "running": "Em execução",
+      "pausedQuota": "Pausada — limite",
+      "completed": "Concluída",
+      "failed": "Falhou",
+      "cancelled": "Cancelada",
+      "noUrls": "Sem URLs"
+    },
+    "network": {
+      "first": "1º",
+      "second": "2º",
+      "third": "3º",
+      "outOfNetwork": "Fora da rede"
+    },
+    "loading": {
+      "label": "Carregando"
+    },
+    "picker": {
+      "atLimit": "No limite · {used, number}/{limit, number}",
+      "quota": "{used, number}/{limit, number}",
+      "selectedOf": "{selected, number} de {total, number} selecionadas",
+      "selectAll": "Selecionar todas",
+      "clear": "Limpar",
+      "noAccounts": "Nenhuma conta conectada",
+      "orderHint": "Ordem — a primeira conta é usada primeiro",
+      "noneSelected": "Nenhuma conta selecionada",
+      "moveUp": "Mover para cima",
+      "moveDown": "Mover para baixo",
+      "notUsed": "Não usadas"
+    },
+    "batches": {
+      "title": "Busca",
+      "description": "Faça buscas no LinkedIn em lotes e exporte os leads.",
+      "newSearch": "Nova busca",
+      "progressFailed": "{failed, number} de {total, number} URLs falharam",
+      "progressDone": "{done, number} de {total, number} URLs concluídas",
+      "rowMenu": {
+        "actionsFor": "Mais ações para {name}",
+        "open": "Abrir",
+        "delete": "Excluir busca"
+      },
+      "capacity": {
+        "title": "Capacidade de busca hoje",
+        "noAccountsDescription": "As buscas rodam nas suas contas do LinkedIn conectadas.",
+        "summary": "{used, number} de {total, number} leads usados em {accounts, plural, one {# conta} other {# contas}}. Cada conta pode buscar {perAccount, number} por dia; o contador zera na tarefa de limites diários.",
+        "summaryAtLimit": "{used, number} de {total, number} leads usados em {accounts, plural, one {# conta} other {# contas}} · {full, number} no limite. Cada conta pode buscar {perAccount, number} por dia; o contador zera na tarefa de limites diários.",
+        "emptyTitle": "Nenhuma conta do LinkedIn conectada",
+        "emptyDescription": "Conecte uma conta para fazer buscas com ela.",
+        "accountsLink": "Contas do LinkedIn"
+      },
+      "list": {
+        "title": "Buscas",
+        "emptyDescription": "Cada busca é um conjunto de URLs de busca do LinkedIn e os leads que elas encontraram.",
+        "summary": "{count, plural, one {# busca} other {# buscas}}. Selecione uma para executá-la e ver os leads.",
+        "summaryLive": "{count, plural, one {# busca} other {# buscas}} · atualizando ao vivo enquanto uma é executada. Selecione uma para executá-la e ver os leads.",
+        "searchLabel": "Buscar pelo nome da busca",
+        "searchPlaceholder": "Buscar por nome…",
+        "noneTitle": "Nenhuma busca ainda",
+        "noneDescription": "Inicie uma busca para trazer leads de uma URL de busca do LinkedIn ou de uma planilha de URLs.",
+        "noMatchTitle": "Nenhuma busca encontrada",
+        "noMatchDescription": "Nenhuma busca tem um nome parecido com “{term}”.",
+        "clearSearch": "Limpar busca"
+      },
+      "table": {
+        "search": "Busca",
+        "status": "Status",
+        "urls": "URLs",
+        "leads": "Leads",
+        "created": "Criada em",
+        "actions": "Ações"
+      },
+      "row": {
+        "deleting": "Excluindo…",
+        "kindSingle": "URL de busca única",
+        "kindCsv": "CSV de URLs de busca"
+      },
+      "delete": {
+        "confirmTitle": "Excluir esta busca?",
+        "confirmDescription": "As URLs e os leads que ela encontrou serão excluídos para sempre. Não é possível desfazer.",
+        "confirm": "Excluir busca",
+        "errorTitle": "Não foi possível excluir a busca",
+        "errorFallback": "Algo deu errado. Tente novamente."
+      },
+      "dialog": {
+        "titleStart": "Nova busca",
+        "titleSingle": "Nova busca única",
+        "titleCsv": "Nova busca por CSV",
+        "descriptionStart": "Busque uma URL do LinkedIn ou envie uma planilha de URLs.",
+        "descriptionSingle": "A busca abre com a URL na fila, pronta para você executar.",
+        "descriptionCsv": "A busca abre com todas as URLs na fila, prontas para você executar.",
+        "singleTitle": "Busca única",
+        "singleBody": "Uma URL de busca do LinkedIn, executada com uma conta.",
+        "csvTitle": "Busca por CSV",
+        "csvBody": "Uma planilha com Nome da empresa + URL de busca, executada com várias contas.",
+        "name": "Nome",
+        "namePlaceholderSingle": "ex.: VP de Vendas na Acme",
+        "namePlaceholderCsv": "ex.: Lista de contas-alvo do 3º tri",
+        "searchUrl": "URL de busca",
+        "companyOptional": "Nome da empresa (opcional)",
+        "account": "Conta",
+        "accounts": "Contas",
+        "sheet": "Planilha (Nome da empresa + URL de busca)",
+        "chooseFile": "Escolher arquivo",
+        "downloadTemplate": "Baixar modelo",
+        "errorSingleRequired": "Nome, URL de busca e uma conta são obrigatórios.",
+        "errorNameRequired": "O nome é obrigatório.",
+        "errorChooseFile": "Escolha um arquivo para enviar.",
+        "errorCreateFailed": "Não foi possível criar a busca.",
+        "errorNetwork": "Erro de rede.",
+        "back": "Voltar",
+        "cancel": "Cancelar",
+        "create": "Criar busca"
+      }
+    },
+    "detail": {
+      "backToSearches": "Buscas",
+      "kindSingle": "URL de busca única",
+      "kindCsv": "CSV de URLs de busca",
+      "subtitle": "{kind} · Criada em {date}",
+      "run": "Executar",
+      "runSelected": "Executar selecionadas ({count, number})",
+      "runTitleSelected": "Executar as URLs selecionadas",
+      "runTitleAll": "Executar todas as URLs na fila desta busca",
+      "addUrls": "Adicionar URLs",
+      "exportLeads": "Exportar leads",
+      "exportTitle": "Baixar todos os leads desta busca",
+      "moreActions": "Mais ações para esta busca",
+      "deleteSearch": "Excluir busca",
+      "notice": {
+        "waiting": "Outra busca está em execução — esta começa quando você clicar em Executar depois que ela terminar.",
+        "alreadyRunning": "Outra busca já está em execução — clique em Executar de novo quando ela terminar.",
+        "runFailed": "Não foi possível iniciar a execução"
+      },
+      "stats": {
+        "searchUrls": "URLs de busca",
+        "searched": "Buscadas",
+        "leadsFound": "Leads encontrados",
+        "accountsUsed": "Contas usadas",
+        "ofTotal": "{done, number} de {total, number}",
+        "failedHint": "{count, number} falharam",
+        "beforeDedupe": "{count, number} resultados antes da remoção de duplicados"
+      },
+      "tabs": {
+        "label": "Seções da busca",
+        "urls": "URLs de busca",
+        "leads": "Leads"
+      },
+      "sort": {
+        "added": "Data de adição",
+        "leadsDesc": "Mais leads",
+        "leadsAsc": "Menos leads",
+        "company": "Empresa A–Z"
+      },
+      "filters": {
+        "account": "Conta",
+        "status": "Status",
+        "sort": "Ordem",
+        "all": "Todas",
+        "allAccounts": "Todas as contas",
+        "allStatuses": "Todos os status",
+        "unknown": "desconhecida",
+        "clear": "Limpar filtros"
+      },
+      "selection": {
+        "region": "Linhas selecionadas",
+        "selected": "{count, number} selecionadas",
+        "clear": "Limpar",
+        "export": "Exportar",
+        "rerun": "Executar de novo",
+        "rerunTitle": "Excluir os leads dessas URLs e buscá-las de novo",
+        "delete": "Excluir"
+      },
+      "urls": {
+        "title": "URLs de busca",
+        "matchCount": "{shown, number} de {total, number} URLs correspondem",
+        "hint": "Cada URL é buscada por uma conta; marque linhas para executar, executar de novo, exportar ou excluir.",
+        "searchLabel": "Buscar empresa ou URL",
+        "searchPlaceholder": "Buscar empresa ou URL…",
+        "noneTitle": "Nenhuma URL de busca ainda",
+        "noneDescription": "Adicione URLs de busca do LinkedIn a esta busca e execute-a.",
+        "noMatchTitle": "Nenhuma URL corresponde a estes filtros",
+        "noMatchDescription": "Tente outra conta, outro status ou outra busca.",
+        "selectAll": "Selecionar todas as URLs de busca visíveis",
+        "selectRow": "Selecionar {name}",
+        "companyAndUrl": "Empresa e URL",
+        "status": "Status",
+        "account": "Conta",
+        "leads": "Leads",
+        "cancelColumn": "Cancelar",
+        "noCompany": "Sem empresa",
+        "cancelTitle": "Cancelar esta URL",
+        "cancelAria": "Cancelar {name}",
+        "cancelFallback": "esta URL"
+      },
+      "deleteUrls": {
+        "confirmTitle": "Excluir {count, plural, one {# URL de busca} other {# URLs de busca}}?",
+        "confirmDescription": "Os leads encontrados por essas URLs também serão excluídos. Uma URL ainda em execução é cancelada em vez de excluída. Não é possível desfazer.",
+        "confirm": "Excluir",
+        "errorTitle": "Não foi possível excluir as URLs de busca",
+        "cancelledNote": "{count, plural, one {# URL foi cancelada porque ainda estava em execução.} other {# URLs foram canceladas porque ainda estavam em execução.}}"
+      },
+      "rerun": {
+        "confirmTitle": "Executar de novo {count, plural, one {# URL de busca} other {# URLs de busca}}?",
+        "confirmDescription": "Os leads já encontrados por essas URLs são excluídos primeiro, e a busca recomeça do zero. Uma URL ainda em execução não é alterada.",
+        "confirm": "Excluir leads e executar de novo",
+        "errorTitle": "Não foi possível executar essas URLs de novo",
+        "queuedAgain": "{count, plural, one {# URL voltou para a fila} other {# URLs voltaram para a fila}} ({leads, plural, one {# lead excluído} other {# leads excluídos}}).",
+        "skipped": "{count, plural, one {# não foi alterada porque ainda está em execução.} other {# não foram alteradas porque ainda estão em execução.}}",
+        "anotherRunning": "Outra busca está em execução — clique em Executar quando ela terminar."
+      },
+      "leads": {
+        "title": "Leads",
+        "matchCount": "{shown, number} de {total, number} leads correspondem",
+        "hint": "Todas as pessoas que essas URLs encontraram, sem duplicados. Marque linhas para exportar ou excluir.",
+        "searchLabel": "Buscar leads",
+        "searchPlaceholder": "Buscar nome, cargo, empresa…",
+        "selectionNote": "em todas as páginas deste filtro",
+        "noneTitle": "Nenhum lead ainda",
+        "noneDescription": "Execute esta busca para trazer leads das URLs.",
+        "noMatchTitle": "Nenhum lead corresponde à busca",
+        "noMatchDescription": "Tente um nome, cargo, empresa ou local.",
+        "clearSearch": "Limpar busca",
+        "selectAll": "Selecionar todos os leads da busca",
+        "selectRow": "Selecionar {name}",
+        "lead": "Lead",
+        "company": "Empresa",
+        "location": "Local",
+        "network": "Rede",
+        "followers": "Seguidores",
+        "unnamed": "Lead sem nome",
+        "noHeadline": "Sem título"
+      },
+      "deleteLeads": {
+        "confirmTitle": "Excluir {count, plural, one {# lead} other {# leads}}?",
+        "confirmDescription": "Esses leads serão removidos desta busca. Executar a busca de novo pode encontrá-los outra vez.",
+        "confirm": "Excluir",
+        "errorTitle": "Não foi possível excluir os leads"
+      },
+      "pagination": {
+        "label": "Paginação",
+        "range": "{start, number}–{end, number} de {total, number}",
+        "previous": "Página anterior",
+        "next": "Próxima página",
+        "pageOf": "Página {page, number} de {pages, number}"
+      },
+      "runDialog": {
+        "title": "Executar com quais contas?",
+        "descriptionSelected": "Executando {count, plural, one {# URL selecionada que ainda está} other {# URLs selecionadas que ainda estão}} na fila. Só as contas marcadas aqui são usadas, na ordem em que você as organizar — a primeira é usada até atingir o limite diário, depois a próxima, e todas buscam em paralelo.",
+        "descriptionAll": "Executando todas as URLs na fila desta busca. Só as contas marcadas aqui são usadas, na ordem em que você as organizar — a primeira é usada até atingir o limite diário, depois a próxima, e todas buscam em paralelo.",
+        "cancel": "Cancelar",
+        "submit": "Executar com {count, plural, one {# conta} other {# contas}}"
+      },
+      "addDialog": {
+        "title": "Adicionar URLs de busca",
+        "description": "Elas entram nesta busca na fila, prontas para a próxima execução.",
+        "urlsLabel": "URLs de busca, uma por linha",
+        "companyLabel": "Nome da empresa (opcional, vale para todas as URLs acima)",
+        "errorNone": "Adicione pelo menos uma URL.",
+        "errorFailed": "Não foi possível adicionar as URLs.",
+        "errorNetwork": "Erro de rede.",
+        "cancel": "Cancelar",
+        "submit": "Adicionar URLs"
+      },
+      "copy": {
+        "copied": "Copiado",
+        "copyUrl": "Copiar URL"
+      }
+    }
+  }
+}

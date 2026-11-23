@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowLeftSLine,
@@ -78,6 +79,24 @@ type UploadResult = {
   crossCampaignNotices?: CrossCampaignNotice[];
 };
 
+// Every lead status the pipeline knows (the label is the catalog's, the colour is metrics' LEAD_STATUS). A status
+// the code does not list falls back to its raw value.
+const LEAD_STATUS_LABEL_KEY = {
+  PENDING: "pending",
+  REQUEST_SENT: "requestSent",
+  CONNECTED: "connected",
+  ACCEPT_MESSAGE_SENT: "acceptMessageSent",
+  FOLLOW_UP_1_SENT: "followUp1Sent",
+  FOLLOW_UP_2_SENT: "followUp2Sent",
+  FOLLOW_UP_3_SENT: "followUp3Sent",
+  COMPLETED: "completed",
+  REPLIED: "replied",
+  FAILED: "failed",
+  CANCELLED: "cancelled",
+} as const;
+type KnownLeadStatus = keyof typeof LEAD_STATUS_LABEL_KEY;
+const isKnownLeadStatus = (status: string): status is KnownLeadStatus => Object.prototype.hasOwnProperty.call(LEAD_STATUS_LABEL_KEY, status);
+
 /** Radix Select can't hold an empty value, so "no filter" is this sentinel. */
 const ALL = "__all";
 const MESSAGE_FIELDS = LEAD_MESSAGE_FIELDS.map(({ key }) => key);
@@ -131,7 +150,10 @@ export function CampaignLeadsTab({
   /** Leads were added or removed server-side; refresh the campaign's figures. */
   onChanged: () => void;
 }) {
+  const t = useTranslations("linkedinCampaigns.leadsTab");
+  const format = useFormatter();
   const dialogs = useDialogs();
+  const statusLabel = (status: string, fallback?: string) => (isKnownLeadStatus(status) ? t(`status.${LEAD_STATUS_LABEL_KEY[status]}`) : (fallback ?? status));
   const [leads, setLeads] = useState(initialLeadsPage.leads);
   const [pagination, setPagination] = useState<LeadsPagination>(initialLeadsPage.pagination);
   const [loading, setLoading] = useState(false);
@@ -198,7 +220,7 @@ export function CampaignLeadsTab({
   const uploadFile = (file: File) => {
     const name = file.name.toLowerCase();
     if (!name.endsWith(".xlsx") && !name.endsWith(".xls") && !name.endsWith(".csv")) {
-      setUploadResult({ ok: false, message: "Please upload an Excel or CSV file (.xlsx, .xls, .csv)" });
+      setUploadResult({ ok: false, message: t("invalidFile") });
       return;
     }
     setUploadResult(null);
@@ -234,9 +256,9 @@ export function CampaignLeadsTab({
 
   const handleDeleteLead = async (lead: CampaignLead) => {
     const ok = await dialogs.confirm({
-      title: "Remove lead?",
-      description: `${lead.name ?? lead.linkedinUrl} will be removed from this campaign with its message history. This cannot be undone.`,
-      confirmLabel: "Remove lead",
+      title: t("removeTitle"),
+      description: t("removeDescription", { name: lead.name ?? lead.linkedinUrl }),
+      confirmLabel: t("removeConfirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -330,32 +352,32 @@ export function CampaignLeadsTab({
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-bg-white-0/85 backdrop-blur-[1px]">
             <div className="flex flex-col items-center gap-2 text-primary-base">
               <RiUploadCloud2Line className="size-9" />
-              <p className="text-label-sm">Drop file to import leads</p>
+              <p className="text-label-sm">{t("dropToImport")}</p>
             </div>
           </div>
         )}
         <FrameHeader
-          title="Leads"
+          title={t("title")}
           description={
             hasLeadFilters
-              ? `${pagination.total.toLocaleString("en-US")} of ${totalLeads.toLocaleString("en-US")} match. Select a lead to see and edit its messages.`
-              : `${totalLeads.toLocaleString("en-US")} in this campaign. Select a lead to see and edit its messages. Drop a spreadsheet here to import.`
+              ? t("descriptionFiltered", { shown: pagination.total, total: totalLeads })
+              : t("descriptionAll", { total: totalLeads })
           }
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Button.Root variant="neutral" mode="ghost" size="xsmall" asChild>
-                <a href={`/api/linkedin/campaigns/${campaignId}/template`} download={campaignLeadTemplateFilename(campaignName)} aria-label="Download import template" title="Download import template">
+                <a href={`/api/linkedin/campaigns/${campaignId}/template`} download={campaignLeadTemplateFilename(campaignName)} aria-label={t("templateLabel")} title={t("templateLabel")}>
                   <Button.Icon as={RiDownloadLine} />
-                  <span className="hidden sm:inline">Template</span>
+                  <span className="hidden sm:inline">{t("template")}</span>
                 </a>
               </Button.Root>
               <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => setShowPeople(true)}>
                 <Button.Icon as={RiAddLine} />
-                Add from People
+                {t("addFromPeople")}
               </Button.Root>
               <Button.Root variant="primary" mode="filled" size="xsmall" onClick={openPicker} disabled={!!pendingImportFile}>
                 <Button.Icon as={RiUploadCloud2Line} />
-                Import
+                {t("import")}
               </Button.Root>
             </div>
           }
@@ -386,40 +408,40 @@ export function CampaignLeadsTab({
                     }
                   >
                     <Button.Icon as={RiDownloadLine} />
-                    Download failed rows
+                    {t("downloadFailedRows")}
                   </Button.Root>
                 )}
-                <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={() => setUploadResult(null)}>Dismiss</Button.Root>
+                <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={() => setUploadResult(null)}>{t("dismiss")}</Button.Root>
               </div>
             </div>
           )}
           {uploadResult?.crossCampaignNotices && uploadResult.crossCampaignNotices.length > 0 && (
             <p className="mb-3 rounded-xl bg-warning-lighter px-3 py-2.5 text-paragraph-xs text-warning-dark">
-              {uploadResult.crossCampaignNotices.length} of the imported leads were already contacted elsewhere:{" "}
+              {t("crossNotice", { count: uploadResult.crossCampaignNotices.length })}{" "}
               {uploadResult.crossCampaignNotices.slice(0, 5).map((n, i) => (
                 <span key={n.linkedinUrl}>
                   {i > 0 && ", "}
-                  <span className="font-medium">{n.name ?? n.linkedinUrl}</span> (also in {n.alsoInCampaigns.map((c) => c.name).join(", ")})
+                  <span className="font-medium">{n.name ?? n.linkedinUrl}</span> {t("alsoIn", { campaigns: n.alsoInCampaigns.map((c) => c.name).join(", ") })}
                 </span>
               ))}
-              {uploadResult.crossCampaignNotices.length > 5 && ` and ${uploadResult.crossCampaignNotices.length - 5} more`}
+              {uploadResult.crossCampaignNotices.length > 5 && ` ${t("andMore", { count: uploadResult.crossCampaignNotices.length - 5 })}`}
             </p>
           )}
 
           {totalLeads === 0 ? (
             <EmptyState
               icon={RiTeamLine}
-              title="No leads yet"
-              description="Import a CSV or Excel file — or drop one anywhere on this card — or add people already in your database."
+              title={t("emptyTitle")}
+              description={t("emptyDescription")}
               action={
                 <div className="flex flex-wrap justify-center gap-2">
                   <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setShowPeople(true)}>
                     <Button.Icon as={RiAddLine} />
-                    Add from People
+                    {t("addFromPeople")}
                   </Button.Root>
                   <Button.Root variant="primary" mode="filled" size="small" onClick={openPicker} disabled={!!pendingImportFile}>
                     <Button.Icon as={RiUploadCloud2Line} />
-                    Import spreadsheet
+                    {t("importSpreadsheet")}
                   </Button.Root>
                 </div>
               }
@@ -428,14 +450,14 @@ export function CampaignLeadsTab({
             <>
               <div className="flex flex-wrap items-center gap-2 px-1 pb-3">
                 <Select.Root size="small" value={filterStatus || ALL} onValueChange={(v) => applyLeadFilters({ status: v === ALL ? "" : v })}>
-                  <Select.Trigger className="w-full sm:w-48" aria-label="Filter by status">
+                  <Select.Trigger className="w-full sm:w-48" aria-label={t("filterStatusLabel")}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
-                    <Select.Item value={ALL}>All statuses</Select.Item>
+                    <Select.Item value={ALL}>{t("allStatuses")}</Select.Item>
                     {statusOptions.map(([key, meta]) => (
                       <Select.Item key={key} value={key}>
-                        {meta.label} <span className="tabular-nums text-text-soft-400">{(statusCounts[key] ?? 0).toLocaleString("en-US")}</span>
+                        {statusLabel(key, meta.label)} <span className="tabular-nums text-text-soft-400">{format.number(statusCounts[key] ?? 0)}</span>
                       </Select.Item>
                     ))}
                   </Select.Content>
@@ -443,11 +465,11 @@ export function CampaignLeadsTab({
 
                 {senderOptions.length > 0 && (
                   <Select.Root size="small" value={filterAccountId || ALL} onValueChange={(v) => applyLeadFilters({ accountId: v === ALL ? "" : v })}>
-                    <Select.Trigger className="w-full sm:w-52" aria-label="Filter by sender">
+                    <Select.Trigger className="w-full sm:w-52" aria-label={t("filterSenderLabel")}>
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value={ALL}>All senders</Select.Item>
+                      <Select.Item value={ALL}>{t("allSenders")}</Select.Item>
                       {senderOptions.map((a) => (
                         <Select.Item key={a.id} value={a.id}>{a.name ?? `@${a.username}`}</Select.Item>
                       ))}
@@ -460,8 +482,8 @@ export function CampaignLeadsTab({
                     <Input.Icon as={RiSearchLine} />
                     <Input.Input
                       type="search"
-                      aria-label="Search leads"
-                      placeholder="Search by name or headline…"
+                      aria-label={t("searchLabel")}
+                      placeholder={t("searchPlaceholder")}
                       value={filterSearch}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -475,7 +497,7 @@ export function CampaignLeadsTab({
 
                 {hasLeadFilters && (
                   <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => applyLeadFilters({ status: "", search: "", accountId: "" })}>
-                    Clear filters
+                    {t("clearFilters")}
                   </Button.Root>
                 )}
               </div>
@@ -483,11 +505,11 @@ export function CampaignLeadsTab({
               {pagination.total === 0 && !loading ? (
                 <EmptyState
                   icon={RiSearchLine}
-                  title="No leads match"
-                  description="Try another status, sender or search."
+                  title={t("noMatchTitle")}
+                  description={t("noMatchDescription")}
                   action={
                     <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => applyLeadFilters({ status: "", search: "", accountId: "" })}>
-                      Clear filters
+                      {t("clearFilters")}
                     </Button.Root>
                   }
                 />
@@ -513,7 +535,7 @@ export function CampaignLeadsTab({
                         <Table.Row>
                           <Table.Head scope="col" className="w-12 px-4">
                             <Checkbox.Root
-                              aria-label="Select all leads on this page"
+                              aria-label={t("selectAllLabel")}
                               checked={allMatchingSelected || allPageSelected ? true : somePageSelected ? "indeterminate" : false}
                               onCheckedChange={(checked) => {
                                 if (checked !== true) { clearSelection(); return; }
@@ -521,11 +543,11 @@ export function CampaignLeadsTab({
                               }}
                             />
                           </Table.Head>
-                          <Table.Head scope="col" className="px-4">Lead</Table.Head>
-                          <Table.Head scope="col" className="w-36 px-4">Status</Table.Head>
-                          <Table.Head scope="col" className="w-48 px-4">Sender</Table.Head>
-                          <Table.Head scope="col" className="w-36 px-4" title="Messages not yet sent can still be edited for this lead">Messages</Table.Head>
-                          <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">Actions</span></Table.Head>
+                          <Table.Head scope="col" className="px-4">{t("colLead")}</Table.Head>
+                          <Table.Head scope="col" className="w-36 px-4">{t("colStatus")}</Table.Head>
+                          <Table.Head scope="col" className="w-48 px-4">{t("colSender")}</Table.Head>
+                          <Table.Head scope="col" className="w-36 px-4" title={t("colMessagesTitle")}>{t("colMessages")}</Table.Head>
+                          <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">{t("colActions")}</span></Table.Head>
                         </Table.Row>
                       </Table.Header>
                       <Table.Body spacing={4}>
@@ -563,7 +585,7 @@ export function CampaignLeadsTab({
                                 >
                                   <Table.Cell className="h-14 px-4" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                                     <Checkbox.Root
-                                      aria-label={`Select ${displayName}`}
+                                      aria-label={t("selectLead", { name: displayName })}
                                       checked={selected}
                                       onCheckedChange={(checked) => {
                                         const on = checked === true;
@@ -583,8 +605,8 @@ export function CampaignLeadsTab({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={(e) => e.stopPropagation()}
-                                            aria-label={`Open ${displayName} on LinkedIn`}
-                                            title="Open on LinkedIn"
+                                            aria-label={t("openLeadOnLinkedIn", { name: displayName })}
+                                            title={t("openOnLinkedIn")}
                                             className="shrink-0 rounded text-text-soft-400 outline-none transition hover:text-text-strong-950 focus-visible:ring-2 focus-visible:ring-primary-base"
                                           >
                                             <RiExternalLinkLine className="size-3.5" />
@@ -601,11 +623,10 @@ export function CampaignLeadsTab({
                                                 variant="lighter"
                                                 color="orange"
                                                 className="max-w-56 shrink-0"
-                                                title={`Also in: ${lead.alsoInCampaigns.map((c) => c.name).join(", ")}`}
+                                                title={t("alsoInTitle", { names: lead.alsoInCampaigns.map((c) => c.name).join(", ") })}
                                               >
                                                 <span className="truncate">
-                                                  Also in {lead.alsoInCampaigns[0]!.name}
-                                                  {lead.alsoInCampaigns.length > 1 ? ` +${lead.alsoInCampaigns.length - 1}` : ""}
+                                                  {t("alsoInBadge", { name: lead.alsoInCampaigns[0]!.name, more: lead.alsoInCampaigns.length - 1 })}
                                                 </span>
                                               </Badge.Root>
                                             )}
@@ -617,7 +638,7 @@ export function CampaignLeadsTab({
                                   <Table.Cell className="px-4">
                                     <Badge.Root size="medium" variant="lighter" color={status?.color ?? "gray"}>
                                       <Badge.Dot />
-                                      {status?.label ?? lead.status}
+                                      {statusLabel(lead.status, status?.label)}
                                     </Badge.Root>
                                   </Table.Cell>
                                   <Table.Cell className="px-4">
@@ -631,33 +652,33 @@ export function CampaignLeadsTab({
                                     {editableCount > 0 ? (
                                       <span className="inline-flex items-center gap-1 text-paragraph-sm text-text-sub-600">
                                         <RiPencilLine className="size-3.5 text-text-soft-400" />
-                                        {editableCount} editable
+                                        {t("editable", { count: editableCount })}
                                       </span>
                                     ) : (
-                                      <span className="text-paragraph-sm text-text-soft-400">All sent</span>
+                                      <span className="text-paragraph-sm text-text-soft-400">{t("allSent")}</span>
                                     )}
                                   </Table.Cell>
                                   <Table.Cell className="px-4" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                                     <div className="flex justify-end">
                                       <Dropdown.Root>
                                         <Dropdown.Trigger asChild>
-                                          <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={deletingId === lead.id} aria-label={`More actions for ${displayName}`}>
+                                          <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={deletingId === lead.id} aria-label={t("moreActions", { name: displayName })}>
                                             <Button.Icon as={deletingId === lead.id ? RiLoader4Line : RiMoreLine} className={cn(deletingId === lead.id && "animate-spin")} />
                                           </Button.Root>
                                         </Dropdown.Trigger>
                                         <Dropdown.Content>
                                           <Dropdown.Item onSelect={() => setSelectedLeadId(lead.id)}>
                                             <Dropdown.ItemIcon as={RiPencilLine} />
-                                            View and edit messages
+                                            {t("viewEdit")}
                                           </Dropdown.Item>
                                           <Dropdown.Item onSelect={() => window.open(`https://www.linkedin.com/in/${lead.linkedinUrl}`, "_blank", "noopener,noreferrer")}>
                                             <Dropdown.ItemIcon as={RiExternalLinkLine} />
-                                            Open on LinkedIn
+                                            {t("openOnLinkedIn")}
                                           </Dropdown.Item>
                                           <Dropdown.Separator />
                                           <Dropdown.Item destructive onSelect={() => void handleDeleteLead(lead)}>
                                             <Dropdown.ItemIcon as={RiDeleteBinLine} />
-                                            Remove lead
+                                            {t("removeLead")}
                                           </Dropdown.Item>
                                         </Dropdown.Content>
                                       </Dropdown.Root>
@@ -673,15 +694,15 @@ export function CampaignLeadsTab({
                   {pagination.pages > 1 && (
                     <div className="mt-2 flex items-center justify-between gap-3 border-t border-stroke-soft-200 px-1 pt-3">
                       <p className="text-paragraph-xs text-text-sub-600">
-                        Page {pagination.page} of {pagination.pages} · {pagination.total.toLocaleString("en-US")} lead{pagination.total !== 1 ? "s" : ""}
+                        {t("pageInfo", { page: pagination.page, pages: pagination.pages, total: pagination.total })}
                       </p>
                       <div className="flex gap-2">
                         <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={pagination.page <= 1 || loading} onClick={() => { clearSelection(); void fetchLeads(pagination.page - 1); }}>
                           <Button.Icon as={RiArrowLeftSLine} />
-                          Prev
+                          {t("prev")}
                         </Button.Root>
                         <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={pagination.page >= pagination.pages || loading} onClick={() => { clearSelection(); void fetchLeads(pagination.page + 1); }}>
-                          Next
+                          {t("next")}
                           <Button.Icon as={RiArrowRightSLine} />
                         </Button.Root>
                       </div>
@@ -717,12 +738,9 @@ export function CampaignLeadsTab({
             const created = Number(data.created ?? 0);
             const attached = Number(data.attached ?? 0);
             const failed = Number(data.failed ?? 0);
-            const parts = [`${created} imported`];
-            if (attached) parts.push(`${attached} existing linked`);
-            if (failed) parts.push(`${failed} failed`);
             setUploadResult({
               ok: true,
-              message: parts.join(", "),
+              message: t("importSummary", { created, attached, failed }),
               ...(typeof data.failedFileBase64 === "string" && typeof data.failedFileName === "string"
                 ? { failedFileBase64: data.failedFileBase64, failedFileName: data.failedFileName }
                 : {}),

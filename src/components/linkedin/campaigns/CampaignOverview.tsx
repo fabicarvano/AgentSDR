@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   RiChat1Line,
   RiCheckboxCircleLine,
@@ -20,7 +21,8 @@ import { KpiCell, KpiStrip } from "@/components/analytics/kit/KpiStrip";
 import { SeriesStats } from "@/components/analytics/kit/SeriesStats";
 import { seriesTotal, TimeSeriesChart, TimeSeriesTable, type SeriesKeys } from "@/components/analytics/kit/TimeSeriesChart";
 import { Skeleton } from "@/components/page/Skeletons";
-import { CHANNEL_META, formatCompact, formatPercent, MUTED, STATUS } from "@/components/analytics/theme";
+import { CHANNEL_META, MUTED, STATUS } from "@/components/analytics/theme";
+import { useAnalyticsFormat } from "@/components/analytics/useAnalyticsFormat";
 import type { CampaignFunnel } from "./metrics";
 
 /**
@@ -40,10 +42,12 @@ const LINKEDIN = CHANNEL_META.linkedin.color;
 export type ChartDay = { date: string; invitations: number; accepted: number };
 
 type ActivityKey = "invites" | "accepted";
-const ACTIVITY_KEYS: SeriesKeys<ActivityKey> = {
-  invites: { label: "Invitations sent", color: LINKEDIN },
-  accepted: { label: "Accepted", color: "#7d52f4" },
-};
+function activityKeys(t: ReturnType<typeof useTranslations<"linkedinCampaigns.overview">>): SeriesKeys<ActivityKey> {
+  return {
+    invites: { label: t("activityInvites"), color: LINKEDIN },
+    accepted: { label: t("activityAccepted"), color: "#7d52f4" },
+  };
+}
 
 /**
  * The chart-data route labels its seven days "Sep 24" (today last); the kit
@@ -60,10 +64,6 @@ function toSeries(days: ChartDay[]) {
   return { keys: ["invites", "accepted"] as const, points };
 }
 
-function pct(part: number, whole: number): string | undefined {
-  return whole > 0 ? formatPercent(part / whole) : undefined;
-}
-
 export function CampaignOverview({
   funnel: f,
   statusCounts: s,
@@ -74,50 +74,54 @@ export function CampaignOverview({
   /** null while the 7-day activity is loading. */
   chartData: ChartDay[] | null;
 }) {
+  const t = useTranslations("linkedinCampaigns.overview");
+  const fmt = useAnalyticsFormat();
+  const pct = (part: number, whole: number): string | undefined => (whole > 0 ? fmt.percent(part / whole) : undefined);
+  const ACTIVITY_KEYS = activityKeys(t);
   const series = toSeries(chartData ?? []);
   const activityStats = (Object.keys(ACTIVITY_KEYS) as ActivityKey[]).map((k) => ({
     label: ACTIVITY_KEYS[k].label,
     color: ACTIVITY_KEYS[k].color,
-    value: chartData ? formatCompact(seriesTotal(series, k)) : "—",
+    value: chartData ? fmt.compact(seriesTotal(series, k)) : "—",
   }));
 
   const leadStates: DonutItem[] = [
-    { key: "queued", label: "Not invited yet", value: f.queued, color: MUTED, icon: RiTimeLine },
-    { key: "awaiting", label: "Awaiting acceptance", value: f.awaiting, color: LINKEDIN, icon: RiSendPlaneLine },
-    { key: "inSequence", label: "In sequence", value: f.inSequence, color: "#e5930a", icon: RiLoader4Line },
-    { key: "completed", label: "Completed, no reply", value: f.completed, color: STATUS.good, icon: RiCheckboxCircleLine },
-    { key: "replied", label: "Replied", value: f.replied, color: "#7d52f4", icon: RiReplyLine },
-    { key: "failed", label: "Failed or cancelled", value: f.failed + f.cancelled, color: STATUS.critical, icon: RiErrorWarningLine },
+    { key: "queued", label: t("stateQueued"), value: f.queued, color: MUTED, icon: RiTimeLine },
+    { key: "awaiting", label: t("stateAwaiting"), value: f.awaiting, color: LINKEDIN, icon: RiSendPlaneLine },
+    { key: "inSequence", label: t("stateInSequence"), value: f.inSequence, color: "#e5930a", icon: RiLoader4Line },
+    { key: "completed", label: t("stateCompleted"), value: f.completed, color: STATUS.good, icon: RiCheckboxCircleLine },
+    { key: "replied", label: t("stateReplied"), value: f.replied, color: "#7d52f4", icon: RiReplyLine },
+    { key: "failed", label: t("stateFailed"), value: f.failed + f.cancelled, color: STATUS.critical, icon: RiErrorWarningLine },
   ];
 
   const n = (key: string) => s[key] ?? 0;
   const sequenceSteps: BarListItem[] = [
-    { key: "CONNECTED", label: "Connected, message not sent yet", value: n("CONNECTED") },
-    { key: "ACCEPT_MESSAGE_SENT", label: "Acceptance message sent", value: n("ACCEPT_MESSAGE_SENT") },
-    { key: "FOLLOW_UP_1_SENT", label: "Follow-up 1 sent", value: n("FOLLOW_UP_1_SENT") },
-    { key: "FOLLOW_UP_2_SENT", label: "Follow-up 2 sent", value: n("FOLLOW_UP_2_SENT") },
-    { key: "FOLLOW_UP_3_SENT", label: "Follow-up 3 sent", value: n("FOLLOW_UP_3_SENT") },
-    { key: "COMPLETED", label: "Sequence finished, no reply", value: n("COMPLETED") },
-    { key: "REPLIED", label: "Replied", value: n("REPLIED") },
+    { key: "CONNECTED", label: t("stepConnected"), value: n("CONNECTED") },
+    { key: "ACCEPT_MESSAGE_SENT", label: t("stepAcceptSent"), value: n("ACCEPT_MESSAGE_SENT") },
+    { key: "FOLLOW_UP_1_SENT", label: t("stepFollowUpSent", { number: 1 }), value: n("FOLLOW_UP_1_SENT") },
+    { key: "FOLLOW_UP_2_SENT", label: t("stepFollowUpSent", { number: 2 }), value: n("FOLLOW_UP_2_SENT") },
+    { key: "FOLLOW_UP_3_SENT", label: t("stepFollowUpSent", { number: 3 }), value: n("FOLLOW_UP_3_SENT") },
+    { key: "COMPLETED", label: t("stepCompleted"), value: n("COMPLETED") },
+    { key: "REPLIED", label: t("stepReplied"), value: n("REPLIED") },
   ];
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
       <KpiStrip className="lg:col-span-12" columns={5}>
-        <KpiCell icon={RiTeamLine} label="Leads" value={formatCompact(f.total)} context={f.queued > 0 ? `${formatCompact(f.queued)} not invited yet` : "Everyone has been invited"} />
-        <KpiCell icon={RiSendPlaneLine} label="Invited" value={formatCompact(f.invited)} context={pct(f.invited, f.total) ? `${pct(f.invited, f.total)} of leads` : undefined} hint="Leads sent a connection request, whatever happened next." />
-        <KpiCell icon={RiCheckDoubleLine} label="Accepted" value={formatCompact(f.accepted)} context={f.acceptanceRate !== null ? `${formatPercent(f.acceptanceRate)} acceptance rate` : undefined} hint="Leads who accepted the connection request. Acceptance rate is accepted ÷ invited." />
-        <KpiCell icon={RiChat1Line} label="Replied" value={formatCompact(f.replied)} context={f.replyRate !== null ? `${formatPercent(f.replyRate)} of accepted` : undefined} hint="Leads who replied. Reply rate is replied ÷ accepted, as on Analytics." />
-        <KpiCell icon={RiErrorWarningLine} label="Failed" value={formatCompact(f.failed)} context={f.cancelled > 0 ? `${formatCompact(f.cancelled)} cancelled` : f.failed > 0 ? "Invitations that could not be sent" : "None"} hint="Leads whose invitation could not be sent after every retry." />
+        <KpiCell icon={RiTeamLine} label={t("kpiLeads")} value={fmt.compact(f.total)} context={f.queued > 0 ? t("kpiLeadsQueued", { count: fmt.compact(f.queued) }) : t("kpiLeadsAllInvited")} />
+        <KpiCell icon={RiSendPlaneLine} label={t("kpiInvited")} value={fmt.compact(f.invited)} context={pct(f.invited, f.total) ? t("kpiInvitedContext", { rate: pct(f.invited, f.total)! }) : undefined} hint={t("kpiInvitedHint")} />
+        <KpiCell icon={RiCheckDoubleLine} label={t("kpiAccepted")} value={fmt.compact(f.accepted)} context={f.acceptanceRate !== null ? t("kpiAcceptedContext", { rate: fmt.percent(f.acceptanceRate) }) : undefined} hint={t("kpiAcceptedHint")} />
+        <KpiCell icon={RiChat1Line} label={t("kpiReplied")} value={fmt.compact(f.replied)} context={f.replyRate !== null ? t("kpiRepliedContext", { rate: fmt.percent(f.replyRate) }) : undefined} hint={t("kpiRepliedHint")} />
+        <KpiCell icon={RiErrorWarningLine} label={t("kpiFailed")} value={fmt.compact(f.failed)} context={f.cancelled > 0 ? t("kpiFailedCancelled", { count: f.cancelled }) : f.failed > 0 ? t("kpiFailedContext") : t("kpiFailedNone")} hint={t("kpiFailedHint")} />
       </KpiStrip>
 
       <ChartCard
         className="lg:col-span-8"
-        title="Activity"
-        description="Invitations sent and connections accepted per day, last 7 days."
+        title={t("activityTitle")}
+        description={t("activityDescription")}
         loading={chartData === null}
         legend={<SeriesStats items={activityStats} />}
-        table={<TimeSeriesTable series={series} keys={ACTIVITY_KEYS} bucket="day" caption="Invitations and accepts per day" />}
+        table={<TimeSeriesTable series={series} keys={ACTIVITY_KEYS} bucket="day" caption={t("activityCaption")} />}
       >
         {chartData === null ? (
           <Skeleton className="h-[260px] w-full rounded-xl" />
@@ -127,30 +131,30 @@ export function CampaignOverview({
       </ChartCard>
 
       <Frame className="self-start lg:col-span-4">
-        <FrameHeader title="Funnel" description="Invited → accepted → replied." />
+        <FrameHeader title={t("funnelTitle")} description={t("funnelDescription")} />
         <FramePanel>
           <FunnelChart
             stages={[
-              { key: "invited", label: "Invited", value: f.invited },
-              { key: "accepted", label: "Accepted", value: f.accepted },
-              { key: "replied", label: "Replied", value: f.replied },
+              { key: "invited", label: t("kpiInvited"), value: f.invited },
+              { key: "accepted", label: t("kpiAccepted"), value: f.accepted },
+              { key: "replied", label: t("kpiReplied"), value: f.replied },
             ]}
           />
         </FramePanel>
-        <FrameFooter>Every lead in this campaign, by how far it has got. All time.</FrameFooter>
+        <FrameFooter>{t("funnelFooter")}</FrameFooter>
       </Frame>
 
       <Frame className="lg:col-span-6">
-        <FrameHeader title="Where leads stand" description="Every lead in the campaign, by where it is now." />
+        <FrameHeader title={t("standTitle")} description={t("standDescription")} />
         <FramePanel>
-          <DonutChart items={leadStates} centerLabel="leads" emptyLabel="No leads yet" emptyDescription="Add leads to see where they stand." />
+          <DonutChart items={leadStates} centerLabel={t("donutCenter")} emptyLabel={t("donutEmptyLabel")} emptyDescription={t("donutEmptyDescription")} />
         </FramePanel>
       </Frame>
 
       <Frame className="lg:col-span-6">
-        <FrameHeader title="Sequence progress" description="Accepted leads, by the last step they were sent." />
+        <FrameHeader title={t("progressTitle")} description={t("progressDescription")} />
         <FramePanel>
-          <BarList items={f.accepted > 0 ? sequenceSteps : []} emptyLabel="No accepted connections yet." />
+          <BarList items={f.accepted > 0 ? sequenceSteps : []} emptyLabel={t("progressEmpty")} />
         </FramePanel>
       </Frame>
     </div>

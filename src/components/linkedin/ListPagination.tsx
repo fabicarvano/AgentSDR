@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
 import { PAGE_SIZE, totalPages } from "@/lib/linkedin/pagination";
 import { cn } from "@/utils/cn";
@@ -35,6 +36,9 @@ const item =
  * the page lives in the URL (`?page=n`).
  */
 export const ListPagination = ({ basePath, page, totalCount, className }: ListPaginationProps) => {
+  // Not a client component: next-intl's hooks also work in server components (this renders in server pages).
+  const t = useTranslations("linkedinMain.listPagination");
+  const format = useFormatter();
   if (totalCount === 0) return null;
   const pages = totalPages(totalCount);
   const from = (page - 1) * PAGE_SIZE + 1;
@@ -52,13 +56,13 @@ export const ListPagination = ({ basePath, page, totalCount, className }: ListPa
     );
 
   return (
-    <nav aria-label="Pagination" className={cn("flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 pb-1 pt-2.5", className)}>
+    <nav aria-label={t("label")} className={cn("flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 pb-1 pt-2.5", className)}>
       <p className="text-paragraph-sm tabular-nums text-text-sub-600">
-        {from.toLocaleString("en-US")}–{to.toLocaleString("en-US")} of {totalCount.toLocaleString("en-US")}
+        {t("range", { from: format.number(from), to: format.number(to), total: format.number(totalCount) })}
       </p>
       {pages > 1 && (
         <div className="flex items-center gap-1">
-          {nav(page > 1 ? page - 1 : null, "Previous page", RiArrowLeftSLine)}
+          {nav(page > 1 ? page - 1 : null, t("previous"), RiArrowLeftSLine)}
           <div className="hidden items-center gap-1 sm:flex">
             {pageWindow(page, pages).map((p, i) =>
               p === "gap" ? (
@@ -67,11 +71,11 @@ export const ListPagination = ({ basePath, page, totalCount, className }: ListPa
                 </span>
               ) : p === page ? (
                 <span key={p} aria-current="page" className={cn(item, "bg-bg-white-0 text-text-strong-950 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200")}>
-                  {p.toLocaleString("en-US")}
+                  {format.number(p)}
                 </span>
               ) : (
                 <Link key={p} href={pageHref(basePath, p)} className={cn(item, "text-text-sub-600 hover:bg-bg-white-0 hover:text-text-strong-950")}>
-                  {p.toLocaleString("en-US")}
+                  {format.number(p)}
                 </Link>
               ),
             )}
@@ -79,7 +83,7 @@ export const ListPagination = ({ basePath, page, totalCount, className }: ListPa
           <span className="px-2 text-paragraph-sm tabular-nums text-text-sub-600 sm:hidden">
             {page} / {pages}
           </span>
-          {nav(page < pages ? page + 1 : null, "Next page", RiArrowRightSLine)}
+          {nav(page < pages ? page + 1 : null, t("next"), RiArrowRightSLine)}
         </div>
       )}
     </nav>

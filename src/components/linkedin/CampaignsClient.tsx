@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   RiAddLine,
@@ -26,7 +27,8 @@ import * as SegmentedControl from "@/components/alignui/segmented-control";
 import * as Table from "@/components/alignui/table";
 import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import { KpiCell, KpiStrip } from "@/components/analytics/kit/KpiStrip";
-import { CHANNEL_META, formatCompact, formatPercent } from "@/components/analytics/theme";
+import { CHANNEL_META } from "@/components/analytics/theme";
+import { useAnalyticsFormat } from "@/components/analytics/useAnalyticsFormat";
 import { useDialogs } from "@/components/DialogProvider";
 import { LinkedInAccountAvatars } from "@/components/linkedin/LinkedInAccountTag";
 import { EditCampaignModal } from "@/components/linkedin/campaigns/EditCampaignModal";
@@ -54,20 +56,18 @@ const LINKEDIN = CHANNEL_META.linkedin.color;
 
 const FILTERS = ["ALL", "ACTIVE", "PAUSED"] as const;
 type Filter = (typeof FILTERS)[number];
-const FILTER_LABEL: Record<Filter, string> = { ALL: "All", ACTIVE: "Active", PAUSED: "Paused" };
+const FILTER_LABEL_KEY = { ALL: "filterAll", ACTIVE: "filterActive", PAUSED: "filterPaused" } as const satisfies Record<Filter, string>;
 
 const num = "text-paragraph-sm tabular-nums text-text-strong-950";
 
-function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 /** A count, its rate, and a slim bar scaled to the column's best rate so rows compare. */
-function CountRate({ count, rate, max, label }: { count: number; rate: number | null; max: number; label: string }) {
+function CountRate({ count, rate, max, kind }: { count: number; rate: number | null; max: number; kind: "accepted" | "replied" }) {
+  const t = useTranslations("linkedinCampaigns.list");
+  const fmt = useAnalyticsFormat();
   return (
-    <div className="flex items-center gap-3" title={`${count.toLocaleString("en-US")} ${label} · ${formatPercent(rate)}`}>
-      <span className={cn("w-10 text-right", num)}>{count.toLocaleString("en-US")}</span>
-      <span className="w-11 text-paragraph-xs tabular-nums text-text-sub-600">{formatPercent(rate)}</span>
+    <div className="flex items-center gap-3" title={t(kind === "accepted" ? "countRateAccepted" : "countRateReplied", { count, rate: fmt.percent(rate) })}>
+      <span className={cn("w-10 text-right", num)}>{fmt.number(count)}</span>
+      <span className="w-11 text-paragraph-xs tabular-nums text-text-sub-600">{fmt.percent(rate)}</span>
       <span aria-hidden="true" className="h-1.5 w-12 rounded-full bg-bg-weak-50">
         <span className="block h-full rounded-full" style={{ width: `${max > 0 ? ((rate ?? 0) / max) * 100 : 0}%`, backgroundColor: LINKEDIN }} />
       </span>
@@ -88,26 +88,27 @@ function RowMenu({
   onDelete: () => void;
   onEdit: () => void;
 }) {
+  const t = useTranslations("linkedinCampaigns.list");
   return (
     <Dropdown.Root>
       <Dropdown.Trigger asChild>
-        <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={`More actions for ${campaign.name}`}>
+        <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={t("moreActions", { name: campaign.name })}>
           <Button.Icon as={busy ? RiLoader4Line : RiMoreLine} className={cn(busy && "animate-spin")} />
         </Button.Root>
       </Dropdown.Trigger>
       <Dropdown.Content>
         <Dropdown.Item onSelect={onEdit}>
           <Dropdown.ItemIcon as={RiPencilLine} />
-          Edit campaign
+          {t("editCampaign")}
         </Dropdown.Item>
         <Dropdown.Item onSelect={onToggle}>
           <Dropdown.ItemIcon as={campaign.status === "ACTIVE" ? RiPauseCircleLine : RiPlayCircleLine} />
-          {campaign.status === "ACTIVE" ? "Pause campaign" : "Resume campaign"}
+          {campaign.status === "ACTIVE" ? t("pauseCampaign") : t("resumeCampaign")}
         </Dropdown.Item>
         <Dropdown.Separator />
         <Dropdown.Item destructive onSelect={onDelete}>
           <Dropdown.ItemIcon as={RiDeleteBinLine} />
-          Delete campaign
+          {t("deleteCampaign")}
         </Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
@@ -121,6 +122,9 @@ export function CampaignsClient({
   campaigns: CampaignRow[];
   accounts: LinkedInAccount[];
 }) {
+  const t = useTranslations("linkedinCampaigns.list");
+  const format = useFormatter();
+  const fmt = useAnalyticsFormat();
   const dialogs = useDialogs();
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initial);
@@ -189,9 +193,9 @@ export function CampaignsClient({
   const handleDelete = async (id: string) => {
     if (deletingId) return;
     const ok = await dialogs.confirm({
-      title: "Delete campaign?",
-      description: "All of its leads, and any connection or message history tied to them, will be permanently deleted. This cannot be undone.",
-      confirmLabel: "Delete campaign",
+      title: t("deleteTitle"),
+      description: t("deleteDescription"),
+      confirmLabel: t("deleteCampaign"),
       variant: "error",
     });
     if (!ok) return;
@@ -199,13 +203,13 @@ export function CampaignsClient({
     try {
       const response = await fetch(`/api/linkedin/campaigns/${id}`, { method: "DELETE" });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? "Could not delete campaign");
+      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("deleteFailed"));
       setCampaigns((prev) => prev.filter((c) => c.id !== id));
       router.refresh();
     } catch (cause) {
       await dialogs.alert({
-        title: "Could not delete campaign",
-        description: cause instanceof Error ? cause.message : "Something went wrong. Please try again.",
+        title: t("deleteFailed"),
+        description: cause instanceof Error ? cause.message : t("genericError"),
         variant: "error",
       });
     } finally {
@@ -216,49 +220,49 @@ export function CampaignsClient({
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <PageHeader
-        title="LinkedIn campaigns"
-        description="Connection requests and follow-ups from your LinkedIn accounts, and how each campaign is landing."
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button.Root variant="primary" mode="filled" size="small" asChild>
             <Link href="/linkedin/campaigns/new">
               <Button.Icon as={RiAddLine} />
-              Start new campaign
+              {t("startNew")}
             </Link>
           </Button.Root>
         }
       />
 
       <KpiStrip className="mt-6" columns={5}>
-        <KpiCell icon={RiLinkedinBoxLine} label="Active campaigns" value={formatCompact(counts.ACTIVE)} context={`${counts.PAUSED} paused`} />
-        <KpiCell icon={RiTeamLine} label="Leads" value={formatCompact(totals.leads)} context={`${formatCompact(totals.queued)} not yet invited`} />
-        <KpiCell icon={RiSendPlaneLine} label="Invited" value={formatCompact(totals.invited)} context={totals.leads > 0 ? `${formatPercent(totals.invited / totals.leads)} of leads` : undefined} hint="Leads who have been sent a connection request, whatever happened next. All time." />
+        <KpiCell icon={RiLinkedinBoxLine} label={t("kpiActive")} value={fmt.compact(counts.ACTIVE)} context={t("kpiActiveContext", { count: counts.PAUSED })} />
+        <KpiCell icon={RiTeamLine} label={t("kpiLeads")} value={fmt.compact(totals.leads)} context={t("kpiLeadsContext", { count: fmt.compact(totals.queued) })} />
+        <KpiCell icon={RiSendPlaneLine} label={t("kpiInvited")} value={fmt.compact(totals.invited)} context={totals.leads > 0 ? t("kpiInvitedContext", { rate: fmt.percent(totals.invited / totals.leads) }) : undefined} hint={t("kpiInvitedHint")} />
         <KpiCell
           icon={RiCheckDoubleLine}
-          label="Acceptance rate"
-          value={formatPercent(totals.invited > 0 ? totals.accepted / totals.invited : null)}
-          context={`${formatCompact(totals.accepted)} of ${formatCompact(totals.invited)} accepted`}
-          hint="Accepted divided by invited, across every campaign."
+          label={t("kpiAcceptance")}
+          value={fmt.percent(totals.invited > 0 ? totals.accepted / totals.invited : null)}
+          context={t("kpiAcceptanceContext", { accepted: fmt.compact(totals.accepted), invited: fmt.compact(totals.invited) })}
+          hint={t("kpiAcceptanceHint")}
         />
         <KpiCell
           icon={RiChat1Line}
-          label="Replies"
-          value={formatCompact(totals.replied)}
-          context={totals.accepted > 0 ? `${formatPercent(totals.replied / totals.accepted)} of accepted` : undefined}
-          hint="Leads who replied. Reply rate is replied divided by accepted, as on Analytics."
+          label={t("kpiReplies")}
+          value={fmt.compact(totals.replied)}
+          context={totals.accepted > 0 ? t("kpiRepliesContext", { rate: fmt.percent(totals.replied / totals.accepted) }) : undefined}
+          hint={t("kpiRepliesHint")}
         />
       </KpiStrip>
 
       <Frame className="mt-5">
         <FrameHeader
-          title="Campaigns"
-          description="All time. Select a campaign to see its activity, leads and sequence."
+          title={t("frameTitle")}
+          description={t("frameDescription")}
           actions={
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
               <SegmentedControl.Root value={filter} onValueChange={(v) => setFilter(v as Filter)}>
                 <SegmentedControl.List className="w-auto">
                   {FILTERS.map((f) => (
                     <SegmentedControl.Trigger key={f} value={f} className="gap-1.5 px-3">
-                      {FILTER_LABEL[f]}
+                      {t(FILTER_LABEL_KEY[f])}
                       <span className="tabular-nums text-text-soft-400">{counts[f]}</span>
                     </SegmentedControl.Trigger>
                   ))}
@@ -267,7 +271,7 @@ export function CampaignsClient({
               <Input.Root size="small" className="w-56">
                 <Input.Wrapper>
                   <Input.Icon as={RiSearchLine} />
-                  <Input.Input type="search" aria-label="Search campaigns" placeholder="Search campaigns…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <Input.Input type="search" aria-label={t("searchLabel")} placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
             </div>
@@ -278,13 +282,13 @@ export function CampaignsClient({
             campaigns.length === 0 ? (
               <EmptyState
                 icon={RiLinkedinBoxLine}
-                title="No LinkedIn campaigns yet"
-                description="Start one to send connection requests and follow-ups from your LinkedIn accounts."
+                title={t("emptyTitle")}
+                description={t("emptyDescription")}
                 action={
                   <Button.Root variant="primary" mode="filled" size="small" asChild>
                     <Link href="/linkedin/campaigns/new">
                       <Button.Icon as={RiAddLine} />
-                      Start new campaign
+                      {t("startNew")}
                     </Link>
                   </Button.Root>
                 }
@@ -292,11 +296,11 @@ export function CampaignsClient({
             ) : (
               <EmptyState
                 icon={RiSearchLine}
-                title="No campaigns match"
-                description="Try another status or search."
+                title={t("noMatchTitle")}
+                description={t("noMatchDescription")}
                 action={
                   <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => { setSearch(""); setFilter("ALL"); }}>
-                    Clear filters
+                    {t("clearFilters")}
                   </Button.Root>
                 }
               />
@@ -305,14 +309,14 @@ export function CampaignsClient({
             <Table.Root className="min-w-[1080px] [&>table]:table-fixed">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Campaign</Table.Head>
-                  <Table.Head scope="col" className="w-24 px-4">Senders</Table.Head>
-                  <Table.Head scope="col" className="w-20 px-4 text-right">Leads</Table.Head>
-                  <Table.Head scope="col" className="w-24 whitespace-nowrap px-4 text-right" title="Leads not yet sent a connection request">Not invited</Table.Head>
-                  <Table.Head scope="col" className="w-20 px-4 text-right" title="Leads sent a connection request">Invited</Table.Head>
-                  <Table.Head scope="col" className="w-48 px-4" title="Accepted connections, and accepted ÷ invited">Accepted</Table.Head>
-                  <Table.Head scope="col" className="w-48 px-4" title="Leads who replied, and replied ÷ accepted">Replied</Table.Head>
-                  <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">Actions</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("colCampaign")}</Table.Head>
+                  <Table.Head scope="col" className="w-24 px-4">{t("colSenders")}</Table.Head>
+                  <Table.Head scope="col" className="w-20 px-4 text-right">{t("colLeads")}</Table.Head>
+                  <Table.Head scope="col" className="w-24 whitespace-nowrap px-4 text-right" title={t("colNotInvitedTitle")}>{t("colNotInvited")}</Table.Head>
+                  <Table.Head scope="col" className="w-20 px-4 text-right" title={t("colInvitedTitle")}>{t("colInvited")}</Table.Head>
+                  <Table.Head scope="col" className="w-48 px-4" title={t("colAcceptedTitle")}>{t("colAccepted")}</Table.Head>
+                  <Table.Head scope="col" className="w-48 px-4" title={t("colRepliedTitle")}>{t("colReplied")}</Table.Head>
+                  <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">{t("colActions")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>
@@ -331,7 +335,7 @@ export function CampaignsClient({
                     >
                       <Table.Cell className="h-16 px-4">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="shrink-0" title={f.progress === null ? "No leads" : f.queued === 0 ? "Every lead has been invited" : `${Math.round(f.progress * 100)}% of leads invited`}>
+                          <div className="shrink-0" title={f.progress === null ? t("progressNoLeads") : f.queued === 0 ? t("progressAll") : t("progressPartial", { percent: Math.round(f.progress * 100) })}>
                             <CampaignProgressRing progress={f.progress} complete={f.total > 0 && f.queued === 0} />
                           </div>
                           <div className="min-w-0">
@@ -339,12 +343,12 @@ export function CampaignsClient({
                               <span className="truncate text-label-sm text-text-strong-950" title={c.name}>{c.name}</span>
                               <Badge.Root size="small" variant="lighter" color={status.color} className="shrink-0">
                                 <Badge.Dot />
-                                {status.label}
+                                {c.status === "ACTIVE" ? t("statusActive") : t("statusPaused")}
                               </Badge.Root>
-                              {deleting && <span className="shrink-0 text-paragraph-xs text-error-base">Deleting…</span>}
+                              {deleting && <span className="shrink-0 text-paragraph-xs text-error-base">{t("deleting")}</span>}
                             </div>
                             <p className="mt-0.5 max-w-md truncate text-paragraph-xs text-text-sub-600" title={c.description ?? undefined} suppressHydrationWarning>
-                              {c.type === "PERSONAL" ? "Personal · " : ""}Created {shortDate(c.createdAt)}
+                              {t(c.type === "PERSONAL" ? "createdOnPersonal" : "createdOn", { date: format.dateTime(new Date(c.createdAt), { month: "short", day: "numeric" }) })}
                               {c.description ? ` · ${c.description}` : ""}
                             </p>
                           </div>
@@ -353,14 +357,14 @@ export function CampaignsClient({
                       <Table.Cell className="px-4">
                         <LinkedInAccountAvatars accounts={c.accounts} maxVisible={2} />
                       </Table.Cell>
-                      <Table.Cell className={cn("px-4 text-right", num)}>{f.total.toLocaleString("en-US")}</Table.Cell>
-                      <Table.Cell className={cn("px-4 text-right", f.queued > 0 ? num : "text-paragraph-sm tabular-nums text-text-soft-400")}>{f.queued.toLocaleString("en-US")}</Table.Cell>
-                      <Table.Cell className={cn("px-4 text-right", num)}>{f.invited.toLocaleString("en-US")}</Table.Cell>
+                      <Table.Cell className={cn("px-4 text-right", num)}>{fmt.number(f.total)}</Table.Cell>
+                      <Table.Cell className={cn("px-4 text-right", f.queued > 0 ? num : "text-paragraph-sm tabular-nums text-text-soft-400")}>{fmt.number(f.queued)}</Table.Cell>
+                      <Table.Cell className={cn("px-4 text-right", num)}>{fmt.number(f.invited)}</Table.Cell>
                       <Table.Cell className="px-4">
-                        <CountRate count={f.accepted} rate={f.acceptanceRate} max={maxAccept} label="accepted" />
+                        <CountRate count={f.accepted} rate={f.acceptanceRate} max={maxAccept} kind="accepted" />
                       </Table.Cell>
                       <Table.Cell className="px-4">
-                        <CountRate count={f.replied} rate={f.replyRate} max={maxReply} label="replied" />
+                        <CountRate count={f.replied} rate={f.replyRate} max={maxReply} kind="replied" />
                       </Table.Cell>
                       <Table.Cell className="px-4" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                         <div className="flex justify-end">

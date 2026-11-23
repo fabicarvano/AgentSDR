@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export type LinkedInAccountRef = {
   username: string;
@@ -112,7 +113,8 @@ export function LinkedInAccountAvatars({
   accounts: (LinkedInAccountRef & { id?: string })[];
   maxVisible?: number;
 }) {
-  if (accounts.length === 0) return <span className="text-paragraph-xs text-text-soft-400">No senders</span>;
+  const t = useTranslations("linkedinMain.accountTag");
+  if (accounts.length === 0) return <span className="text-paragraph-xs text-text-soft-400">{t("noSenders")}</span>;
 
   const visible = accounts.slice(0, maxVisible);
   const extra = accounts.length - visible.length;

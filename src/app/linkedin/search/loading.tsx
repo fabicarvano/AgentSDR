@@ -1,10 +1,12 @@
+import { useTranslations } from "next-intl";
 import { PageHeaderSkeleton, Skeleton, TableSkeleton } from "@/components/page/Skeletons";
 
 // The LinkedIn layout already pads the page, so this composes the skeleton
 // pieces rather than using ListPageSkeleton (which adds PageContainer).
 export default function SearchLoading() {
+  const t = useTranslations("linkedinSearch.loading");
   return (
-    <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-[1440px] space-y-6">
+    <div aria-busy="true" aria-label={t("label")} className="mx-auto w-full max-w-[1440px] space-y-6">
       <PageHeaderSkeleton />
       <div className="rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
         <div className="space-y-1.5 px-4 pb-3 pt-3">

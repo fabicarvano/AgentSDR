@@ -1,0 +1,273 @@
+{
+  "linkedinSearch": {
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "pausedQuota": "Paused — quota",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "noUrls": "No URLs"
+    },
+    "network": {
+      "first": "1st",
+      "second": "2nd",
+      "third": "3rd",
+      "outOfNetwork": "Out of network"
+    },
+    "loading": {
+      "label": "Loading"
+    },
+    "picker": {
+      "atLimit": "At limit · {used, number}/{limit, number}",
+      "quota": "{used, number}/{limit, number}",
+      "selectedOf": "{selected, number} of {total, number} selected",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "noAccounts": "No connected accounts",
+      "orderHint": "Order — the first account is used first",
+      "noneSelected": "No accounts selected",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "notUsed": "Not used"
+    },
+    "batches": {
+      "title": "Search",
+      "description": "Run LinkedIn searches in batches, then export the leads.",
+      "newSearch": "New search",
+      "progressFailed": "{failed, number} of {total, number} URLs failed",
+      "progressDone": "{done, number} of {total, number} URLs done",
+      "rowMenu": {
+        "actionsFor": "More actions for {name}",
+        "open": "Open",
+        "delete": "Delete search"
+      },
+      "capacity": {
+        "title": "Search capacity today",
+        "noAccountsDescription": "Searches run on your connected LinkedIn accounts.",
+        "summary": "{used, number} of {total, number} leads used across {accounts, plural, one {# account} other {# accounts}}. Each account can pull {perAccount, number} a day; it resets with the daily limits job.",
+        "summaryAtLimit": "{used, number} of {total, number} leads used across {accounts, plural, one {# account} other {# accounts}} · {full, number} at limit. Each account can pull {perAccount, number} a day; it resets with the daily limits job.",
+        "emptyTitle": "No connected LinkedIn accounts",
+        "emptyDescription": "Connect an account to run searches with it.",
+        "accountsLink": "LinkedIn accounts"
+      },
+      "list": {
+        "title": "Searches",
+        "emptyDescription": "Each search is a set of LinkedIn search URLs and the leads they found.",
+        "summary": "{count, plural, one {# search} other {# searches}}. Select one to run it and see its leads.",
+        "summaryLive": "{count, plural, one {# search} other {# searches}} · updating live while one runs. Select one to run it and see its leads.",
+        "searchLabel": "Search searches by name",
+        "searchPlaceholder": "Search by name…",
+        "noneTitle": "No searches yet",
+        "noneDescription": "Start a search to pull leads from a LinkedIn search URL, or from a sheet of them.",
+        "noMatchTitle": "No searches match",
+        "noMatchDescription": "Nothing is named like “{term}”.",
+        "clearSearch": "Clear search"
+      },
+      "table": {
+        "search": "Search",
+        "status": "Status",
+        "urls": "URLs",
+        "leads": "Leads",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "row": {
+        "deleting": "Deleting…",
+        "kindSingle": "Single search URL",
+        "kindCsv": "CSV of search URLs"
+      },
+      "delete": {
+        "confirmTitle": "Delete this search?",
+        "confirmDescription": "Its URLs and any leads it found will be permanently deleted. This cannot be undone.",
+        "confirm": "Delete search",
+        "errorTitle": "Could not delete search",
+        "errorFallback": "Something went wrong. Please try again."
+      },
+      "dialog": {
+        "titleStart": "New search",
+        "titleSingle": "New single search",
+        "titleCsv": "New CSV search",
+        "descriptionStart": "Search one LinkedIn URL, or upload a sheet of them.",
+        "descriptionSingle": "The search opens with its URL queued, ready for you to run.",
+        "descriptionCsv": "The search opens with every URL queued, ready for you to run.",
+        "singleTitle": "Single search",
+        "singleBody": "One LinkedIn search URL, run with one account.",
+        "csvTitle": "CSV search",
+        "csvBody": "A sheet of Company Name + Search URL, run with several accounts.",
+        "name": "Name",
+        "namePlaceholderSingle": "e.g. VP Sales at Acme",
+        "namePlaceholderCsv": "e.g. Q3 target account list",
+        "searchUrl": "Search URL",
+        "companyOptional": "Company name (optional)",
+        "account": "Account",
+        "accounts": "Accounts",
+        "sheet": "Sheet (Company Name + Search URL)",
+        "chooseFile": "Choose file",
+        "downloadTemplate": "Download template",
+        "errorSingleRequired": "Name, search URL and an account are required",
+        "errorNameRequired": "Name is required",
+        "errorChooseFile": "Choose a file to upload",
+        "errorCreateFailed": "Failed to create search",
+        "errorNetwork": "Network error",
+        "back": "Back",
+        "cancel": "Cancel",
+        "create": "Create search"
+      }
+    },
+    "detail": {
+      "backToSearches": "Searches",
+      "kindSingle": "Single search URL",
+      "kindCsv": "CSV of search URLs",
+      "subtitle": "{kind} · Created {date}",
+      "run": "Run",
+      "runSelected": "Run selected ({count, number})",
+      "runTitleSelected": "Run the selected URLs",
+      "runTitleAll": "Run every queued URL in this search",
+      "addUrls": "Add URLs",
+      "exportLeads": "Export leads",
+      "exportTitle": "Download every lead in this search",
+      "moreActions": "More actions for this search",
+      "deleteSearch": "Delete search",
+      "notice": {
+        "waiting": "Another search is running — this one starts when you press Run after it finishes.",
+        "alreadyRunning": "Another search is already running — press Run again once it finishes.",
+        "runFailed": "Failed to start run"
+      },
+      "stats": {
+        "searchUrls": "Search URLs",
+        "searched": "Searched",
+        "leadsFound": "Leads found",
+        "accountsUsed": "Accounts used",
+        "ofTotal": "{done, number} of {total, number}",
+        "failedHint": "{count, number} failed",
+        "beforeDedupe": "{count, number} results before de-duplication"
+      },
+      "tabs": {
+        "label": "Search sections",
+        "urls": "Search URLs",
+        "leads": "Leads"
+      },
+      "sort": {
+        "added": "Date added",
+        "leadsDesc": "Most leads",
+        "leadsAsc": "Fewest leads",
+        "company": "Company A–Z"
+      },
+      "filters": {
+        "account": "Account",
+        "status": "Status",
+        "sort": "Sort",
+        "all": "All",
+        "allAccounts": "All accounts",
+        "allStatuses": "All statuses",
+        "unknown": "unknown",
+        "clear": "Clear filters"
+      },
+      "selection": {
+        "region": "Selected rows",
+        "selected": "{count, number} selected",
+        "clear": "Clear",
+        "export": "Export",
+        "rerun": "Re-run",
+        "rerunTitle": "Delete these URLs' leads and search them again",
+        "delete": "Delete"
+      },
+      "urls": {
+        "title": "Search URLs",
+        "matchCount": "{shown, number} of {total, number} URLs match",
+        "hint": "Each URL is searched by one account; tick rows to run, re-run, export or delete them.",
+        "searchLabel": "Search company or URL",
+        "searchPlaceholder": "Search company or URL…",
+        "noneTitle": "No search URLs yet",
+        "noneDescription": "Add LinkedIn search URLs to this search, then run it.",
+        "noMatchTitle": "No URLs match these filters",
+        "noMatchDescription": "Try another account, status or search.",
+        "selectAll": "Select all visible search URLs",
+        "selectRow": "Select {name}",
+        "companyAndUrl": "Company and URL",
+        "status": "Status",
+        "account": "Account",
+        "leads": "Leads",
+        "cancelColumn": "Cancel",
+        "noCompany": "No company",
+        "cancelTitle": "Cancel this URL",
+        "cancelAria": "Cancel {name}",
+        "cancelFallback": "this URL"
+      },
+      "deleteUrls": {
+        "confirmTitle": "Delete {count, plural, one {# search URL} other {# search URLs}}?",
+        "confirmDescription": "The leads found by these URLs are deleted too. A URL that is still running is cancelled instead of deleted. This cannot be undone.",
+        "confirm": "Delete",
+        "errorTitle": "Could not delete search URLs",
+        "cancelledNote": "{count, plural, one {# URL was cancelled because it was still running.} other {# URLs were cancelled because they were still running.}}"
+      },
+      "rerun": {
+        "confirmTitle": "Re-run {count, plural, one {# search URL} other {# search URLs}}?",
+        "confirmDescription": "The leads already found by these URLs are deleted first, then they are searched again from scratch. A URL that is still running is left alone.",
+        "confirm": "Delete leads and re-run",
+        "errorTitle": "Could not re-run these URLs",
+        "queuedAgain": "{count, plural, one {# URL queued again} other {# URLs queued again}} ({leads, plural, one {# lead} other {# leads}} cleared).",
+        "skipped": "{count, plural, one {# left alone because it is still running.} other {# left alone because they are still running.}}",
+        "anotherRunning": "Another search is running — press Run once it finishes."
+      },
+      "leads": {
+        "title": "Leads",
+        "matchCount": "{shown, number} of {total, number} leads match",
+        "hint": "Everyone these URLs found, de-duplicated. Tick rows to export or delete them.",
+        "searchLabel": "Search leads",
+        "searchPlaceholder": "Search name, headline, company…",
+        "selectionNote": "across every page of this filter",
+        "noneTitle": "No leads yet",
+        "noneDescription": "Run this search to pull leads from its URLs.",
+        "noMatchTitle": "No leads match this search",
+        "noMatchDescription": "Try a name, headline, company or location.",
+        "clearSearch": "Clear search",
+        "selectAll": "Select all leads matching the search",
+        "selectRow": "Select {name}",
+        "lead": "Lead",
+        "company": "Company",
+        "location": "Location",
+        "network": "Network",
+        "followers": "Followers",
+        "unnamed": "Unnamed lead",
+        "noHeadline": "No headline"
+      },
+      "deleteLeads": {
+        "confirmTitle": "Delete {count, plural, one {# lead} other {# leads}}?",
+        "confirmDescription": "These leads are removed from this search. Running the search again can find them again.",
+        "confirm": "Delete",
+        "errorTitle": "Could not delete leads"
+      },
+      "pagination": {
+        "label": "Pagination",
+        "range": "{start, number}–{end, number} of {total, number}",
+        "previous": "Previous page",
+        "next": "Next page",
+        "pageOf": "Page {page, number} of {pages, number}"
+      },
+      "runDialog": {
+        "title": "Run with which accounts?",
+        "descriptionSelected": "Running the {count, plural, one {# selected URL that is} other {# selected URLs that are}} still queued. Only the accounts checked here are used, in the order you arrange them — the first one is used until it hits its daily limit, then the next, and they all search in parallel.",
+        "descriptionAll": "Running every queued URL in this search. Only the accounts checked here are used, in the order you arrange them — the first one is used until it hits its daily limit, then the next, and they all search in parallel.",
+        "cancel": "Cancel",
+        "submit": "Run with {count, plural, one {# account} other {# accounts}}"
+      },
+      "addDialog": {
+        "title": "Add search URLs",
+        "description": "They join this search queued, ready for the next run.",
+        "urlsLabel": "Search URLs, one per line",
+        "companyLabel": "Company name (optional, applies to every URL above)",
+        "errorNone": "Add at least one URL",
+        "errorFailed": "Failed to add URLs",
+        "errorNetwork": "Network error",
+        "cancel": "Cancel",
+        "submit": "Add URLs"
+      },
+      "copy": {
+        "copied": "Copied",
+        "copyUrl": "Copy URL"
+      }
+    }
+  }
+}

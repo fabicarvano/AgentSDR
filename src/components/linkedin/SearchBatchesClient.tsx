@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowLeftSLine,
@@ -40,64 +41,51 @@ import {
 import { cn } from "@/utils/cn";
 import type { SearchBatchSummary } from "@/lib/linkedin/searchBatches";
 import type { SearchQueryStatus } from "@/lib/linkedin/schema";
+import { STATUS_META, type BadgeColor, type StatusLabelKey } from "./searchStatus";
 
 export type SearchAccount = SearchPickerAccount & { profilePictureUrl: string | null };
 
-type BadgeColor = "gray" | "blue" | "orange" | "red" | "green" | "yellow" | "purple" | "sky" | "pink" | "teal";
-
-const STATUS_META: Record<SearchQueryStatus, { label: string; color: BadgeColor }> = {
-  QUEUED: { label: "Queued", color: "gray" },
-  RUNNING: { label: "Running", color: "blue" },
-  PAUSED_LIMIT: { label: "Paused — quota", color: "orange" },
-  COMPLETED: { label: "Completed", color: "green" },
-  FAILED: { label: "Failed", color: "red" },
-  CANCELLED: { label: "Cancelled", color: "gray" },
-};
-
-function rollupStatus(counts: Partial<Record<SearchQueryStatus, number>>): { label: string; color: BadgeColor } {
+function rollupStatus(counts: Partial<Record<SearchQueryStatus, number>>): { labelKey: StatusLabelKey; color: BadgeColor } {
   if ((counts.RUNNING ?? 0) > 0) return STATUS_META.RUNNING;
   if ((counts.QUEUED ?? 0) > 0) return STATUS_META.QUEUED;
   if ((counts.PAUSED_LIMIT ?? 0) > 0) return STATUS_META.PAUSED_LIMIT;
   if ((counts.FAILED ?? 0) > 0) return STATUS_META.FAILED;
   if ((counts.COMPLETED ?? 0) > 0) return STATUS_META.COMPLETED;
-  return { label: "No URLs", color: "gray" };
+  return { labelKey: "noUrls", color: "gray" };
 }
 
 /** "12 of 69 URLs done" under the status — how far a search has got, not just its state. */
-function progressLabel(batch: SearchBatchSummary): string | null {
+function progressLabel(batch: SearchBatchSummary, t: ReturnType<typeof useTranslations<"linkedinSearch.batches">>): string | null {
   if (batch.queryCount === 0) return null;
   const c = batch.statusCounts;
   const done = (c.COMPLETED ?? 0) + (c.FAILED ?? 0) + (c.CANCELLED ?? 0);
   if (done === batch.queryCount) {
     const failed = c.FAILED ?? 0;
-    return failed > 0 ? `${failed.toLocaleString("en-US")} of ${batch.queryCount.toLocaleString("en-US")} URLs failed` : null;
+    return failed > 0 ? t("progressFailed", { failed, total: batch.queryCount }) : null;
   }
-  return `${done.toLocaleString("en-US")} of ${batch.queryCount.toLocaleString("en-US")} URLs done`;
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+  return t("progressDone", { done, total: batch.queryCount });
 }
 
 const num = "text-paragraph-sm tabular-nums text-text-strong-950";
 
 function RowMenu({ name, onOpen, onDelete, deleting }: { name: string; onOpen: () => void; onDelete: () => void; deleting: boolean }) {
+  const tRow = useTranslations("linkedinSearch.batches.rowMenu");
   return (
     <Dropdown.Root>
       <Dropdown.Trigger asChild>
-        <AlignButton.Root variant="neutral" mode="ghost" size="xsmall" disabled={deleting} aria-label={`More actions for ${name}`}>
+        <AlignButton.Root variant="neutral" mode="ghost" size="xsmall" disabled={deleting} aria-label={tRow("actionsFor", { name })}>
           <AlignButton.Icon as={deleting ? RiLoader4Line : RiMoreLine} className={cn(deleting && "animate-spin")} />
         </AlignButton.Root>
       </Dropdown.Trigger>
       <Dropdown.Content align="end">
         <Dropdown.Item onSelect={onOpen}>
           <Dropdown.ItemIcon as={RiExternalLinkLine} />
-          Open
+          {tRow("open")}
         </Dropdown.Item>
         <Dropdown.Separator />
         <Dropdown.Item destructive onSelect={onDelete} disabled={deleting}>
           <Dropdown.ItemIcon as={RiDeleteBinLine} />
-          Delete search
+          {tRow("delete")}
         </Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
@@ -140,6 +128,7 @@ function FormError({ message }: { message: string }) {
  * DAILY_SEARCH_LEAD_LIMIT leads a day, and a full account is skipped by runs.
  */
 function CapacityCard({ accounts }: { accounts: SearchAccount[] }) {
+  const tCap = useTranslations("linkedinSearch.batches.capacity");
   const used = accounts.reduce((sum, a) => sum + Math.min(a.searchLeadsToday, a.searchLimit), 0);
   const total = accounts.reduce((sum, a) => sum + a.searchLimit, 0);
   const full = accounts.filter((a) => getSearchUsage(a.searchLeadsToday, a.searchLimit).limitReached).length;
@@ -147,11 +136,11 @@ function CapacityCard({ accounts }: { accounts: SearchAccount[] }) {
   return (
     <Frame>
       <FrameHeader
-        title="Search capacity today"
+        title={tCap("title")}
         description={
           accounts.length === 0
-            ? "Searches run on your connected LinkedIn accounts."
-            : `${used.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} leads used across ${accounts.length} ${accounts.length === 1 ? "account" : "accounts"}${full > 0 ? ` · ${full} at limit` : ""}. Each account can pull ${perAccount.toLocaleString("en-US")} a day; it resets with the daily limits job.`
+            ? tCap("noAccountsDescription")
+            : tCap(full > 0 ? "summaryAtLimit" : "summary", { used, total, accounts: accounts.length, full, perAccount })
         }
       />
       <FramePanel>
@@ -159,12 +148,12 @@ function CapacityCard({ accounts }: { accounts: SearchAccount[] }) {
           <EmptyState
             compact
             icon={RiLinkedinBoxLine}
-            title="No connected LinkedIn accounts"
-            description="Connect an account to run searches with it."
+            title={tCap("emptyTitle")}
+            description={tCap("emptyDescription")}
             action={
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <AlignButton.Root variant="neutral" mode="stroke" size="xsmall" asChild>
-                  <Link href="/settings/linkedin-accounts">LinkedIn accounts</Link>
+                  <Link href="/settings/linkedin-accounts">{tCap("accountsLink")}</Link>
                 </AlignButton.Root>
                 <DocsLink page="linkedin/accounts#add-a-linkedin-account" size="xsmall" />
               </div>
@@ -195,6 +184,10 @@ export function SearchBatchesClient({
 }) {
   const dialogs = useDialogs();
   const router = useRouter();
+  const t = useTranslations("linkedinSearch.batches");
+  const tStatus = useTranslations("linkedinSearch.status");
+  const format = useFormatter();
+  const formatDate = (iso: string) => format.dateTime(new Date(iso), { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   const [batches, setBatches] = useState(initialBatches);
   const [accounts, setAccounts] = useState(initialAccounts);
@@ -260,9 +253,9 @@ export function SearchBatchesClient({
   const handleDelete = async (batch: SearchBatchSummary) => {
     if (deletingId) return;
     const ok = await dialogs.confirm({
-      title: "Delete this search?",
-      description: "Its URLs and any leads it found will be permanently deleted. This cannot be undone.",
-      confirmLabel: "Delete search",
+      title: t("delete.confirmTitle"),
+      description: t("delete.confirmDescription"),
+      confirmLabel: t("delete.confirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -272,8 +265,8 @@ export function SearchBatchesClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
-          title: "Could not delete search",
-          description: typeof data.error === "string" ? data.error : "Something went wrong. Please try again.",
+          title: t("delete.errorTitle"),
+          description: typeof data.error === "string" ? data.error : t("delete.errorFallback"),
           variant: "error",
         });
         return;
@@ -339,7 +332,7 @@ export function SearchBatchesClient({
 
   const handleCreateSingle = async () => {
     if (!singleName.trim() || !singleUrl.trim() || !singleAccountId) {
-      setCreateError("Name, search URL and an account are required");
+      setCreateError(t("dialog.errorSingleRequired"));
       return;
     }
     setCreating(true);
@@ -357,14 +350,14 @@ export function SearchBatchesClient({
       });
       const data = await res.json();
       if (!data.ok) {
-        setCreateError(typeof data.error === "string" ? data.error : "Failed to create search");
+        setCreateError(typeof data.error === "string" ? data.error : t("dialog.errorCreateFailed"));
         return;
       }
       setNewOpen(false);
       // Nothing is running yet — the search opens with its URLs queued, ready for Run.
       router.push(`/linkedin/search/${data.id}`);
     } catch {
-      setCreateError("Network error");
+      setCreateError(t("dialog.errorNetwork"));
     } finally {
       setCreating(false);
     }
@@ -372,12 +365,12 @@ export function SearchBatchesClient({
 
   const handleCreateCsv = async () => {
     if (!csvName.trim()) {
-      setCreateError("Name is required");
+      setCreateError(t("dialog.errorNameRequired"));
       return;
     }
     const file = csvFileRef.current?.files?.[0];
     if (!file) {
-      setCreateError("Choose a file to upload");
+      setCreateError(t("dialog.errorChooseFile"));
       return;
     }
     const ids = csvAccountOrder;
@@ -392,13 +385,13 @@ export function SearchBatchesClient({
       const res = await fetch("/api/linkedin/search/batches/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!data.ok) {
-        setCreateError(typeof data.error === "string" ? data.error : "Failed to create search");
+        setCreateError(typeof data.error === "string" ? data.error : t("dialog.errorCreateFailed"));
         return;
       }
       setNewOpen(false);
       router.push(`/linkedin/search/${data.id}`);
     } catch {
-      setCreateError("Network error");
+      setCreateError(t("dialog.errorNetwork"));
     } finally {
       setCreating(false);
     }
@@ -417,7 +410,7 @@ export function SearchBatchesClient({
   const newSearchButton = (
     <AlignButton.Root variant="primary" mode="filled" size="small" onClick={openNew}>
       <AlignButton.Icon as={RiAddLine} />
-      New search
+      {t("newSearch")}
     </AlignButton.Root>
   );
 
@@ -439,7 +432,7 @@ export function SearchBatchesClient({
 
   return (
     <div className="mx-auto w-full max-w-[1440px]">
-      <PageHeader title="Search" description="Run LinkedIn searches in batches, then export the leads." actions={newSearchButton} />
+      <PageHeader title={t("title")} description={t("description")} actions={newSearchButton} />
 
       <div className="mt-6">
         <CapacityCard accounts={accounts} />
@@ -447,14 +440,14 @@ export function SearchBatchesClient({
 
       <Frame className="mt-5">
         <FrameHeader
-          title="Searches"
-          description={batches.length === 0 ? "Each search is a set of LinkedIn search URLs and the leads they found." : `${batches.length.toLocaleString("en-US")} ${batches.length === 1 ? "search" : "searches"}${hasActive ? " · updating live while one runs" : ""}. Select one to run it and see its leads.`}
+          title={t("list.title")}
+          description={batches.length === 0 ? t("list.emptyDescription") : t(hasActive ? "list.summaryLive" : "list.summary", { count: batches.length })}
           actions={
             batches.length > 0 && (
               <Input.Root size="small" className="w-44 sm:w-64">
                 <Input.Wrapper>
                   <Input.Icon as={RiSearchLine} />
-                  <Input.Input type="search" aria-label="Search searches by name" placeholder="Search by name…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <Input.Input type="search" aria-label={t("list.searchLabel")} placeholder={t("list.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
             )
@@ -463,15 +456,15 @@ export function SearchBatchesClient({
         <FramePanel className="overflow-x-auto p-2 sm:p-2">
           {filtered.length === 0 ? (
             batches.length === 0 ? (
-              <EmptyState icon={RiSearchLine} title="No searches yet" description="Start a search to pull leads from a LinkedIn search URL, or from a sheet of them." action={newSearchButton} />
+              <EmptyState icon={RiSearchLine} title={t("list.noneTitle")} description={t("list.noneDescription")} action={newSearchButton} />
             ) : (
               <EmptyState
                 icon={RiSearchLine}
-                title="No searches match"
-                description={`Nothing is named like “${search.trim()}”.`}
+                title={t("list.noMatchTitle")}
+                description={t("list.noMatchDescription", { term: search.trim() })}
                 action={
                   <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={() => setSearch("")}>
-                    Clear search
+                    {t("list.clearSearch")}
                   </AlignButton.Root>
                 }
               />
@@ -480,18 +473,18 @@ export function SearchBatchesClient({
             <Table.Root className="[&>table]:min-w-[820px]">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Search</Table.Head>
-                  <Table.Head scope="col" className="w-56 px-4">Status</Table.Head>
-                  <Table.Head scope="col" className="w-24 px-4 text-right">URLs</Table.Head>
-                  <Table.Head scope="col" className="w-24 px-4 text-right">Leads</Table.Head>
-                  <Table.Head scope="col" className="w-44 px-4">Created</Table.Head>
-                  <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">Actions</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("table.search")}</Table.Head>
+                  <Table.Head scope="col" className="w-56 px-4">{t("table.status")}</Table.Head>
+                  <Table.Head scope="col" className="w-24 px-4 text-right">{t("table.urls")}</Table.Head>
+                  <Table.Head scope="col" className="w-24 px-4 text-right">{t("table.leads")}</Table.Head>
+                  <Table.Head scope="col" className="w-44 px-4">{t("table.created")}</Table.Head>
+                  <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">{t("table.actions")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>
                 {filtered.map((b) => {
                   const status = rollupStatus(b.statusCounts);
-                  const progress = progressLabel(b);
+                  const progress = progressLabel(b, t);
                   const isDeleting = deletingId === b.id;
                   const KindIcon = b.kind === "SINGLE" ? RiSearchLine : RiFileList3Line;
                   return (
@@ -511,7 +504,7 @@ export function SearchBatchesClient({
                           <div className="min-w-0">
                             <p className="truncate text-label-sm text-text-strong-950" title={b.name}>{b.name}</p>
                             <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">
-                              {isDeleting ? "Deleting…" : b.kind === "SINGLE" ? "Single search URL" : "CSV of search URLs"}
+                              {isDeleting ? t("row.deleting") : b.kind === "SINGLE" ? t("row.kindSingle") : t("row.kindCsv")}
                             </p>
                           </div>
                         </div>
@@ -519,12 +512,12 @@ export function SearchBatchesClient({
                       <Table.Cell className="px-4">
                         <Badge.Root size="medium" variant="lighter" color={status.color}>
                           <Badge.Dot />
-                          {status.label}
+                          {tStatus(status.labelKey)}
                         </Badge.Root>
                         {progress && <p className="mt-1 text-paragraph-xs tabular-nums text-text-sub-600">{progress}</p>}
                       </Table.Cell>
-                      <Table.Cell className={cn("px-4 text-right", num)}>{b.queryCount.toLocaleString("en-US")}</Table.Cell>
-                      <Table.Cell className={cn("px-4 text-right", num)}>{b.leadCount.toLocaleString("en-US")}</Table.Cell>
+                      <Table.Cell className={cn("px-4 text-right", num)}>{format.number(b.queryCount)}</Table.Cell>
+                      <Table.Cell className={cn("px-4 text-right", num)}>{format.number(b.leadCount)}</Table.Cell>
                       <Table.Cell className="whitespace-nowrap px-4 text-paragraph-sm text-text-sub-600" suppressHydrationWarning>
                         {formatDate(b.createdAt)}
                       </Table.Cell>
@@ -551,35 +544,36 @@ export function SearchBatchesClient({
       >
         <Modal.Content size="max-w-lg">
           <Modal.Header>
-            <Modal.Title>{step === 1 ? "New search" : kind === "SINGLE" ? "New single search" : "New CSV search"}</Modal.Title>
+            <Modal.Title>{step === 1 ? t("dialog.titleStart") : kind === "SINGLE" ? t("dialog.titleSingle") : t("dialog.titleCsv")}</Modal.Title>
             <Modal.Description>
               {step === 1
-                ? "Search one LinkedIn URL, or upload a sheet of them."
+                ? t("dialog.descriptionStart")
                 : kind === "SINGLE"
-                  ? "The search opens with its URL queued, ready for you to run."
-                  : "The search opens with every URL queued, ready for you to run."}
+                  ? t("dialog.descriptionSingle")
+                  : t("dialog.descriptionCsv")}
             </Modal.Description>
           </Modal.Header>
 
           {step === 1 && (
             <Modal.Body className="grid gap-3 sm:grid-cols-2">
-              {kindCard("SINGLE", "Single search", "One LinkedIn search URL, run with one account.", RiSearchLine)}
-              {kindCard("BULK", "CSV search", "A sheet of Company Name + Search URL, run with several accounts.", RiFileList3Line)}
+              {kindCard("SINGLE", t("dialog.singleTitle"), t("dialog.singleBody"), RiSearchLine)}
+              {kindCard("BULK", t("dialog.csvTitle"), t("dialog.csvBody"), RiFileList3Line)}
             </Modal.Body>
           )}
 
           {step === 2 && kind === "SINGLE" && (
             <Modal.Body className="space-y-4">
-              <Field label="Name" htmlFor="single-name">
-                <TextField id="single-name" value={singleName} onChange={setSingleName} placeholder="e.g. VP Sales at Acme" autoFocus />
+              <Field label={t("dialog.name")} htmlFor="single-name">
+                <TextField id="single-name" value={singleName} onChange={setSingleName} placeholder={t("dialog.namePlaceholderSingle")} autoFocus />
               </Field>
-              <Field label="Search URL" htmlFor="single-url">
-                <TextField id="single-url" value={singleUrl} onChange={setSingleUrl} placeholder="https://www.linkedin.com/search/results/people/?keywords=..." mono />
+              <Field label={t("dialog.searchUrl")} htmlFor="single-url">
+                <TextField id="single-url" value={singleUrl} onChange={setSingleUrl} // Example URL, not translatable.
+                placeholder="https://www.linkedin.com/search/results/people/?keywords=..." mono />
               </Field>
-              <Field label="Company name (optional)" htmlFor="single-company">
+              <Field label={t("dialog.companyOptional")} htmlFor="single-company">
                 <TextField id="single-company" value={singleCompany} onChange={setSingleCompany} />
               </Field>
-              <Field label="Account">
+              <Field label={t("dialog.account")}>
                 <SearchAccountPicker
                   accounts={accounts}
                   selected={singleAccountId ? new Set([singleAccountId]) : new Set()}
@@ -593,10 +587,10 @@ export function SearchBatchesClient({
 
           {step === 2 && kind === "BULK" && (
             <Modal.Body className="space-y-4">
-              <Field label="Name" htmlFor="csv-name">
-                <TextField id="csv-name" value={csvName} onChange={setCsvName} placeholder="e.g. Q3 target account list" autoFocus />
+              <Field label={t("dialog.name")} htmlFor="csv-name">
+                <TextField id="csv-name" value={csvName} onChange={setCsvName} placeholder={t("dialog.namePlaceholderCsv")} autoFocus />
               </Field>
-              <Field label="Sheet (Company Name + Search URL)">
+              <Field label={t("dialog.sheet")}>
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     ref={csvFileRef}
@@ -607,17 +601,17 @@ export function SearchBatchesClient({
                   />
                   <AlignButton.Root type="button" variant="neutral" mode="stroke" size="xsmall" onClick={() => csvFileRef.current?.click()} className="max-w-full">
                     <AlignButton.Icon as={RiUploadCloud2Line} />
-                    <span className="truncate">{csvFileName ?? "Choose file"}</span>
+                    <span className="truncate">{csvFileName ?? t("dialog.chooseFile")}</span>
                   </AlignButton.Root>
                   <AlignButton.Root variant="neutral" mode="ghost" size="xsmall" asChild>
                     <a href="/api/linkedin/search/queue/template" download="search-queue-template.xlsx">
                       <AlignButton.Icon as={RiDownloadLine} />
-                      Download template
+                      {t("dialog.downloadTemplate")}
                     </a>
                   </AlignButton.Root>
                 </div>
               </Field>
-              <Field label="Accounts">
+              <Field label={t("dialog.accounts")}>
                 <div className="rounded-xl p-2 ring-1 ring-inset ring-stroke-soft-200">
                   <SearchAccountPicker
                     accounts={accounts}
@@ -639,11 +633,11 @@ export function SearchBatchesClient({
             <Modal.Footer className="justify-between">
               <AlignButton.Root variant="neutral" mode="ghost" size="small" onClick={() => setStep(1)}>
                 <AlignButton.Icon as={RiArrowLeftSLine} />
-                Back
+                {t("dialog.back")}
               </AlignButton.Root>
               <div className="flex gap-2">
                 <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={() => setNewOpen(false)}>
-                  Cancel
+                  {t("dialog.cancel")}
                 </AlignButton.Root>
                 <AlignButton.Root
                   variant="primary"
@@ -653,7 +647,7 @@ export function SearchBatchesClient({
                   disabled={creating || (kind === "BULK" && csvAccountIds.size === 0)}
                 >
                   <AlignButton.Icon as={creating ? RiLoader4Line : RiCheckLine} className={cn(creating && "animate-spin")} />
-                  Create search
+                  {t("dialog.create")}
                 </AlignButton.Root>
               </div>
             </Modal.Footer>

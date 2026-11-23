@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { Badge } from "@/components/linkedin/ui/badge";
 import { Button } from "@/components/linkedin/ui/button";
 import { Trash2, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { FilterSelect } from "@/components/linkedin/FilterSelect";
-import { LeadDetailPanel } from "@/components/linkedin/LeadDetailPanel";
+import { LeadDetailPanel, LEAD_STATUS_VARIANTS, useLeadStatusLabel } from "@/components/linkedin/LeadDetailPanel";
 import { LeadBulkActionBar } from "@/components/linkedin/LeadBulkActionBar";
 import { LeadSelectCheckbox } from "@/components/linkedin/LeadSelectCheckbox";
 import {
@@ -36,30 +37,6 @@ type Lead = {
 type Account = { id: string; username: string; name: string | null; profilePictureUrl?: string | null };
 type Pagination = { page: number; limit: number; total: number; pages: number };
 
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "success" | "warning" | "destructive" | "muted" | "blue" | "purple"> = {
-  PENDING: "muted",
-  REQUEST_SENT: "warning",
-  ACCEPT_MESSAGE_SENT: "success",
-  FOLLOW_UP_1_SENT: "blue",
-  FOLLOW_UP_2_SENT: "blue",
-  FOLLOW_UP_3_SENT: "blue",
-  COMPLETED: "secondary",
-  REPLIED: "purple",
-  FAILED: "destructive",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending",
-  REQUEST_SENT: "Request Sent",
-  ACCEPT_MESSAGE_SENT: "Accepted",
-  FOLLOW_UP_1_SENT: "Follow-up 1",
-  FOLLOW_UP_2_SENT: "Follow-up 2",
-  FOLLOW_UP_3_SENT: "Follow-up 3",
-  COMPLETED: "Completed",
-  REPLIED: "Replied",
-  FAILED: "Failed",
-};
-
 function Avatar({ src, name }: { src: string | null; name: string }) {
   const [imgError, setImgError] = useState(false);
   const initials = name.split(/[\s/]/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
@@ -76,6 +53,9 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
 type InitialData = { leads: Lead[]; pagination: Pagination; accounts: Account[] };
 
 export function LeadsClient({ initialData }: { initialData: InitialData }) {
+  const t = useTranslations("linkedinMain.leadsClient");
+  const format = useFormatter();
+  const statusLabel = useLeadStatusLabel();
   const [leads, setLeads] = useState<Lead[]>(initialData.leads);
   const [pagination, setPagination] = useState<Pagination>(initialData.pagination);
   const [loading, setLoading] = useState(false);
@@ -213,8 +193,8 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
   const hasFilters = status || search || accountId;
 
   const statusOptions = useMemo(
-    () => Object.entries(STATUS_LABELS).map(([val, label]) => ({ value: val, label })),
-    []
+    () => Object.keys(LEAD_STATUS_VARIANTS).map((val) => ({ value: val, label: statusLabel(val) })),
+    [statusLabel]
   );
 
   const accountOptions = useMemo(
@@ -237,8 +217,8 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
           value={status}
           onChange={handleStatusChange}
           options={statusOptions}
-          placeholder="All statuses"
-          clearLabel="All statuses"
+          placeholder={t("allStatuses")}
+          clearLabel={t("allStatuses")}
           compact
           className="min-w-[9rem]"
         />
@@ -250,7 +230,7 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
             type="text"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search by name or headline…"
+            placeholder={t("searchPlaceholder")}
             className="h-9 w-full rounded-lg border border-stroke-soft-200 bg-bg-white-0 pl-9 pr-3 text-sm text-text-strong-950 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -261,8 +241,8 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
             value={accountId}
             onChange={handleAccountChange}
             options={accountOptions}
-            placeholder="All senders"
-            clearLabel="All senders"
+            placeholder={t("allSenders")}
+            clearLabel={t("allSenders")}
             showAvatars
             compact
             className="min-w-40"
@@ -275,7 +255,7 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
             onClick={() => { setStatus(""); setSearch(""); setAccountId(""); clearSelection(); fetchLeads(1, { status: "", search: "", accountId: "" }); }}
             className="text-xs text-text-soft-400 hover:text-text-strong-950 transition-colors"
           >
-            Clear
+            {t("clear")}
           </button>
         )}
       </div>
@@ -288,8 +268,8 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
           </div>
         ) : leads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-text-sub-600 font-medium">{hasFilters ? "No leads match your filters" : "No leads yet"}</p>
-            <p className="text-text-soft-400 text-sm mt-1">{hasFilters ? "Try adjusting your search or filters" : "Import leads through a campaign to get started"}</p>
+            <p className="text-text-sub-600 font-medium">{hasFilters ? t("noMatchTitle") : t("emptyTitle")}</p>
+            <p className="text-text-soft-400 text-sm mt-1">{hasFilters ? t("noMatchDescription") : t("emptyDescription")}</p>
           </div>
         ) : (
           <>
@@ -322,13 +302,13 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
                       setSelectedIds((prev) => toggleAllOnPage(prev, pageIds, true));
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    ariaLabel="Select all leads on this page"
+                    ariaLabel={t("selectAllOnPage")}
                   />
                 </th>
-                <th className="px-4 py-3 font-semibold text-text-sub-600">Lead</th>
-                <th className="px-4 py-3 font-semibold text-text-sub-600">Campaign</th>
-                <th className="px-4 py-3 font-semibold text-text-sub-600">Status</th>
-                <th className="px-4 py-3 font-semibold text-text-sub-600 w-14">Sender</th>
+                <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colLead")}</th>
+                <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colCampaign")}</th>
+                <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colStatus")}</th>
+                <th className="px-4 py-3 font-semibold text-text-sub-600 w-14">{t("colSender")}</th>
                 <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
@@ -348,7 +328,7 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
                         if (!checked) setAllMatchingSelected(false);
                         setSelectedIds((prev) => toggleLeadSelection(prev, lead.id, checked));
                       }}
-                      ariaLabel={`Select ${lead.name ?? lead.linkedinUrl}`}
+                      ariaLabel={t("selectLead", { name: lead.name ?? lead.linkedinUrl })}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -373,8 +353,8 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
                     {lead.campaign ? lead.campaign.name : <span className="text-text-disabled-300">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={STATUS_VARIANTS[lead.status] ?? "secondary"}>
-                      {STATUS_LABELS[lead.status] ?? lead.status}
+                    <Badge variant={LEAD_STATUS_VARIANTS[lead.status] ?? "secondary"}>
+                      {statusLabel(lead.status)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -389,7 +369,7 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
                       onClick={() => handleDelete(lead.id)}
                       disabled={deletingId === lead.id}
                       className="p-1.5 rounded-md text-text-disabled-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                      title="Delete lead"
+                      title={t("deleteLead")}
                     >
                       {deletingId === lead.id
                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -408,14 +388,14 @@ export function LeadsClient({ initialData }: { initialData: InitialData }) {
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-text-sub-600">
-            Page {pagination.page} of {pagination.pages} · {pagination.total} leads
+            {t("pageSummary", { page: format.number(pagination.page), pages: format.number(pagination.pages), total: pagination.total })}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={pagination.page <= 1} onClick={() => { clearSelection(); fetchLeads(pagination.page - 1); }}>
-              <ChevronLeft className="h-4 w-4" />Prev
+              <ChevronLeft className="h-4 w-4" />{t("prev")}
             </Button>
             <Button variant="outline" size="sm" disabled={pagination.page >= pagination.pages} onClick={() => { clearSelection(); fetchLeads(pagination.page + 1); }}>
-              Next<ChevronRight className="h-4 w-4" />
+              {t("next")}<ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

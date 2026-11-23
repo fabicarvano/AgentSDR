@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import { Fragment, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useDialogs } from "@/components/DialogProvider";
 import {
@@ -23,10 +24,12 @@ import {
   CrmCategoryControl,
   CrmDraftCard,
   DoNotContactNotice,
-  crmCategoryLabel,
+  useInboxCrmText,
   type CrmCategoryOption,
 } from "@/components/crm/InboxCrmStrip";
-import { crmFetch, errorMessage } from "@/components/crm/crm-utils";
+import { crmFetch } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
+import { useLeadStatusLabel, useMessageTypeLabel } from "@/components/linkedin/LeadDetailPanel";
 import {
   ActiveFilterChips,
   CategoryChip,
@@ -51,14 +54,12 @@ import {
   ThreadSkeleton,
   TriageTabs,
   dayKeyOf,
-  fullTime,
-  rowTime,
-  withRecencyBreaks,
+  useInboxTime,
   type BadgeTone,
   type TriageTab,
 } from "@/components/inbox/shell/InboxShell";
 import { Bubble, ChatComposer, ComposerDock, ComposerDraftBanner, DaySeparator, ExpandableText, MessageCaption } from "@/components/inbox/shell/Conversation";
-import { ContactDetails, DetailsPanel, toLinkedinHref, useCrmRecordSummary, useDetailsPanel, workflowLabel } from "@/components/inbox/shell/DetailsPanel";
+import { ContactDetails, DetailsPanel, toLinkedinHref, useCrmRecordSummary, useDetailsPanel, useWorkflowLabel } from "@/components/inbox/shell/DetailsPanel";
 import { useInboxHotkeys } from "@/components/inbox/shell/hotkeys";
 import { cn } from "@/utils/cn";
 import type { ConnectionItem } from "@/lib/linkedin/messages/connectionList";
@@ -86,38 +87,18 @@ type FilterCampaign = { id: string; name: string };
 
 const SENT_TYPES = new Set(["INVITATION", "ACCEPTANCE", "FOLLOW_UP_1", "FOLLOW_UP_2", "FOLLOW_UP_3", "CUSTOM_SENT"]);
 
-const TYPE_LABEL: Record<string, string> = {
-  INVITATION: "Invitation",
-  ACCEPTANCE: "Acceptance",
-  FOLLOW_UP_1: "Follow-up 1",
-  FOLLOW_UP_2: "Follow-up 2",
-  FOLLOW_UP_3: "Follow-up 3",
-  CUSTOM_SENT: "Sent",
-  RECEIVED: "Received",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Pending",
-  REQUEST_SENT: "Invited",
-  ACCEPT_MESSAGE_SENT: "Accepted",
-  FOLLOW_UP_1_SENT: "Follow-up 1",
-  FOLLOW_UP_2_SENT: "Follow-up 2",
-  FOLLOW_UP_3_SENT: "Follow-up 3",
-  COMPLETED: "Completed",
-  REPLIED: "Replied",
-  FAILED: "Failed",
-};
+/** Lead status labels for this screen: the shared ones, except that REQUEST_SENT reads "Invited" here. */
+function useMessageStatusLabel() {
+  const t = useTranslations("linkedinMain.messages");
+  const leadStatusLabel = useLeadStatusLabel();
+  return (status: string): string => (status === "REQUEST_SENT" ? t("statusInvited") : leadStatusLabel(status));
+}
 
 /** Lead status → badge tone. Only outcomes wear a colour; the steps in between stay grey. */
 const STATUS_TONE: Record<string, BadgeTone> = {
   REPLIED: "green",
   FAILED: "red",
   REQUEST_SENT: "orange",
-};
-
-const humanize = (value: string) => {
-  const input = value.replaceAll("_", " ").trim();
-  return input ? input.charAt(0).toUpperCase() + input.slice(1) : "—";
 };
 
 /** Status scopes under which the list is CRM-tracked, so a category filter makes sense. */
@@ -135,20 +116,12 @@ const splitCategoryFilter = (value: string, categories: CrmCategoryOption[]) => 
 
 const ALL_STATUSES = ["PENDING", "REQUEST_SENT", "ACCEPT_MESSAGE_SENT", "FOLLOW_UP_1_SENT", "FOLLOW_UP_2_SENT", "FOLLOW_UP_3_SENT", "COMPLETED", "REPLIED", "FAILED"];
 
+/** The period select stores the number of days as its value; the label comes from the catalog. */
 const TIME_PERIODS = [
-  { label: "All time", days: null },
-  { label: "Last 7 days", days: 7 },
-  { label: "Last 30 days", days: 30 },
-  { label: "Last 90 days", days: 90 },
-];
-
-/** Scopes first, then the lead statuses, as two groups in the scope select. */
-const MESSAGE_SCOPE_OPTIONS = [
-  { value: ALL_LEADS_FILTER, label: "All conversations" },
-  { value: UNREPLIED_FILTER, label: "Needs reply", hint: "Latest message is from the prospect" },
-  { value: CONNECTIONS_ONLY_FILTER, label: "Connections only" },
-];
-const MESSAGE_STATUS_OPTIONS = ALL_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }));
+  { value: "7", days: 7, labelKey: "period7" },
+  { value: "30", days: 30, labelKey: "period30" },
+  { value: "90", days: 90, labelKey: "period90" },
+] as const;
 
 const filtersKeyFrom = (filters: {
   search: string;
@@ -185,16 +158,13 @@ type InitialList = {
   hasMore: boolean;
 };
 
-/** The clock time of a message, for its caption. */
-function clockTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
 /** Row-level status: the CRM category when the thread is CRM-tracked, else the lead status. */
 function RowStatus({ conn }: { conn: ConnectionItem }) {
-  if (conn.crm) return <CategoryChip categoryKey={conn.crm.categoryKey} label={crmCategoryLabel(conn.crm)} />;
+  const { categoryLabel } = useInboxCrmText();
+  const statusLabel = useMessageStatusLabel();
+  if (conn.crm) return <CategoryChip categoryKey={conn.crm.categoryKey} label={categoryLabel(conn.crm)} />;
   if (!conn.leadStatus) return null;
-  return <RowBadge tone={STATUS_TONE[conn.leadStatus] ?? "gray"}>{STATUS_LABEL[conn.leadStatus] ?? conn.leadStatus}</RowBadge>;
+  return <RowBadge tone={STATUS_TONE[conn.leadStatus] ?? "gray"}>{statusLabel(conn.leadStatus)}</RowBadge>;
 }
 
 export function MessagesLayout({
@@ -206,7 +176,15 @@ export function MessagesLayout({
   accounts: FilterAccount[];
   initialList: InitialList;
 }) {
+  const t = useTranslations("linkedinMain.messages");
+  const format = useFormatter();
   const dialogs = useDialogs();
+  const { errorMessage, categoryLabel: crmKeyLabel } = useCrmText();
+  const { categoryLabel: crmCategoryLabel } = useInboxCrmText();
+  const { fullTime, rowTime, withRecencyBreaks } = useInboxTime();
+  const workflowLabel = useWorkflowLabel();
+  const messageTypeLabel = useMessageTypeLabel();
+  const statusLabel = useMessageStatusLabel();
   const [connections, setConnections] = useState(initialList.connections);
   const [totalCount, setTotalCount] = useState(initialList.totalCount);
   const [hasMore, setHasMore] = useState(initialList.hasMore);
@@ -245,7 +223,7 @@ export function MessagesLayout({
   const [categoryFilter, setCategoryFilter] = useState("");
 
   const periodDays = periodFilter
-    ? (TIME_PERIODS.find((p) => p.label === periodFilter)?.days ?? null)
+    ? (TIME_PERIODS.find((p) => p.value === periodFilter)?.days ?? null)
     : null;
 
   const showCategoryFilter = CRM_FILTERABLE_STATUSES.has(statusFilter);
@@ -524,7 +502,7 @@ export function MessagesLayout({
       // 409 (stale revision / step no longer pending) and anything else: keep
       // the text, show the API's message, and resync the strip.
       setText(body);
-      void dialogs.alert({ title: "Could not send draft", description: errorMessage(err), variant: "error" });
+      void dialogs.alert({ title: t("sendDraftFailed"), description: errorMessage(err), variant: "error" });
       void loadCrmContext(connId);
     }
   };
@@ -561,7 +539,7 @@ export function MessagesLayout({
         );
       } else {
         setText(body);
-        void dialogs.alert({ title: "Could not send message", description: data.error, variant: "error" });
+        void dialogs.alert({ title: t("sendMessageFailed"), description: data.error, variant: "error" });
       }
     } catch {
       setText(body);
@@ -573,9 +551,9 @@ export function MessagesLayout({
 
   const renderMessages = () => {
     if (messages.length === 0) {
-      return <EmptyState icon={RiMessage3Line} title="No messages yet" description="Messages sent and received with this connection appear here." />;
+      return <EmptyState icon={RiMessage3Line} title={t("noMessagesTitle")} description={t("noMessagesDescription")} />;
     }
-    const theirName = (selected?.name ?? "").trim().split(/\s+/)[0] || "Them";
+    const theirName = (selected?.name ?? "").trim().split(/\s+/)[0] || t("them");
     const lastId = messages[messages.length - 1]?.id;
 
     return messages.map((msg, i) => {
@@ -591,7 +569,7 @@ export function MessagesLayout({
       const newDay = !prev || dayKeyOf(new Date(prev.createdAt)) !== dayKeyOf(date);
       const isFirst = !sameRun(prev);
       const isLast = !sameRun(next);
-      const stepLabel = isSent && msg.type !== "CUSTOM_SENT" ? TYPE_LABEL[msg.type] ?? null : null;
+      const stepLabel = isSent && msg.type !== "CUSTOM_SENT" ? messageTypeLabel(msg.type) : null;
 
       return (
         <Fragment key={msg.id}>
@@ -600,9 +578,9 @@ export function MessagesLayout({
             {isFirst && (
               <MessageCaption
                 outbound={isSent}
-                who={isSent ? "You" : theirName}
+                who={isSent ? t("you") : theirName}
                 detail={stepLabel}
-                time={clockTime(date)}
+                time={format.dateTime(date, { hour: "numeric", minute: "2-digit" })}
                 timeTitle={fullTime(date)}
               />
             )}
@@ -615,7 +593,7 @@ export function MessagesLayout({
     });
   };
 
-  const displayName = (conn: ConnectionItem) => conn.name ?? conn.linkedinUrl ?? "Unknown";
+  const displayName = (conn: ConnectionItem) => conn.name ?? conn.linkedinUrl ?? t("unknown");
 
   const clearFilters = () => {
     setSearch("");
@@ -637,10 +615,10 @@ export function MessagesLayout({
     if (categoryFilter.startsWith(CATEGORY_FILTER_PREFIX)) {
       const key = categoryFilter.slice(CATEGORY_FILTER_PREFIX.length);
       const category = crmCategories.find((c) => c.key === key);
-      return `All ${category?.label ?? humanize(key)}`;
+      return t("allOfCategory", { name: category?.label ?? crmKeyLabel(key) });
     }
-    return crmCategories.flatMap((c) => c.subcategories).find((sc) => sc.id === categoryFilter)?.name ?? "Category";
-  }, [categoryFilter, crmCategories]);
+    return crmCategories.flatMap((c) => c.subcategories).find((sc) => sc.id === categoryFilter)?.name ?? t("categoryFallback");
+  }, [categoryFilter, crmCategories, t, crmKeyLabel]);
 
   // The popover's filters; search and the scope tabs live in the toolbar itself.
   const popoverFilterCount = [campaignFilter, accountFilter, periodFilter, showCategoryFilter ? categoryFilter : ""].filter(Boolean).length;
@@ -652,12 +630,16 @@ export function MessagesLayout({
   };
   const accountName = (id: string) => {
     const account = accounts.find((a) => a.id === id);
-    return account ? account.name ?? `@${account.username}` : "Sender";
+    return account ? account.name ?? `@${account.username}` : t("senderFallback");
+  };
+  const periodLabel = (value: string) => {
+    const period = TIME_PERIODS.find((p) => p.value === value);
+    return period ? t(period.labelKey) : value;
   };
   const chips = [
-    campaignFilter && { key: "campaign", label: campaigns.find((c) => c.id === campaignFilter)?.name ?? "Campaign", onRemove: () => setCampaignFilter("") },
-    accountFilter && { key: "account", label: `From ${accountName(accountFilter)}`, onRemove: () => setAccountFilter("") },
-    periodFilter && { key: "period", label: periodFilter, onRemove: () => setPeriodFilter("") },
+    campaignFilter && { key: "campaign", label: campaigns.find((c) => c.id === campaignFilter)?.name ?? t("campaignFallback"), onRemove: () => setCampaignFilter("") },
+    accountFilter && { key: "account", label: t("fromSender", { name: accountName(accountFilter) }), onRemove: () => setAccountFilter("") },
+    periodFilter && { key: "period", label: periodLabel(periodFilter), onRemove: () => setPeriodFilter("") },
     showCategoryFilter && categoryFilter && { key: "category", label: categoryLabel, onRemove: () => setCategoryFilter("") },
   ].filter((chip): chip is { key: string; label: string; onRemove: () => void } => Boolean(chip));
 
@@ -669,8 +651,14 @@ export function MessagesLayout({
     setDraftWatchUntil(null);
   }, []);
 
-  const scopeLabel =
-    MESSAGE_SCOPE_OPTIONS.find((o) => o.value === statusFilter)?.label ?? STATUS_LABEL[statusFilter] ?? "Conversations";
+  // Scopes first, then the lead statuses, as two groups in the scope select.
+  const scopeLabels: Record<string, string> = {
+    [ALL_LEADS_FILTER]: t("scopeAll"),
+    [UNREPLIED_FILTER]: t("scopeNeedsReply"),
+    [CONNECTIONS_ONLY_FILTER]: t("scopeConnectionsOnly"),
+  };
+  const messageStatusOptions = ALL_STATUSES.map((s) => ({ value: s, label: statusLabel(s) }));
+  const scopeLabel = scopeLabels[statusFilter] ?? (ALL_STATUSES.includes(statusFilter) ? statusLabel(statusFilter) : t("conversationsFallback"));
 
   useInboxHotkeys({ listRef: listScrollRef, onClose: selected ? closeThread : null });
   const details = useDetailsPanel(selected?.id ?? null);
@@ -684,23 +672,23 @@ export function MessagesLayout({
     label,
     title,
     count: value === statusFilter && !loadingList ? totalCount : null,
-    countTitle: value === statusFilter ? `${totalCount.toLocaleString("en-US")} conversations` : undefined,
+    countTitle: value === statusFilter ? t("conversationCountTitle", { count: totalCount }) : undefined,
   });
   const triage = (
     <TriageTabs
-      label="Show conversations"
+      label={t("triageLabel")}
       value={statusFilter}
       onChange={changeStatusFilter}
       tabs={[
-        scopeTab(DEFAULT_MESSAGES_STATUS_FILTER, "Replied", "Leads who replied"),
-        scopeTab(UNREPLIED_FILTER, "Needs reply", "Latest message is from the prospect"),
-        scopeTab(ALL_LEADS_FILTER, "All", "Every campaign lead"),
+        scopeTab(DEFAULT_MESSAGES_STATUS_FILTER, t("tabReplied"), t("tabRepliedTitle")),
+        scopeTab(UNREPLIED_FILTER, t("scopeNeedsReply"), t("needsReplyHint")),
+        scopeTab(ALL_LEADS_FILTER, t("tabAll"), t("tabAllTitle")),
       ]}
       moreGroups={[
-        { label: "Show", tabs: [scopeTab(CONNECTIONS_ONLY_FILTER, "Connections only", "Connections with no campaign lead")] },
+        { label: t("groupShow"), tabs: [scopeTab(CONNECTIONS_ONLY_FILTER, t("scopeConnectionsOnly"), t("connectionsOnlyTitle"))] },
         {
-          label: "Lead status",
-          tabs: MESSAGE_STATUS_OPTIONS.filter((o) => o.value !== DEFAULT_MESSAGES_STATUS_FILTER).map((o) => scopeTab(o.value, o.label)),
+          label: t("groupLeadStatus"),
+          tabs: messageStatusOptions.filter((o) => o.value !== DEFAULT_MESSAGES_STATUS_FILTER).map((o) => scopeTab(o.value, o.label)),
         },
       ]}
     />
@@ -736,11 +724,11 @@ export function MessagesLayout({
         }
         crmLoading={Boolean(recordId) && recordLoading && !crmSummary}
         facts={[
-          ...(selected.campaignName ? [{ label: "Campaign", value: selected.campaignName, title: selected.campaignName }] : []),
+          ...(selected.campaignName ? [{ label: t("factCampaign"), value: selected.campaignName, title: selected.campaignName }] : []),
           ...(selected.linkedInAccountUsername
             ? [
                 {
-                  label: "Sent from",
+                  label: t("factSentFrom"),
                   value: (
                     <LinkedInAccountTag
                       account={{ username: selected.linkedInAccountUsername, name: selected.linkedInAccountName, profilePictureUrl: selected.linkedInAccountPicture }}
@@ -750,8 +738,8 @@ export function MessagesLayout({
                 },
               ]
             : []),
-          ...(selected.leadStatus ? [{ label: "Lead status", value: STATUS_LABEL[selected.leadStatus] ?? selected.leadStatus }] : []),
-          ...(selected.connectedAt ? [{ label: "Connected", value: new Date(selected.connectedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) }] : []),
+          ...(selected.leadStatus ? [{ label: t("factLeadStatus"), value: statusLabel(selected.leadStatus) }] : []),
+          ...(selected.connectedAt ? [{ label: t("factConnected"), value: format.dateTime(new Date(selected.connectedAt), { day: "numeric", month: "short", year: "numeric" }) }] : []),
         ]}
         actions={record?.personId && record.phone ? <CallButton personId={record.personId} crmRecordId={recordId} phone={record.phone} numberMenu={false} /> : undefined}
       />
@@ -763,28 +751,28 @@ export function MessagesLayout({
       threadOpen={selected !== null}
       header={
         <PageHeader
-          title="Messages"
-          description="LinkedIn conversations from your campaigns, and who is waiting on a reply."
+          title={t("title")}
+          description={t("description")}
         />
       }
     >
       <ListPane
-        label="LinkedIn conversations"
+        label={t("listLabel")}
         hidden={selected !== null}
         busy={loadingList && connections.length > 0}
         scrollRef={listScrollRef}
         toolbar={
           <>
             <div className="flex items-center gap-2">
-              <ListSearch value={search} onChange={setSearch} placeholder="Search by name" label="Search conversations by name" />
+              <ListSearch value={search} onChange={setSearch} placeholder={t("searchPlaceholder")} label={t("searchLabel")} />
               <FilterPopover count={popoverFilterCount} onClear={clearPopoverFilters}>
-                <FilterField label="Campaign">
+                <FilterField label={t("filterCampaign")}>
                   <Select.Root size="small" value={campaignFilter} onValueChange={setCampaignFilter}>
-                    <Select.Trigger aria-label="Campaign filter">
-                      <Select.Value placeholder="All campaigns" />
+                    <Select.Trigger aria-label={t("campaignFilterAria")}>
+                      <Select.Value placeholder={t("allCampaigns")} />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">All campaigns</Select.Item>
+                      <Select.Item value="">{t("allCampaigns")}</Select.Item>
                       {campaigns.map((c) => (
                         <Select.Item key={c.id} value={c.id}>
                           {c.name}
@@ -793,13 +781,13 @@ export function MessagesLayout({
                     </Select.Content>
                   </Select.Root>
                 </FilterField>
-                <FilterField label="Sender">
+                <FilterField label={t("filterSender")}>
                   <Select.Root size="small" value={accountFilter} onValueChange={setAccountFilter}>
-                    <Select.Trigger aria-label="Sender account filter">
-                      <Select.Value placeholder="All senders" />
+                    <Select.Trigger aria-label={t("senderFilterAria")}>
+                      <Select.Value placeholder={t("allSenders")} />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">All senders</Select.Item>
+                      <Select.Item value="">{t("allSenders")}</Select.Item>
                       {accounts.map((a) => (
                         <Select.Item key={a.id} value={a.id}>
                           <span className="flex min-w-0 items-center gap-2">
@@ -812,35 +800,35 @@ export function MessagesLayout({
                     </Select.Content>
                   </Select.Root>
                 </FilterField>
-                <FilterField label="Last activity">
+                <FilterField label={t("filterLastActivity")}>
                   <Select.Root size="small" value={periodFilter} onValueChange={setPeriodFilter}>
-                    <Select.Trigger aria-label="Time period filter">
-                      <Select.Value placeholder="All time" />
+                    <Select.Trigger aria-label={t("periodFilterAria")}>
+                      <Select.Value placeholder={t("allTime")} />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">All time</Select.Item>
-                      {TIME_PERIODS.slice(1).map((p) => (
-                        <Select.Item key={p.label} value={p.label}>
-                          {p.label}
+                      <Select.Item value="">{t("allTime")}</Select.Item>
+                      {TIME_PERIODS.map((p) => (
+                        <Select.Item key={p.value} value={p.value}>
+                          {t(p.labelKey)}
                         </Select.Item>
                       ))}
                     </Select.Content>
                   </Select.Root>
                 </FilterField>
-                <FilterField label="CRM category" hint={showCategoryFilter ? undefined : "Applies when the list shows Replied or Needs reply."}>
+                <FilterField label={t("filterCrmCategory")} hint={showCategoryFilter ? undefined : t("crmCategoryHint")}>
                   <Select.Root size="small" value={showCategoryFilter ? categoryFilter : ""} onValueChange={setCategoryFilter} disabled={!showCategoryFilter || crmCategories.length === 0}>
-                    <Select.Trigger aria-label="CRM category filter">
-                      <Select.Value placeholder="All categories" />
+                    <Select.Trigger aria-label={t("crmCategoryFilterAria")}>
+                      <Select.Value placeholder={t("allCategories")} />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">All categories</Select.Item>
+                      <Select.Item value="">{t("allCategories")}</Select.Item>
                       {crmCategories.map((category) => {
-                        const label = category.label ?? humanize(category.key);
+                        const label = category.label ?? crmKeyLabel(category.key);
                         return (
                           <Select.Group key={category.key}>
                             <Select.Separator />
                             <Select.GroupLabel>{label}</Select.GroupLabel>
-                            <Select.Item value={`${CATEGORY_FILTER_PREFIX}${category.key}`}>All {label}</Select.Item>
+                            <Select.Item value={`${CATEGORY_FILTER_PREFIX}${category.key}`}>{t("allOfCategory", { name: label })}</Select.Item>
                             {category.subcategories
                               .filter((sc) => sc.active !== false)
                               .map((sc) => (
@@ -860,7 +848,7 @@ export function MessagesLayout({
           </>
         }
         tabs={triage}
-        footer={<ListCount shown={connections.length} total={totalCount} noun={totalCount === 1 ? "conversation" : "conversations"} loading={loadingList} />}
+        footer={<ListCount shown={connections.length} total={totalCount} noun={t("conversationNoun", { count: totalCount })} loading={loadingList} />}
       >
         {loadingList && connections.length === 0 ? (
           <RowsSkeleton />
@@ -869,25 +857,25 @@ export function MessagesLayout({
             <EmptyState
               compact
               icon={RiSearchLine}
-              title="No conversations match"
-              description={`Nothing in “${scopeLabel}” matches this search and these filters.`}
+              title={t("noMatchTitle")}
+              description={t("noMatchDescription", { scope: scopeLabel })}
               action={
                 <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={clearFilters}>
-                  Clear filters
+                  {t("clearFilters")}
                 </Button.Root>
               }
             />
           ) : statusFilter === UNREPLIED_FILTER ? (
-            <EmptyState compact icon={RiCheckDoubleLine} title="You're all caught up" description="Nobody is waiting on a reply right now." />
+            <EmptyState compact icon={RiCheckDoubleLine} title={t("caughtUpTitle")} description={t("caughtUpDescription")} />
           ) : (
             <EmptyState
               compact
               icon={RiChatSmile3Line}
-              title={statusFilter === DEFAULT_MESSAGES_STATUS_FILTER ? "No replies yet" : `Nothing in “${scopeLabel}”`}
+              title={statusFilter === DEFAULT_MESSAGES_STATUS_FILTER ? t("noRepliesTitle") : t("nothingInScope", { scope: scopeLabel })}
               description={
                 statusFilter === DEFAULT_MESSAGES_STATUS_FILTER
-                  ? "Prospects who reply show up here. Switch to All to see everyone."
-                  : "Connections appear here after leads accept your invitations."
+                  ? t("noRepliesDescription")
+                  : t("noConnectionsDescription")
               }
             />
           )
@@ -897,6 +885,7 @@ export function MessagesLayout({
             const hasUnseen = conn.unseenCount > 0;
             const last = conn.lastMessage ? new Date(conn.lastMessage.createdAt) : null;
             const drafted = conn.crm?.hasDraft === true;
+            // The step label still comes from src/lib in English (batch I); the compare below depends on that text.
             const step = conn.crm ? inboxCrmStepLabel(conn.crm) : null;
             return (
               <Fragment key={conn.id}>
@@ -913,11 +902,11 @@ export function MessagesLayout({
                   snippet={
                     conn.lastMessage ? (
                       <>
-                        {SENT_TYPES.has(conn.lastMessage.type) && <span className="text-text-soft-400">You: </span>}
+                        {SENT_TYPES.has(conn.lastMessage.type) && <span className="text-text-soft-400">{t("youPrefix")} </span>}
                         {conn.lastMessage.text}
                       </>
                     ) : (
-                      <span className="italic text-text-soft-400">No messages yet</span>
+                      <span className="italic text-text-soft-400">{t("noMessagesYet")}</span>
                     )
                   }
                   hint={conn.headline ?? undefined}
@@ -935,14 +924,14 @@ export function MessagesLayout({
         )}
         {!loadingList && connections.length > 0 && (
           <div ref={listSentinelRef} className="flex min-h-8 justify-center py-3">
-            {loadingMore && <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label="Loading more" />}
+            {loadingMore && <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label={t("loadingMore")} />}
           </div>
         )}
       </ListPane>
 
       <ReadingPane shown={selected !== null} aside={detailsPanel}>
         {!selected ? (
-          <ReadingEmpty icon={RiMessage3Line} description="Pick a conversation from the list to read it and reply." />
+          <ReadingEmpty icon={RiMessage3Line} description={t("pickConversation")} />
         ) : (
           <>
             <ThreadHeader
@@ -971,17 +960,17 @@ export function MessagesLayout({
               actions={
                 <>
                   {recordId && (
-                    <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title="Open CRM record">
-                      <Link href={`/crm/records/${recordId}`} aria-label="Open CRM record">
+                    <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title={t("openRecord")}>
+                      <Link href={`/crm/records/${recordId}`} aria-label={t("openRecord")}>
                         <Button.Icon as={RiUserSearchLine} />
-                        <span className="hidden @3xl:inline">Record</span>
+                        <span className="hidden @3xl:inline">{t("record")}</span>
                       </Link>
                     </Button.Root>
                   )}
                   {selected.linkedinUrl && (
-                    <HeaderAction icon={RiExternalLinkLine} label="LinkedIn profile" href={toLinkedinHref(selected.linkedinUrl)} external iconOnly />
+                    <HeaderAction icon={RiExternalLinkLine} label={t("linkedinProfile")} href={toLinkedinHref(selected.linkedinUrl)} external iconOnly />
                   )}
-                  <HeaderAction icon={RiLayoutRightLine} label={details.open ? "Hide details" : "Show details"} onClick={details.toggle} pressed={details.open} iconOnly />
+                  <HeaderAction icon={RiLayoutRightLine} label={details.open ? t("hideDetails") : t("showDetails")} onClick={details.toggle} pressed={details.open} iconOnly />
                 </>
               }
             />
@@ -999,7 +988,7 @@ export function MessagesLayout({
                 <DoNotContactNotice />
               ) : !selected.chatId ? (
                 <p className="py-1 text-center text-paragraph-xs text-text-soft-400">
-                  No chat with this connection yet — you can reply once they send a message.
+                  {t("noChatYet")}
                 </p>
               ) : (
                 <>
@@ -1036,9 +1025,9 @@ export function MessagesLayout({
                         />
                       ) : undefined
                     }
-                    submitLabel={activeDraft ? "Approve & send" : "Send"}
-                    placeholder={`Message ${selectedName.split(" ")[0] || "them"}…`}
-                    meta={<ChannelTag channel="linkedin" label={senderLabel ? `as ${senderLabel}` : "LinkedIn"} />}
+                    submitLabel={activeDraft ? t("approveAndSend") : t("send")}
+                    placeholder={t("messagePlaceholder", { name: selectedName.split(" ")[0] || t("themLower") })}
+                    meta={<ChannelTag channel="linkedin" label={senderLabel ? t("sentAs", { sender: senderLabel }) : "LinkedIn"} />}
                   />
                 </>
               )}

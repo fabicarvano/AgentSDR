@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiLoader4Line, RiPencilLine, RiSaveLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Checkbox from "@/components/alignui/checkbox";
@@ -61,6 +62,7 @@ function EditForm({
   onCancel: () => void;
   onSaved: (updated: { name: string; description: string | null; accounts: SenderAccount[] }) => void;
 }) {
+  const t = useTranslations("linkedinCampaigns.editModal");
   const [name, setName] = useState(campaign.name);
   const [description, setDescription] = useState(campaign.description ?? "");
   const [selectedIds, setSelectedIds] = useState<string[]>(campaign.accounts.map((a) => a.id));
@@ -69,7 +71,7 @@ function EditForm({
 
   async function save() {
     const trimmed = name.trim();
-    if (!trimmed) { setError("Campaign name is required"); return; }
+    if (!trimmed) { setError(t("nameRequired")); return; }
     setSaving(true);
     setError(null);
     try {
@@ -79,14 +81,14 @@ function EditForm({
         body: JSON.stringify({ name: trimmed, description: description.trim() || null, linkedinAccountIds: selectedIds }),
       });
       const data = await res.json();
-      if (!data.ok) { setError(data.error ?? "Failed"); return; }
+      if (!data.ok) { setError(data.error ?? t("saveFailed")); return; }
       onSaved({
         name: trimmed,
         description: description.trim() || null,
         accounts: accounts.filter((a) => selectedIds.includes(a.id)),
       });
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -95,23 +97,21 @@ function EditForm({
   return (
     <>
       <Modal.Header icon={RiPencilLine}>
-        <Modal.Title>Edit campaign</Modal.Title>
+        <Modal.Title>{t("title")}</Modal.Title>
         <Modal.Description>
-          {campaign.type
-            ? `${campaign.type === "PERSONAL" ? "Personal" : "Regular"} campaign. The type can't be changed after creation.`
-            : "Rename it, or change which accounts send."}
+          {campaign.type ? t("typeNotice", { type: campaign.type }) : t("noTypeDescription")}
         </Modal.Description>
       </Modal.Header>
       <Modal.Body className="space-y-4">
         <label className="block">
-          <span className="mb-1.5 block text-label-sm text-text-strong-950">Campaign name</span>
+          <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("nameLabel")}</span>
           <Input.Root hasError={Boolean(error && !name.trim())}>
             <Input.Wrapper>
               <Input.Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void save(); }}
-                placeholder="e.g. Q2 Tech Founders Outreach"
+                placeholder={t("namePlaceholder")}
                 autoFocus
               />
             </Input.Wrapper>
@@ -119,14 +119,14 @@ function EditForm({
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label-sm text-text-strong-950">
-            Description <span className="text-text-soft-400">(optional)</span>
+            {t.rich("descriptionLabel", { soft: (chunks) => <span className="text-text-soft-400">{chunks}</span> })}
           </span>
-          <Textarea.Root simple rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional notes about this campaign…" />
+          <Textarea.Root simple rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} />
         </label>
         <div>
-          <span className="mb-1.5 block text-label-sm text-text-strong-950">LinkedIn senders</span>
+          <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("sendersLabel")}</span>
           {accounts.length === 0 ? (
-            <p className="rounded-xl bg-bg-weak-50 p-3 text-paragraph-sm text-text-sub-600">No connected accounts.</p>
+            <p className="rounded-xl bg-bg-weak-50 p-3 text-paragraph-sm text-text-sub-600">{t("noAccounts")}</p>
           ) : (
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl p-1 ring-1 ring-inset ring-stroke-soft-200">
               {accounts.map((a) => {
@@ -151,10 +151,10 @@ function EditForm({
         )}
       </Modal.Body>
       <Modal.Footer>
-        <Button.Root variant="neutral" mode="stroke" size="small" onClick={onCancel}>Cancel</Button.Root>
+        <Button.Root variant="neutral" mode="stroke" size="small" onClick={onCancel}>{t("cancel")}</Button.Root>
         <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving}>
           <Button.Icon as={saving ? RiLoader4Line : RiSaveLine} className={cn(saving && "animate-spin")} />
-          Save changes
+          {t("save")}
         </Button.Root>
       </Modal.Footer>
     </>

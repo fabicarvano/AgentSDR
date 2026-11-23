@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { requirePageOrgContext } from "@/lib/auth/context";
 import { inOrg, runInOrganization } from "@/lib/tenancy/scope";
@@ -16,6 +17,7 @@ type Props = {
 
 export default async function WebhooksPage({ searchParams }: Props) {
   const ctx = await requirePageOrgContext();
+  const t = await getTranslations("linkedinMain.webhooksPage");
   return runInOrganization(ctx.organizationId, async () => {
     const { page: pageParam } = await searchParams;
     const [{ totalCount }] = await db.select({ totalCount: count() }).from(webhookEvents).where(inOrg(webhookEvents));
@@ -93,12 +95,8 @@ export default async function WebhooksPage({ searchParams }: Props) {
     return (
       <div className="mx-auto w-full max-w-[1440px]">
         <PageHeader
-          title="LinkedIn webhooks"
-          description={
-            totalCount === 0
-              ? "Processing logs and raw payloads from Unipile"
-              : `${totalCount.toLocaleString("en-US")} event${totalCount === 1 ? "" : "s"} received from Unipile, newest first`
-          }
+          title={t("title")}
+          description={totalCount === 0 ? t("descriptionEmpty") : t("description", { count: totalCount })}
         />
         <WebhooksClient events={rows} footer={<ListPagination basePath="/linkedin/webhooks" page={page} totalCount={totalCount} />} />
       </div>
