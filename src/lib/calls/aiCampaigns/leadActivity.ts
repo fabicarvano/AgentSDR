@@ -7,7 +7,7 @@ import { whatsappAccounts, whatsappChats, whatsappMessages } from "@/lib/whatsap
 import { crmStageForPeople } from "../leadStage";
 import { callCampaignContacts, callCampaignStepRuns, callCampaigns, callSessions, callingStations, stationMessageJobs } from "../schema";
 import { toCallSummary } from "../sessions";
-import { aiStepLabel, describeStepKey, type AiActivityCallResult, type AiLeadActivity, type AiLeadActivitySummary } from "./api";
+import { aiStepLabel, aiStepPosition, describeStepKey, type AiActivityCallResult, type AiLeadActivity, type AiLeadActivitySummary, type AiStepRef } from "./api";
 
 type CampaignRow = typeof callCampaigns.$inferSelect;
 type SessionRow = typeof callSessions.$inferSelect;
@@ -61,8 +61,17 @@ export async function loadLeadActivity(
     const position = index >= 0 ? aiStepLabel(steps, index, false) : null;
     return position ? `${described.label} · ${position}` : described.label;
   };
+  const stepRefOf = (stepKey: string): AiStepRef => {
+    const described = describeStepKey(stepKey);
+    if (described.phase === "system") return { type: "system", system: described.system ?? { type: "other", key: described.label } };
+    const steps = described.phase === "chase" ? campaign.aiChaseSteps : campaign.aiSteps;
+    const index = described.stepId ? steps.findIndex((step) => step.id === described.stepId) : -1;
+    return { type: "step", phase: described.phase, position: index >= 0 ? aiStepPosition(steps, index, false) : null };
+  };
   const stepByCall = new Map(runs.flatMap((run) => (run.callSessionId ? [[run.callSessionId, stepOf(run.stepKey)] as const] : [])));
   const stepByMessage = new Map(runs.flatMap((run) => (run.whatsappMessageId ? [[run.whatsappMessageId, stepOf(run.stepKey)] as const] : [])));
+  const refByCall = new Map(runs.flatMap((run) => (run.callSessionId ? [[run.callSessionId, stepRefOf(run.stepKey)] as const] : [])));
+  const refByMessage = new Map(runs.flatMap((run) => (run.whatsappMessageId ? [[run.whatsappMessageId, stepRefOf(run.stepKey)] as const] : [])));
 
   const activity: AiLeadActivity[] = [];
   for (const { session, campaignId, campaignName, numberName } of calls) {
@@ -71,6 +80,7 @@ export async function loadLeadActivity(
       at: (session.startedAt ?? session.createdAt).toISOString(),
       kind: "call",
       stepLabel: stepByCall.get(session.id) ?? null,
+      stepRef: refByCall.get(session.id) ?? null,
       campaignName: campaignId && campaignId !== campaign.id ? campaignName : null,
       call: {
         id: session.id,
@@ -100,6 +110,7 @@ export async function loadLeadActivity(
       at: message.sentAt.toISOString(),
       kind: "message",
       stepLabel: stepByMessage.get(message.id) ?? null,
+      stepRef: refByMessage.get(message.id) ?? null,
       campaignName: null,
       call: null,
       message: {
@@ -125,10 +136,13 @@ export async function loadLeadActivity(
       at: run.createdAt.toISOString(),
       kind: "step",
       stepLabel: stepOf(run.stepKey),
+      stepRef: stepRefOf(run.stepKey),
       campaignName: null,
       call: null,
       message: null,
       error: run.error ?? (run.status === "started" ? "Starting…" : "It did not start"),
+      // Without a stored reason, the screens word it from this (the English above is for the API).
+      errorKind: run.error ? null : run.status === "started" ? "starting" : "notStarted",
     });
   }
   activity.sort((a, b) => b.at.localeCompare(a.at));

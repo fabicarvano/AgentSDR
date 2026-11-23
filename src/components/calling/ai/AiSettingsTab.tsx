@@ -10,11 +10,12 @@ import * as Select from "@/components/alignui/select";
 import * as Textarea from "@/components/alignui/textarea";
 import { Frame, FrameFooter, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import { TextField } from "@/components/calls/fields";
+import { useAgentVoiceLabel } from "@/components/calls/useAgentVoiceLabel";
 import { AGENT_VOICES, DEFAULT_AGENT_NAME, DEFAULT_AGENT_VOICE, MAX_AGENT_NAME_CHARS } from "@/lib/calls/contract";
 import {
   AI_CAMPAIGN_MAX_BOOKING_MESSAGE,
   AI_CAMPAIGN_MAX_INSTRUCTIONS,
-  aiSettingsError,
+  aiSettingsProblem,
   type AiCampaignDetail,
   type UpdateAiCampaignRequest,
 } from "@/lib/calls/aiCampaigns/api";
@@ -24,6 +25,7 @@ import { setAiCampaignStations, updateAiCampaign } from "@/lib/calls/aiCampaigns
 import type { CallingStation } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
 import { errorText, NumberPicker, useAiGoalText, useBeforeUnload } from "./aiShared";
+import { useAiProblemText } from "./useAiServerText";
 
 const DEFAULT_VOICE = "default";
 
@@ -64,6 +66,8 @@ export function AiSettingsTab({
   toggling: boolean;
 }) {
   const t = useTranslations("callingAiWork.settings");
+  const problemText = useAiProblemText();
+  const voiceLabel = useAgentVoiceLabel();
   const goalText = useAiGoalText();
   const [draft, setDraft] = useState<Draft>(() => draftOf(campaign));
   const [saved, setSaved] = useState<Draft>(() => draftOf(campaign));
@@ -91,13 +95,14 @@ export function AiSettingsTab({
   useBeforeUnload(dirty || numbersDirty);
 
   const handover = draft.goal === "human_callback";
-  const problem = aiSettingsError({
+  const problemFound = aiSettingsProblem({
     goal: draft.goal,
     instructions: draft.instructions,
     bookingUrl: handover ? null : draft.bookingUrl.trim() || null,
     bookingMessage: draft.bookingMessage,
     maxCallbacks: draft.maxCallbacks,
   });
+  const problem = problemFound ? problemText.settings(problemFound) : null;
   const nameTooLong = draft.agentName.trim().length > MAX_AGENT_NAME_CHARS;
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
@@ -220,7 +225,7 @@ export function AiSettingsTab({
                     <Select.Trigger aria-label={t("voice")}><Select.Value /></Select.Trigger>
                     <Select.Content>
                       <Select.Item value={DEFAULT_VOICE}>{t("voiceDefault", { voice: DEFAULT_AGENT_VOICE })}</Select.Item>
-                      {AGENT_VOICES.map((voice) => <Select.Item key={voice.id} value={voice.id}>{voice.label}</Select.Item>)}
+                      {AGENT_VOICES.map((voice) => <Select.Item key={voice.id} value={voice.id}>{voiceLabel(voice.id)}</Select.Item>)}
                     </Select.Content>
                   </Select.Root>
                 </div>

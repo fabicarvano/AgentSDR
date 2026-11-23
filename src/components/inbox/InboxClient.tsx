@@ -55,7 +55,8 @@ import { crmFetch } from "@/components/crm/crm-utils";
 import { useCrmText } from "@/components/crm/useCrmText";
 import type { Messages } from "@/i18n/catalog";
 import type { InboxMessageRow } from "@/lib/inbox/queries";
-import { inboxCrmStepLabel, type InboxCrmContext } from "@/lib/linkedin/messages/crmContext";
+import { useInboxCrmStepLabel } from "@/components/crm/useInboxCrmStepLabel";
+import type { InboxCrmContext } from "@/lib/linkedin/messages/crmContext";
 
 type ThreadResponse = {
   lead: {
@@ -90,6 +91,7 @@ export default function InboxClient() {
   const t = useTranslations("inboxMain.client");
   const tSections = useTranslations("inboxMain.sections");
   const workflowLabel = useWorkflowLabel();
+  const crmStepLabel = useInboxCrmStepLabel();
   const { categoryLabel } = useCrmText();
   const [section, setSection] = useState<InboxSectionKey>("inbox");
   const [rows, setRows] = useState<InboxMessageRow[]>([]);
@@ -384,7 +386,7 @@ export default function InboxClient() {
                   categoryLabel: crmContext ? (crmContext.subcategoryName ?? categoryLabel(crmContext.categoryKey)) : (record?.subcategory ?? categoryLabel(record?.categoryKey)),
                   stage: workflowLabel(crmContext?.workflowState ?? record?.workflowState),
                   sequence: crmContext?.sequenceName ?? record?.sequence,
-                  step: crmContext ? inboxCrmStepLabel(crmContext) : null,
+                  step: crmContext ? crmStepLabel(crmContext) : null,
                   nextActionAt: crmContext?.nextActionAt ?? record?.nextActionAt,
                   lastInboundAt: record?.lastInboundAt,
                   lastOutboundAt: record?.lastOutboundAt,

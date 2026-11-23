@@ -32,6 +32,7 @@ import { AI_CONTACT_STATUSES, AI_OPEN_STATUSES, type AiContactStatus } from "@/l
 import { cn } from "@/utils/cn";
 import { AiLeadDrawer, useAiOutcomeLabel } from "./AiLeadDrawer";
 import { AiStatusBadge, errorText, useAiFormat, useAiStatusLabel, useErrorText } from "./aiShared";
+import { useAiStepText } from "./useAiServerText";
 
 const PAGE_SIZE = 25;
 const ALL = "all";
@@ -66,6 +67,7 @@ export function AiLeadsTab({
   const format = useFormatter();
   const statusLabel = useAiStatusLabel();
   const outcomeLabel = useAiOutcomeLabel();
+  const stepText = useAiStepText();
   const importSummaryText = useImportSummary();
   const { formatWhen, actionRequiredText } = useAiFormat();
   const friendlyError = useErrorText();
@@ -224,7 +226,7 @@ export function AiLeadsTab({
                         {lead.meetingAt && <p className="mt-0.5 text-paragraph-xs text-text-sub-600" suppressHydrationWarning>{t("meeting", { when: formatWhen(lead.meetingAt) })}</p>}
                         {lead.actionRequiredAt && <p className="mt-0.5 text-paragraph-xs text-text-sub-600" suppressHydrationWarning>{actionRequiredText(lead.actionRequiredAt)}</p>}
                       </Table.Cell>
-                      <Table.Cell className="px-4 text-paragraph-sm text-text-sub-600">{lead.currentStep ?? "—"}</Table.Cell>
+                      <Table.Cell className="px-4 text-paragraph-sm text-text-sub-600">{lead.currentStepRef ? stepText.lead(lead.currentStepRef) : (lead.currentStep ?? "—")}</Table.Cell>
                       <Table.Cell className="px-4 text-paragraph-sm text-text-sub-600" suppressHydrationWarning>{open ? (lead.nextAt ? format.relativeTime(new Date(lead.nextAt)) : t("waitingForNumber")) : "—"}</Table.Cell>
                       <Table.Cell className="px-4">
                         {lead.lastOutcome ? (

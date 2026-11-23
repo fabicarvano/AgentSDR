@@ -1,0 +1,12 @@
+{
+  "serverWhatsapp": {
+    "stepsProblem": {
+      "tooManySteps": "Uma sequência pode ter no máximo {max} mensagens",
+      "needsUniqueId": "{which, select, first {A primeira mensagem} other {O follow-up {number}}} precisa de um ID único",
+      "empty": "{which, select, first {A primeira mensagem está vazia} other {O follow-up {number} está vazio}}",
+      "tooLong": "{which, select, first {A primeira mensagem passa} other {O follow-up {number} passa}} de {max} caracteres",
+      "delayNotWhole": "{which, select, first {A espera da primeira mensagem} other {A espera do follow-up {number}}} deve ser em horas inteiras",
+      "delayRange": "{which, select, first {A primeira mensagem deve} other {O follow-up {number} deve}} esperar entre {minHours, plural, one {# hora} other {# horas}} e {maxDays, plural, one {# dia} other {# dias}}"
+    }
+  }
+}

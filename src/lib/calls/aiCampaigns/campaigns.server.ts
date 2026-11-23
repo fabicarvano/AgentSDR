@@ -43,9 +43,11 @@ import {
   AI_EMPTY_STATUS_COUNTS,
   aiCampaignState,
   aiLaunchBlocker,
+  aiLaunchProblem,
   aiSequencesError,
   aiSettingsError,
   aiStepLabel,
+  aiStepPosition,
   callsPerDayLimit,
   describeStepKey,
   httpsUrl,
@@ -54,6 +56,7 @@ import {
   type AiCampaignLead,
   type AiCampaignNumber,
   type AiCampaignStats,
+  type AiLeadStepRef,
   type AiCampaignSummary,
   type AiLeadDetail,
   type AiLeadsImportResponse,
@@ -242,17 +245,16 @@ async function toDetail(row: CampaignRow): Promise<AiCampaignDetail> {
   const [summary] = await loadSummaries([row]);
   if (!summary) throw new CallApiError(404, "Campaign not found");
   const rules = await channelRules("whatsapp");
-  const blocker =
-    summary.state === "draft"
-      ? aiLaunchBlocker({
-          numbers: summary.numbers.length,
-          steps: row.aiSteps,
-          instructions: row.aiInstructions,
-          goal: row.aiGoal,
-          bookingUrl: row.aiBookingUrl,
-          leads: summary.leads,
-        })
-      : null;
+  const launchCheck = {
+    numbers: summary.numbers.length,
+    steps: row.aiSteps,
+    instructions: row.aiInstructions,
+    goal: row.aiGoal,
+    bookingUrl: row.aiBookingUrl,
+    leads: summary.leads,
+  };
+  const blocker = summary.state === "draft" ? aiLaunchBlocker(launchCheck) : null;
+  const blockerProblem = summary.state === "draft" ? aiLaunchProblem(launchCheck) : null;
   return {
     ...summary,
     goal: row.aiGoal,
@@ -266,6 +268,7 @@ async function toDetail(row: CampaignRow): Promise<AiCampaignDetail> {
     chaseSteps: row.aiChaseSteps,
     knowledgeIds: row.aiKnowledgeIds ?? null,
     blocker,
+    blockerProblem,
     callsPerDayLimit: callsPerDayLimit(summary.numbers, rules.callsPerDay),
   };
 }
@@ -551,6 +554,25 @@ function personName(person: Pick<PersonRow, "fullName" | "firstName" | "lastName
   return person.fullName?.trim() || [person.firstName, person.lastName].filter(Boolean).join(" ").trim() || null;
 }
 
+/** currentStepLabel as data, for the screens to word in the interface language. */
+function currentStepRef(row: ContactRow, campaign: Pick<CampaignRow, "aiSteps" | "aiChaseSteps">): AiLeadStepRef | null {
+  switch (row.aiStatus) {
+    case "queued":
+    case "reaching": {
+      const position = aiStepPosition(campaign.aiSteps, row.aiStep, false);
+      return position ? { type: "step", position } : null;
+    }
+    case "chasing": {
+      const position = aiStepPosition(campaign.aiChaseSteps, row.aiStep, true);
+      return position ? { type: "step", position } : null;
+    }
+    case "callback":
+      return { type: "callback", n: row.aiCallbacks + 1 };
+    default:
+      return null;
+  }
+}
+
 function currentStepLabel(row: ContactRow, campaign: Pick<CampaignRow, "aiSteps" | "aiChaseSteps">): string | null {
   switch (row.aiStatus) {
     case "queued":
@@ -586,6 +608,7 @@ function toLead(
     status,
     note: contact.aiNote,
     currentStep: currentStepLabel(contact, campaign),
+    currentStepRef: currentStepRef(contact, campaign),
     nextAt: open ? iso(contact.aiNextAt) : null,
     actionRequiredAt: contact.stage === "follow_up" ? iso(contact.followUpAt) : null,
     meetingAt: status === "booked" ? iso(contact.aiMeetingAt) : null,
@@ -935,6 +958,7 @@ export function foldStepRuns(
         stepId: step.id,
         kind: step.kind,
         label: `${phase === "chase" ? "Chase · " : ""}${aiStepLabel(steps, index, false) ?? step.id}`,
+        labelRef: { type: "step", phase, position: aiStepPosition(steps, index, false) },
         attempted: 0,
         done: 0,
         failed: 0,
@@ -953,6 +977,10 @@ export function foldStepRuns(
       stepId: described.stepId,
       kind: run.kind,
       label: described.stepId ? `${described.label} (removed step)` : described.label,
+      labelRef:
+        described.phase !== "system"
+          ? { type: "step", phase: described.phase, position: null, removed: true }
+          : { type: "system", system: described.system ?? { type: "other", key: described.label } },
       attempted: 0,
       done: 0,
       failed: 0,

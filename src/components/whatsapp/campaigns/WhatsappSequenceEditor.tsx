@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   RiAddLine,
@@ -21,7 +21,7 @@ import * as Textarea from "@/components/alignui/textarea";
 import { Frame, FrameFooter, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import {
   normalizeWhatsappCampaignSteps,
-  whatsappCampaignStepsError,
+  whatsappCampaignStepsProblem,
   WHATSAPP_CAMPAIGN_DEFAULT_DELAY_HOURS,
   WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH,
   WHATSAPP_CAMPAIGN_MAX_DELAY_HOURS,
@@ -68,6 +68,21 @@ export function WhatsappSequenceEditor({
 }) {
   const t = useTranslations("whatsappCampaigns.sequence");
   const cf = useCampaignFormat();
+  const tProblem = useTranslations("serverWhatsapp.stepsProblem");
+  const stepsError = (list: WhatsappCampaignStep[]): string | null => {
+    const problem = whatsappCampaignStepsProblem(list);
+    if (!problem) return null;
+    if (problem.code === "tooManySteps") return tProblem("tooManySteps", { max: problem.max });
+    const which = problem.position === 0 ? "first" : "other";
+    switch (problem.code) {
+      case "tooLong":
+        return tProblem("tooLong", { which, number: problem.position, max: problem.max });
+      case "delayRange":
+        return tProblem("delayRange", { which, number: problem.position, minHours: problem.minHours, maxDays: problem.maxDays });
+      default:
+        return tProblem(problem.code, { which, number: problem.position });
+    }
+  };
   const stepLabel = (i: number): string => (i === 0 ? t("firstMessage") : t("followUp", { number: i }));
   const [steps, setSteps] = useState<WhatsappCampaignStep[]>(() =>
     initialSteps.length > 0 ? initialSteps.map((s) => ({ ...s })) : [newStep(0)],
@@ -93,7 +108,7 @@ export function WhatsappSequenceEditor({
 
   const index = Math.min(selected, steps.length - 1);
   const step = steps[index]!;
-  const validationError = useMemo(() => whatsappCampaignStepsError(steps), [steps]);
+  const validationError = stepsError(steps);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,7 +198,7 @@ export function WhatsappSequenceEditor({
   }
 
   async function save() {
-    const issue = whatsappCampaignStepsError(steps);
+    const issue = stepsError(steps);
     if (issue) { setError(issue); return; }
     setSaving(true);
     setError(null);

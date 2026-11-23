@@ -27,9 +27,9 @@ import CampaignCsvMappingDialog from "@/components/leads/CampaignCsvMappingDialo
 import { PageHeader } from "@/components/page/PageHeader";
 import {
   AI_CAMPAIGN_MAX_INSTRUCTIONS,
-  aiLaunchBlocker,
-  aiSequencesError,
-  aiSettingsError,
+  aiLaunchProblem,
+  aiSequencesProblem,
+  aiSettingsProblem,
   type AiCampaignDetail,
   type AiLeadsImportResponse,
 } from "@/lib/calls/aiCampaigns/api";
@@ -44,10 +44,12 @@ import {
 } from "@/lib/calls/aiCampaigns/client";
 import { AI_CAMPAIGN_GOALS, type AiCampaignGoal, type AiCampaignStep } from "@/lib/calls/aiCampaigns/contract";
 import { listCallingStations } from "@/lib/calls/client";
+import { useAgentVoiceLabel } from "@/components/calls/useAgentVoiceLabel";
 import { AGENT_VOICES, DEFAULT_AGENT_NAME, DEFAULT_AGENT_VOICE, MAX_AGENT_NAME_CHARS } from "@/lib/calls/contract";
 import type { CallingStation } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
 import { NumberPicker, useAiGoalText, useErrorText, useFormatDelay } from "./aiShared";
+import { useAiProblemText } from "./useAiServerText";
 import { useImportSummary } from "./AiLeadsTab";
 import { AiStepsEditor } from "./AiStepsEditor";
 import { LeadSourceCards, SummaryRow } from "@/components/campaigns/wizardParts";
@@ -67,6 +69,8 @@ export function AiCampaignWizard() {
   const t = useTranslations("callingAiSetup.wizard");
   const format = useFormatter();
   const errorText = useErrorText();
+  const problemText = useAiProblemText();
+  const voiceLabel = useAgentVoiceLabel();
   const importSummary = useImportSummary();
   const goalText = useAiGoalText();
   const formatDelay = useFormatDelay();
@@ -116,9 +120,10 @@ export function AiCampaignWizard() {
   }, [step, campaignId]);
 
   const handover = goal === "human_callback";
-  const blocker = campaign
-    ? aiLaunchBlocker({ numbers: campaign.numbers.length, steps: campaign.steps, instructions: campaign.instructions, goal: campaign.goal, bookingUrl: campaign.bookingUrl, leads: campaign.leads })
-    : t("saveFirst");
+  const launchProblem = campaign
+    ? aiLaunchProblem({ numbers: campaign.numbers.length, steps: campaign.steps, instructions: campaign.instructions, goal: campaign.goal, bookingUrl: campaign.bookingUrl, leads: campaign.leads })
+    : null;
+  const blocker = campaign ? (launchProblem ? problemText.launch(launchProblem) : null) : t("saveFirst");
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -155,9 +160,9 @@ export function AiCampaignWizard() {
     setStep(2);
   });
 
-  const sequenceProblem =
-    aiSettingsError({ goal, instructions, bookingUrl: handover ? null : bookingUrl.trim() || null, bookingMessage, maxCallbacks: campaign?.maxCallbacks ?? 2 }) ??
-    aiSequencesError(steps, handover ? [] : chaseSteps);
+  const settingsFound = aiSettingsProblem({ goal, instructions, bookingUrl: handover ? null : bookingUrl.trim() || null, bookingMessage, maxCallbacks: campaign?.maxCallbacks ?? 2 });
+  const sequencesFound = settingsFound ? null : aiSequencesProblem(steps, handover ? [] : chaseSteps);
+  const sequenceProblem = settingsFound ? problemText.settings(settingsFound) : sequencesFound ? problemText.sequences(sequencesFound) : null;
 
   const saveSequence = () => run(async () => {
     if (!campaign) return;
@@ -360,8 +365,7 @@ export function AiCampaignWizard() {
                             <Select.Trigger aria-label={t("script.voice")}><Select.Value /></Select.Trigger>
                             <Select.Content>
                               <Select.Item value={DEFAULT_VOICE}>{t("script.voiceDefault", { voice: DEFAULT_AGENT_VOICE })}</Select.Item>
-                              {/* Voice labels come from lib/calls/contract (English, batch I). */}
-                              {AGENT_VOICES.map((voice) => <Select.Item key={voice.id} value={voice.id}>{voice.label}</Select.Item>)}
+                              {AGENT_VOICES.map((voice) => <Select.Item key={voice.id} value={voice.id}>{voiceLabel(voice.id)}</Select.Item>)}
                             </Select.Content>
                           </Select.Root>
                         </div>
@@ -425,8 +429,7 @@ export function AiCampaignWizard() {
                   )}
                 </div>
                 <p className="mt-4 text-paragraph-xs text-text-sub-600">{t("review.hours")}</p>
-                {blocker && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">{/* The blocker text comes from lib/calls/aiCampaigns (English, batch I). */}
-                  {t("review.blocker", { blocker })}</p>}
+                {blocker && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">{t("review.blocker", { blocker })}</p>}
                 <Footer error={error} onBack={() => setStep(3)} busy={busy} secondaryLabel={t("review.saveDraft")} onSecondary={() => void finish(false)} nextLabel={t("review.launch")} onNext={() => void finish(true)} nextDisabled={Boolean(blocker)} nextIcon={RiRocketLine} />
               </div>
             )}

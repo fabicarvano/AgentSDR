@@ -688,17 +688,18 @@ export const MAX_AGENT_NAME_CHARS = 40;
 
 /**
  * Gemini Live's preset voices offered for the agent. The voice is fixed per
- * call; `gender` sets the grammar the agent uses for itself in Hindi.
+ * call; `gender` sets the grammar the agent uses for itself in Hindi. The
+ * label people read is in the catalog (serverCalling.voice.<id>).
  */
 export const AGENT_VOICES = [
-  { id: "Kore", label: "Kore — firm, female", gender: "female" },
-  { id: "Aoede", label: "Aoede — breezy, female", gender: "female" },
-  { id: "Leda", label: "Leda — youthful, female", gender: "female" },
-  { id: "Sulafat", label: "Sulafat — warm, female", gender: "female" },
-  { id: "Despina", label: "Despina — smooth, female", gender: "female" },
-  { id: "Puck", label: "Puck — upbeat, male", gender: "male" },
-  { id: "Charon", label: "Charon — informative, male", gender: "male" },
-  { id: "Achird", label: "Achird — friendly, male", gender: "male" },
+  { id: "Kore", gender: "female" },
+  { id: "Aoede", gender: "female" },
+  { id: "Leda", gender: "female" },
+  { id: "Sulafat", gender: "female" },
+  { id: "Despina", gender: "female" },
+  { id: "Puck", gender: "male" },
+  { id: "Charon", gender: "male" },
+  { id: "Achird", gender: "male" },
 ] as const;
 export type AgentVoiceId = (typeof AGENT_VOICES)[number]["id"];
 export const DEFAULT_AGENT_VOICE: AgentVoiceId = "Kore";

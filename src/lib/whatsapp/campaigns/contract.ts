@@ -178,24 +178,55 @@ export type PreviewWhatsappCampaignStepResponse = {
 
 // --- pure helpers -------------------------------------------------------------------------
 
+/**
+ * What is wrong with a sequence, as a code plus the numbers. `position` is the step index (0 = the first message). The
+ * interface words it from serverWhatsapp.stepsProblem.<code>; `whatsappCampaignStepsError` words it in English for the API.
+ */
+export type WhatsappCampaignStepsProblem =
+  | { code: "tooManySteps"; max: number }
+  | { code: "needsUniqueId"; position: number }
+  | { code: "empty"; position: number }
+  | { code: "tooLong"; position: number; max: number }
+  | { code: "delayNotWhole"; position: number }
+  | { code: "delayRange"; position: number; minHours: number; maxDays: number };
+
 /** Why a sequence cannot be saved, or null. Pure, shared by the editor and the API. */
-export function whatsappCampaignStepsError(steps: WhatsappCampaignStep[]): string | null {
-  if (steps.length > WHATSAPP_CAMPAIGN_MAX_STEPS) return `A sequence has at most ${WHATSAPP_CAMPAIGN_MAX_STEPS} messages`;
+export function whatsappCampaignStepsProblem(steps: WhatsappCampaignStep[]): WhatsappCampaignStepsProblem | null {
+  if (steps.length > WHATSAPP_CAMPAIGN_MAX_STEPS) return { code: "tooManySteps", max: WHATSAPP_CAMPAIGN_MAX_STEPS };
   const ids = new Set<string>();
-  for (const [index, step] of steps.entries()) {
-    const label = index === 0 ? "The first message" : `Follow-up ${index}`;
-    if (!step.id || ids.has(step.id)) return `${label} needs a unique id`;
+  for (const [position, step] of steps.entries()) {
+    if (!step.id || ids.has(step.id)) return { code: "needsUniqueId", position };
     ids.add(step.id);
-    if (!step.body.trim()) return `${label} is empty`;
-    if (step.body.length > WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH) return `${label} is longer than ${WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH} characters`;
-    if (index > 0) {
-      if (!Number.isInteger(step.delayHours)) return `${label}'s wait must be whole hours`;
+    if (!step.body.trim()) return { code: "empty", position };
+    if (step.body.length > WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH) return { code: "tooLong", position, max: WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH };
+    if (position > 0) {
+      if (!Number.isInteger(step.delayHours)) return { code: "delayNotWhole", position };
       if (step.delayHours < WHATSAPP_CAMPAIGN_MIN_DELAY_HOURS || step.delayHours > WHATSAPP_CAMPAIGN_MAX_DELAY_HOURS) {
-        return `${label} must wait between ${WHATSAPP_CAMPAIGN_MIN_DELAY_HOURS} hour and ${WHATSAPP_CAMPAIGN_MAX_DELAY_HOURS / 24} days`;
+        return { code: "delayRange", position, minHours: WHATSAPP_CAMPAIGN_MIN_DELAY_HOURS, maxDays: WHATSAPP_CAMPAIGN_MAX_DELAY_HOURS / 24 };
       }
     }
   }
   return null;
+}
+
+/** The same problem worded in English, for the API. */
+export function whatsappCampaignStepsError(steps: WhatsappCampaignStep[]): string | null {
+  const problem = whatsappCampaignStepsProblem(steps);
+  if (!problem) return null;
+  if (problem.code === "tooManySteps") return `A sequence has at most ${problem.max} messages`;
+  const label = problem.position === 0 ? "The first message" : `Follow-up ${problem.position}`;
+  switch (problem.code) {
+    case "needsUniqueId":
+      return `${label} needs a unique id`;
+    case "empty":
+      return `${label} is empty`;
+    case "tooLong":
+      return `${label} is longer than ${problem.max} characters`;
+    case "delayNotWhole":
+      return `${label}'s wait must be whole hours`;
+    case "delayRange":
+      return `${label} must wait between ${problem.minHours} hour and ${problem.maxDays} days`;
+  }
 }
 
 /** Steps as saved: bodies kept verbatim, the first step's delay zeroed. */

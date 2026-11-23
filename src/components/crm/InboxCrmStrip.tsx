@@ -8,8 +8,8 @@ import { useDialogs } from "@/components/DialogProvider";
 import { ClassificationPicker, humanize, type ClassificationChoice } from "@/components/crm/ActionRowTools";
 import { crmFetch } from "@/components/crm/crm-utils";
 import { useCrmText } from "@/components/crm/useCrmText";
+import { useInboxCrmStepLabel } from "@/components/crm/useInboxCrmStepLabel";
 import type { InboxCrmContext, InboxCrmDraft, InboxCrmSummary } from "@/lib/linkedin/messages/crmContext";
-import { inboxCrmStepLabel } from "@/lib/linkedin/messages/crmContext";
 import { cn } from "@/utils/cn";
 
 /**
@@ -21,7 +21,6 @@ import { cn } from "@/utils/cn";
  * - `CrmDraftCard` — the drafted reply, pinned above the composer where it
  *   is reviewed and sent.
  * - `DoNotContactNotice` — in place of the composer when the lead opted out.
- * - `crmSequenceLine` — sequence, step and next action, for the details column.
  *
  * `InboxCrmStrip` still composes them into one band for any caller that
  * wants the old all-in-one strip.
@@ -36,8 +35,8 @@ export type CrmCategoryOption = {
 
 /**
  * English-only twin kept for callers that are not translated yet (the inbox lists and threads). Inside this file
- * and in translated screens use `useInboxCrmText()`, which returns the translated versions.
- * The step label (`inboxCrmStepLabel`) still comes from `src/lib` in English (batch I).
+ * and in translated screens use `useInboxCrmText()`, which returns the translated versions
+ * (the step label comes from `useInboxCrmStepLabel()`).
  */
 /** The (sub)category a row or header names: the subcategory, else the category, else "Unclassified". */
 export function crmCategoryLabel(summary: Pick<InboxCrmSummary, "categoryKey" | "subcategoryName"> | null | undefined): string {
@@ -45,20 +44,12 @@ export function crmCategoryLabel(summary: Pick<InboxCrmSummary, "categoryKey" | 
   return summary.subcategoryName ?? (summary.categoryKey ? humanize(summary.categoryKey) : "Unclassified");
 }
 
-/** "Sequence · Reply drafted · next 30 Sep, 13:39". */
-export function crmSequenceLine(context: InboxCrmSummary): string {
-  const nextAt = context.nextActionAt ? new Date(context.nextActionAt) : null;
-  const nextAtLabel = nextAt && !Number.isNaN(nextAt.getTime())
-    ? nextAt.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
-    : null;
-  return `${context.sequenceName ? `${context.sequenceName} · ` : ""}${inboxCrmStepLabel(context)}${nextAtLabel ? ` · next ${nextAtLabel}` : ""}`;
-}
-
-/** Translated `crmCategoryLabel` and `crmSequenceLine` for translated screens. */
+/** Translated `crmCategoryLabel` for translated screens. */
 export function useInboxCrmText() {
   const t = useTranslations("crmRecord.inboxStrip");
   const format = useFormatter();
   const { categoryLabel } = useCrmText();
+  const stepLabel = useInboxCrmStepLabel();
   return {
     categoryLabel: (summary: Pick<InboxCrmSummary, "categoryKey" | "subcategoryName"> | null | undefined): string => {
       if (!summary) return categoryLabel(null);
@@ -69,7 +60,7 @@ export function useInboxCrmText() {
       const nextAtLabel = nextAt && !Number.isNaN(nextAt.getTime())
         ? t("nextAt", { date: format.dateTime(nextAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })
         : null;
-      return `${context.sequenceName ? `${context.sequenceName} · ` : ""}${inboxCrmStepLabel(context)}${nextAtLabel ? ` · ${nextAtLabel}` : ""}`;
+      return `${context.sequenceName ? `${context.sequenceName} · ` : ""}${stepLabel(context)}${nextAtLabel ? ` · ${nextAtLabel}` : ""}`;
     },
   };
 }
