@@ -1,0 +1,18 @@
+{
+  "apiErrors": {
+    "UNAUTHENTICATED": "Entre para continuar.",
+    "NO_ACTIVE_ORGANIZATION": "Escolha ou crie um espaço de trabalho primeiro.",
+    "NOT_A_MEMBER": "Você não faz mais parte deste espaço de trabalho.",
+    "FORBIDDEN": "Você não tem permissão para fazer isso.",
+    "INVALID_ORIGIN": "Esta solicitação veio de outro site e foi recusada.",
+    "INVALID_IDEMPOTENCY_KEY": "Não foi possível verificar esta solicitação. Recarregue a página e tente de novo.",
+    "STALE_CONTEXT": "Este registro mudou enquanto você trabalhava nele. Recarregue e tente de novo.",
+    "invalidJson": "A solicitação não é um JSON válido.",
+    "invalidBody": "A solicitação não é válida.",
+    "notFound": "Não encontramos isso.",
+    "campaignNotFound": "Não encontramos essa campanha.",
+    "leadNotFound": "Não encontramos esse lead.",
+    "missingIds": "Nenhum item foi informado.",
+    "unsupportedColumnType": "O tipo de coluna \"{type}\" não é compatível."
+  }
+}
