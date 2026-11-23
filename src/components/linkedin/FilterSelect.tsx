@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 import { getSearchRemainingTier } from "@/lib/linkedin/searchLeadLimit";
 
@@ -45,6 +46,7 @@ function OptionAvatar({
   size?: "sm" | "md";
   remainingCount?: number;
 }) {
+  const t = useTranslations("linkedinMain.filterSelect");
   const [err, setErr] = useState(false);
   const cls = size === "sm" ? "h-6 w-6 text-[10px]" : "h-7 w-7 text-xs";
   const initials = name
@@ -57,7 +59,7 @@ function OptionAvatar({
   const ringClass =
     remainingCount !== undefined ? limitRingClass(remainingCount) : "";
   const title =
-    remainingCount !== undefined ? `${remainingCount} searches left today` : undefined;
+    remainingCount !== undefined ? t("searchesLeft", { count: remainingCount }) : undefined;
 
   const inner =
     src && !err ? (
@@ -88,7 +90,7 @@ export function FilterSelect({
   onChange,
   options,
   placeholder,
-  clearLabel = "All",
+  clearLabel,
   showAvatars = false,
   showLimitBadges = false,
   allowClear = true,
@@ -96,6 +98,7 @@ export function FilterSelect({
   disabled = false,
   className = "",
 }: FilterSelectProps) {
+  const t = useTranslations("linkedinMain.filterSelect");
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -193,7 +196,7 @@ export function FilterSelect({
           {allowClear && (
             <>
               <button type="button" onClick={() => pick("")} className={optionRowClass(!value)}>
-                <span className={`flex-1 truncate ${!value ? "font-medium" : ""}`}>{clearLabel}</span>
+                <span className={`flex-1 truncate ${!value ? "font-medium" : ""}`}>{clearLabel ?? t("all")}</span>
                 {!value && <Check className="size-4 shrink-0 text-primary-base" />}
               </button>
               <div className="my-1 border-t border-stroke-soft-200" />
@@ -201,7 +204,7 @@ export function FilterSelect({
           )}
 
           {options.length === 0 ? (
-            <p className="px-3 py-2 text-paragraph-sm text-text-soft-400">No options</p>
+            <p className="px-3 py-2 text-paragraph-sm text-text-soft-400">{t("noOptions")}</p>
           ) : (
             options.map((opt) => {
               const active = value === opt.value;

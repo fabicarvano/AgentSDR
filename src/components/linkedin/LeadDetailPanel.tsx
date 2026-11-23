@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
+import type { LeadStatus } from "@/lib/linkedin/schema";
 import {
   X,
   ExternalLink,
@@ -42,27 +45,53 @@ export const LEAD_STATUS_VARIANTS: Record<
   FAILED: "destructive",
 };
 
-export const LEAD_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending",
-  REQUEST_SENT: "Request Sent",
-  ACCEPT_MESSAGE_SENT: "Accepted",
-  FOLLOW_UP_1_SENT: "Follow-up 1",
-  FOLLOW_UP_2_SENT: "Follow-up 2",
-  FOLLOW_UP_3_SENT: "Follow-up 3",
-  COMPLETED: "Completed",
-  REPLIED: "Replied",
-  FAILED: "Failed",
+// Intl format options, not interface text.
+const SHORT_DATE_TIME = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" } as const;
+
+type LeadStatusKey = keyof Messages["linkedinMain"]["leadStatus"];
+// Compile-time exhaustiveness: a lead status added to the database enum without a label fails tsc here.
+const _statusesCovered: Exclude<LeadStatus, LeadStatusKey> extends never ? true : false = true;
+void _statusesCovered;
+
+/** The translated lead status label; a status the catalog does not know is shown as stored. */
+export function useLeadStatusLabel() {
+  const tStatus = useTranslations("linkedinMain.leadStatus");
+  return useCallback(
+    (status: string): string => (Object.hasOwn(LEAD_STATUS_VARIANTS, status) ? tStatus(status as LeadStatusKey) : status),
+    [tStatus],
+  );
+}
+
+type MessageTypeKey = keyof Messages["linkedinMain"]["messageType"];
+const MESSAGE_TYPE_KEYS: Record<MessageTypeKey, true> = {
+  INVITATION: true,
+  ACCEPTANCE: true,
+  FOLLOW_UP_1: true,
+  FOLLOW_UP_2: true,
+  FOLLOW_UP_3: true,
+  RECEIVED: true,
+  CUSTOM_SENT: true,
 };
 
-const MESSAGE_TYPE_LABEL: Record<string, string> = {
-  INVITATION: "Invitation",
-  ACCEPTANCE: "Acceptance",
-  FOLLOW_UP_1: "Follow-up 1",
-  FOLLOW_UP_2: "Follow-up 2",
-  FOLLOW_UP_3: "Follow-up 3",
-  RECEIVED: "Received",
-  CUSTOM_SENT: "Sent",
-};
+/** The translated label of a LinkedIn message type; an unknown type is shown as stored. */
+export function useMessageTypeLabel() {
+  const tType = useTranslations("linkedinMain.messageType");
+  return useCallback(
+    (type: string): string => (Object.hasOwn(MESSAGE_TYPE_KEYS, type) ? tType(type as MessageTypeKey) : type),
+    [tType],
+  );
+}
+
+/** Medium date and time in the active locale; "sent" (a send with no recorded time) reads as the word. */
+function useLeadDate() {
+  const t = useTranslations("linkedinMain.leadDetail");
+  const format = useFormatter();
+  return (iso: string | null) => {
+    if (!iso) return null;
+    if (iso === "sent") return t("sent");
+    return format.dateTime(new Date(iso), { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  };
+}
 
 const SENT_TYPES = new Set(["INVITATION", "ACCEPTANCE", "FOLLOW_UP_1", "FOLLOW_UP_2", "FOLLOW_UP_3", "CUSTOM_SENT"]);
 
@@ -142,18 +171,6 @@ function Avatar({ src, name, size = "lg" }: { src: string | null; name: string; 
   );
 }
 
-function fmt(iso: string | null) {
-  if (!iso) return null;
-  if (iso === "sent") return "Sent";
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (value == null || value === "") return null;
   return (
@@ -165,6 +182,8 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
 }
 
 function MessageBubble({ type, text, createdAt }: { type: string; text: string; createdAt: string }) {
+  const format = useFormatter();
+  const typeLabel = useMessageTypeLabel();
   const sent = SENT_TYPES.has(type);
   return (
     <div className={`flex ${sent ? "justify-end" : "justify-start"}`}>
@@ -174,9 +193,9 @@ function MessageBubble({ type, text, createdAt }: { type: string; text: string; 
         }`}
       >
         <p className="text-[10px] font-medium opacity-80 mb-0.5">
-          {MESSAGE_TYPE_LABEL[type] ?? type}
+          {typeLabel(type)}
           <span className="mx-1">·</span>
-          {new Date(createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+          {format.dateTime(new Date(createdAt), SHORT_DATE_TIME)}
         </p>
         <p className="whitespace-pre-wrap break-words leading-relaxed">{text || "—"}</p>
       </div>
@@ -191,6 +210,10 @@ function OutreachTemplatesEditor({
   lead: LeadDetail;
   onSaved: (updated: LeadDetail) => void;
 }) {
+  const t = useTranslations("linkedinMain.leadDetail");
+  const locale = useLocale();
+  const fmt = useLeadDate();
+  const typeLabel = useMessageTypeLabel();
   const [draft, setDraft] = useState<MessageDraft>(() => draftFromLead(lead));
   const [editingFields, setEditingFields] = useState<Set<LeadMessageField>>(() => new Set());
   const [saving, setSaving] = useState(false);
@@ -230,7 +253,7 @@ function OutreachTemplatesEditor({
       isInvitationMessageTooLong(payload.invitationMessage)
     ) {
       setSaveError(
-        `Invitation message must be ${MAX_INVITATION_MESSAGE_LENGTH} characters or fewer (currently ${invitationMessageLength(payload.invitationMessage)}).`
+        t("invitationTooLong", { max: MAX_INVITATION_MESSAGE_LENGTH, current: invitationMessageLength(payload.invitationMessage) })
       );
       return;
     }
@@ -245,7 +268,7 @@ function OutreachTemplatesEditor({
       });
       const data = await res.json();
       if (!data.ok) {
-        setSaveError(data.error ?? "Save failed");
+        setSaveError(data.error ?? t("saveFailed"));
         return;
       }
       let updated: LeadDetail = {
@@ -264,7 +287,7 @@ function OutreachTemplatesEditor({
       setEditingFields(new Set());
       onSaved(updated);
     } catch {
-      setSaveError("Network error");
+      setSaveError(t("networkError"));
     } finally {
       setSaving(false);
     }
@@ -272,7 +295,9 @@ function OutreachTemplatesEditor({
 
   return (
     <div className="space-y-2">
-      {LEAD_MESSAGE_FIELDS.map(({ key, label }) => {
+      {LEAD_MESSAGE_FIELDS.map(({ key }) => {
+        // The label comes from the message-type catalog; the English one in lib/linkedin/leadMessages is no longer shown.
+        const label = typeLabel(MESSAGE_TYPE_FOR_FIELD[key]);
         const editable = isMessageEditable(key, lead.status);
         const editing = editable && editingFields.has(key);
         const sentAt = sentAtForField(key, lead);
@@ -296,7 +321,7 @@ function OutreachTemplatesEditor({
               <p className="text-xs font-medium text-text-sub-600">{label}</p>
               {sent ? (
                 <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
-                  Sent{sentAt !== "sent" ? ` ${fmt(sentAt)}` : ""}
+                  {sentAt !== "sent" ? t("sentAt", { date: fmt(sentAt) ?? "" }) : t("sent")}
                 </span>
               ) : editable ? (
                 <button
@@ -304,10 +329,10 @@ function OutreachTemplatesEditor({
                   className="text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline"
                   onClick={() => toggleFieldEditor(key)}
                 >
-                  {editing ? "Cancel edit" : "Edit template"}
+                  {editing ? t("cancelEdit") : t("editTemplate")}
                 </button>
               ) : (
-                <span className="text-[10px] text-text-soft-400">Locked</span>
+                <span className="text-[10px] text-text-soft-400">{t("locked")}</span>
               )}
             </div>
             {editing ? (
@@ -317,7 +342,7 @@ function OutreachTemplatesEditor({
                   onChange={(e) => setDraft((p) => ({ ...p, [key]: e.target.value }))}
                   rows={3}
                   maxLength={key === "invitationMessage" ? MAX_INVITATION_MESSAGE_LENGTH : undefined}
-                  placeholder={`Write your ${label.toLowerCase()}…`}
+                  placeholder={t("writePlaceholder", { label: label.toLocaleLowerCase(locale) })}
                   className="w-full resize-none rounded-lg border border-stroke-soft-200 bg-bg-white-0 px-3 py-2 text-sm text-text-strong-950 leading-relaxed placeholder:text-text-soft-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {key === "invitationMessage" && (
@@ -333,7 +358,7 @@ function OutreachTemplatesEditor({
             ) : previewValue ? (
               <p className="text-sm text-text-strong-950 whitespace-pre-wrap leading-relaxed">{previewValue}</p>
             ) : (
-              <p className="text-sm text-text-soft-400 italic">No message</p>
+              <p className="text-sm text-text-soft-400 italic">{t("noMessage")}</p>
             )}
           </div>
         );
@@ -349,7 +374,7 @@ function OutreachTemplatesEditor({
       {hasEditable && editingFields.size > 0 && (
         <Button size="sm" className="w-full" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save message templates
+          {t("saveTemplates")}
         </Button>
       )}
     </div>
@@ -367,6 +392,9 @@ export function LeadDetailPanel({
   refreshKey?: number;
   onMessagesSaved?: (leadId: string, updates: Pick<LeadDetail, LeadMessageField>) => void;
 }) {
+  const t = useTranslations("linkedinMain.leadDetail");
+  const fmt = useLeadDate();
+  const statusLabel = useLeadStatusLabel();
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -388,14 +416,14 @@ export function LeadDetailPanel({
       .then((data) => {
         if (cancelled) return;
         if (!data.ok) {
-          setError(data.error ?? "Failed to load lead");
+          setError(data.error ?? t("loadFailed"));
           setLead(null);
           return;
         }
         setLead(data.lead);
       })
       .catch(() => {
-        if (!cancelled) setError("Network error");
+        if (!cancelled) setError(t("networkError"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -404,11 +432,12 @@ export function LeadDetailPanel({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t only changes with the locale; refetching the lead for that would be wasteful
   }, [leadId, refreshKey]);
 
   if (!leadId) return null;
 
-  const displayName = lead?.name ?? lead?.linkedinUrl ?? "Lead";
+  const displayName = lead?.name ?? lead?.linkedinUrl ?? t("leadFallback");
   const profileUrl = lead
     ? lead.linkedinUrl.startsWith("http")
       ? lead.linkedinUrl
@@ -430,7 +459,7 @@ export function LeadDetailPanel({
     <>
       <button
         type="button"
-        aria-label="Close lead details"
+        aria-label={t("closeDetails")}
         className="fixed inset-0 z-40 bg-black/25 lg:bg-transparent"
         onClick={onClose}
       />
@@ -438,10 +467,10 @@ export function LeadDetailPanel({
       <aside
         className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-stroke-soft-200 bg-bg-white-0 shadow-xl"
         role="dialog"
-        aria-label="Lead details"
+        aria-label={t("title")}
       >
         <div className="flex items-center justify-between gap-2 border-b border-stroke-soft-200 px-4 py-3 shrink-0">
-          <h2 className="text-sm font-semibold text-text-strong-950">Lead details</h2>
+          <h2 className="text-sm font-semibold text-text-strong-950">{t("title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -468,11 +497,11 @@ export function LeadDetailPanel({
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold text-text-strong-950 truncate">{displayName}</h3>
                     <Badge variant={LEAD_STATUS_VARIANTS[lead.status] ?? "secondary"}>
-                      {LEAD_STATUS_LABELS[lead.status] ?? lead.status}
+                      {statusLabel(lead.status)}
                     </Badge>
                     {lead.inviteRetryCount > 0 && lead.status !== "FAILED" && (
                       <span className="text-xs text-amber-600 dark:text-amber-400">
-                        Retries: {lead.inviteRetryCount}/{MAX_LEAD_RETRIES}
+                        {t("retries", { count: lead.inviteRetryCount, max: MAX_LEAD_RETRIES })}
                       </span>
                     )}
                   </div>
@@ -492,7 +521,7 @@ export function LeadDetailPanel({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2"
                     >
-                      View on LinkedIn
+                      {t("viewOnLinkedIn")}
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
@@ -500,10 +529,10 @@ export function LeadDetailPanel({
               </div>
 
               <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400">Overview</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400">{t("overview")}</h4>
                 <div className="space-y-2 rounded-xl border border-stroke-soft-200 bg-bg-weak-50/50 p-3">
                   <DetailRow
-                    label="Campaign"
+                    label={t("campaign")}
                     value={
                       lead.campaign ? (
                         <span className="inline-flex items-center gap-1">
@@ -516,7 +545,7 @@ export function LeadDetailPanel({
                     }
                   />
                   <DetailRow
-                    label="Sender"
+                    label={t("sender")}
                     value={
                       lead.linkedInAccount ? (
                         <LinkedInAccountTag account={lead.linkedInAccount} size="sm" />
@@ -525,18 +554,18 @@ export function LeadDetailPanel({
                       )
                     }
                   />
-                  <DetailRow label="Added" value={fmt(lead.createdAt)} />
-                  <DetailRow label="Invite sent" value={fmt(lead.requestSentAt)} />
+                  <DetailRow label={t("added")} value={fmt(lead.createdAt)} />
+                  <DetailRow label={t("inviteSent")} value={fmt(lead.requestSentAt)} />
                   <DetailRow
-                    label="Accepted"
+                    label={t("accepted")}
                     value={fmt(lead.acceptMessageSentAt ?? lead.connection?.connectedAt ?? null)}
                   />
-                  <DetailRow label="Follow-up 1" value={fmt(lead.followUp1SentAt)} />
-                  <DetailRow label="Follow-up 2" value={fmt(lead.followUp2SentAt)} />
-                  <DetailRow label="Follow-up 3" value={fmt(lead.followUp3SentAt)} />
+                  <DetailRow label={t("followUp1")} value={fmt(lead.followUp1SentAt)} />
+                  <DetailRow label={t("followUp2")} value={fmt(lead.followUp2SentAt)} />
+                  <DetailRow label={t("followUp3")} value={fmt(lead.followUp3SentAt)} />
                   {lead.providerId && (
                     <DetailRow
-                      label="Provider ID"
+                      label={t("providerId")}
                       value={<span className="font-mono text-[10px] break-all">{lead.providerId}</span>}
                     />
                   )}
@@ -546,12 +575,12 @@ export function LeadDetailPanel({
               {(lead.alsoInCampaigns.length > 0 || lead.excludedAccounts.length > 0) && (
                 <section className="space-y-2">
                   <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400">
-                    Cross-campaign outreach
+                    {t("crossCampaign")}
                   </h4>
                   <div className="space-y-2 rounded-xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/10 p-3">
                     {lead.alsoInCampaigns.length > 0 && (
                       <DetailRow
-                        label="Also in"
+                        label={t("alsoIn")}
                         value={
                           <span className="inline-flex flex-wrap items-center gap-1">
                             {lead.alsoInCampaigns.map((c) => (
@@ -569,7 +598,7 @@ export function LeadDetailPanel({
                     )}
                     {lead.excludedAccounts.length > 0 && (
                       <DetailRow
-                        label="Do not reach via"
+                        label={t("doNotReachVia")}
                         value={<LinkedInAccountTags accounts={lead.excludedAccounts} size="sm" maxVisible={4} />}
                       />
                     )}
@@ -579,8 +608,8 @@ export function LeadDetailPanel({
 
               <section className="space-y-2">
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400">Outreach preview</h4>
-                  <p className="mt-1 text-[11px] text-text-soft-400">Rendered for {displayName}. Edit a template to view its variables.</p>
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400">{t("outreachPreview")}</h4>
+                  <p className="mt-1 text-[11px] text-text-soft-400">{t("renderedFor", { name: displayName })}</p>
                 </div>
                 <OutreachTemplatesEditor lead={lead} onSaved={handleTemplatesSaved} />
               </section>
@@ -588,11 +617,11 @@ export function LeadDetailPanel({
               <section className="space-y-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-text-soft-400 flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5" />
-                  Conversation ({lead.messages.length})
+                  {t("conversation", { count: lead.messages.length })}
                 </h4>
                 {lead.messages.length === 0 ? (
                   <p className="text-sm text-text-soft-400 py-4 text-center rounded-lg border border-dashed border-stroke-soft-200">
-                    No messages recorded yet
+                    {t("noMessagesRecorded")}
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto pr-1">

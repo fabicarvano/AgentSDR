@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { count, desc, eq } from "drizzle-orm";
 import { requirePageOrgContext } from "@/lib/auth/context";
 import { inOrg, runInOrganization } from "@/lib/tenancy/scope";
@@ -20,19 +21,20 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
-function timeAgo(date: Date): string {
-  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
-
 const initialsOf = (name: string) =>
   name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?";
 
 export default async function ConnectionsPage({ searchParams }: Props) {
   const ctx = await requirePageOrgContext();
+  const t = await getTranslations("linkedinMain.connectionsPage");
+  const tAgo = await getTranslations("crmShared.timeAgo");
+  const timeAgo = (date: Date): string => {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return tAgo("justNow");
+    if (diff < 3600) return tAgo("minutes", { count: Math.floor(diff / 60) });
+    if (diff < 86400) return tAgo("hours", { count: Math.floor(diff / 3600) });
+    return tAgo("days", { count: Math.floor(diff / 86400) });
+  };
   return runInOrganization(ctx.organizationId, async () => {
     const { page: pageParam } = await searchParams;
     const [{ totalCount }] = await db.select({ totalCount: count() }).from(connectionsTable).where(inOrg(connectionsTable));
@@ -84,19 +86,15 @@ export default async function ConnectionsPage({ searchParams }: Props) {
     return (
       <div className="mx-auto w-full max-w-[1440px]">
         <PageHeader
-          title="Connections"
-          description={
-            totalCount === 0
-              ? "People who accept your LinkedIn invitations"
-              : `${totalCount.toLocaleString("en-US")} ${totalCount === 1 ? "person has" : "people have"} accepted your invitations, newest first`
-          }
+          title={t("title")}
+          description={totalCount === 0 ? t("descriptionEmpty") : t("description", { count: totalCount })}
         />
 
         <Frame className="mt-5">
-          <FrameHeader title="Accepted invitations" description="Each connection is matched to its lead, campaign and sending account" />
+          <FrameHeader title={t("frameTitle")} description={t("frameDescription")} />
           {totalCount === 0 ? (
             <FramePanel>
-              <EmptyState icon={RiUserAddLine} title="No connections yet" description="Connections appear here when leads accept your invitations." />
+              <EmptyState icon={RiUserAddLine} title={t("emptyTitle")} description={t("emptyDescription")} />
             </FramePanel>
           ) : (
             <>
@@ -104,15 +102,15 @@ export default async function ConnectionsPage({ searchParams }: Props) {
                 <Table.Root className="min-w-[760px]">
                   <Table.Header>
                     <Table.Row>
-                      <Table.Head scope="col" className="px-4">Connection</Table.Head>
-                      <Table.Head scope="col" className="w-56 px-4">Campaign</Table.Head>
-                      <Table.Head scope="col" className="w-48 px-4">Account</Table.Head>
-                      <Table.Head scope="col" className="w-32 px-4">Connected</Table.Head>
+                      <Table.Head scope="col" className="px-4">{t("colConnection")}</Table.Head>
+                      <Table.Head scope="col" className="w-56 px-4">{t("colCampaign")}</Table.Head>
+                      <Table.Head scope="col" className="w-48 px-4">{t("colAccount")}</Table.Head>
+                      <Table.Head scope="col" className="w-32 px-4">{t("colConnected")}</Table.Head>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body spacing={4}>
                     {connections.map((conn) => {
-                      const displayName = conn.name ?? conn.linkedinUrl ?? "Unknown";
+                      const displayName = conn.name ?? conn.linkedinUrl ?? t("unknown");
                       return (
                         <Table.Row key={conn.id}>
                           <Table.Cell className="h-16 px-4">
@@ -148,7 +146,7 @@ export default async function ConnectionsPage({ searchParams }: Props) {
                               <div className="flex min-w-0 flex-col items-start gap-1">
                                 <Badge.Root size="small" variant="lighter" color="green">
                                   <Badge.Dot />
-                                  Lead
+                                  {t("leadBadge")}
                                 </Badge.Root>
                                 {conn.lead.campaign?.name && (
                                   <p className="max-w-52 truncate text-paragraph-xs text-text-sub-600" title={conn.lead.campaign.name}>
@@ -157,7 +155,7 @@ export default async function ConnectionsPage({ searchParams }: Props) {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-paragraph-sm text-text-soft-400">Not from a campaign</span>
+                              <span className="text-paragraph-sm text-text-soft-400">{t("notFromCampaign")}</span>
                             )}
                           </Table.Cell>
 

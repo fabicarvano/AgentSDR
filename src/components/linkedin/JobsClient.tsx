@@ -2,6 +2,8 @@
 
 import { Fragment, useState, useEffect, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
+import type { Messages } from "@/i18n/catalog";
 import {
   RiArrowDownSLine,
   RiArrowRightSLine,
@@ -14,8 +16,12 @@ import * as Button from "@/components/alignui/button";
 import * as Table from "@/components/alignui/table";
 import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import { StatusDotBadge } from "@/components/analytics/kit/StatusDotBadge";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { EmptyState } from "@/components/page/EmptyState";
 import { cn } from "@/lib/linkedin/utils";
+
+// Intl format options, not interface text.
+const CLOCK_FORMAT = { hour: "2-digit", minute: "2-digit", second: "2-digit" } as const;
 
 type JobLog = {
   id: string;
@@ -36,10 +42,12 @@ type JobRun = {
   errorCount: number;
 };
 
-const JOB_LABELS: Record<string, string> = {
-  "run-outreach": "Run Outreach",
-  "reset-daily-limits": "Reset Daily Limits",
-  "run-search-queue": "Run Search Queue",
+// Job ids stay as stored; only the three known ones get a translated label (anything else is shown raw).
+type JobKey = keyof Messages["linkedinMain"]["jobsClient"]["jobs"];
+const JOB_LABEL_KEYS: Record<string, JobKey> = {
+  "run-outreach": "runOutreach",
+  "reset-daily-limits": "resetDailyLimits",
+  "run-search-queue": "runSearchQueue",
 };
 
 const LEVEL_TEXT: Record<string, string> = {
@@ -53,37 +61,26 @@ const LEVEL_TAG: Record<string, string> = { info: "INF", warn: "WRN", error: "ER
 function duration(start: string | Date, end: string | Date | null): string {
   if (!end) return "—";
   const ms = new Date(end).getTime() - new Date(start).getTime();
+  // Units are compact symbols (ms, s, m): the same in both languages.
   if (ms < 1000) return `${ms}ms`;
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
   return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
 }
 
-function fmt(d: string | Date): string {
-  const date = new Date(d);
-  return (
-    date.toLocaleDateString([], { month: "short", day: "numeric" }) +
-    " " +
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-  );
-}
-
-function ago(d: string | Date): string {
-  const diff = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
-
 function StatusBadge({ status }: { status: string }) {
-  if (status === "SUCCESS") return <StatusDotBadge status="good">Success</StatusDotBadge>;
-  if (status === "FAILED") return <StatusDotBadge status="critical">Failed</StatusDotBadge>;
-  return <StatusDotBadge status="info">Running</StatusDotBadge>;
+  const tStatus = useTranslations("linkedinMain.jobsClient.status");
+  if (status === "SUCCESS") return <StatusDotBadge status="good">{tStatus("success")}</StatusDotBadge>;
+  if (status === "FAILED") return <StatusDotBadge status="critical">{tStatus("failed")}</StatusDotBadge>;
+  return <StatusDotBadge status="info">{tStatus("running")}</StatusDotBadge>;
 }
 
 const COLUMNS = 6;
 
 function RunRows({ run }: { run: JobRun }) {
+  const t = useTranslations("linkedinMain.jobsClient");
+  const format = useFormatter();
+  const { timeAgo: ago } = useCrmText();
+  const fmt = (d: string | Date) => format.dateTime(new Date(d), { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
   const [expanded, setExpanded] = useState(false);
   const [logs, setLogs] = useState<JobLog[] | null>(null);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -103,7 +100,7 @@ function RunRows({ run }: { run: JobRun }) {
     }
   };
 
-  const label = JOB_LABELS[run.job] ?? run.job;
+  const label = Object.hasOwn(JOB_LABEL_KEYS, run.job) ? t(`jobs.${JOB_LABEL_KEYS[run.job]}`) : run.job;
 
   return (
     <Fragment>
@@ -123,7 +120,7 @@ function RunRows({ run }: { run: JobRun }) {
           <div className="min-w-0">
             <p className="truncate text-label-sm text-text-strong-950" title={run.job}>{label}</p>
             <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">
-              {run.logCount.toLocaleString("en-US")} log line{run.logCount !== 1 ? "s" : ""}
+              {t("logLines", { count: run.logCount })}
             </p>
           </div>
         </Table.Cell>
@@ -140,16 +137,16 @@ function RunRows({ run }: { run: JobRun }) {
         <Table.Cell className="whitespace-nowrap px-4 text-right text-paragraph-sm tabular-nums">
           {run.errorCount > 0 || run.warnCount > 0 ? (
             <span className="inline-flex items-center gap-2">
-              {run.errorCount > 0 && <span className="text-error-base">{run.errorCount} error{run.errorCount !== 1 ? "s" : ""}</span>}
-              {run.warnCount > 0 && <span className="text-warning-base">{run.warnCount} warn</span>}
+              {run.errorCount > 0 && <span className="text-error-base">{t("errorCount", { count: run.errorCount })}</span>}
+              {run.warnCount > 0 && <span className="text-warning-base">{t("warnCount", { count: run.warnCount })}</span>}
             </span>
           ) : (
-            <span className="text-text-soft-400">None</span>
+            <span className="text-text-soft-400">{t("none")}</span>
           )}
         </Table.Cell>
         <Table.Cell className="px-4 text-text-sub-600">
           {expanded ? <RiArrowDownSLine className="size-5" aria-hidden="true" /> : <RiArrowRightSLine className="size-5" aria-hidden="true" />}
-          <span className="sr-only">{expanded ? "Hide logs" : "Show logs"}</span>
+          <span className="sr-only">{expanded ? t("hideLogs") : t("showLogs")}</span>
         </Table.Cell>
       </Table.Row>
 
@@ -165,16 +162,16 @@ function RunRows({ run }: { run: JobRun }) {
               <div className="max-h-96 overflow-y-auto rounded-lg bg-bg-weak-50 px-4 py-3 ring-1 ring-inset ring-stroke-soft-200">
                 {loadingLogs ? (
                   <div className="flex justify-center py-6">
-                    <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label="Loading logs" />
+                    <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label={t("loadingLogs")} />
                   </div>
                 ) : (logs?.length ?? 0) === 0 ? (
-                  <p className="text-paragraph-xs italic text-text-sub-600">No logs captured</p>
+                  <p className="text-paragraph-xs italic text-text-sub-600">{t("noLogs")}</p>
                 ) : (
                   <div className="space-y-0.5 font-mono text-paragraph-xs">
                     {logs!.map((log) => (
                       <div key={log.id} className="flex gap-3 leading-5">
                         <span className="shrink-0 select-none tabular-nums text-text-soft-400" suppressHydrationWarning>
-                          {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                          {format.dateTime(new Date(log.createdAt), CLOCK_FORMAT)}
                         </span>
                         <span className={cn("mt-px w-8 shrink-0 text-[10px] font-bold uppercase", LEVEL_TEXT[log.level] ?? "text-text-sub-600")}>
                           {LEVEL_TAG[log.level] ?? "INF"}
@@ -194,6 +191,7 @@ function RunRows({ run }: { run: JobRun }) {
 }
 
 export function JobsClient({ runs, footer }: { runs: JobRun[]; footer?: ReactNode }) {
+  const t = useTranslations("linkedinMain.jobsClient");
   const router = useRouter();
   const [triggering, setTriggering] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -226,13 +224,15 @@ export function JobsClient({ runs, footer }: { runs: JobRun[]; footer?: ReactNod
 
   const summary =
     runs.length === 0
-      ? "Every run, with its log lines and errors"
-      : `On this page: ${successCount} succeeded, ${failedCount} failed${runningCount > 0 ? `, ${runningCount} running` : ""}. Select a run to read its logs.`;
+      ? t("summaryEmpty")
+      : runningCount > 0
+        ? t("summaryWithRunning", { succeeded: successCount, failed: failedCount, running: runningCount })
+        : t("summary", { succeeded: successCount, failed: failedCount });
 
   return (
     <Frame className="mt-5" aria-busy={isPending}>
       <FrameHeader
-        title="Runs"
+        title={t("runsTitle")}
         description={summary}
         actions={
           <>
@@ -244,11 +244,11 @@ export function JobsClient({ runs, footer }: { runs: JobRun[]; footer?: ReactNod
               disabled={!!triggering}
             >
               <Button.Icon as={triggering === "reset-daily-limits" ? RiLoader4Line : RiRefreshLine} className={cn(triggering === "reset-daily-limits" && "animate-spin")} />
-              Reset Daily Limits
+              {t("jobs.resetDailyLimits")}
             </Button.Root>
             <Button.Root variant="primary" mode="filled" size="xsmall" onClick={() => trigger("run-outreach")} disabled={!!triggering}>
               <Button.Icon as={triggering === "run-outreach" ? RiLoader4Line : RiPlayLine} className={cn(triggering === "run-outreach" && "animate-spin")} />
-              Run Outreach
+              {t("jobs.runOutreach")}
             </Button.Root>
           </>
         }
@@ -256,7 +256,7 @@ export function JobsClient({ runs, footer }: { runs: JobRun[]; footer?: ReactNod
 
       {runs.length === 0 ? (
         <FramePanel>
-          <EmptyState icon={RiHistoryLine} title="No jobs run yet" description="Run Outreach above, or wait for the next scheduled run, and its history appears here." />
+          <EmptyState icon={RiHistoryLine} title={t("emptyTitle")} description={t("emptyDescription")} />
         </FramePanel>
       ) : (
         <>
@@ -264,12 +264,12 @@ export function JobsClient({ runs, footer }: { runs: JobRun[]; footer?: ReactNod
             <Table.Root className="min-w-[760px]">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Job</Table.Head>
-                  <Table.Head scope="col" className="w-32 px-4">Status</Table.Head>
-                  <Table.Head scope="col" className="w-40 px-4">Started</Table.Head>
-                  <Table.Head scope="col" className="w-28 px-4 text-right">Duration</Table.Head>
-                  <Table.Head scope="col" className="w-36 px-4 text-right">Problems</Table.Head>
-                  <Table.Head scope="col" className="w-12 px-4"><span className="sr-only">Expand</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("colJob")}</Table.Head>
+                  <Table.Head scope="col" className="w-32 px-4">{t("colStatus")}</Table.Head>
+                  <Table.Head scope="col" className="w-40 px-4">{t("colStarted")}</Table.Head>
+                  <Table.Head scope="col" className="w-28 px-4 text-right">{t("colDuration")}</Table.Head>
+                  <Table.Head scope="col" className="w-36 px-4 text-right">{t("colProblems")}</Table.Head>
+                  <Table.Head scope="col" className="w-12 px-4"><span className="sr-only">{t("colExpand")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>

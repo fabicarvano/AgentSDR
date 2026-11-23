@@ -1,11 +1,13 @@
 "use client";
 
 import { Fragment, useState, type ReactNode } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line, RiWebhookLine } from "@remixicon/react";
 import * as Badge from "@/components/alignui/badge";
 import * as Table from "@/components/alignui/table";
 import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import { StatusDotBadge } from "@/components/analytics/kit/StatusDotBadge";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { ContactAvatar } from "@/components/crm/ContactAvatar";
 import { EmptyState } from "@/components/page/EmptyState";
 import { LinkedInAccountTag } from "@/components/linkedin/LinkedInAccountTag";
@@ -40,19 +42,14 @@ type WebhookEventDetail = {
   processingLog: { level: string; message: string; time: string }[] | null;
 };
 
-function timeAgo(iso: string): string {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
+/** Date and time down to the second, in the active locale. */
+// Intl format options, not interface text.
+const CLOCK_FORMAT = { hour: "2-digit", minute: "2-digit", second: "2-digit" } as const;
 
-function fmt(iso: string): string {
-  return new Date(iso).toLocaleString([], {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-  });
+function useStamp() {
+  const format = useFormatter();
+  return (iso: string) =>
+    format.dateTime(new Date(iso), { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 const initialsOf = (name: string) =>
@@ -72,10 +69,15 @@ function EventBadge({ event }: { event: string }) {
   );
 }
 
+const PROCESSING_KINDS = { ok: "good", error: "critical", processing: "info" } as const;
+
 function ProcessingBadge({ status }: { status: string | null }) {
+  const t = useTranslations("linkedinMain.webhooksClient");
   if (!status) return <span className="text-paragraph-sm text-text-soft-400">—</span>;
-  const kind = status === "ok" ? "good" : status === "error" ? "critical" : status === "processing" ? "info" : "neutral";
-  const label = status === "ok" ? "OK" : status.charAt(0).toUpperCase() + status.slice(1);
+  const known = Object.hasOwn(PROCESSING_KINDS, status);
+  const kind = known ? PROCESSING_KINDS[status as keyof typeof PROCESSING_KINDS] : "neutral";
+  // A status the code does not know is shown as stored.
+  const label = known ? t(`processingStatus.${status as keyof typeof PROCESSING_KINDS}`) : status.charAt(0).toUpperCase() + status.slice(1);
   return <StatusDotBadge status={kind}>{label}</StatusDotBadge>;
 }
 
@@ -99,11 +101,15 @@ const LEVEL_TAG: Record<string, string> = { info: "INF", warn: "WRN", error: "ER
 const COLUMNS = 6;
 
 function EventRows({ ev }: { ev: WebhookEventRow }) {
+  const t = useTranslations("linkedinMain.webhooksClient");
+  const format = useFormatter();
+  const { timeAgo } = useCrmText();
+  const fmt = useStamp();
   const [expanded, setExpanded] = useState(false);
   const [detail, setDetail] = useState<WebhookEventDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const displayName = ev.connection?.name ?? ev.account?.name ?? ev.account?.username ?? null;
-  const title = displayName ?? ev.senderId ?? "Unknown";
+  const title = displayName ?? ev.senderId ?? t("unknownSender");
   const hasError = ev.processingStatus === "error";
   const accountRef = ev.account
     ? { username: ev.account.username, name: ev.account.name, profilePictureUrl: ev.account.profilePictureUrl ?? null }
@@ -148,10 +154,10 @@ function EventRows({ ev }: { ev: WebhookEventRow }) {
               <p className="truncate text-label-sm text-text-strong-950" title={title}>{title}</p>
               {ev.messageText ? (
                 <p className="mt-0.5 max-w-sm truncate text-paragraph-xs italic text-text-sub-600" title={ev.messageText}>
-                  &ldquo;{ev.messageText}&rdquo;
+                  {t("quotedMessage", { text: ev.messageText })}
                 </p>
               ) : (
-                <p className="mt-0.5 text-paragraph-xs text-text-soft-400">No message</p>
+                <p className="mt-0.5 text-paragraph-xs text-text-soft-400">{t("noMessage")}</p>
               )}
             </div>
           </div>
@@ -166,7 +172,7 @@ function EventRows({ ev }: { ev: WebhookEventRow }) {
         </Table.Cell>
         <Table.Cell className="px-4 text-text-sub-600">
           {expanded ? <RiArrowDownSLine className="size-5" aria-hidden="true" /> : <RiArrowRightSLine className="size-5" aria-hidden="true" />}
-          <span className="sr-only">{expanded ? "Hide details" : "Show details"}</span>
+          <span className="sr-only">{expanded ? t("hideDetails") : t("showDetails")}</span>
         </Table.Cell>
       </Table.Row>
 
@@ -176,18 +182,18 @@ function EventRows({ ev }: { ev: WebhookEventRow }) {
             <div className={cn("space-y-5 rounded-lg bg-bg-weak-50 px-4 py-4 ring-1 ring-inset", hasError ? "ring-error-base/30" : "ring-stroke-soft-200")}>
               {loadingDetail ? (
                 <div className="flex justify-center py-8">
-                  <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label="Loading details" />
+                  <RiLoader4Line className="size-5 animate-spin text-text-soft-400" aria-label={t("loadingDetails")} />
                 </div>
               ) : (
                 <>
                   <div>
-                    <SectionLabel>Processing log</SectionLabel>
+                    <SectionLabel>{t("processingLog")}</SectionLabel>
                     {detail?.processingLog && detail.processingLog.length > 0 ? (
                       <div className="space-y-0.5 font-mono text-paragraph-xs">
                         {detail.processingLog.map((entry, i) => (
                           <div key={i} className="flex gap-3 leading-5">
                             <span className="shrink-0 select-none tabular-nums text-text-soft-400">
-                              {new Date(entry.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                              {format.dateTime(new Date(entry.time), CLOCK_FORMAT)}
                             </span>
                             <span className={cn("mt-px w-8 shrink-0 text-[10px] font-bold uppercase", LEVEL_TEXT[entry.level] ?? "text-text-sub-600")}>
                               {LEVEL_TAG[entry.level] ?? "INF"}
@@ -197,23 +203,23 @@ function EventRows({ ev }: { ev: WebhookEventRow }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-paragraph-xs italic text-text-sub-600">No processing log (event received before logging was added)</p>
+                      <p className="text-paragraph-xs italic text-text-sub-600">{t("noProcessingLog")}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <SectionLabel>Event fields</SectionLabel>
-                    <DetailRow label="Event" value={ev.event} />
-                    <DetailRow label="Time" value={fmt(ev.createdAt)} />
-                    <DetailRow label="Account" value={accountRef ? <LinkedInAccountTag account={accountRef} size="sm" /> : ev.accountId} />
-                    <DetailRow label="Sender ID" value={ev.senderId} />
-                    <DetailRow label="Chat ID" value={ev.chatId} />
-                    <DetailRow label="Message" value={ev.messageText ? `"${ev.messageText}"` : null} />
-                    {ev.connection?.name && <DetailRow label="Connection" value={ev.connection.name} />}
+                    <SectionLabel>{t("eventFields")}</SectionLabel>
+                    <DetailRow label={t("fieldEvent")} value={ev.event} />
+                    <DetailRow label={t("fieldTime")} value={fmt(ev.createdAt)} />
+                    <DetailRow label={t("fieldAccount")} value={accountRef ? <LinkedInAccountTag account={accountRef} size="sm" /> : ev.accountId} />
+                    <DetailRow label={t("fieldSenderId")} value={ev.senderId} />
+                    <DetailRow label={t("fieldChatId")} value={ev.chatId} />
+                    <DetailRow label={t("fieldMessage")} value={ev.messageText ? `“${ev.messageText}”` : null} />
+                    {ev.connection?.name && <DetailRow label={t("fieldConnection")} value={ev.connection.name} />}
                   </div>
 
                   <div>
-                    <SectionLabel>Raw payload</SectionLabel>
+                    <SectionLabel>{t("rawPayload")}</SectionLabel>
                     <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-bg-white-0 p-3 font-mono text-paragraph-xs text-text-strong-950 ring-1 ring-inset ring-stroke-soft-200">
                       {JSON.stringify(detail?.rawBody ?? null, null, 2)}
                     </pre>
@@ -229,12 +235,13 @@ function EventRows({ ev }: { ev: WebhookEventRow }) {
 }
 
 export function WebhooksClient({ events, footer }: { events: WebhookEventRow[]; footer?: ReactNode }) {
+  const t = useTranslations("linkedinMain.webhooksClient");
   return (
     <Frame className="mt-5">
-      <FrameHeader title="Events" description="Select an event to read its processing log and raw payload" />
+      <FrameHeader title={t("eventsTitle")} description={t("eventsDescription")} />
       {events.length === 0 ? (
         <FramePanel>
-          <EmptyState icon={RiWebhookLine} title="No webhook events yet" description="Events appear here once Unipile starts sending them." />
+          <EmptyState icon={RiWebhookLine} title={t("emptyTitle")} description={t("emptyDescription")} />
         </FramePanel>
       ) : (
         <>
@@ -242,12 +249,12 @@ export function WebhooksClient({ events, footer }: { events: WebhookEventRow[]; 
             <Table.Root className="min-w-[860px]">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Sender</Table.Head>
-                  <Table.Head scope="col" className="w-44 px-4">Event</Table.Head>
-                  <Table.Head scope="col" className="w-32 px-4">Processing</Table.Head>
-                  <Table.Head scope="col" className="w-48 px-4">Account</Table.Head>
-                  <Table.Head scope="col" className="w-28 px-4">Received</Table.Head>
-                  <Table.Head scope="col" className="w-12 px-4"><span className="sr-only">Expand</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("colSender")}</Table.Head>
+                  <Table.Head scope="col" className="w-44 px-4">{t("colEvent")}</Table.Head>
+                  <Table.Head scope="col" className="w-32 px-4">{t("colProcessing")}</Table.Head>
+                  <Table.Head scope="col" className="w-48 px-4">{t("colAccount")}</Table.Head>
+                  <Table.Head scope="col" className="w-28 px-4">{t("colReceived")}</Table.Head>
+                  <Table.Head scope="col" className="w-12 px-4"><span className="sr-only">{t("colExpand")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>

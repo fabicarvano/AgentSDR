@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { count, desc, inArray } from "drizzle-orm";
 import { isPlatformOperator, requirePageOrgContext } from "@/lib/auth/context";
 import { runInOrganization } from "@/lib/tenancy/scope";
@@ -17,11 +18,12 @@ type Props = {
 
 export default async function JobsPage({ searchParams }: Props) {
   const ctx = await requirePageOrgContext();
+  const t = await getTranslations("linkedinMain.jobsPage");
   // Job runs and logs span every organization's accounts: operator only.
   if (!(await isPlatformOperator(ctx))) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Jobs" description="System job runs are visible only to the team running this AgentSDR instance." />
+        <PageHeader title={t("operatorOnlyTitle")} description={t("operatorOnlyDescription")} />
       </div>
     );
   }
@@ -75,12 +77,8 @@ export default async function JobsPage({ searchParams }: Props) {
     return (
       <div className="mx-auto w-full max-w-[1440px]">
         <PageHeader
-          title="Job history"
-          description={
-            totalCount === 0
-              ? "Every outreach job run, with its actions and errors"
-              : `${totalCount.toLocaleString("en-US")} job run${totalCount === 1 ? "" : "s"}, newest first`
-          }
+          title={t("title")}
+          description={totalCount === 0 ? t("descriptionEmpty") : t("description", { count: totalCount })}
         />
         <JobsClient runs={runsForClient} footer={<ListPagination basePath="/linkedin/jobs" page={page} totalCount={totalCount} />} />
       </div>

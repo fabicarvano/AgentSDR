@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 function RowSkeleton() {
   return (
     <tr className="border-b border-stroke-soft-200 animate-pulse">
@@ -19,6 +21,7 @@ function RowSkeleton() {
 }
 
 export default function LeadsLoading() {
+  const t = useTranslations("linkedinMain.loading");
   return (
     <div>
       <div className="flex items-center gap-3 mb-6 animate-pulse">
@@ -30,10 +33,10 @@ export default function LeadsLoading() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-stroke-soft-200 bg-bg-weak-50 text-left">
-              <th className="px-4 py-3 font-semibold text-text-sub-600">Lead</th>
-              <th className="px-4 py-3 font-semibold text-text-sub-600">Campaign</th>
-              <th className="px-4 py-3 font-semibold text-text-sub-600">Status</th>
-              <th className="px-4 py-3 font-semibold text-text-sub-600">Account</th>
+              <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colLead")}</th>
+              <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colCampaign")}</th>
+              <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colStatus")}</th>
+              <th className="px-4 py-3 font-semibold text-text-sub-600">{t("colAccount")}</th>
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
