@@ -77,6 +77,30 @@ function rollupStatus(counts: Partial<Record<SearchQueryStatus, number>>): { lab
   return null;
 }
 
+type SearchLead = SearchBatchDetail["leads"][number];
+
+// One row of the xlsx export (shared by "export all" and "export selected"). Headers stay English on purpose:
+// they match the import template and are data, not interface.
+function leadExportRow(r: SearchLead) {
+  return {
+    "Company Name": r.companyName ?? "",
+    "LinkedIn URL": r.linkedinUrl,
+    "Profile URL": r.profileUrl ?? "",
+    "LinkedIn API": r.sourceLinkedinApi ?? "",
+    Name: r.name ?? "",
+    Headline: r.headline ?? "",
+    Location: r.location ?? "",
+    "Profile Picture URL": r.profilePictureUrl ?? "",
+    "Invitation Message": "",
+    "Acceptance Message": "",
+    "Follow-up 1": "",
+    "Follow-up 2": "",
+    "Network Distance": networkLabel(r.networkDistance),
+    Followers: r.followersCount ?? "",
+    "Shared Connections": r.sharedConnectionsCount ?? "",
+  };
+}
+
 // The xlsx export keeps English ordinals and LinkedIn's raw values: it is a data file, not interface.
 function networkLabel(d?: string | null) {
   if (!d) return "—";
@@ -445,23 +469,7 @@ export function SearchBatchDetailClient({
     if (detail.leads.length === 0) return;
     setExporting(true);
     try {
-      const rows = detail.leads.map((r) => ({
-        "Company Name": r.companyName ?? "",
-        "LinkedIn URL": r.linkedinUrl,
-        "Profile URL": r.profileUrl ?? "",
-        "LinkedIn API": r.sourceLinkedinApi ?? "",
-        Name: r.name ?? "",
-        Headline: r.headline ?? "",
-        Location: r.location ?? "",
-        "Profile Picture URL": r.profilePictureUrl ?? "",
-        "Invitation Message": "",
-        "Acceptance Message": "",
-        "Follow-up 1": "",
-        "Follow-up 2": "",
-        "Network Distance": networkLabel(r.networkDistance),
-        Followers: r.followersCount ?? "",
-        "Shared Connections": r.sharedConnectionsCount ?? "",
-      }));
+      const rows = detail.leads.map(leadExportRow);
 
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = [
@@ -734,23 +742,7 @@ export function SearchBatchDetailClient({
     if (rows.length === 0) return;
     setBulkExportingLeads(true);
     try {
-      const data = rows.map((r) => ({
-        "Company Name": r.companyName ?? "",
-        "LinkedIn URL": r.linkedinUrl,
-        "Profile URL": r.profileUrl ?? "",
-        "LinkedIn API": r.sourceLinkedinApi ?? "",
-        Name: r.name ?? "",
-        Headline: r.headline ?? "",
-        Location: r.location ?? "",
-        "Profile Picture URL": r.profilePictureUrl ?? "",
-        "Invitation Message": "",
-        "Acceptance Message": "",
-        "Follow-up 1": "",
-        "Follow-up 2": "",
-        "Network Distance": networkLabel(r.networkDistance),
-        Followers: r.followersCount ?? "",
-        "Shared Connections": r.sharedConnectionsCount ?? "",
-      }));
+      const data = rows.map(leadExportRow);
       const ws = XLSX.utils.json_to_sheet(data);
       ws["!cols"] = [
         { wch: 30 }, { wch: 45 }, { wch: 45 }, { wch: 18 }, { wch: 30 }, { wch: 50 }, { wch: 25 }, { wch: 55 },

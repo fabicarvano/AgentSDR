@@ -78,7 +78,7 @@ type Catalog = {
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "gridColumns", "gridEnrich", "gridMain", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
+export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "gridColumns", "gridEnrich", "gridMain", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[]; // gitleaks:allow (domain names such as "linkedinMain", not a LinkedIn client id)
 
 export type Domain = (typeof DOMAINS)[number];
 
