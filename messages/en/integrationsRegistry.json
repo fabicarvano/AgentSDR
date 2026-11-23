@@ -1,0 +1,2546 @@
+{
+  "integrationsRegistry": {
+    "apollo": {
+      "actions": {
+        "find-person-by-email": {
+          "name": "Find person by email",
+          "description": "Find a person's profile and employment data from a work email.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The person's work email address."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find a person's work email from their name and company domain.",
+          "inputs": {
+            "fullName": {
+              "name": "Full Name",
+              "description": "The person's full name."
+            },
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "The company's website or domain."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "emailStatus": {
+              "name": "Email Status"
+            }
+          }
+        },
+        "enrich-person-from-linkedin": {
+          "name": "Enrich person",
+          "description": "Retrieve a person's profile and company details from a LinkedIn URL.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "Personal LinkedIn URL",
+              "description": "A LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "email": {
+              "name": "Work Email"
+            }
+          }
+        },
+        "enrich-company-by-domain": {
+          "name": "Enrich company",
+          "description": "Retrieve company firmographics from its website domain.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "The company's website or domain."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "linkedinUrl": {
+              "name": "Company LinkedIn URL"
+            }
+          }
+        },
+        "find-user-id-by-email": {
+          "name": "Find user ID by email",
+          "description": "Find a user in your Apollo workspace by their exact email address.",
+          "inputs": {
+            "email": {
+              "name": "User Email",
+              "description": "Exact email of an Apollo workspace user."
+            }
+          },
+          "outputs": {
+            "userId": {
+              "name": "User ID"
+            },
+            "name": {
+              "name": "Name"
+            },
+            "email": {
+              "name": "Email"
+            }
+          }
+        },
+        "find-email-accounts-for-user": {
+          "name": "Find email accounts for user",
+          "description": "List connected Apollo email accounts owned by a workspace user.",
+          "inputs": {
+            "userId": {
+              "name": "User ID",
+              "description": "Apollo workspace user ID."
+            }
+          },
+          "outputs": {
+            "emailAccountId": {
+              "name": "Default Email Account ID"
+            },
+            "email": {
+              "name": "Default Email"
+            },
+            "emailAccounts": {
+              "name": "Email Accounts"
+            }
+          }
+        },
+        "update-contact-status-in-sequence": {
+          "name": "Update contact status in sequence",
+          "description": "Finish, stop, or remove a contact from an Apollo sequence.",
+          "inputs": {
+            "sequenceId": {
+              "name": "Sequence ID",
+              "description": "Apollo sequence ID."
+            },
+            "contactId": {
+              "name": "Contact ID",
+              "description": "Apollo contact ID."
+            },
+            "mode": {
+              "name": "Mode",
+              "description": "One of: mark_as_finished, remove, or stop."
+            }
+          },
+          "outputs": {
+            "updated": {
+              "name": "Updated"
+            }
+          }
+        },
+        "update-contact": {
+          "name": "Update contact",
+          "description": "Update standard fields on a saved Apollo contact.",
+          "inputs": {
+            "contactId": {
+              "name": "Contact ID",
+              "description": "Apollo contact ID."
+            },
+            "firstName": {
+              "name": "First Name",
+              "description": "New first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "New last name."
+            },
+            "email": {
+              "name": "Email",
+              "description": "New email."
+            },
+            "jobTitle": {
+              "name": "Job Title",
+              "description": "New job title."
+            },
+            "companyName": {
+              "name": "Company Name",
+              "description": "New organization name."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "Contact ID"
+            },
+            "name": {
+              "name": "Name"
+            },
+            "email": {
+              "name": "Email"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            }
+          }
+        },
+        "find-people-at-company-by-job-title": {
+          "name": "Find people at company by job title",
+          "description": "Search Apollo people using a company domain and job title.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "jobTitle": {
+              "name": "Job Title",
+              "description": "Job title to search for."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "People"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            }
+          }
+        },
+        "find-saved-contacts": {
+          "name": "Find saved contacts",
+          "description": "Search contacts saved in your Apollo workspace.",
+          "inputs": {
+            "query": {
+              "name": "Search Query",
+              "description": "Name, email, or keyword to search."
+            }
+          },
+          "outputs": {
+            "contacts": {
+              "name": "Contacts"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            }
+          }
+        },
+        "find-contact-by-id": {
+          "name": "Find contact by ID",
+          "description": "Retrieve a saved Apollo contact by ID.",
+          "inputs": {
+            "contactId": {
+              "name": "Contact ID",
+              "description": "Apollo contact ID."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "Contact ID"
+            },
+            "name": {
+              "name": "Name"
+            },
+            "email": {
+              "name": "Email"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            }
+          }
+        },
+        "find-open-jobs": {
+          "name": "Find open jobs",
+          "description": "Find current job postings for an Apollo organization.",
+          "inputs": {
+            "organizationId": {
+              "name": "Organization ID",
+              "description": "Apollo organization ID (not an account ID)."
+            }
+          },
+          "outputs": {
+            "jobs": {
+              "name": "Open Jobs"
+            },
+            "jobCount": {
+              "name": "Job Count"
+            }
+          }
+        },
+        "find-account-by-id": {
+          "name": "Find account by ID",
+          "description": "Retrieve a saved Apollo account by ID.",
+          "inputs": {
+            "accountId": {
+              "name": "Account ID",
+              "description": "Apollo account ID."
+            }
+          },
+          "outputs": {
+            "accountId": {
+              "name": "Account ID"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "domain": {
+              "name": "Domain"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            }
+          }
+        },
+        "find-or-create-contact": {
+          "name": "Find or create contact",
+          "description": "Return an existing saved contact for an email, or create one with deduplication.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "Contact email."
+            },
+            "firstName": {
+              "name": "First Name",
+              "description": "Contact first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "Contact last name."
+            },
+            "jobTitle": {
+              "name": "Job Title",
+              "description": "Contact job title."
+            },
+            "companyName": {
+              "name": "Company Name",
+              "description": "Contact organization."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "Contact ID"
+            },
+            "name": {
+              "name": "Name"
+            },
+            "email": {
+              "name": "Email"
+            },
+            "created": {
+              "name": "Created"
+            }
+          }
+        },
+        "add-contact-to-sequence": {
+          "name": "Add contact to sequence",
+          "description": "Add an Apollo contact to a sequence using a connected sending account.",
+          "inputs": {
+            "sequenceId": {
+              "name": "Sequence ID",
+              "description": "Apollo sequence ID."
+            },
+            "contactId": {
+              "name": "Contact ID",
+              "description": "Apollo contact ID."
+            },
+            "emailAccountId": {
+              "name": "Email Account ID",
+              "description": "Connected Apollo sending account ID."
+            }
+          },
+          "outputs": {
+            "added": {
+              "name": "Added"
+            }
+          }
+        }
+      }
+    },
+    "cleanlist": {
+      "actions": {
+        "search-people": {
+          "name": "Search people",
+          "description": "Search Cleanlist for people using structured job, location, and company filters.",
+          "inputs": {
+            "titles": {
+              "name": "Job Titles",
+              "description": "Match people whose current job title contains one of these values."
+            },
+            "seniority": {
+              "name": "Seniority",
+              "description": "Match Cleanlist seniority levels such as executive, director, or manager."
+            },
+            "managementLevels": {
+              "name": "Management Levels",
+              "description": "Match management levels such as C-Level, VP, Director, or Manager."
+            },
+            "departments": {
+              "name": "Departments",
+              "description": "Match the departments in which people work."
+            },
+            "locationCity": {
+              "name": "Location Cities",
+              "description": "Match people located in specific cities."
+            },
+            "locationState": {
+              "name": "Location States",
+              "description": "Match people located in specific states or regions."
+            },
+            "locationCountry": {
+              "name": "Location Countries",
+              "description": "Match people located in specific countries."
+            },
+            "locations": {
+              "name": "Locations",
+              "description": "Match free-form location values when city, state, or country is not separated."
+            },
+            "companyNames": {
+              "name": "Company Names",
+              "description": "Match people currently working at specific companies."
+            },
+            "companyDomains": {
+              "name": "Company Domains",
+              "description": "Match people currently working at companies with these domains."
+            },
+            "companyHeadcount": {
+              "name": "Company Headcount",
+              "description": "Match company employee-count ranges supported by Cleanlist."
+            },
+            "companyIndustries": {
+              "name": "Company Industries",
+              "description": "Match people working in specific company industries."
+            },
+            "filters": {
+              "name": "Legacy Filters",
+              "description": "Legacy structured Cleanlist people-search filters as JSON."
+            },
+            "limit": {
+              "name": "Limit",
+              "description": "Maximum results to return, from 1 to 500. Defaults to 25."
+            },
+            "cursor": {
+              "name": "Cursor",
+              "description": "Opaque cursor returned by a previous search page."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "People"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            },
+            "total": {
+              "name": "Total"
+            },
+            "cursor": {
+              "name": "Next Cursor"
+            },
+            "taskId": {
+              "name": "Task ID"
+            },
+            "truncationWarning": {
+              "name": "Truncation Warning"
+            }
+          }
+        },
+        "search-companies": {
+          "name": "Search companies",
+          "description": "Search Cleanlist for companies using structured firmographic filters.",
+          "inputs": {
+            "industries": {
+              "name": "Industries",
+              "description": "Match companies in specific industries."
+            },
+            "employeeCountRanges": {
+              "name": "Employee Count Ranges",
+              "description": "Match company employee-count ranges supported by Cleanlist."
+            },
+            "locations": {
+              "name": "Locations",
+              "description": "Match companies headquartered or operating in these locations."
+            },
+            "names": {
+              "name": "Company Names",
+              "description": "Match companies by name."
+            },
+            "domains": {
+              "name": "Company Domains",
+              "description": "Match companies by website domain."
+            },
+            "filters": {
+              "name": "Legacy Filters",
+              "description": "Legacy structured Cleanlist company-search filters as JSON."
+            },
+            "limit": {
+              "name": "Limit",
+              "description": "Maximum results to return, from 1 to 500. Defaults to 25."
+            },
+            "cursor": {
+              "name": "Cursor",
+              "description": "Opaque cursor returned by a previous search page."
+            }
+          },
+          "outputs": {
+            "companies": {
+              "name": "Companies"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            },
+            "total": {
+              "name": "Total"
+            },
+            "cursor": {
+              "name": "Next Cursor"
+            },
+            "taskId": {
+              "name": "Task ID"
+            },
+            "truncationWarning": {
+              "name": "Truncation Warning"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enrich person",
+          "description": "Enrich a person asynchronously with contact and professional details.",
+          "inputs": {
+            "leadListId": {
+              "name": "Lead List ID",
+              "description": "Target Cleanlist lead list for the enriched person."
+            },
+            "email": {
+              "name": "Email",
+              "description": "Known work email address."
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "Known LinkedIn profile URL."
+            },
+            "personId": {
+              "name": "Person ID",
+              "description": "Cleanlist person identifier from a previous search."
+            },
+            "firstName": {
+              "name": "First Name",
+              "description": "Person's first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "Person's last name."
+            },
+            "companyName": {
+              "name": "Company Name",
+              "description": "Person's current company name."
+            },
+            "domain": {
+              "name": "Company Domain",
+              "description": "Person's current company domain."
+            },
+            "phone": {
+              "name": "Phone",
+              "description": "Known phone number to use as an enrichment hint."
+            },
+            "enrichmentType": {
+              "name": "Enrichment Type",
+              "description": "partial, phone_only, or full. Defaults to partial."
+            },
+            "quoteId": {
+              "name": "Quote ID",
+              "description": "Optional pre-approved Cleanlist credit quote."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Full Name"
+            },
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "email": {
+              "name": "Email"
+            },
+            "emailStatus": {
+              "name": "Email Status"
+            },
+            "phone": {
+              "name": "Phone"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "provider": {
+              "name": "Provider"
+            },
+            "leadId": {
+              "name": "Lead ID"
+            },
+            "status": {
+              "name": "Status"
+            },
+            "creditsCharged": {
+              "name": "Credits Charged"
+            },
+            "result": {
+              "name": "Full Result"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enrich company",
+          "description": "Enrich a company synchronously with firmographic, funding, and technology details.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "quoteId": {
+              "name": "Quote ID",
+              "description": "Optional pre-approved Cleanlist credit quote."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "domain": {
+              "name": "Domain"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "industries": {
+              "name": "Industries"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "employeeCountRange": {
+              "name": "Employee Count Range"
+            },
+            "revenueRange": {
+              "name": "Revenue Range"
+            },
+            "hqLocation": {
+              "name": "HQ Location"
+            },
+            "fundingStage": {
+              "name": "Funding Stage"
+            },
+            "totalFundingUsd": {
+              "name": "Total Funding (USD)"
+            },
+            "techStack": {
+              "name": "Tech Stack"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "companyId": {
+              "name": "Company ID"
+            },
+            "creditsCharged": {
+              "name": "Credits Charged"
+            },
+            "company": {
+              "name": "Full Company"
+            }
+          }
+        }
+      }
+    },
+    "companyenrich": {
+      "actions": {
+        "enrich-company": {
+          "name": "Enrich company by domain",
+          "description": "Retrieve a company profile for 1 credit. Uses stored data immediately; a company not yet stored is scheduled by CompanyEnrich and returns a free miss. Run again manually later if needed.",
+          "inputs": {
+            "domain": {
+              "name": "Company domain",
+              "description": "Company website or domain, such as example.com."
+            }
+          },
+          "outputs": {
+            "companyId": {
+              "name": "Company ID"
+            },
+            "companyName": {
+              "name": "Company name"
+            },
+            "domain": {
+              "name": "Domain"
+            },
+            "website": {
+              "name": "Website"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeRange": {
+              "name": "Employee range"
+            },
+            "description": {
+              "name": "Description"
+            },
+            "linkedinUrl": {
+              "name": "Company LinkedIn URL"
+            },
+            "creditsConsumed": {
+              "name": "Credits consumed",
+              "description": "Reported CompanyEnrich credits, including zero. Empty when the API does not report usage; not a currency amount."
+            },
+            "data": {
+              "name": "Full response",
+              "description": "Complete provider response. Integers outside JavaScript's safe range are kept as exact decimal strings."
+            }
+          }
+        },
+        "search-companies": {
+          "name": "Search companies",
+          "description": "Find companies using names, semantic descriptions and firmographic filters. One bounded page: 1 credit per result, with a 1-credit minimum even when no results match.",
+          "inputs": {
+            "query": {
+              "name": "Name or domain query",
+              "description": "Text to match against company name or domain (up to 250 characters)."
+            },
+            "semanticQuery": {
+              "name": "Semantic query",
+              "description": "Describe the companies to find in natural language (up to 500 characters)."
+            },
+            "filters": {
+              "name": "Advanced filters (JSON)",
+              "description": "CompanyEnrich search fields, including countries, employees, technologies, categories, funding, exclusions and workforce filters. See the action documentation for exact keys and values. Named inputs override matching JSON fields."
+            },
+            "page": {
+              "name": "Page",
+              "description": "One page per execution, starting at 1. Defaults to 1; page × page size cannot exceed 10,000."
+            },
+            "pageSize": {
+              "name": "Page size",
+              "description": "Results per request, from 1 to 100. Defaults to 10. More results consume more credits."
+            }
+          },
+          "outputs": {
+            "companies": {
+              "name": "Companies"
+            },
+            "resultCount": {
+              "name": "Results returned"
+            },
+            "page": {
+              "name": "Page"
+            },
+            "totalItems": {
+              "name": "Total matching results"
+            },
+            "totalPages": {
+              "name": "Total pages"
+            },
+            "creditsConsumed": {
+              "name": "Credits consumed",
+              "description": "Reported CompanyEnrich credits, including zero. Empty when the API does not report usage; not a currency amount."
+            },
+            "data": {
+              "name": "Full response",
+              "description": "Complete provider response. Integers outside JavaScript's safe range are kept as exact decimal strings."
+            }
+          }
+        },
+        "search-people": {
+          "name": "Search professional profiles",
+          "description": "Find people by employer, position and professional filters. Returns profiles, not email addresses. One bounded page: 2 credits per result, with a 2-credit minimum even when no results match.",
+          "inputs": {
+            "domains": {
+              "name": "Company domains",
+              "description": "Up to 2,500 employer domains. Accepts an array, JSON array, or comma/newline-separated text."
+            },
+            "positionQuery": {
+              "name": "Job titles",
+              "description": "Current job titles. Accepts an array, JSON array, or comma/newline-separated text."
+            },
+            "filters": {
+              "name": "Advanced filters (JSON)",
+              "description": "CompanyEnrich people-search fields, including seniority, department, countries, education, dates, exclusions and companyFilter. Named inputs override matching JSON fields."
+            },
+            "page": {
+              "name": "Page",
+              "description": "One page per execution, starting at 1. Defaults to 1; page × page size cannot exceed 10,000."
+            },
+            "pageSize": {
+              "name": "Page size",
+              "description": "Results per request, from 1 to 100. Defaults to 10. More results consume more credits."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "People profiles",
+              "description": "Professional profiles, with exact large IDs as text. Does not provide email addresses."
+            },
+            "resultCount": {
+              "name": "Results returned"
+            },
+            "page": {
+              "name": "Page"
+            },
+            "totalItems": {
+              "name": "Total matching results"
+            },
+            "totalPages": {
+              "name": "Total pages"
+            },
+            "creditsConsumed": {
+              "name": "Credits consumed",
+              "description": "Reported CompanyEnrich credits, including zero. Empty when the API does not report usage; not a currency amount."
+            },
+            "data": {
+              "name": "Full response",
+              "description": "Complete provider response. Integers outside JavaScript's safe range are kept as exact decimal strings."
+            }
+          }
+        }
+      }
+    },
+    "snov": {
+      "actions": {
+        "domain-search": {
+          "name": "Domain search",
+          "description": "Retrieve company information and email availability from a company domain.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "The company domain to enrich."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "city": {
+              "name": "Company City"
+            },
+            "founded": {
+              "name": "Founded"
+            },
+            "website": {
+              "name": "Company Website"
+            },
+            "phone": {
+              "name": "Company Phone"
+            },
+            "industry": {
+              "name": "Company Industry"
+            },
+            "size": {
+              "name": "Company Size"
+            },
+            "relatedDomains": {
+              "name": "Related Domains"
+            },
+            "prospectsCount": {
+              "name": "Prospects Count"
+            },
+            "emailsCount": {
+              "name": "Emails Count"
+            },
+            "genericContactsCount": {
+              "name": "Generic Contacts Count"
+            }
+          }
+        },
+        "database-search": {
+          "name": "Database search",
+          "description": "Search Snov.io for prospects or companies using a JSON filter object.",
+          "inputs": {
+            "searchType": {
+              "name": "Search Type",
+              "description": "Use prospects or companies."
+            },
+            "filters": {
+              "name": "Search Filters",
+              "description": "Snov.io database-search filters JSON."
+            },
+            "page": {
+              "name": "Page",
+              "description": "Results page; defaults to 1."
+            }
+          },
+          "outputs": {
+            "total": {
+              "name": "Total Results"
+            },
+            "page": {
+              "name": "Result Page"
+            },
+            "totalPages": {
+              "name": "Total Pages"
+            },
+            "results": {
+              "name": "Search Results"
+            }
+          }
+        },
+        "email-count": {
+          "name": "Check number of available emails",
+          "description": "Check how many email addresses Snov.io has for a domain.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "The domain to check."
+            }
+          },
+          "outputs": {
+            "emailCount": {
+              "name": "Available Emails"
+            },
+            "webmail": {
+              "name": "Webmail Domain"
+            }
+          }
+        },
+        "find-emails-by-name-domain": {
+          "name": "Find emails from name and domain",
+          "description": "Find and verify a work email from a person's name and company domain.",
+          "inputs": {
+            "firstName": {
+              "name": "First Name",
+              "description": "The person's first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "The person's last name."
+            },
+            "domain": {
+              "name": "Company Domain",
+              "description": "The person's company domain."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Full Name"
+            },
+            "email": {
+              "name": "Work Email"
+            },
+            "smtpStatus": {
+              "name": "Email Status"
+            },
+            "isValidFormat": {
+              "name": "Valid Format"
+            },
+            "isDisposable": {
+              "name": "Disposable"
+            },
+            "isWebmail": {
+              "name": "Webmail"
+            },
+            "unknownReason": {
+              "name": "Unknown Status Reason"
+            }
+          }
+        },
+        "company-domain-by-name": {
+          "name": "Find domain from company name",
+          "description": "Find a company's domain from its name.",
+          "inputs": {
+            "companyName": {
+              "name": "Company Name",
+              "description": "The company name to resolve."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Matched Company Name"
+            },
+            "domain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "linkedin-profile-info": {
+          "name": "Get LinkedIn profile info from URLs",
+          "description": "Retrieve complete person profile information from a LinkedIn URL.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "profileId": {
+              "name": "Profile ID"
+            },
+            "source": {
+              "name": "Profile Source"
+            },
+            "name": {
+              "name": "Full Name"
+            },
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "location": {
+              "name": "Location"
+            },
+            "country": {
+              "name": "Country"
+            },
+            "skills": {
+              "name": "Skills"
+            },
+            "positions": {
+              "name": "Positions"
+            }
+          }
+        },
+        "profile-by-email": {
+          "name": "Enrich person profile from email",
+          "description": "Retrieve a person's profile information from an email address.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The person's email address."
+            }
+          },
+          "outputs": {
+            "name": {
+              "name": "Full Name"
+            },
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "country": {
+              "name": "Country"
+            },
+            "locality": {
+              "name": "Locality"
+            },
+            "profileImage": {
+              "name": "Profile Image"
+            },
+            "social": {
+              "name": "Social Profiles"
+            },
+            "currentJobs": {
+              "name": "Current Jobs"
+            },
+            "previousJobs": {
+              "name": "Previous Jobs"
+            },
+            "lastUpdated": {
+              "name": "Last Updated"
+            }
+          }
+        },
+        "email-verifier": {
+          "name": "Email Verifier",
+          "description": "Run Snov.io's complete deliverability check for an email address.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The email address to verify."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Verified Email"
+            },
+            "smtpStatus": {
+              "name": "SMTP Status"
+            },
+            "isValidFormat": {
+              "name": "Valid Format"
+            },
+            "isDisposable": {
+              "name": "Disposable"
+            },
+            "isWebmail": {
+              "name": "Webmail"
+            },
+            "isGibberish": {
+              "name": "Gibberish"
+            },
+            "unknownReason": {
+              "name": "Unknown Status Reason"
+            }
+          }
+        }
+      }
+    },
+    "millionverifier": {
+      "actions": {
+        "verify-email": {
+          "name": "Verify email",
+          "description": "Check an email address for deliverability, risk, and mailbox type.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The email address to verify."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Verified Email"
+            },
+            "result": {
+              "name": "Verification Result"
+            },
+            "quality": {
+              "name": "Email Quality"
+            },
+            "resultCode": {
+              "name": "Result Code"
+            },
+            "subresult": {
+              "name": "Detailed Result"
+            },
+            "isFreeEmail": {
+              "name": "Free Email Provider"
+            },
+            "isRoleBased": {
+              "name": "Role-based Email"
+            },
+            "didYouMean": {
+              "name": "Suggested Email"
+            },
+            "creditsRemaining": {
+              "name": "Credits Remaining"
+            },
+            "executionTimeMs": {
+              "name": "Execution Time (ms)"
+            },
+            "liveMode": {
+              "name": "Live Mode"
+            }
+          }
+        }
+      }
+    },
+    "contactout": {
+      "actions": {
+        "professional-url-from-personal-email": {
+          "name": "Find professional URL from personal email",
+          "description": "Find a LinkedIn profile URL associated with a personal email address.",
+          "inputs": {
+            "email": {
+              "name": "Personal Email",
+              "description": "The person's personal email address."
+            }
+          },
+          "outputs": {
+            "linkedinUrl": {
+              "name": "Professional URL"
+            },
+            "email": {
+              "name": "Matched Email"
+            }
+          }
+        },
+        "mobile-number-from-linkedin": {
+          "name": "Find mobile number from LinkedIn",
+          "description": "Find mobile numbers associated with a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "A regular LinkedIn profile URL, not a Sales Navigator or Recruiter URL."
+            }
+          },
+          "outputs": {
+            "mobileNumber": {
+              "name": "Mobile Number"
+            },
+            "phoneNumbers": {
+              "name": "All Phone Numbers"
+            }
+          }
+        },
+        "personal-email-from-linkedin": {
+          "name": "Find personal email from LinkedIn",
+          "description": "Find personal email addresses associated with a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "A regular LinkedIn profile URL, not a Sales Navigator or Recruiter URL."
+            }
+          },
+          "outputs": {
+            "personalEmail": {
+              "name": "Personal Email"
+            },
+            "personalEmails": {
+              "name": "All Personal Emails"
+            }
+          }
+        }
+      }
+    },
+    "findymail": {
+      "actions": {
+        "validate-email": {
+          "name": "Validate Email",
+          "description": "Check whether an email address is valid and deliverable.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The email address to validate."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Email"
+            },
+            "verified": {
+              "name": "Verified"
+            },
+            "provider": {
+              "name": "Email Provider"
+            }
+          }
+        },
+        "work-email-from-profile-url": {
+          "name": "Find work email from profile URL",
+          "description": "Find a verified work email from a LinkedIn profile URL.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "fullName": {
+              "name": "Full Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find a verified work email from a person's name and company domain.",
+          "inputs": {
+            "fullName": {
+              "name": "Full Name",
+              "description": "The person's full name."
+            },
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "The person's company website or domain."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "fullName": {
+              "name": "Full Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "find-mobile-phone": {
+          "name": "Findymail Find Mobile Phone",
+          "description": "Find a mobile phone number from a LinkedIn profile URL.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "phone": {
+              "name": "Mobile Phone"
+            },
+            "lineType": {
+              "name": "Line Type"
+            }
+          }
+        }
+      }
+    },
+    "fullenrich": {
+      "actions": {
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find the most probable work email for a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "workEmail": {
+              "name": "Work Email"
+            },
+            "emailStatus": {
+              "name": "Email Status"
+            },
+            "workEmails": {
+              "name": "All Work Emails"
+            }
+          }
+        },
+        "find-mobile-phone": {
+          "name": "Find mobile phone",
+          "description": "Find the most probable mobile phone number for a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "phoneNumber": {
+              "name": "Mobile Phone"
+            },
+            "region": {
+              "name": "Phone Region"
+            },
+            "phones": {
+              "name": "All Phone Numbers"
+            }
+          }
+        }
+      }
+    },
+    "hunter": {
+      "actions": {
+        "verify-email": {
+          "name": "Verify email",
+          "description": "Verify the deliverability and risk status of an email address.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "Email address to verify."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Email"
+            },
+            "status": {
+              "name": "Status"
+            },
+            "score": {
+              "name": "Score"
+            },
+            "acceptAll": {
+              "name": "Accept All"
+            },
+            "disposable": {
+              "name": "Disposable"
+            },
+            "webmail": {
+              "name": "Webmail"
+            }
+          }
+        },
+        "find-emails-by-company": {
+          "name": "Find emails by company",
+          "description": "Find known email addresses and their contacts for a company domain.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "emails": {
+              "name": "Emails"
+            },
+            "emailCount": {
+              "name": "Email Count"
+            },
+            "firstEmail": {
+              "name": "First Email"
+            },
+            "organization": {
+              "name": "Organization"
+            },
+            "pattern": {
+              "name": "Email Pattern"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find a person's work email from their name and company domain.",
+          "inputs": {
+            "fullName": {
+              "name": "Full Name",
+              "description": "The person's full name."
+            },
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "The person's company domain."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "score": {
+              "name": "Score"
+            },
+            "verificationStatus": {
+              "name": "Verification Status"
+            },
+            "position": {
+              "name": "Position"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "phoneNumber": {
+              "name": "Phone Number"
+            }
+          }
+        }
+      }
+    },
+    "leadmagic": {
+      "actions": {
+        "validate-email": {
+          "name": "Validate email",
+          "description": "Validate an email address for deliverability.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "Email address to validate."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Email"
+            },
+            "status": {
+              "name": "Email Status"
+            },
+            "mxProvider": {
+              "name": "MX Provider"
+            },
+            "companyName": {
+              "name": "Company Name"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find and validate a work email from a person's name and company domain.",
+          "inputs": {
+            "fullName": {
+              "name": "Full Name",
+              "description": "The person's full name."
+            },
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "The person's company domain."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "status": {
+              "name": "Email Status"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "employmentVerified": {
+              "name": "Employment Verified"
+            }
+          }
+        },
+        "find-personal-email": {
+          "name": "Find personal email",
+          "description": "Find personal email addresses from a professional profile URL.",
+          "inputs": {
+            "profileUrl": {
+              "name": "Professional Profile URL",
+              "description": "The person's professional profile URL."
+            }
+          },
+          "outputs": {
+            "personalEmail": {
+              "name": "Personal Email"
+            },
+            "personalEmails": {
+              "name": "All Personal Emails"
+            },
+            "name": {
+              "name": "Full Name"
+            }
+          }
+        },
+        "find-mobile-number": {
+          "name": "Find mobile number",
+          "description": "Find a mobile number from a professional profile URL.",
+          "inputs": {
+            "profileUrl": {
+              "name": "Professional Profile URL",
+              "description": "The person's professional profile URL."
+            }
+          },
+          "outputs": {
+            "mobileNumber": {
+              "name": "Mobile Number"
+            },
+            "profileUrl": {
+              "name": "Professional Profile URL"
+            }
+          }
+        },
+        "find-professional-profile": {
+          "name": "Find professional profile",
+          "description": "Find a professional profile URL from an email address.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "A work or personal email address."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "Professional Profile URL"
+            },
+            "message": {
+              "name": "Status Message"
+            }
+          }
+        },
+        "find-active-job-openings": {
+          "name": "Find active job openings",
+          "description": "Find recent open jobs at a company, optionally filtered by title.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company domain to search."
+            },
+            "jobTitle": {
+              "name": "Job Title",
+              "description": "Optional job title to match."
+            },
+            "postedWithinDays": {
+              "name": "Posted Within Days",
+              "description": "Optional age limit in days."
+            }
+          },
+          "outputs": {
+            "jobs": {
+              "name": "Active Jobs"
+            },
+            "jobCount": {
+              "name": "Job Count"
+            },
+            "firstJobTitle": {
+              "name": "First Job Title"
+            },
+            "firstJobUrl": {
+              "name": "First Job URL"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enrich company",
+          "description": "Enrich a company with firmographic and social data from its domain.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "websiteUrl": {
+              "name": "Website"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "profileUrl": {
+              "name": "Company Profile URL"
+            },
+            "description": {
+              "name": "Description"
+            }
+          }
+        }
+      }
+    },
+    "lusha": {
+      "actions": {
+        "company-website-traffic-signal": {
+          "name": "Find company website traffic signal",
+          "description": "Find recent increases or decreases in a company's website traffic.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-it-spend-signal": {
+          "name": "Find company IT spend signal",
+          "description": "Find recent increases or decreases in a company's IT spending.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-jobs-growth-by-location-signal": {
+          "name": "Find company jobs growth by location signal",
+          "description": "Find hiring surges grouped by location.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-jobs-growth-by-department-signal": {
+          "name": "Find company jobs growth by department signal",
+          "description": "Find hiring surges grouped by department.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-jobs-growth-signal": {
+          "name": "Find company jobs growth signal",
+          "description": "Find recent company-wide hiring surges.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-headcount-growth-signal": {
+          "name": "Find company headcount growth signal",
+          "description": "Find headcount increases or decreases across supported time windows.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "company-news-signal": {
+          "name": "Find company news signal",
+          "description": "Find recent risk, commercial, strategy, financial, people, market, and product news.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enrich company",
+          "description": "Find and reveal a company's full firmographic profile from its domain.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            },
+            "website": {
+              "name": "Website"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "company": {
+              "name": "Full Company"
+            }
+          }
+        },
+        "find-person-signals": {
+          "name": "Find person signals",
+          "description": "Find recent promotions and company changes for a professional profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            },
+            "startDate": {
+              "name": "Start Date",
+              "description": "Optional earliest signal date."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Signals"
+            },
+            "signalCount": {
+              "name": "Signal Count"
+            },
+            "fullName": {
+              "name": "Full Name"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enrich person",
+          "description": "Find and reveal a person's profile, emails, and phone numbers from LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Full Name"
+            },
+            "workEmail": {
+              "name": "Work Email"
+            },
+            "phoneNumber": {
+              "name": "Phone Number"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "person": {
+              "name": "Full Person"
+            }
+          }
+        }
+      }
+    },
+    "zerobounce": {
+      "actions": {
+        "validate-email": {
+          "name": "Validate Email",
+          "description": "Check an email address for deliverability, risk, and mailbox type.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The email address to validate."
+            },
+            "ipAddress": {
+              "name": "IP Address",
+              "description": "Optional signup IP address used by ZeroBounce for additional context."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Validated Email"
+            },
+            "status": {
+              "name": "Validation Status"
+            },
+            "subStatus": {
+              "name": "Detailed Status"
+            },
+            "isFreeEmail": {
+              "name": "Free Email Provider"
+            },
+            "isCatchAll": {
+              "name": "Catch-all Domain"
+            },
+            "didYouMean": {
+              "name": "Suggested Email"
+            },
+            "account": {
+              "name": "Email Account"
+            },
+            "domain": {
+              "name": "Email Domain"
+            },
+            "domainAgeDays": {
+              "name": "Domain Age (days)"
+            },
+            "activeInDays": {
+              "name": "Active In Days"
+            },
+            "mxFound": {
+              "name": "MX Found"
+            },
+            "mxRecord": {
+              "name": "MX Record"
+            },
+            "smtpProvider": {
+              "name": "SMTP Provider"
+            },
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            },
+            "processedAt": {
+              "name": "Processed At"
+            }
+          }
+        }
+      }
+    },
+    "similarweb": {
+      "actions": {
+        "get-monthly-website-visits": {
+          "name": "Get monthly website visits",
+          "description": "Get estimated desktop and mobile visits for the latest complete month.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "visits": {
+              "name": "Monthly Visits"
+            },
+            "month": {
+              "name": "Data Month"
+            }
+          }
+        },
+        "get-traffic-distribution-by-geography": {
+          "name": "Get traffic distribution by geography",
+          "description": "Get website traffic share and engagement by country.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "countries": {
+              "name": "Traffic by Country"
+            }
+          }
+        },
+        "get-website-pages-per-visit": {
+          "name": "Get website pages per visit",
+          "description": "Get average pages viewed per visit for the latest complete month.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "pagesPerVisit": {
+              "name": "Pages per Visit"
+            },
+            "month": {
+              "name": "Data Month"
+            }
+          }
+        },
+        "get-website-bounce-rate": {
+          "name": "Get website bounce rate",
+          "description": "Get website bounce rate for the latest complete month.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "bounceRate": {
+              "name": "Bounce Rate"
+            },
+            "month": {
+              "name": "Data Month"
+            }
+          }
+        },
+        "get-website-average-visit-duration": {
+          "name": "Get website average visit duration",
+          "description": "Get average visit duration in seconds for the latest complete month.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "averageVisitDuration": {
+              "name": "Average Visit Duration (seconds)"
+            },
+            "month": {
+              "name": "Data Month"
+            }
+          }
+        },
+        "get-global-website-traffic-rank": {
+          "name": "Get global website traffic rank",
+          "description": "Get the website's global rank for the latest complete month.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "globalRank": {
+              "name": "Global Rank"
+            },
+            "month": {
+              "name": "Data Month"
+            }
+          }
+        },
+        "find-website-technologies": {
+          "name": "Find website technologies",
+          "description": "Find technologies detected on a website.",
+          "inputs": {
+            "domain": {
+              "name": "Website Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "technologies": {
+              "name": "Technologies"
+            }
+          }
+        }
+      }
+    },
+    "semrush": {
+      "actions": {
+        "get-traffic-analytics": {
+          "name": "Get traffic analytics",
+          "description": "Get current traffic and engagement metrics for a company website.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "visits": {
+              "name": "Visits"
+            },
+            "users": {
+              "name": "Unique Visitors"
+            },
+            "rank": {
+              "name": "Traffic Rank"
+            },
+            "pagesPerVisit": {
+              "name": "Pages per Visit"
+            },
+            "averageVisitDuration": {
+              "name": "Average Visit Duration"
+            },
+            "bounceRate": {
+              "name": "Bounce Rate"
+            },
+            "trafficAnalytics": {
+              "name": "Full Traffic Analytics"
+            }
+          }
+        },
+        "get-competitors-in-paid-search": {
+          "name": "Get competitors in paid search",
+          "description": "Find domains competing with a company in paid search.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "competitors": {
+              "name": "Paid Search Competitors"
+            }
+          }
+        },
+        "get-company-traffic-sources": {
+          "name": "Get company traffic sources",
+          "description": "Get upstream websites and channel traffic sources for a company.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "trafficSources": {
+              "name": "Traffic Sources"
+            }
+          }
+        },
+        "get-company-top-pages": {
+          "name": "Get company top pages",
+          "description": "Get the most popular pages for a company website.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "topPages": {
+              "name": "Top Pages"
+            }
+          }
+        },
+        "get-company-social-media-engagement": {
+          "name": "Get company social media engagement",
+          "description": "Get social-platform audience and engagement data for a company website.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "socialMedia": {
+              "name": "Social Media Engagement"
+            }
+          }
+        },
+        "get-company-website-traffic-geographic-distribution": {
+          "name": "Get company website traffic’s geographic distribution",
+          "description": "Get company website traffic and engagement broken down by country.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "geography": {
+              "name": "Geographic Distribution"
+            }
+          }
+        }
+      }
+    },
+    "rocketreach": {
+      "actions": {
+        "find-professional-email": {
+          "name": "Find professional email",
+          "description": "Find a verified professional email from a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Professional Email"
+            },
+            "emails": {
+              "name": "Professional Emails"
+            }
+          }
+        },
+        "find-personal-email": {
+          "name": "Find personal email",
+          "description": "Find a verified personal email from a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Personal Email"
+            },
+            "emails": {
+              "name": "Personal Emails"
+            }
+          }
+        },
+        "find-phone-number": {
+          "name": "Find phone number",
+          "description": "Find a phone number from a LinkedIn profile.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "phoneNumber": {
+              "name": "Phone Number"
+            },
+            "phoneNumbers": {
+              "name": "Phone Numbers"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enrich person",
+          "description": "Retrieve professional profile, employment, and location data.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "LinkedIn URL",
+              "description": "The person's LinkedIn profile URL."
+            }
+          },
+          "outputs": {
+            "name": {
+              "name": "Full Name"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "companyDomain": {
+              "name": "Company Domain"
+            },
+            "location": {
+              "name": "Location"
+            },
+            "linkedinUrl": {
+              "name": "LinkedIn URL"
+            },
+            "profile": {
+              "name": "Full Profile"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enrich company",
+          "description": "Retrieve company firmographics and technology data from its domain.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company website or domain."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "domain": {
+              "name": "Domain"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "revenue": {
+              "name": "Revenue"
+            },
+            "yearFounded": {
+              "name": "Year Founded"
+            },
+            "technologies": {
+              "name": "Technologies"
+            },
+            "company": {
+              "name": "Full Company"
+            }
+          }
+        }
+      }
+    },
+    "icypeas": {
+      "actions": {
+        "verify-email": {
+          "name": "Verify email",
+          "description": "Verify an email address and return its deliverability status.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "Email address to verify."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Email"
+            },
+            "status": {
+              "name": "Verification Status"
+            },
+            "certainty": {
+              "name": "Certainty"
+            },
+            "details": {
+              "name": "Verification Details"
+            }
+          }
+        },
+        "find-professional-profile": {
+          "name": "Find professional profile",
+          "description": "Find a professional profile URL from a name and company.",
+          "inputs": {
+            "firstName": {
+              "name": "First Name",
+              "description": "Person's first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "Person's last name."
+            },
+            "company": {
+              "name": "Company or Domain",
+              "description": "Company name, domain, or website."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "Professional Profile URL"
+            }
+          }
+        },
+        "find-people-at-company": {
+          "name": "Find people at company",
+          "description": "Find people currently working at a company.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company domain or website."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "People"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            }
+          }
+        },
+        "find-emails-for-domain": {
+          "name": "Find emails for domain",
+          "description": "Scan a domain for role-based email addresses.",
+          "inputs": {
+            "domain": {
+              "name": "Company Domain",
+              "description": "Company domain or website."
+            }
+          },
+          "outputs": {
+            "emails": {
+              "name": "Emails"
+            },
+            "resultCount": {
+              "name": "Result Count"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Find work email",
+          "description": "Find a professional email from a name and company.",
+          "inputs": {
+            "firstName": {
+              "name": "First Name",
+              "description": "Person's first name."
+            },
+            "lastName": {
+              "name": "Last Name",
+              "description": "Person's last name."
+            },
+            "company": {
+              "name": "Company or Domain",
+              "description": "Company name, domain, or website."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Work Email"
+            },
+            "certainty": {
+              "name": "Certainty"
+            },
+            "mxProvider": {
+              "name": "MX Provider"
+            }
+          }
+        },
+        "find-company-professional-profile": {
+          "name": "Find company professional profile",
+          "description": "Find a company's professional-network profile URL.",
+          "inputs": {
+            "company": {
+              "name": "Company or Domain",
+              "description": "Company name, domain, or website."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "Company Profile URL"
+            }
+          }
+        },
+        "enrich-profile": {
+          "name": "Enrich profile",
+          "description": "Scrape and enrich a professional profile.",
+          "inputs": {
+            "profileUrl": {
+              "name": "Professional Profile URL",
+              "description": "Professional profile URL to enrich."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Full Name"
+            },
+            "jobTitle": {
+              "name": "Job Title"
+            },
+            "companyName": {
+              "name": "Company Name"
+            },
+            "location": {
+              "name": "Location"
+            },
+            "profile": {
+              "name": "Full Profile"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enrich company",
+          "description": "Scrape and enrich a company profile.",
+          "inputs": {
+            "profileUrl": {
+              "name": "Company Profile URL",
+              "description": "Company professional profile URL."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Company Name"
+            },
+            "domain": {
+              "name": "Domain"
+            },
+            "industry": {
+              "name": "Industry"
+            },
+            "employeeCount": {
+              "name": "Employee Count"
+            },
+            "location": {
+              "name": "Location"
+            },
+            "company": {
+              "name": "Full Company"
+            }
+          }
+        }
+      }
+    }
+  }
+}
