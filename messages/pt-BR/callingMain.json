@@ -1,3 +1,238 @@
 {
-  "callingMain": {}
+  "callingMain": {
+    "shared": {
+      "callStatus": {
+        "new": "Não chamado",
+        "calling": "Chamando…",
+        "no_answer": "Não atendeu",
+        "busy": "Ocupado / recusou",
+        "connected": "Conectado",
+        "not_on_whatsapp": "Sem WhatsApp",
+        "wrong_number": "Número errado",
+        "failed": "Chamada com falha"
+      },
+      "stage": {
+        "to_call": "Para chamar",
+        "follow_up": "Follow-up",
+        "done": "Concluído"
+      },
+      "disposition": {
+        "no_answer": "Não atendeu",
+        "busy": "Ocupado / recusou",
+        "not_on_whatsapp": "Sem WhatsApp",
+        "wrong_number": "Número errado",
+        "interested": "Interessado",
+        "meeting_booked": "Reunião agendada",
+        "callback": "Retornar depois",
+        "send_details": "Enviar detalhes",
+        "not_interested": "Sem interesse",
+        "do_not_call": "Não chamar"
+      },
+      "campaignStatus": {
+        "active": "Ativa",
+        "paused": "Pausada"
+      },
+      "attempt": "Tentativa {current} de {total}",
+      "followUp": {
+        "overdue": "Atrasado · {date}",
+        "today": "Vence hoje",
+        "tomorrow": "Vence amanhã",
+        "inDays": "{count, plural, one {Vence em # dia} other {Vence em # dias}}"
+      },
+      "aiStageTitle": "Definido pela IA a partir da transcrição da chamada",
+      "aiTag": "IA",
+      "unnamedContact": "Contato sem nome",
+      "thisContact": "este contato"
+    },
+    "skeleton": {
+      "loading": "Carregando"
+    },
+    "campaigns": {
+      "title": "Campanhas de chamadas",
+      "description": "O agente de IA liga para seus leads pelo WhatsApp, faz o follow-up e passa para você quem demonstrar interesse."
+    },
+    "page": {
+      "campaignsTitle": "Campanhas de chamadas",
+      "messagesTitle": "Mensagens"
+    },
+    "campaignModals": {
+      "editTitle": "Editar campanha",
+      "name": "Nome",
+      "description": "Descrição (opcional)",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "saveChanges": "Salvar alterações",
+      "deleteTitle": "Excluir campanha?",
+      "deleteBody": "Excluir “{name}”? Ela sai de Chamadas; as chamadas, gravações e transcrições continuam em cada lead.",
+      "deleting": "Excluindo…",
+      "deleteButton": "Excluir campanha"
+    },
+    "companyField": {
+      "matching": "Empresas correspondentes",
+      "people": "{count, plural, one {# pessoa} other {# pessoas}}"
+    },
+    "editContact": {
+      "title": "Editar contato",
+      "description": "Edita o registro em Pessoas, compartilhado em todo lugar onde esta pessoa aparece no AgentSDR.",
+      "photoTypeError": "Escolha uma imagem JPG, PNG, WebP ou GIF.",
+      "photoSizeError": "Essa foto tem {size} MB; o limite é {max} MB.",
+      "upload": "Enviar foto",
+      "uploading": "Enviando…",
+      "remove": "Remover foto",
+      "removing": "Removendo…",
+      "photoHint": "JPG, PNG, WebP ou GIF, até {max} MB.",
+      "photoLink": "Link da foto (opcional)",
+      "fullName": "Nome completo",
+      "whatsappNumber": "Número do WhatsApp",
+      "companyName": "Nome da empresa (opcional)",
+      "companyWebsite": "Site da empresa (opcional)",
+      "jobTitle": "Cargo (opcional)",
+      "email": "E-mail (opcional)",
+      "cancel": "Cancelar",
+      "saving": "Salvando…",
+      "save": "Salvar alterações"
+    },
+    "campaign": {
+      "back": "Campanhas de chamadas",
+      "loadError": "Não foi possível carregar esta campanha.",
+      "tabs": {
+        "all": "Todos os leads",
+        "due": "Para hoje"
+      },
+      "tabDescriptions": {
+        "all": "Todos desta campanha. Selecione uma pessoa para ver chamadas, notas e WhatsApp.",
+        "due": "Quem ainda não foi chamado, novas tentativas que chegaram e follow-ups para hoje ou atrasados.",
+        "follow_up": "Você falou com a pessoa; o próximo passo está pendente.",
+        "done": "Concluído: não há mais chamadas planejadas."
+      },
+      "summary": "{count, plural, one {# contato} other {# contatos}} · Criada em {date}",
+      "summaryWithDescription": "{description} · {count, plural, one {# contato} other {# contatos}} · Criada em {date}",
+      "uploadContacts": "Enviar contatos",
+      "addContact": "Adicionar contato",
+      "moreActionsFor": "Mais ações para {name}",
+      "edit": "Editar campanha",
+      "pause": "Pausar campanha",
+      "resume": "Retomar campanha",
+      "delete": "Excluir campanha",
+      "stats": {
+        "dueToday": "Para hoje",
+        "dueOverdue": "{due} · {overdue} em atraso",
+        "dueHint": "Quem ainda não foi chamado, novas tentativas que chegaram e follow-ups para hoje ou atrasados. Em atraso: a data do follow-up já passou.",
+        "reached": "Alcançados",
+        "reachedValue": "{called} de {leads}",
+        "reachedHint": "Contatos chamados ao menos uma vez",
+        "connectRate": "Taxa de conexão",
+        "connectHint": "{connected} de {called, plural, one {# contato chamado atendeu} other {# contatos chamados atenderam}} ao menos uma vez",
+        "nobodyCalled": "Ninguém foi chamado ainda",
+        "lastCall": "Última chamada",
+        "never": "Nunca"
+      },
+      "tabsLabel": "Contatos da campanha",
+      "searchLabel": "Buscar contatos",
+      "searchPlaceholder": "Buscar contatos…",
+      "columns": {
+        "person": "Pessoa",
+        "company": "Empresa",
+        "callStatus": "Status da chamada",
+        "leadStatus": "Status do lead",
+        "lastCall": "Última chamada",
+        "actions": "Ações"
+      },
+      "empty": {
+        "noContactsTitle": "Nenhum contato ainda",
+        "noContactsDescription": "Adicione pessoas uma a uma ou envie um arquivo CSV ou Excel com a lista para chamar.",
+        "noMatchTitle": "Nenhum contato encontrado",
+        "noMatchDescription": "Ninguém em {tab} corresponde a “{search}”.",
+        "clearSearch": "Limpar busca",
+        "dueTitle": "Ninguém para hoje",
+        "dueDescription": "Leads para chamar hoje e follow-ups que venceram aparecem aqui.",
+        "followUpTitle": "Nenhum follow-up pendente",
+        "followUpDescription": "Pessoas com quem você falou e que têm um próximo passo pendente aparecem aqui.",
+        "doneTitle": "Ninguém concluído ainda",
+        "doneDescription": "Os leads vêm para cá quando não há mais nada a fazer."
+      },
+      "artifacts": {
+        "recording": "Gravação",
+        "transcribing": "Transcrevendo",
+        "transcript": "Transcrição",
+        "transcriptFailed": "Transcrição falhou"
+      },
+      "row": {
+        "open": "Abrir {name}",
+        "linkedinProfile": "Perfil no LinkedIn",
+        "nameOnLinkedin": "{name} no LinkedIn",
+        "noDetails": "Sem detalhes",
+        "calls": "{count, plural, one {# chamada} other {# chamadas}}",
+        "notCalledYet": "Ainda não chamado",
+        "editContact": "Editar contato",
+        "remove": "Remover da campanha"
+      }
+    },
+    "addContact": {
+      "title": "Adicionar um contato",
+      "description": "Entra na campanha, pronto para ser chamado.",
+      "fullName": "Nome completo",
+      "whatsappNumber": "Número do WhatsApp",
+      "companyName": "Nome da empresa (opcional)",
+      "companyWebsite": "Site da empresa (opcional)",
+      "jobTitle": "Cargo (opcional)",
+      "email": "E-mail (opcional)",
+      "cancel": "Cancelar",
+      "adding": "Adicionando…",
+      "add": "Adicionar contato"
+    },
+    "uploadContacts": {
+      "title": "Enviar contatos",
+      "description": "CSV ou Excel. Colunas esperadas, com estes nomes em inglês: Name (ou First Name / Last Name), Phone (ou Mobile / WhatsApp), Company, Title, Email.",
+      "chooseFile": "Escolha um arquivo .csv ou .xlsx",
+      "clickToBrowse": "Clique para procurar",
+      "result": "<b>{added}</b> adicionados · <b>{already}</b> já na campanha · <b>{skipped}</b> ignorados",
+      "done": "Concluir",
+      "cancel": "Cancelar",
+      "uploading": "Enviando…",
+      "upload": "Enviar"
+    },
+    "panel": {
+      "loading": "Carregando…",
+      "contactFallback": "Contato",
+      "moreActionsFor": "Mais ações para {name}",
+      "editContact": "Editar contato",
+      "removeFromCampaign": "Remover da campanha",
+      "loadingContact": "Carregando contato",
+      "refreshError": "Não foi possível atualizar este contato: {error}",
+      "detailsAria": "Dados do contato",
+      "whatsappNumberAria": "Número do WhatsApp",
+      "emailAria": "E-mail",
+      "noNumber": "Ainda sem número",
+      "noPhoneError": "Este contato ainda não tem telefone.",
+      "status": "Status",
+      "callStatus": "Status da chamada",
+      "callStatusHelp": "Definido automaticamente pelas chamadas. Corrija aqui quando a chamada o enganar.",
+      "leadStatus": "Status do lead",
+      "nextFollowUp": "Próximo follow-up",
+      "clear": "Limpar",
+      "writeFollowUp": "Escrever follow-up no WhatsApp",
+      "whatsappSection": "WhatsApp",
+      "notes": "Notas",
+      "notesPlaceholder": "Qualquer coisa que valha lembrar da próxima vez…",
+      "saveNotes": "Salvar notas",
+      "saving": "Salvando…",
+      "calls": "Chamadas",
+      "noCalls": "Nenhuma chamada ainda. O botão de chamar acima faz uma chamada pelo WhatsApp e a grava.",
+      "messagesLogged": "Mensagens registradas",
+      "noMessages": "Nenhuma mensagem ainda.",
+      "removeTitle": "Remover da campanha?",
+      "removeBody": "Remover {name} desta campanha? A pessoa continua em Pessoas, com as chamadas e gravações.",
+      "cancel": "Cancelar",
+      "removing": "Removendo…",
+      "transcribing": "Transcrevendo…",
+      "transcriptStuck": "A transcrição está demorando bem mais que o normal e pode ter parado.",
+      "retry": "Tentar de novo",
+      "transcriptionFailed": "A transcrição falhou.",
+      "hideTranscript": "Ocultar transcrição",
+      "showTranscript": "Mostrar transcrição",
+      "speakerRep": "Vendedor",
+      "speakerLead": "Lead"
+    }
+  }
 }

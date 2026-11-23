@@ -2,10 +2,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiDeleteBinLine, RiPencilLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Modal from "@/components/alignui/modal";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { FormError, TextField } from "@/components/calls/fields";
 import { deleteCampaign, updateCampaign } from "@/lib/calls/client";
 import type { CampaignSummary } from "@/lib/calls/contract";
@@ -22,6 +23,8 @@ export function EditCampaignModal({
   campaign: CampaignSummary | null;
   onUpdated: (campaign: CampaignSummary) => void;
 }) {
+  const t = useTranslations("callingMain.campaignModals");
+  const { errorMessage } = useCrmText();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,19 +57,19 @@ export function EditCampaignModal({
     <Modal.Root open={open} onOpenChange={(next) => { if (!submitting) onOpenChange(next); }}>
       <Modal.Content>
         <Modal.Header icon={RiPencilLine}>
-          <Modal.Title>Edit campaign</Modal.Title>
+          <Modal.Title>{t("editTitle")}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="space-y-3">
           {error && <FormError>{error}</FormError>}
-          <TextField label="Name" autoFocus value={name} onChange={setName} disabled={submitting} />
-          <TextField label="Description (optional)" value={description} onChange={setDescription} disabled={submitting} />
+          <TextField label={t("name")} autoFocus value={name} onChange={setName} disabled={submitting} />
+          <TextField label={t("description")} value={description} onChange={setDescription} disabled={submitting} />
         </Modal.Body>
         <Modal.Footer>
           <Modal.Close asChild>
-            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>Cancel</Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>{t("cancel")}</Button.Root>
           </Modal.Close>
           <Button.Root variant="primary" mode="filled" size="small" disabled={submitting || !name.trim()} onClick={() => void submit()}>
-            {submitting ? "Saving…" : "Save changes"}
+            {submitting ? t("saving") : t("saveChanges")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>
@@ -86,6 +89,8 @@ export function DeleteCampaignModal({
   campaign: CampaignSummary | null;
   onDeleted: () => void;
 }) {
+  const t = useTranslations("callingMain.campaignModals");
+  const { errorMessage } = useCrmText();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -113,9 +118,9 @@ export function DeleteCampaignModal({
     <Modal.Root open={open} onOpenChange={(next) => { if (!submitting) onOpenChange(next); }}>
       <Modal.Content>
         <Modal.Header icon={RiDeleteBinLine}>
-          <Modal.Title>Delete campaign?</Modal.Title>
+          <Modal.Title>{t("deleteTitle")}</Modal.Title>
           <Modal.Description>
-            Delete “{campaign?.name}”? It leaves Calling; the calls, recordings and transcripts stay on each lead.
+            {t("deleteBody", { name: campaign?.name ?? "" })}
           </Modal.Description>
         </Modal.Header>
         {error && (
@@ -125,10 +130,10 @@ export function DeleteCampaignModal({
         )}
         <Modal.Footer>
           <Modal.Close asChild>
-            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>Cancel</Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>{t("cancel")}</Button.Root>
           </Modal.Close>
           <Button.Root variant="error" mode="filled" size="small" disabled={submitting} onClick={() => void submit()}>
-            {submitting ? "Deleting…" : "Delete campaign"}
+            {submitting ? t("deleting") : t("deleteButton")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

@@ -1,3 +1,238 @@
 {
-  "callingMain": {}
+  "callingMain": {
+    "shared": {
+      "callStatus": {
+        "new": "Not called",
+        "calling": "Calling…",
+        "no_answer": "Didn't pick up",
+        "busy": "Busy / declined",
+        "connected": "Connected",
+        "not_on_whatsapp": "Not on WhatsApp",
+        "wrong_number": "Wrong number",
+        "failed": "Call failed"
+      },
+      "stage": {
+        "to_call": "To call",
+        "follow_up": "Follow-up",
+        "done": "Done"
+      },
+      "disposition": {
+        "no_answer": "No answer",
+        "busy": "Busy / declined",
+        "not_on_whatsapp": "Not on WhatsApp",
+        "wrong_number": "Wrong number",
+        "interested": "Interested",
+        "meeting_booked": "Meeting booked",
+        "callback": "Call back later",
+        "send_details": "Send details",
+        "not_interested": "Not interested",
+        "do_not_call": "Do not call"
+      },
+      "campaignStatus": {
+        "active": "Active",
+        "paused": "Paused"
+      },
+      "attempt": "Attempt {current} of {total}",
+      "followUp": {
+        "overdue": "Overdue · {date}",
+        "today": "Due today",
+        "tomorrow": "Due tomorrow",
+        "inDays": "{count, plural, one {Due in # day} other {Due in # days}}"
+      },
+      "aiStageTitle": "Set by the AI from the call transcript",
+      "aiTag": "AI",
+      "unnamedContact": "Unnamed contact",
+      "thisContact": "this contact"
+    },
+    "skeleton": {
+      "loading": "Loading"
+    },
+    "campaigns": {
+      "title": "Call campaigns",
+      "description": "The AI agent calls your leads over WhatsApp, follows up, and hands interested people to you."
+    },
+    "page": {
+      "campaignsTitle": "Call campaigns",
+      "messagesTitle": "Messages"
+    },
+    "campaignModals": {
+      "editTitle": "Edit campaign",
+      "name": "Name",
+      "description": "Description (optional)",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "deleteTitle": "Delete campaign?",
+      "deleteBody": "Delete “{name}”? It leaves Calling; the calls, recordings and transcripts stay on each lead.",
+      "deleting": "Deleting…",
+      "deleteButton": "Delete campaign"
+    },
+    "companyField": {
+      "matching": "Matching companies",
+      "people": "{count, plural, one {# person} other {# people}}"
+    },
+    "editContact": {
+      "title": "Edit contact",
+      "description": "Edits the People record — shared everywhere this person appears in AgentSDR.",
+      "photoTypeError": "Choose a JPG, PNG, WebP or GIF image.",
+      "photoSizeError": "That photo is {size} MB; the limit is {max} MB.",
+      "upload": "Upload photo",
+      "uploading": "Uploading…",
+      "remove": "Remove photo",
+      "removing": "Removing…",
+      "photoHint": "JPG, PNG, WebP or GIF, up to {max} MB.",
+      "photoLink": "Photo link (optional)",
+      "fullName": "Full name",
+      "whatsappNumber": "WhatsApp number",
+      "companyName": "Company name (optional)",
+      "companyWebsite": "Company website (optional)",
+      "jobTitle": "Title (optional)",
+      "email": "Email (optional)",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save changes"
+    },
+    "campaign": {
+      "back": "Call campaigns",
+      "loadError": "This campaign could not be loaded.",
+      "tabs": {
+        "all": "All leads",
+        "due": "Due today"
+      },
+      "tabDescriptions": {
+        "all": "Everyone in this campaign. Select a person to see their calls, notes and WhatsApp.",
+        "due": "Not called yet, retries that have come round, and follow-ups due today or overdue.",
+        "follow_up": "You spoke to them; the next step is pending.",
+        "done": "Finished: no more calls are planned."
+      },
+      "summary": "{count, plural, one {# contact} other {# contacts}} · Created {date}",
+      "summaryWithDescription": "{description} · {count, plural, one {# contact} other {# contacts}} · Created {date}",
+      "uploadContacts": "Upload contacts",
+      "addContact": "Add contact",
+      "moreActionsFor": "More actions for {name}",
+      "edit": "Edit campaign",
+      "pause": "Pause campaign",
+      "resume": "Resume campaign",
+      "delete": "Delete campaign",
+      "stats": {
+        "dueToday": "Due today",
+        "dueOverdue": "{due} · {overdue} overdue",
+        "dueHint": "Not called yet, retries that have come round, and follow-ups due today or overdue. Overdue: the follow-up date has passed.",
+        "reached": "Reached",
+        "reachedValue": "{called} of {leads}",
+        "reachedHint": "Contacts called at least once",
+        "connectRate": "Connect rate",
+        "connectHint": "{connected} of the {called, plural, one {# contact} other {# contacts}} called picked up at least once",
+        "nobodyCalled": "Nobody called yet",
+        "lastCall": "Last call",
+        "never": "Never"
+      },
+      "tabsLabel": "Campaign contacts",
+      "searchLabel": "Search contacts",
+      "searchPlaceholder": "Search contacts…",
+      "columns": {
+        "person": "Person",
+        "company": "Company",
+        "callStatus": "Call status",
+        "leadStatus": "Lead status",
+        "lastCall": "Last call",
+        "actions": "Actions"
+      },
+      "empty": {
+        "noContactsTitle": "No contacts yet",
+        "noContactsDescription": "Add people one at a time, or upload a CSV or Excel file of the list to call.",
+        "noMatchTitle": "No contacts match",
+        "noMatchDescription": "Nobody in {tab} matches “{search}”.",
+        "clearSearch": "Clear search",
+        "dueTitle": "Nobody is due today",
+        "dueDescription": "Leads to call today and follow-ups that have come due show up here.",
+        "followUpTitle": "No follow-ups pending",
+        "followUpDescription": "People you spoke to with a next step pending show up here.",
+        "doneTitle": "Nobody is done yet",
+        "doneDescription": "Leads move here once there is nothing left to do."
+      },
+      "artifacts": {
+        "recording": "Recording",
+        "transcribing": "Transcribing",
+        "transcript": "Transcript",
+        "transcriptFailed": "Transcript failed"
+      },
+      "row": {
+        "open": "Open {name}",
+        "linkedinProfile": "LinkedIn profile",
+        "nameOnLinkedin": "{name} on LinkedIn",
+        "noDetails": "No details",
+        "calls": "{count, plural, one {# call} other {# calls}}",
+        "notCalledYet": "Not called yet",
+        "editContact": "Edit contact",
+        "remove": "Remove from campaign"
+      }
+    },
+    "addContact": {
+      "title": "Add a contact",
+      "description": "Added to the campaign, ready to call.",
+      "fullName": "Full name",
+      "whatsappNumber": "WhatsApp number",
+      "companyName": "Company name (optional)",
+      "companyWebsite": "Company website (optional)",
+      "jobTitle": "Title (optional)",
+      "email": "Email (optional)",
+      "cancel": "Cancel",
+      "adding": "Adding…",
+      "add": "Add contact"
+    },
+    "uploadContacts": {
+      "title": "Upload contacts",
+      "description": "CSV or Excel. Expected columns: Name (or First Name / Last Name), Phone (or Mobile / WhatsApp), Company, Title, Email.",
+      "chooseFile": "Choose a .csv or .xlsx file",
+      "clickToBrowse": "Click to browse",
+      "result": "<b>{added}</b> added · <b>{already}</b> already in campaign · <b>{skipped}</b> skipped",
+      "done": "Done",
+      "cancel": "Cancel",
+      "uploading": "Uploading…",
+      "upload": "Upload"
+    },
+    "panel": {
+      "loading": "Loading…",
+      "contactFallback": "Contact",
+      "moreActionsFor": "More actions for {name}",
+      "editContact": "Edit contact",
+      "removeFromCampaign": "Remove from campaign",
+      "loadingContact": "Loading contact",
+      "refreshError": "Couldn't refresh this contact: {error}",
+      "detailsAria": "Contact details",
+      "whatsappNumberAria": "WhatsApp number",
+      "emailAria": "Email",
+      "noNumber": "No number yet",
+      "noPhoneError": "This contact has no phone number yet.",
+      "status": "Status",
+      "callStatus": "Call status",
+      "callStatusHelp": "Set automatically by calls. Correct it here when the call misled it.",
+      "leadStatus": "Lead status",
+      "nextFollowUp": "Next follow-up",
+      "clear": "Clear",
+      "writeFollowUp": "Write a WhatsApp follow-up",
+      "whatsappSection": "WhatsApp",
+      "notes": "Notes",
+      "notesPlaceholder": "Anything worth remembering for next time…",
+      "saveNotes": "Save notes",
+      "saving": "Saving…",
+      "calls": "Calls",
+      "noCalls": "No calls yet. The Call button above places one through WhatsApp and records it.",
+      "messagesLogged": "Messages logged",
+      "noMessages": "No messages yet.",
+      "removeTitle": "Remove from campaign?",
+      "removeBody": "Remove {name} from this campaign? They stay in People with their calls and recordings.",
+      "cancel": "Cancel",
+      "removing": "Removing…",
+      "transcribing": "Transcribing…",
+      "transcriptStuck": "Transcription is taking much longer than usual — it may have stopped.",
+      "retry": "Retry",
+      "transcriptionFailed": "Transcription failed.",
+      "hideTranscript": "Hide transcript",
+      "showTranscript": "Show transcript",
+      "speakerRep": "Rep",
+      "speakerLead": "Lead"
+    }
+  }
 }

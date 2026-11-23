@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { PageHeaderSkeleton, Skeleton, TableSkeleton } from "@/components/page/Skeletons";
 
 /*
@@ -7,8 +10,9 @@ import { PageHeaderSkeleton, Skeleton, TableSkeleton } from "@/components/page/S
  */
 
 export function CallingListSkeleton() {
+  const t = useTranslations("callingMain.skeleton");
   return (
-    <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-[1440px] space-y-6">
+    <div aria-busy="true" aria-label={t("loading")} className="mx-auto w-full max-w-[1440px] space-y-6">
       <PageHeaderSkeleton />
       <TableSkeleton rows={4} columns={7} />
     </div>
@@ -16,8 +20,9 @@ export function CallingListSkeleton() {
 }
 
 export function CallingDetailSkeleton() {
+  const t = useTranslations("callingMain.skeleton");
   return (
-    <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-[1440px] space-y-6">
+    <div aria-busy="true" aria-label={t("loading")} className="mx-auto w-full max-w-[1440px] space-y-6">
       <PageHeaderSkeleton back />
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-stroke-soft-200 ring-1 ring-inset ring-stroke-soft-200 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-fr">
         {Array.from({ length: 4 }, (_, i) => (
