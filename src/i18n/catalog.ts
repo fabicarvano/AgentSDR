@@ -41,6 +41,7 @@ import type serverCalling from "../../messages/en/serverCalling.json";
 import type serverCrm from "../../messages/en/serverCrm.json";
 import type serverMeta from "../../messages/en/serverMeta.json";
 import type serverWhatsapp from "../../messages/en/serverWhatsapp.json";
+import type integrationsRegistry from "../../messages/en/integrationsRegistry.json";
 import type settings from "../../messages/en/settings.json";
 import type settingsAccounts from "../../messages/en/settingsAccounts.json";
 import type settingsAi from "../../messages/en/settingsAi.json";
@@ -83,6 +84,7 @@ type Catalog = {
   serverCrm: typeof serverCrm;
   serverMeta: typeof serverMeta;
   serverWhatsapp: typeof serverWhatsapp;
+  integrationsRegistry: typeof integrationsRegistry;
   settings: typeof settings;
   settingsAccounts: typeof settingsAccounts;
   settingsAi: typeof settingsAi;
@@ -96,7 +98,7 @@ type Catalog = {
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "callingAiSetup", "callingAiWork", "callingMain", "callsMain", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "gridColumns", "gridEnrich", "gridMain", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "serverCalling", "serverCrm", "serverMeta", "serverWhatsapp", "shared", "shell", "whatsappCampaigns"] as const satisfies readonly (keyof Catalog)[]; // gitleaks:allow (domain names such as "linkedinMain", not a LinkedIn client id)
+export const DOMAINS = ["analytics", "auth", "callingAiSetup", "callingAiWork", "callingMain", "callsMain", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "gridColumns", "gridEnrich", "gridMain", "inboxMain", "inboxShell", "inboxThread", "integrationsRegistry", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "serverCalling", "serverCrm", "serverMeta", "serverWhatsapp", "shared", "shell", "whatsappCampaigns"] as const satisfies readonly (keyof Catalog)[]; // gitleaks:allow (domain names such as "linkedinMain", not a LinkedIn client id)
 
 export type Domain = (typeof DOMAINS)[number];
 

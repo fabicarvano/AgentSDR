@@ -68,10 +68,24 @@ function useRegistryTexts() {
   };
   const lookup = (key: string, fallback: string, values?: Record<string, string>) =>
     tr.has(key) ? tr(key, values) : fallback;
+  // Action, input and output texts: integrationsRegistry.<integration>.actions.<action>… (English fallback).
+  const ta = useTranslations("integrationsRegistry") as unknown as ((key: string) => string) & { has: (key: string) => boolean };
+  const own = (key: string, fallback: string) => (ta.has(key) ? ta(key) : fallback);
   type AuthField = IntegrationDefinition["auth"]["fields"][number];
   return {
     description: (integration: IntegrationDefinition) =>
       lookup(`integrations.${integration.key}.description`, integration.description),
+    actionName: (integrationKey: string, action: { key: string; name: string }) =>
+      own(`${integrationKey}.actions.${action.key}.name`, action.name),
+    actionDescription: (integrationKey: string, action: { key: string; description: string }) =>
+      own(`${integrationKey}.actions.${action.key}.description`, action.description),
+    inputName: (integrationKey: string, actionKey: string | null | undefined, input: { key: string; name: string }) =>
+      own(`${integrationKey}.actions.${actionKey ?? ""}.inputs.${input.key}.name`, input.name),
+    inputDescription: (integrationKey: string, actionKey: string | null | undefined, input: { key: string; description: string }) =>
+      own(`${integrationKey}.actions.${actionKey ?? ""}.inputs.${input.key}.description`, input.description),
+    // Shown only: the column a run creates is named from the English registry (a name is data, not interface).
+    outputName: (integrationKey: string, actionKey: string | null | undefined, output: { key: string; name: string }) =>
+      own(`${integrationKey}.actions.${actionKey ?? ""}.outputs.${output.key}.name`, output.name),
     category: (key: ActionCategory, fallback: string) => lookup(`categories.${CATEGORY_KEY[key]}`, fallback),
     fieldLabel: (integration: IntegrationDefinition | null | undefined, field: AuthField) =>
       !integration
@@ -330,15 +344,17 @@ export default function EnrichmentDialog({
       )
     : null;
 
-  const filteredActions = useMemo(() => {
+  // Not wrapped in useMemo: it reads the translated texts through `registry` (see the note on filteredOutputs).
+  // The search matches the English registry words (tags, category) and the words shown in the interface language.
+  const filteredActions = (() => {
     if (!integration) return [];
     const query = search.trim().toLowerCase();
     if (!query) return integration.actions;
     return integration.actions.filter((candidate) =>
-      [candidate.name, candidate.description, candidate.category, ...candidate.tags]
+      [candidate.name, candidate.description, candidate.category, ...candidate.tags, registry.actionName(integrationKey, candidate), registry.actionDescription(integrationKey, candidate)]
         .join(" ").toLowerCase().includes(query),
     );
-  }, [integration, search]);
+  })();
 
   // Not wrapped in useMemo: with the translated registry texts the React Compiler could not preserve a manual
   // memo over `action` (lint error). It memoizes this on its own.
@@ -346,7 +362,7 @@ export default function EnrichmentDialog({
     if (!action) return [];
     const query = outputSearch.trim().toLowerCase();
     return query
-      ? action.outputs.filter((output) => `${output.name} ${output.key} ${output.columnType} ${columnTypeLabel(output.columnType)}`.toLowerCase().includes(query))
+      ? action.outputs.filter((output) => `${output.name} ${registry.outputName(integrationKey, actionKey, output)} ${output.key} ${output.columnType} ${columnTypeLabel(output.columnType)}`.toLowerCase().includes(query))
       : action.outputs;
   })();
 
@@ -396,11 +412,30 @@ export default function EnrichmentDialog({
     }
   }
 
+  // One mapped input: its label (and star when required), its description and the column picker. Shared by the
+  // standard and the advanced lists.
+  function renderMappedInput(input: ActionInputDefinition) {
+    return (
+      <label key={input.key} className="block">
+        <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
+          {registry.inputName(integrationKey, actionKey, input)}{input.required && <span className="text-red-500"> *</span>}
+        </span>
+        {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{registry.inputDescription(integrationKey, actionKey, input)}</span>}
+        <ColumnMappingSelect
+          input={input}
+          columns={inputColumns}
+          value={inputs[input.key] ?? ""}
+          onChange={(columnKey) => setInputColumn(input.key, columnKey)}
+        />
+      </label>
+    );
+  }
+
   function continueToOutputs() {
     if (!action) return;
     if (!connectionId) return setError(t("errors.connectFirst", { provider: integration?.name ?? t("errors.providerFallback") }));
     const missing = action.inputs.find((input) => input.required && !inputs[input.key]);
-    if (missing) return setError(t("errors.selectColumnFor", { name: missing.name }));
+    if (missing) return setError(t("errors.selectColumnFor", { name: registry.inputName(integrationKey, actionKey, missing) }));
     if (action.filterBuilder) {
       const mappedFilters = action.inputs.filter(
         (input) => input.group === "filter" && inputs[input.key],
@@ -539,7 +574,7 @@ export default function EnrichmentDialog({
           <div className="flex min-w-0 items-center gap-2">
             {action && <button type="button" onClick={() => step === "outputs" ? setStep("setup") : column ? onClose() : setActionKey(null)} disabled={busy} className="rounded-lg border border-stroke-soft-200 p-2 text-text-sub-600 hover:bg-bg-weak-50"><RiArrowLeftLine className="size-5" /></button>}
             {action && integration && <IntegrationIcon integration={integration} size={32} />}
-            <h2 className="truncate text-[18px] font-semibold text-text-strong-950">{action ? action.name : t("title")}</h2>
+            <h2 className="truncate text-[18px] font-semibold text-text-strong-950">{action ? registry.actionName(integrationKey, action) : t("title")}</h2>
           </div>
           <button type="button" onClick={onClose} disabled={busy} className="rounded-lg p-1.5 text-text-sub-600 hover:bg-bg-weak-50 disabled:opacity-50"><RiCloseLine className="size-5" /></button>
         </div>
@@ -572,8 +607,8 @@ export default function EnrichmentDialog({
               <section className="mb-4">
                 <h3 className="text-[13px] font-semibold text-text-strong-950">{t("action.title")}</h3>
                 <div className="mt-2 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-4">
-                  <p className="text-[14px] font-semibold text-text-strong-950">{integration?.name} <span className="mx-1 text-text-soft-400">›</span> {action.name}</p>
-                  <p className="mt-1 text-[13px] text-text-sub-600">{action.description}</p>
+                  <p className="text-[14px] font-semibold text-text-strong-950">{integration?.name} <span className="mx-1 text-text-soft-400">›</span> {registry.actionName(integrationKey, action)}</p>
+                  <p className="mt-1 text-[13px] text-text-sub-600">{registry.actionDescription(integrationKey, action)}</p>
                   <a href={action.docsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">{t("action.viewDocs")} <RiExternalLinkLine className="size-3.5" /></a>
                   <p className="mt-2 text-[11px] font-medium text-text-soft-400">{t("action.categoryLine", { category: categoryName ?? "" })}</p>
                 </div>
@@ -621,20 +656,7 @@ export default function EnrichmentDialog({
                   {standardInputs.length > 0 && (
                     <div className="space-y-4">
                       <p className="text-[12px] font-semibold uppercase tracking-wide text-text-sub-600">{t("columnMapping.setupInputs")}</p>
-                      {standardInputs.map((input) => (
-                        <label key={input.key} className="block">
-                          <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
-                            {input.name}{input.required && <span className="text-red-500"> *</span>}
-                          </span>
-                          {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{input.description}</span>}
-                          <ColumnMappingSelect
-                            input={input}
-                            columns={inputColumns}
-                            value={inputs[input.key] ?? ""}
-                            onChange={(columnKey) => setInputColumn(input.key, columnKey)}
-                          />
-                        </label>
-                      ))}
+                      {standardInputs.map(renderMappedInput)}
                     </div>
                   )}
 
@@ -686,9 +708,9 @@ export default function EnrichmentDialog({
                                   <Select.Value />
                                 </Select.Trigger>
                                 <Select.Content>
-                                  <Select.Item value={input.key}>{input.name}</Select.Item>
+                                  <Select.Item value={input.key}>{registry.inputName(integrationKey, actionKey, input)}</Select.Item>
                                   {unusedFilterInputs.map((candidate) => (
-                                    <Select.Item key={candidate.key} value={candidate.key}>{candidate.name}</Select.Item>
+                                    <Select.Item key={candidate.key} value={candidate.key}>{registry.inputName(integrationKey, actionKey, candidate)}</Select.Item>
                                   ))}
                                 </Select.Content>
                               </Select.Root>
@@ -697,12 +719,12 @@ export default function EnrichmentDialog({
                               type="button"
                               onClick={() => removeFilter(input.key)}
                               className="mt-5 rounded-lg p-2.5 text-text-sub-600 hover:bg-bg-soft-200 hover:text-text-strong-950"
-                              aria-label={t("columnMapping.removeFilterAria", { name: input.name })}
+                              aria-label={t("columnMapping.removeFilterAria", { name: registry.inputName(integrationKey, actionKey, input) })}
                             >
                               <RiCloseLine className="size-4" />
                             </button>
                           </div>
-                          {input.description && <p className="mt-2 text-[12px] text-text-sub-600">{input.description}</p>}
+                          {input.description && <p className="mt-2 text-[12px] text-text-sub-600">{registry.inputDescription(integrationKey, actionKey, input)}</p>}
                           <label className="mt-3 block">
                             <span className="mb-1 block text-[11px] font-medium text-text-sub-600">{t("columnMapping.mapValuesFrom")}</span>
                             <ColumnMappingSelect
@@ -724,7 +746,7 @@ export default function EnrichmentDialog({
                             </Select.Trigger>
                             <Select.Content>
                               {unusedFilterInputs.map((input) => (
-                                <Select.Item key={input.key} value={input.key}>{input.name}</Select.Item>
+                                <Select.Item key={input.key} value={input.key}>{registry.inputName(integrationKey, actionKey, input)}</Select.Item>
                               ))}
                             </Select.Content>
                           </Select.Root>
@@ -745,20 +767,7 @@ export default function EnrichmentDialog({
                         {t("columnMapping.advanced")}
                       </summary>
                       <div className="space-y-4 border-t border-stroke-soft-200 p-3">
-                        {advancedInputs.map((input) => (
-                          <label key={input.key} className="block">
-                            <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
-                              {input.name}{input.required && <span className="text-red-500"> *</span>}
-                            </span>
-                            {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{input.description}</span>}
-                            <ColumnMappingSelect
-                              input={input}
-                              columns={inputColumns}
-                              value={inputs[input.key] ?? ""}
-                              onChange={(columnKey) => setInputColumn(input.key, columnKey)}
-                            />
-                          </label>
-                        ))}
+                        {advancedInputs.map(renderMappedInput)}
                       </div>
                     </details>
                   )}
@@ -784,7 +793,7 @@ export default function EnrichmentDialog({
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               <div className="flex items-start justify-between gap-3"><div><h3 className="text-[18px] font-semibold text-text-strong-950">{t("outputs.title")}</h3><p className="mt-2 text-[13px] leading-5 text-text-sub-600">{t("outputs.intro")}</p></div><span className="shrink-0 text-[13px] text-text-sub-600">{t("outputs.selected", { count: outputs.size })}</span></div>
               <label className="mt-5 flex items-center gap-2 rounded-lg border border-stroke-soft-200 px-3 py-2.5"><RiSearchLine className="size-4 text-text-soft-400" /><input value={outputSearch} onChange={(event) => setOutputSearch(event.target.value)} placeholder={t("outputs.searchPlaceholder")} className="min-w-0 flex-1 text-[13px] outline-none" /></label>
-              <div className="mt-4 space-y-2">{filteredOutputs.map((output) => { const selected = outputs.has(output.key); const alreadyAdded = column ? Object.prototype.hasOwnProperty.call((column.config as EnrichmentConfig).outputs, output.key) : false; return <button key={output.key} type="button" disabled={alreadyAdded} onClick={() => { setError(null); setOutputs((current) => { const next = new Set(current); if (selected) next.delete(output.key); else next.add(output.key); return next; }); }} className="flex w-full items-center gap-3 rounded-lg bg-bg-weak-50 px-3 py-3 text-left hover:bg-bg-weak-50 disabled:cursor-default">{selected ? <RiCheckboxLine className="size-5 text-blue-600 dark:text-blue-400" /> : <RiCheckboxBlankLine className="size-5 text-text-soft-400" />}<span className="min-w-0 flex-1"><span className="font-medium text-text-strong-950">{output.name}</span>{output.example && <span className="ml-2 text-text-sub-600">{output.example}</span>}<span className="block text-[11px] text-text-soft-400">{alreadyAdded ? t("outputs.typeAlreadyAdded", { type: columnTypeLabel(output.columnType) }) : columnTypeLabel(output.columnType)}</span></span></button>; })}</div>
+              <div className="mt-4 space-y-2">{filteredOutputs.map((output) => { const selected = outputs.has(output.key); const alreadyAdded = column ? Object.prototype.hasOwnProperty.call((column.config as EnrichmentConfig).outputs, output.key) : false; return <button key={output.key} type="button" disabled={alreadyAdded} onClick={() => { setError(null); setOutputs((current) => { const next = new Set(current); if (selected) next.delete(output.key); else next.add(output.key); return next; }); }} className="flex w-full items-center gap-3 rounded-lg bg-bg-weak-50 px-3 py-3 text-left hover:bg-bg-weak-50 disabled:cursor-default">{selected ? <RiCheckboxLine className="size-5 text-blue-600 dark:text-blue-400" /> : <RiCheckboxBlankLine className="size-5 text-text-soft-400" />}<span className="min-w-0 flex-1"><span className="font-medium text-text-strong-950">{registry.outputName(integrationKey, actionKey, output)}</span>{output.example && <span className="ml-2 text-text-sub-600">{output.example}</span>}<span className="block text-[11px] text-text-soft-400">{alreadyAdded ? t("outputs.typeAlreadyAdded", { type: columnTypeLabel(output.columnType) }) : columnTypeLabel(output.columnType)}</span></span></button>; })}</div>
             </div>
             {error && <p role="alert" className="mx-5 mb-3 mt-3 shrink-0 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[13px] text-red-700 dark:text-red-400">{error}</p>}
             <div className="flex shrink-0 items-center justify-end gap-2 border-t border-stroke-soft-200 bg-bg-white-0 px-5 py-4"><button type="button" onClick={() => void save(false)} disabled={busy || !outputs.size} className="rounded-lg border border-stroke-soft-200 px-3 py-2.5 text-[13px] font-semibold text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50">{column ? t("outputs.saveChanges") : t("outputs.saveWithoutRunning")}</button><button type="button" title={action.implemented ? undefined : t("outputs.notImplemented")} onClick={() => void save(true)} disabled={busy || !outputs.size || !action.implemented} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-semibold text-white disabled:bg-blue-300">{busy && <RiLoader4Line className="size-4 animate-spin" />}{t("outputs.saveAndRun")}</button></div>
@@ -914,12 +923,12 @@ function Catalog({
               <button type="button" disabled={!connected || connectionsLoading} aria-disabled={!connected || connectionsLoading} onClick={() => chooseAction(candidate.key)} className="flex min-w-0 flex-1 items-start gap-3 px-6 py-4 text-left disabled:cursor-not-allowed">
                 {integration && <span className={connected ? "" : "grayscale opacity-50"}><IntegrationIcon integration={integration} size={28} /></span>}
                 <span>
-                  <span className={`block text-[14px] font-semibold ${connected ? "text-text-strong-950" : "text-text-sub-600"}`}>{candidate.name}</span>
-                  <span className={`mt-1 block text-[13px] ${connected ? "text-text-sub-600" : "text-text-soft-400"}`}>{candidate.description}</span>
+                  <span className={`block text-[14px] font-semibold ${connected ? "text-text-strong-950" : "text-text-sub-600"}`}>{registry.actionName(integrationKey, candidate)}</span>
+                  <span className={`mt-1 block text-[13px] ${connected ? "text-text-sub-600" : "text-text-soft-400"}`}>{registry.actionDescription(integrationKey, candidate)}</span>
                   <span className={`mt-1.5 block text-[12px] ${connected ? "text-text-sub-600" : "text-text-soft-400"}`}><RiFlashlightLine className="mr-1 inline size-3.5" />{t("catalog.enrichmentLine", { name: integration?.name ?? "" })}</span>
                 </span>
               </button>
-              <a href={candidate.docsUrl} target="_blank" rel="noreferrer" aria-label={t("catalog.openDocsAria", { name: candidate.name })} title={t("action.viewDocs")} className="m-4 rounded-md p-2 text-text-soft-400 hover:bg-bg-white-0 hover:text-blue-600 dark:hover:text-blue-400"><RiExternalLinkLine className="size-4" /></a>
+              <a href={candidate.docsUrl} target="_blank" rel="noreferrer" aria-label={t("catalog.openDocsAria", { name: registry.actionName(integrationKey, candidate) })} title={t("action.viewDocs")} className="m-4 rounded-md p-2 text-text-soft-400 hover:bg-bg-white-0 hover:text-blue-600 dark:hover:text-blue-400"><RiExternalLinkLine className="size-4" /></a>
             </div>
           ))}
         </main>

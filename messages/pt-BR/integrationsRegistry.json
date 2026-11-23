@@ -1,0 +1,2546 @@
+{
+  "integrationsRegistry": {
+    "apollo": {
+      "actions": {
+        "find-person-by-email": {
+          "name": "Encontrar pessoa por e-mail",
+          "description": "Encontra o perfil e os dados profissionais de uma pessoa a partir do e-mail corporativo.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail corporativo da pessoa."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra o e-mail corporativo de uma pessoa a partir do nome e do domínio da empresa.",
+          "inputs": {
+            "fullName": {
+              "name": "Nome completo",
+              "description": "O nome completo da pessoa."
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "O site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "emailStatus": {
+              "name": "Status do e-mail"
+            }
+          }
+        },
+        "enrich-person-from-linkedin": {
+          "name": "Enriquecer pessoa",
+          "description": "Obtém o perfil e os dados da empresa de uma pessoa a partir da URL do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn pessoal",
+              "description": "A URL de um perfil do LinkedIn."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "email": {
+              "name": "E-mail corporativo"
+            }
+          }
+        },
+        "enrich-company-by-domain": {
+          "name": "Enriquecer empresa",
+          "description": "Obtém os dados firmográficos de uma empresa a partir do domínio do site.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "O site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn da empresa"
+            }
+          }
+        },
+        "find-user-id-by-email": {
+          "name": "Encontrar ID de usuário por e-mail",
+          "description": "Encontra um usuário do seu espaço de trabalho no Apollo pelo endereço de e-mail exato.",
+          "inputs": {
+            "email": {
+              "name": "E-mail do usuário",
+              "description": "E-mail exato de um usuário do espaço de trabalho no Apollo."
+            }
+          },
+          "outputs": {
+            "userId": {
+              "name": "ID do usuário"
+            },
+            "name": {
+              "name": "Nome"
+            },
+            "email": {
+              "name": "E-mail"
+            }
+          }
+        },
+        "find-email-accounts-for-user": {
+          "name": "Encontrar contas de e-mail do usuário",
+          "description": "Lista as contas de e-mail do Apollo conectadas que pertencem a um usuário do espaço de trabalho.",
+          "inputs": {
+            "userId": {
+              "name": "ID do usuário",
+              "description": "ID do usuário do espaço de trabalho no Apollo."
+            }
+          },
+          "outputs": {
+            "emailAccountId": {
+              "name": "ID da conta de e-mail padrão"
+            },
+            "email": {
+              "name": "E-mail padrão"
+            },
+            "emailAccounts": {
+              "name": "Contas de e-mail"
+            }
+          }
+        },
+        "update-contact-status-in-sequence": {
+          "name": "Atualizar status do contato na sequência",
+          "description": "Conclui, para ou remove um contato de uma sequência do Apollo.",
+          "inputs": {
+            "sequenceId": {
+              "name": "ID da sequência",
+              "description": "ID da sequência do Apollo."
+            },
+            "contactId": {
+              "name": "ID do contato",
+              "description": "ID do contato do Apollo."
+            },
+            "mode": {
+              "name": "Modo",
+              "description": "Um destes: mark_as_finished, remove ou stop."
+            }
+          },
+          "outputs": {
+            "updated": {
+              "name": "Atualizado"
+            }
+          }
+        },
+        "update-contact": {
+          "name": "Atualizar contato",
+          "description": "Atualiza os campos padrão de um contato salvo no Apollo.",
+          "inputs": {
+            "contactId": {
+              "name": "ID do contato",
+              "description": "ID do contato do Apollo."
+            },
+            "firstName": {
+              "name": "Nome",
+              "description": "Novo nome."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "Novo sobrenome."
+            },
+            "email": {
+              "name": "E-mail",
+              "description": "Novo e-mail."
+            },
+            "jobTitle": {
+              "name": "Cargo",
+              "description": "Novo cargo."
+            },
+            "companyName": {
+              "name": "Nome da empresa",
+              "description": "Novo nome da organização."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "ID do contato"
+            },
+            "name": {
+              "name": "Nome"
+            },
+            "email": {
+              "name": "E-mail"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            }
+          }
+        },
+        "find-people-at-company-by-job-title": {
+          "name": "Encontrar pessoas na empresa por cargo",
+          "description": "Busca pessoas no Apollo por domínio da empresa e cargo.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "jobTitle": {
+              "name": "Cargo",
+              "description": "Cargo a buscar."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "Pessoas"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            }
+          }
+        },
+        "find-saved-contacts": {
+          "name": "Encontrar contatos salvos",
+          "description": "Busca contatos salvos no seu espaço de trabalho no Apollo.",
+          "inputs": {
+            "query": {
+              "name": "Termo de busca",
+              "description": "Nome, e-mail ou palavra-chave a buscar."
+            }
+          },
+          "outputs": {
+            "contacts": {
+              "name": "Contatos"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            }
+          }
+        },
+        "find-contact-by-id": {
+          "name": "Encontrar contato por ID",
+          "description": "Obtém um contato salvo no Apollo pelo ID.",
+          "inputs": {
+            "contactId": {
+              "name": "ID do contato",
+              "description": "ID do contato do Apollo."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "ID do contato"
+            },
+            "name": {
+              "name": "Nome"
+            },
+            "email": {
+              "name": "E-mail"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            }
+          }
+        },
+        "find-open-jobs": {
+          "name": "Encontrar vagas abertas",
+          "description": "Encontra as vagas atuais de uma organização do Apollo.",
+          "inputs": {
+            "organizationId": {
+              "name": "ID da organização",
+              "description": "ID da organização do Apollo (não o ID de uma conta)."
+            }
+          },
+          "outputs": {
+            "jobs": {
+              "name": "Vagas abertas"
+            },
+            "jobCount": {
+              "name": "Quantidade de vagas"
+            }
+          }
+        },
+        "find-account-by-id": {
+          "name": "Encontrar conta por ID",
+          "description": "Obtém uma conta salva no Apollo pelo ID.",
+          "inputs": {
+            "accountId": {
+              "name": "ID da conta",
+              "description": "ID da conta do Apollo."
+            }
+          },
+          "outputs": {
+            "accountId": {
+              "name": "ID da conta"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "domain": {
+              "name": "Domínio"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            }
+          }
+        },
+        "find-or-create-contact": {
+          "name": "Encontrar ou criar contato",
+          "description": "Retorna um contato salvo para um e-mail ou crie um novo, evitando duplicidade.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "E-mail do contato."
+            },
+            "firstName": {
+              "name": "Nome",
+              "description": "Nome do contato."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "Sobrenome do contato."
+            },
+            "jobTitle": {
+              "name": "Cargo",
+              "description": "Cargo do contato."
+            },
+            "companyName": {
+              "name": "Nome da empresa",
+              "description": "Organização do contato."
+            }
+          },
+          "outputs": {
+            "contactId": {
+              "name": "ID do contato"
+            },
+            "name": {
+              "name": "Nome"
+            },
+            "email": {
+              "name": "E-mail"
+            },
+            "created": {
+              "name": "Criado"
+            }
+          }
+        },
+        "add-contact-to-sequence": {
+          "name": "Adicionar contato à sequência",
+          "description": "Adiciona um contato do Apollo a uma sequência usando uma conta de envio conectada.",
+          "inputs": {
+            "sequenceId": {
+              "name": "ID da sequência",
+              "description": "ID da sequência do Apollo."
+            },
+            "contactId": {
+              "name": "ID do contato",
+              "description": "ID do contato do Apollo."
+            },
+            "emailAccountId": {
+              "name": "ID da conta de e-mail",
+              "description": "ID da conta de envio do Apollo conectada."
+            }
+          },
+          "outputs": {
+            "added": {
+              "name": "Adicionado"
+            }
+          }
+        }
+      }
+    },
+    "cleanlist": {
+      "actions": {
+        "search-people": {
+          "name": "Buscar pessoas",
+          "description": "Busca pessoas no Cleanlist com filtros estruturados de cargo, localização e empresa.",
+          "inputs": {
+            "titles": {
+              "name": "Cargos",
+              "description": "Filtra pessoas cujo cargo atual contém um destes valores."
+            },
+            "seniority": {
+              "name": "Senioridade",
+              "description": "Filtra níveis de senioridade do Cleanlist, como executive, director ou manager."
+            },
+            "managementLevels": {
+              "name": "Níveis de gestão",
+              "description": "Filtra níveis de gestão, como C-Level, VP, Director ou Manager."
+            },
+            "departments": {
+              "name": "Departamentos",
+              "description": "Filtra os departamentos em que as pessoas trabalham."
+            },
+            "locationCity": {
+              "name": "Cidades",
+              "description": "Filtra pessoas localizadas em cidades específicas."
+            },
+            "locationState": {
+              "name": "Estados",
+              "description": "Filtra pessoas localizadas em estados ou regiões específicos."
+            },
+            "locationCountry": {
+              "name": "Países",
+              "description": "Filtra pessoas localizadas em países específicos."
+            },
+            "locations": {
+              "name": "Localizações",
+              "description": "Filtra valores de localização livres quando cidade, estado ou país não estão separados."
+            },
+            "companyNames": {
+              "name": "Nomes das empresas",
+              "description": "Filtra pessoas que trabalham atualmente em empresas específicas."
+            },
+            "companyDomains": {
+              "name": "Domínios das empresas",
+              "description": "Filtra pessoas que trabalham atualmente em empresas com estes domínios."
+            },
+            "companyHeadcount": {
+              "name": "Número de funcionários da empresa",
+              "description": "Filtra faixas de número de funcionários compatíveis com o Cleanlist."
+            },
+            "companyIndustries": {
+              "name": "Setores das empresas",
+              "description": "Filtra pessoas que trabalham em setores específicos."
+            },
+            "filters": {
+              "name": "Filtros legados",
+              "description": "Filtros legados estruturados de busca de pessoas do Cleanlist, em JSON."
+            },
+            "limit": {
+              "name": "Limite",
+              "description": "Máximo de resultados a retornar, de 1 a 500. O padrão é 25."
+            },
+            "cursor": {
+              "name": "Cursor",
+              "description": "Cursor opaco retornado por uma página de busca anterior."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "Pessoas"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            },
+            "total": {
+              "name": "Total"
+            },
+            "cursor": {
+              "name": "Próximo cursor"
+            },
+            "taskId": {
+              "name": "ID da tarefa"
+            },
+            "truncationWarning": {
+              "name": "Aviso de truncamento"
+            }
+          }
+        },
+        "search-companies": {
+          "name": "Buscar empresas",
+          "description": "Busca empresas no Cleanlist com filtros firmográficos estruturados.",
+          "inputs": {
+            "industries": {
+              "name": "Setores",
+              "description": "Filtra empresas de setores específicos."
+            },
+            "employeeCountRanges": {
+              "name": "Faixas de número de funcionários",
+              "description": "Filtra faixas de número de funcionários compatíveis com o Cleanlist."
+            },
+            "locations": {
+              "name": "Localizações",
+              "description": "Filtra empresas com sede ou operação nestas localizações."
+            },
+            "names": {
+              "name": "Nomes das empresas",
+              "description": "Filtra empresas pelo nome."
+            },
+            "domains": {
+              "name": "Domínios das empresas",
+              "description": "Filtra empresas pelo domínio do site."
+            },
+            "filters": {
+              "name": "Filtros legados",
+              "description": "Filtros legados estruturados de busca de empresas do Cleanlist, em JSON."
+            },
+            "limit": {
+              "name": "Limite",
+              "description": "Máximo de resultados a retornar, de 1 a 500. O padrão é 25."
+            },
+            "cursor": {
+              "name": "Cursor",
+              "description": "Cursor opaco retornado por uma página de busca anterior."
+            }
+          },
+          "outputs": {
+            "companies": {
+              "name": "Empresas"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            },
+            "total": {
+              "name": "Total"
+            },
+            "cursor": {
+              "name": "Próximo cursor"
+            },
+            "taskId": {
+              "name": "ID da tarefa"
+            },
+            "truncationWarning": {
+              "name": "Aviso de truncamento"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enriquecer pessoa",
+          "description": "Enriquece uma pessoa de forma assíncrona com dados de contato e profissionais.",
+          "inputs": {
+            "leadListId": {
+              "name": "ID da lista de leads",
+              "description": "Lista de leads do Cleanlist de destino para a pessoa enriquecida."
+            },
+            "email": {
+              "name": "E-mail",
+              "description": "E-mail corporativo conhecido."
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "URL do perfil do LinkedIn conhecida."
+            },
+            "personId": {
+              "name": "ID da pessoa",
+              "description": "Identificador da pessoa no Cleanlist, obtido em uma busca anterior."
+            },
+            "firstName": {
+              "name": "Nome",
+              "description": "Nome da pessoa."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "Sobrenome da pessoa."
+            },
+            "companyName": {
+              "name": "Nome da empresa",
+              "description": "Nome da empresa atual da pessoa."
+            },
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Domínio da empresa atual da pessoa."
+            },
+            "phone": {
+              "name": "Telefone",
+              "description": "Telefone conhecido, usado como dica de enriquecimento."
+            },
+            "enrichmentType": {
+              "name": "Tipo de enriquecimento",
+              "description": "partial, phone_only ou full. O padrão é partial."
+            },
+            "quoteId": {
+              "name": "ID da cotação",
+              "description": "Cotação de créditos do Cleanlist pré-aprovada (opcional)."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "email": {
+              "name": "E-mail"
+            },
+            "emailStatus": {
+              "name": "Status do e-mail"
+            },
+            "phone": {
+              "name": "Telefone"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "provider": {
+              "name": "Provedor"
+            },
+            "leadId": {
+              "name": "ID do lead"
+            },
+            "status": {
+              "name": "Status"
+            },
+            "creditsCharged": {
+              "name": "Créditos cobrados"
+            },
+            "result": {
+              "name": "Resultado completo"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enriquecer empresa",
+          "description": "Enriquece uma empresa de forma síncrona com dados firmográficos, de investimento e de tecnologia.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "quoteId": {
+              "name": "ID da cotação",
+              "description": "Cotação de créditos do Cleanlist pré-aprovada (opcional)."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "domain": {
+              "name": "Domínio"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "industries": {
+              "name": "Setores"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "employeeCountRange": {
+              "name": "Faixa de número de funcionários"
+            },
+            "revenueRange": {
+              "name": "Faixa de receita"
+            },
+            "hqLocation": {
+              "name": "Localização da sede"
+            },
+            "fundingStage": {
+              "name": "Estágio de investimento"
+            },
+            "totalFundingUsd": {
+              "name": "Investimento total (USD)"
+            },
+            "techStack": {
+              "name": "Stack de tecnologia"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "companyId": {
+              "name": "ID da empresa"
+            },
+            "creditsCharged": {
+              "name": "Créditos cobrados"
+            },
+            "company": {
+              "name": "Empresa completa"
+            }
+          }
+        }
+      }
+    },
+    "companyenrich": {
+      "actions": {
+        "enrich-company": {
+          "name": "Enriquecer empresa por domínio",
+          "description": "Retorna o perfil de uma empresa por 1 crédito. Usa os dados armazenados na hora; uma empresa ainda não armazenada é agendada pelo CompanyEnrich e retorna uma falha sem custo. Execute de novo mais tarde, se precisar.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa, como example.com."
+            }
+          },
+          "outputs": {
+            "companyId": {
+              "name": "ID da empresa"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "domain": {
+              "name": "Domínio"
+            },
+            "website": {
+              "name": "Site"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeRange": {
+              "name": "Faixa de funcionários"
+            },
+            "description": {
+              "name": "Descrição"
+            },
+            "linkedinUrl": {
+              "name": "URL da empresa no LinkedIn"
+            },
+            "creditsConsumed": {
+              "name": "Créditos consumidos",
+              "description": "Créditos informados pelo CompanyEnrich, inclusive zero. Vazio quando a API não informa o uso; não é um valor em dinheiro."
+            },
+            "data": {
+              "name": "Resposta completa",
+              "description": "Resposta completa do provedor. Inteiros fora da faixa segura do JavaScript são mantidos como texto decimal exato."
+            }
+          }
+        },
+        "search-companies": {
+          "name": "Buscar empresas",
+          "description": "Encontra empresas por nome, descrição semântica e filtros firmográficos. Uma página limitada: 1 crédito por resultado, com mínimo de 1 crédito mesmo sem resultados.",
+          "inputs": {
+            "query": {
+              "name": "Consulta por nome ou domínio",
+              "description": "Texto para comparar com o nome ou o domínio da empresa (até 250 caracteres)."
+            },
+            "semanticQuery": {
+              "name": "Consulta semântica",
+              "description": "Descreva as empresas que quer encontrar em linguagem natural (até 500 caracteres)."
+            },
+            "filters": {
+              "name": "Filtros avançados (JSON)",
+              "description": "Campos de busca do CompanyEnrich, como países, funcionários, tecnologias, categorias, investimento, exclusões e filtros de força de trabalho. Veja a documentação da ação para chaves e valores exatos. Entradas nomeadas substituem os campos JSON correspondentes."
+            },
+            "page": {
+              "name": "Página",
+              "description": "Uma página por execução, a partir de 1. O padrão é 1; página × tamanho da página não pode passar de 10.000."
+            },
+            "pageSize": {
+              "name": "Tamanho da página",
+              "description": "Resultados por requisição, de 1 a 100. O padrão é 10. Mais resultados consomem mais créditos."
+            }
+          },
+          "outputs": {
+            "companies": {
+              "name": "Empresas"
+            },
+            "resultCount": {
+              "name": "Resultados retornados"
+            },
+            "page": {
+              "name": "Página"
+            },
+            "totalItems": {
+              "name": "Total de resultados correspondentes"
+            },
+            "totalPages": {
+              "name": "Total de páginas"
+            },
+            "creditsConsumed": {
+              "name": "Créditos consumidos",
+              "description": "Créditos informados pelo CompanyEnrich, inclusive zero. Vazio quando a API não informa o uso; não é um valor em dinheiro."
+            },
+            "data": {
+              "name": "Resposta completa",
+              "description": "Resposta completa do provedor. Inteiros fora da faixa segura do JavaScript são mantidos como texto decimal exato."
+            }
+          }
+        },
+        "search-people": {
+          "name": "Buscar perfis profissionais",
+          "description": "Encontra pessoas por empregador, cargo e filtros profissionais. Retorna perfis, não endereços de e-mail. Uma página limitada: 2 créditos por resultado, com mínimo de 2 créditos mesmo sem resultados.",
+          "inputs": {
+            "domains": {
+              "name": "Domínios das empresas",
+              "description": "Até 2.500 domínios de empregadores. Aceita uma lista, um array JSON ou texto separado por vírgula ou quebra de linha."
+            },
+            "positionQuery": {
+              "name": "Cargos",
+              "description": "Cargos atuais. Aceita uma lista, um array JSON ou texto separado por vírgula ou quebra de linha."
+            },
+            "filters": {
+              "name": "Filtros avançados (JSON)",
+              "description": "Campos de busca de pessoas do CompanyEnrich, como senioridade, departamento, países, formação, datas, exclusões e companyFilter. Entradas nomeadas substituem os campos JSON correspondentes."
+            },
+            "page": {
+              "name": "Página",
+              "description": "Uma página por execução, a partir de 1. O padrão é 1; página × tamanho da página não pode passar de 10.000."
+            },
+            "pageSize": {
+              "name": "Tamanho da página",
+              "description": "Resultados por requisição, de 1 a 100. O padrão é 10. Mais resultados consomem mais créditos."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "Perfis de pessoas",
+              "description": "Perfis profissionais, com IDs grandes exatos em texto. Não fornece endereços de e-mail."
+            },
+            "resultCount": {
+              "name": "Resultados retornados"
+            },
+            "page": {
+              "name": "Página"
+            },
+            "totalItems": {
+              "name": "Total de resultados correspondentes"
+            },
+            "totalPages": {
+              "name": "Total de páginas"
+            },
+            "creditsConsumed": {
+              "name": "Créditos consumidos",
+              "description": "Créditos informados pelo CompanyEnrich, inclusive zero. Vazio quando a API não informa o uso; não é um valor em dinheiro."
+            },
+            "data": {
+              "name": "Resposta completa",
+              "description": "Resposta completa do provedor. Inteiros fora da faixa segura do JavaScript são mantidos como texto decimal exato."
+            }
+          }
+        }
+      }
+    },
+    "snov": {
+      "actions": {
+        "domain-search": {
+          "name": "Busca por domínio",
+          "description": "Obtém dados da empresa e a disponibilidade de e-mails a partir de um domínio.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "O domínio da empresa a enriquecer."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "city": {
+              "name": "Cidade da empresa"
+            },
+            "founded": {
+              "name": "Fundação"
+            },
+            "website": {
+              "name": "Site da empresa"
+            },
+            "phone": {
+              "name": "Telefone da empresa"
+            },
+            "industry": {
+              "name": "Setor da empresa"
+            },
+            "size": {
+              "name": "Porte da empresa"
+            },
+            "relatedDomains": {
+              "name": "Domínios relacionados"
+            },
+            "prospectsCount": {
+              "name": "Quantidade de prospects"
+            },
+            "emailsCount": {
+              "name": "Quantidade de e-mails"
+            },
+            "genericContactsCount": {
+              "name": "Quantidade de contatos genéricos"
+            }
+          }
+        },
+        "database-search": {
+          "name": "Busca na base de dados",
+          "description": "Busca prospects ou empresas no Snov.io com um objeto de filtros em JSON.",
+          "inputs": {
+            "searchType": {
+              "name": "Tipo de busca",
+              "description": "Use prospects ou companies."
+            },
+            "filters": {
+              "name": "Filtros de busca",
+              "description": "Filtros da busca na base de dados do Snov.io, em JSON."
+            },
+            "page": {
+              "name": "Página",
+              "description": "Página de resultados; o padrão é 1."
+            }
+          },
+          "outputs": {
+            "total": {
+              "name": "Total de resultados"
+            },
+            "page": {
+              "name": "Página de resultados"
+            },
+            "totalPages": {
+              "name": "Total de páginas"
+            },
+            "results": {
+              "name": "Resultados da busca"
+            }
+          }
+        },
+        "email-count": {
+          "name": "Verificar quantidade de e-mails disponíveis",
+          "description": "Verifica quantos endereços de e-mail o Snov.io tem para um domínio.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "O domínio a verificar."
+            }
+          },
+          "outputs": {
+            "emailCount": {
+              "name": "E-mails disponíveis"
+            },
+            "webmail": {
+              "name": "Domínio de webmail"
+            }
+          }
+        },
+        "find-emails-by-name-domain": {
+          "name": "Encontrar e-mails por nome e domínio",
+          "description": "Encontra e verifique um e-mail corporativo a partir do nome da pessoa e do domínio da empresa.",
+          "inputs": {
+            "firstName": {
+              "name": "Nome",
+              "description": "O nome da pessoa."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "O sobrenome da pessoa."
+            },
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "O domínio da empresa da pessoa."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "smtpStatus": {
+              "name": "Status do e-mail"
+            },
+            "isValidFormat": {
+              "name": "Formato válido"
+            },
+            "isDisposable": {
+              "name": "Descartável"
+            },
+            "isWebmail": {
+              "name": "Webmail"
+            },
+            "unknownReason": {
+              "name": "Motivo do status desconhecido"
+            }
+          }
+        },
+        "company-domain-by-name": {
+          "name": "Encontrar domínio pelo nome da empresa",
+          "description": "Encontra o domínio de uma empresa a partir do nome dela.",
+          "inputs": {
+            "companyName": {
+              "name": "Nome da empresa",
+              "description": "O nome da empresa a resolver."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa encontrada"
+            },
+            "domain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "linkedin-profile-info": {
+          "name": "Obter dados de perfil do LinkedIn por URL",
+          "description": "Obtém os dados completos do perfil de uma pessoa a partir de uma URL do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil do LinkedIn da pessoa."
+            }
+          },
+          "outputs": {
+            "profileId": {
+              "name": "ID do perfil"
+            },
+            "source": {
+              "name": "Origem do perfil"
+            },
+            "name": {
+              "name": "Nome completo"
+            },
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "location": {
+              "name": "Localização"
+            },
+            "country": {
+              "name": "País"
+            },
+            "skills": {
+              "name": "Habilidades"
+            },
+            "positions": {
+              "name": "Cargos"
+            }
+          }
+        },
+        "profile-by-email": {
+          "name": "Enriquecer perfil de pessoa por e-mail",
+          "description": "Obtém os dados do perfil de uma pessoa a partir de um endereço de e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail da pessoa."
+            }
+          },
+          "outputs": {
+            "name": {
+              "name": "Nome completo"
+            },
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "country": {
+              "name": "País"
+            },
+            "locality": {
+              "name": "Localidade"
+            },
+            "profileImage": {
+              "name": "Foto do perfil"
+            },
+            "social": {
+              "name": "Perfis sociais"
+            },
+            "currentJobs": {
+              "name": "Empregos atuais"
+            },
+            "previousJobs": {
+              "name": "Empregos anteriores"
+            },
+            "lastUpdated": {
+              "name": "Última atualização"
+            }
+          }
+        },
+        "email-verifier": {
+          "name": "Verificador de e-mail",
+          "description": "Executa a verificação completa de entregabilidade do Snov.io para um endereço de e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail a verificar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail verificado"
+            },
+            "smtpStatus": {
+              "name": "Status SMTP"
+            },
+            "isValidFormat": {
+              "name": "Formato válido"
+            },
+            "isDisposable": {
+              "name": "Descartável"
+            },
+            "isWebmail": {
+              "name": "Webmail"
+            },
+            "isGibberish": {
+              "name": "Sem sentido (gibberish)"
+            },
+            "unknownReason": {
+              "name": "Motivo do status desconhecido"
+            }
+          }
+        }
+      }
+    },
+    "millionverifier": {
+      "actions": {
+        "verify-email": {
+          "name": "Verificar e-mail",
+          "description": "Verifica se um endereço de e-mail é entregável, o risco e o tipo de caixa de e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail a verificar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail verificado"
+            },
+            "result": {
+              "name": "Resultado da verificação"
+            },
+            "quality": {
+              "name": "Qualidade do e-mail"
+            },
+            "resultCode": {
+              "name": "Código do resultado"
+            },
+            "subresult": {
+              "name": "Resultado detalhado"
+            },
+            "isFreeEmail": {
+              "name": "Provedor de e-mail gratuito"
+            },
+            "isRoleBased": {
+              "name": "E-mail de função"
+            },
+            "didYouMean": {
+              "name": "E-mail sugerido"
+            },
+            "creditsRemaining": {
+              "name": "Créditos restantes"
+            },
+            "executionTimeMs": {
+              "name": "Tempo de execução (ms)"
+            },
+            "liveMode": {
+              "name": "Modo real"
+            }
+          }
+        }
+      }
+    },
+    "contactout": {
+      "actions": {
+        "professional-url-from-personal-email": {
+          "name": "Encontrar URL profissional por e-mail pessoal",
+          "description": "Encontra a URL do perfil no LinkedIn associada a um e-mail pessoal.",
+          "inputs": {
+            "email": {
+              "name": "E-mail pessoal",
+              "description": "O e-mail pessoal da pessoa."
+            }
+          },
+          "outputs": {
+            "linkedinUrl": {
+              "name": "URL profissional"
+            },
+            "email": {
+              "name": "E-mail correspondente"
+            }
+          }
+        },
+        "mobile-number-from-linkedin": {
+          "name": "Encontrar celular pelo LinkedIn",
+          "description": "Encontra celulares associados a um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "Uma URL comum de perfil do LinkedIn, não do Sales Navigator nem do Recruiter."
+            }
+          },
+          "outputs": {
+            "mobileNumber": {
+              "name": "Celular"
+            },
+            "phoneNumbers": {
+              "name": "Todos os telefones"
+            }
+          }
+        },
+        "personal-email-from-linkedin": {
+          "name": "Encontrar e-mail pessoal pelo LinkedIn",
+          "description": "Encontra e-mails pessoais associados a um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "Uma URL comum de perfil do LinkedIn, não do Sales Navigator nem do Recruiter."
+            }
+          },
+          "outputs": {
+            "personalEmail": {
+              "name": "E-mail pessoal"
+            },
+            "personalEmails": {
+              "name": "Todos os e-mails pessoais"
+            }
+          }
+        }
+      }
+    },
+    "findymail": {
+      "actions": {
+        "validate-email": {
+          "name": "Validar e-mail",
+          "description": "Verifica se um e-mail é válido e entregável.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O e-mail a validar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail"
+            },
+            "verified": {
+              "name": "Verificado"
+            },
+            "provider": {
+              "name": "Provedor de e-mail"
+            }
+          }
+        },
+        "work-email-from-profile-url": {
+          "name": "Encontrar e-mail corporativo pela URL do perfil",
+          "description": "Encontra um e-mail corporativo verificado a partir da URL de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra um e-mail corporativo verificado a partir do nome da pessoa e do domínio da empresa.",
+          "inputs": {
+            "fullName": {
+              "name": "Nome completo",
+              "description": "O nome completo da pessoa."
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "O site ou domínio da empresa da pessoa."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "find-mobile-phone": {
+          "name": "Encontrar celular com Findymail",
+          "description": "Encontra um celular a partir da URL de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "phone": {
+              "name": "Celular"
+            },
+            "lineType": {
+              "name": "Tipo de linha"
+            }
+          }
+        }
+      }
+    },
+    "fullenrich": {
+      "actions": {
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra o e-mail corporativo mais provável de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "workEmail": {
+              "name": "E-mail corporativo"
+            },
+            "emailStatus": {
+              "name": "Status do e-mail"
+            },
+            "workEmails": {
+              "name": "Todos os e-mails corporativos"
+            }
+          }
+        },
+        "find-mobile-phone": {
+          "name": "Encontrar celular",
+          "description": "Encontra o celular mais provável de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "phoneNumber": {
+              "name": "Celular"
+            },
+            "region": {
+              "name": "Região do telefone"
+            },
+            "phones": {
+              "name": "Todos os telefones"
+            }
+          }
+        }
+      }
+    },
+    "hunter": {
+      "actions": {
+        "verify-email": {
+          "name": "Verificar e-mail",
+          "description": "Verifica a entregabilidade e o nível de risco de um endereço de e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "Endereço de e-mail a verificar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail"
+            },
+            "status": {
+              "name": "Status"
+            },
+            "score": {
+              "name": "Pontuação"
+            },
+            "acceptAll": {
+              "name": "Aceita tudo (catch-all)"
+            },
+            "disposable": {
+              "name": "Descartável"
+            },
+            "webmail": {
+              "name": "Webmail"
+            }
+          }
+        },
+        "find-emails-by-company": {
+          "name": "Encontrar e-mails por empresa",
+          "description": "Encontra endereços de e-mail conhecidos e seus contatos para o domínio de uma empresa.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "emails": {
+              "name": "E-mails"
+            },
+            "emailCount": {
+              "name": "Quantidade de e-mails"
+            },
+            "firstEmail": {
+              "name": "Primeiro e-mail"
+            },
+            "organization": {
+              "name": "Organização"
+            },
+            "pattern": {
+              "name": "Padrão de e-mail"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra o e-mail corporativo de uma pessoa a partir do nome e do domínio da empresa.",
+          "inputs": {
+            "fullName": {
+              "name": "Nome completo",
+              "description": "O nome completo da pessoa."
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "O domínio da empresa da pessoa."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "score": {
+              "name": "Pontuação"
+            },
+            "verificationStatus": {
+              "name": "Status da verificação"
+            },
+            "position": {
+              "name": "Cargo"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "phoneNumber": {
+              "name": "Número de telefone"
+            }
+          }
+        }
+      }
+    },
+    "leadmagic": {
+      "actions": {
+        "validate-email": {
+          "name": "Validar e-mail",
+          "description": "Valida a entregabilidade de um e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "E-mail a validar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail"
+            },
+            "status": {
+              "name": "Status do e-mail"
+            },
+            "mxProvider": {
+              "name": "Provedor de MX"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra e valida um e-mail corporativo a partir do nome da pessoa e do domínio da empresa.",
+          "inputs": {
+            "fullName": {
+              "name": "Nome completo",
+              "description": "O nome completo da pessoa."
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "O domínio da empresa da pessoa."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "status": {
+              "name": "Status do e-mail"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "employmentVerified": {
+              "name": "Vínculo verificado"
+            }
+          }
+        },
+        "find-personal-email": {
+          "name": "Encontrar e-mail pessoal",
+          "description": "Encontra e-mails pessoais a partir da URL de um perfil profissional.",
+          "inputs": {
+            "profileUrl": {
+              "name": "URL do perfil profissional",
+              "description": "A URL do perfil profissional da pessoa."
+            }
+          },
+          "outputs": {
+            "personalEmail": {
+              "name": "E-mail pessoal"
+            },
+            "personalEmails": {
+              "name": "Todos os e-mails pessoais"
+            },
+            "name": {
+              "name": "Nome completo"
+            }
+          }
+        },
+        "find-mobile-number": {
+          "name": "Encontrar celular",
+          "description": "Encontra um celular a partir da URL de um perfil profissional.",
+          "inputs": {
+            "profileUrl": {
+              "name": "URL do perfil profissional",
+              "description": "A URL do perfil profissional da pessoa."
+            }
+          },
+          "outputs": {
+            "mobileNumber": {
+              "name": "Celular"
+            },
+            "profileUrl": {
+              "name": "URL do perfil profissional"
+            }
+          }
+        },
+        "find-professional-profile": {
+          "name": "Encontrar perfil profissional",
+          "description": "Encontra a URL de um perfil profissional a partir de um e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "Um e-mail corporativo ou pessoal."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "URL do perfil profissional"
+            },
+            "message": {
+              "name": "Mensagem de status"
+            }
+          }
+        },
+        "find-active-job-openings": {
+          "name": "Encontrar vagas abertas",
+          "description": "Encontra vagas recentes em uma empresa, com filtro opcional por cargo.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Domínio da empresa a buscar."
+            },
+            "jobTitle": {
+              "name": "Cargo",
+              "description": "Cargo opcional para filtrar."
+            },
+            "postedWithinDays": {
+              "name": "Publicada nos últimos dias",
+              "description": "Limite opcional de idade, em dias."
+            }
+          },
+          "outputs": {
+            "jobs": {
+              "name": "Vagas abertas"
+            },
+            "jobCount": {
+              "name": "Quantidade de vagas"
+            },
+            "firstJobTitle": {
+              "name": "Cargo da primeira vaga"
+            },
+            "firstJobUrl": {
+              "name": "URL da primeira vaga"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enriquecer empresa",
+          "description": "Enriquece uma empresa com dados firmográficos e sociais a partir do domínio.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "websiteUrl": {
+              "name": "Site"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "profileUrl": {
+              "name": "URL do perfil da empresa"
+            },
+            "description": {
+              "name": "Descrição"
+            }
+          }
+        }
+      }
+    },
+    "lusha": {
+      "actions": {
+        "company-website-traffic-signal": {
+          "name": "Encontrar sinal de tráfego do site da empresa",
+          "description": "Encontra aumentos ou quedas recentes no tráfego do site de uma empresa.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-it-spend-signal": {
+          "name": "Encontrar sinal de gasto com TI da empresa",
+          "description": "Encontra aumentos ou quedas recentes no gasto de uma empresa com TI.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-jobs-growth-by-location-signal": {
+          "name": "Encontrar sinal de crescimento de vagas da empresa por localização",
+          "description": "Encontra picos de contratação agrupados por localização.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-jobs-growth-by-department-signal": {
+          "name": "Encontrar sinal de crescimento de vagas da empresa por departamento",
+          "description": "Encontra picos de contratação agrupados por departamento.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-jobs-growth-signal": {
+          "name": "Encontrar sinal de crescimento de vagas da empresa",
+          "description": "Encontra picos recentes de contratação em toda a empresa.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-headcount-growth-signal": {
+          "name": "Encontrar sinal de crescimento do número de funcionários da empresa",
+          "description": "Encontra aumentos ou quedas no número de funcionários nos períodos compatíveis.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "company-news-signal": {
+          "name": "Encontrar sinal de notícias da empresa",
+          "description": "Encontra notícias recentes de risco, comerciais, de estratégia, financeiras, de pessoas, de mercado e de produto.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enriquecer empresa",
+          "description": "Encontra e revele o perfil firmográfico completo de uma empresa a partir do domínio.",
+          "inputs": {
+            "companyDomain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            },
+            "website": {
+              "name": "Site"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "company": {
+              "name": "Empresa completa"
+            }
+          }
+        },
+        "find-person-signals": {
+          "name": "Encontrar sinais da pessoa",
+          "description": "Encontra promoções e mudanças de empresa recentes em um perfil profissional.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            },
+            "startDate": {
+              "name": "Data inicial",
+              "description": "Data mais antiga do sinal (opcional)."
+            }
+          },
+          "outputs": {
+            "signals": {
+              "name": "Sinais"
+            },
+            "signalCount": {
+              "name": "Quantidade de sinais"
+            },
+            "fullName": {
+              "name": "Nome completo"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enriquecer pessoa",
+          "description": "Encontra e revele o perfil, os e-mails e os telefones de uma pessoa a partir do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "workEmail": {
+              "name": "E-mail corporativo"
+            },
+            "phoneNumber": {
+              "name": "Número de telefone"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "person": {
+              "name": "Pessoa completa"
+            }
+          }
+        }
+      }
+    },
+    "zerobounce": {
+      "actions": {
+        "validate-email": {
+          "name": "Validar e-mail",
+          "description": "Verifica a entregabilidade, o risco e o tipo de caixa de um endereço de e-mail.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail a validar."
+            },
+            "ipAddress": {
+              "name": "Endereço IP",
+              "description": "IP de cadastro (opcional) usado pelo ZeroBounce como contexto adicional."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail validado"
+            },
+            "status": {
+              "name": "Status da validação"
+            },
+            "subStatus": {
+              "name": "Status detalhado"
+            },
+            "isFreeEmail": {
+              "name": "Provedor de e-mail gratuito"
+            },
+            "isCatchAll": {
+              "name": "Domínio catch-all"
+            },
+            "didYouMean": {
+              "name": "E-mail sugerido"
+            },
+            "account": {
+              "name": "Conta de e-mail"
+            },
+            "domain": {
+              "name": "Domínio do e-mail"
+            },
+            "domainAgeDays": {
+              "name": "Idade do domínio (dias)"
+            },
+            "activeInDays": {
+              "name": "Ativo em (dias)"
+            },
+            "mxFound": {
+              "name": "MX encontrado"
+            },
+            "mxRecord": {
+              "name": "Registro MX"
+            },
+            "smtpProvider": {
+              "name": "Provedor SMTP"
+            },
+            "firstName": {
+              "name": "Nome"
+            },
+            "lastName": {
+              "name": "Sobrenome"
+            },
+            "processedAt": {
+              "name": "Processado em"
+            }
+          }
+        }
+      }
+    },
+    "similarweb": {
+      "actions": {
+        "get-monthly-website-visits": {
+          "name": "Obter visitas mensais do site",
+          "description": "Obtém as visitas estimadas em desktop e celular do último mês completo.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "visits": {
+              "name": "Visitas mensais"
+            },
+            "month": {
+              "name": "Mês dos dados"
+            }
+          }
+        },
+        "get-traffic-distribution-by-geography": {
+          "name": "Obter distribuição de tráfego por região",
+          "description": "Obtém a participação no tráfego e o engajamento do site por país.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "countries": {
+              "name": "Tráfego por país"
+            }
+          }
+        },
+        "get-website-pages-per-visit": {
+          "name": "Obter páginas por visita do site",
+          "description": "Obtém a média de páginas vistas por visita no último mês completo.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "pagesPerVisit": {
+              "name": "Páginas por visita"
+            },
+            "month": {
+              "name": "Mês dos dados"
+            }
+          }
+        },
+        "get-website-bounce-rate": {
+          "name": "Obter taxa de rejeição do site",
+          "description": "Obtém a taxa de rejeição (bounce) do site no último mês completo.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "bounceRate": {
+              "name": "Taxa de rejeição (bounce)"
+            },
+            "month": {
+              "name": "Mês dos dados"
+            }
+          }
+        },
+        "get-website-average-visit-duration": {
+          "name": "Obter duração média da visita ao site",
+          "description": "Obtém a duração média da visita, em segundos, no último mês completo.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "averageVisitDuration": {
+              "name": "Duração média da visita (segundos)"
+            },
+            "month": {
+              "name": "Mês dos dados"
+            }
+          }
+        },
+        "get-global-website-traffic-rank": {
+          "name": "Obter ranking global de tráfego do site",
+          "description": "Obtém o ranking global do site no último mês completo.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "globalRank": {
+              "name": "Ranking global"
+            },
+            "month": {
+              "name": "Mês dos dados"
+            }
+          }
+        },
+        "find-website-technologies": {
+          "name": "Encontrar tecnologias do site",
+          "description": "Encontra as tecnologias detectadas em um site.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio do site",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "technologies": {
+              "name": "Tecnologias"
+            }
+          }
+        }
+      }
+    },
+    "semrush": {
+      "actions": {
+        "get-traffic-analytics": {
+          "name": "Obter análise de tráfego",
+          "description": "Obtém as métricas atuais de tráfego e engajamento do site de uma empresa.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "visits": {
+              "name": "Visitas"
+            },
+            "users": {
+              "name": "Visitantes únicos"
+            },
+            "rank": {
+              "name": "Ranking de tráfego"
+            },
+            "pagesPerVisit": {
+              "name": "Páginas por visita"
+            },
+            "averageVisitDuration": {
+              "name": "Duração média da visita"
+            },
+            "bounceRate": {
+              "name": "Taxa de rejeição (bounce)"
+            },
+            "trafficAnalytics": {
+              "name": "Análise de tráfego completa"
+            }
+          }
+        },
+        "get-competitors-in-paid-search": {
+          "name": "Obter concorrentes em busca paga",
+          "description": "Encontra domínios que concorrem com uma empresa em busca paga.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "competitors": {
+              "name": "Concorrentes em busca paga"
+            }
+          }
+        },
+        "get-company-traffic-sources": {
+          "name": "Obter fontes de tráfego da empresa",
+          "description": "Obtém os sites de origem e os canais de tráfego de uma empresa.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "trafficSources": {
+              "name": "Fontes de tráfego"
+            }
+          }
+        },
+        "get-company-top-pages": {
+          "name": "Obter principais páginas da empresa",
+          "description": "Obtém as páginas mais populares do site de uma empresa.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "topPages": {
+              "name": "Principais páginas"
+            }
+          }
+        },
+        "get-company-social-media-engagement": {
+          "name": "Obter engajamento da empresa nas redes sociais",
+          "description": "Obtém dados de audiência e engajamento nas redes sociais para o site de uma empresa.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "socialMedia": {
+              "name": "Engajamento nas redes sociais"
+            }
+          }
+        },
+        "get-company-website-traffic-geographic-distribution": {
+          "name": "Obter distribuição geográfica do tráfego do site da empresa",
+          "description": "Obtém o tráfego e o engajamento do site de uma empresa por país.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "geography": {
+              "name": "Distribuição geográfica"
+            }
+          }
+        }
+      }
+    },
+    "rocketreach": {
+      "actions": {
+        "find-professional-email": {
+          "name": "Encontrar e-mail profissional",
+          "description": "Encontra um e-mail profissional verificado a partir de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail profissional"
+            },
+            "emails": {
+              "name": "E-mails profissionais"
+            }
+          }
+        },
+        "find-personal-email": {
+          "name": "Encontrar e-mail pessoal",
+          "description": "Encontra um e-mail pessoal verificado a partir de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail pessoal"
+            },
+            "emails": {
+              "name": "E-mails pessoais"
+            }
+          }
+        },
+        "find-phone-number": {
+          "name": "Encontrar número de telefone",
+          "description": "Encontra um número de telefone a partir de um perfil do LinkedIn.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "phoneNumber": {
+              "name": "Número de telefone"
+            },
+            "phoneNumbers": {
+              "name": "Números de telefone"
+            }
+          }
+        },
+        "enrich-person": {
+          "name": "Enriquecer pessoa",
+          "description": "Obtém o perfil profissional, o histórico de trabalho e a localização.",
+          "inputs": {
+            "linkedinUrl": {
+              "name": "URL do LinkedIn",
+              "description": "A URL do perfil da pessoa no LinkedIn."
+            }
+          },
+          "outputs": {
+            "name": {
+              "name": "Nome completo"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "companyDomain": {
+              "name": "Domínio da empresa"
+            },
+            "location": {
+              "name": "Localização"
+            },
+            "linkedinUrl": {
+              "name": "URL do LinkedIn"
+            },
+            "profile": {
+              "name": "Perfil completo"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enriquecer empresa",
+          "description": "Obtém os dados firmográficos e de tecnologia de uma empresa a partir do domínio.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "domain": {
+              "name": "Domínio"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "revenue": {
+              "name": "Receita"
+            },
+            "yearFounded": {
+              "name": "Ano de fundação"
+            },
+            "technologies": {
+              "name": "Tecnologias"
+            },
+            "company": {
+              "name": "Empresa completa"
+            }
+          }
+        }
+      }
+    },
+    "icypeas": {
+      "actions": {
+        "verify-email": {
+          "name": "Verificar e-mail",
+          "description": "Verifica um e-mail e retorna o status de entregabilidade.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "E-mail a verificar."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail"
+            },
+            "status": {
+              "name": "Status da verificação"
+            },
+            "certainty": {
+              "name": "Certeza"
+            },
+            "details": {
+              "name": "Detalhes da verificação"
+            }
+          }
+        },
+        "find-professional-profile": {
+          "name": "Encontrar perfil profissional",
+          "description": "Encontra a URL de um perfil profissional a partir do nome e da empresa.",
+          "inputs": {
+            "firstName": {
+              "name": "Nome",
+              "description": "Nome da pessoa."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "Sobrenome da pessoa."
+            },
+            "company": {
+              "name": "Empresa ou domínio",
+              "description": "Nome, domínio ou site da empresa."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "URL do perfil profissional"
+            }
+          }
+        },
+        "find-people-at-company": {
+          "name": "Encontrar pessoas na empresa",
+          "description": "Encontra pessoas que trabalham atualmente em uma empresa.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Domínio ou site da empresa."
+            }
+          },
+          "outputs": {
+            "people": {
+              "name": "Pessoas"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            }
+          }
+        },
+        "find-emails-for-domain": {
+          "name": "Encontrar e-mails por domínio",
+          "description": "Varre um domínio em busca de e-mails por função.",
+          "inputs": {
+            "domain": {
+              "name": "Domínio da empresa",
+              "description": "Domínio ou site da empresa."
+            }
+          },
+          "outputs": {
+            "emails": {
+              "name": "E-mails"
+            },
+            "resultCount": {
+              "name": "Quantidade de resultados"
+            }
+          }
+        },
+        "find-work-email": {
+          "name": "Encontrar e-mail corporativo",
+          "description": "Encontra um e-mail profissional a partir do nome e da empresa.",
+          "inputs": {
+            "firstName": {
+              "name": "Nome",
+              "description": "Nome da pessoa."
+            },
+            "lastName": {
+              "name": "Sobrenome",
+              "description": "Sobrenome da pessoa."
+            },
+            "company": {
+              "name": "Empresa ou domínio",
+              "description": "Nome, domínio ou site da empresa."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail corporativo"
+            },
+            "certainty": {
+              "name": "Certeza"
+            },
+            "mxProvider": {
+              "name": "Provedor de MX"
+            }
+          }
+        },
+        "find-company-professional-profile": {
+          "name": "Encontrar perfil profissional da empresa",
+          "description": "Encontra a URL do perfil de uma empresa em uma rede profissional.",
+          "inputs": {
+            "company": {
+              "name": "Empresa ou domínio",
+              "description": "Nome, domínio ou site da empresa."
+            }
+          },
+          "outputs": {
+            "profileUrl": {
+              "name": "URL do perfil da empresa"
+            }
+          }
+        },
+        "enrich-profile": {
+          "name": "Enriquecer perfil",
+          "description": "Coleta e enriquece um perfil profissional.",
+          "inputs": {
+            "profileUrl": {
+              "name": "URL do perfil profissional",
+              "description": "URL do perfil profissional a enriquecer."
+            }
+          },
+          "outputs": {
+            "fullName": {
+              "name": "Nome completo"
+            },
+            "jobTitle": {
+              "name": "Cargo"
+            },
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "location": {
+              "name": "Localização"
+            },
+            "profile": {
+              "name": "Perfil completo"
+            }
+          }
+        },
+        "enrich-company": {
+          "name": "Enriquecer empresa",
+          "description": "Coleta e enriquece o perfil de uma empresa.",
+          "inputs": {
+            "profileUrl": {
+              "name": "URL do perfil da empresa",
+              "description": "URL do perfil profissional da empresa."
+            }
+          },
+          "outputs": {
+            "companyName": {
+              "name": "Nome da empresa"
+            },
+            "domain": {
+              "name": "Domínio"
+            },
+            "industry": {
+              "name": "Setor"
+            },
+            "employeeCount": {
+              "name": "Número de funcionários"
+            },
+            "location": {
+              "name": "Localização"
+            },
+            "company": {
+              "name": "Empresa completa"
+            }
+          }
+        }
+      }
+    }
+  }
+}
