@@ -69,3 +69,28 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Step (sequence) | Passo |
 | Launch campaign / Launching… | Iniciar campanha / Iniciando… |
 | Send campaigns | Campanhas de envio |
+
+## Tables (grid)
+
+| English | pt-BR |
+|---|---|
+| Workbook | Pasta de trabalho |
+| Table / Column / Row / Cell | Tabela / Coluna / Linha / Célula |
+| Folder | Pasta |
+| Lead columns | Colunas de lead |
+| Sort / Filter | Ordenar (substantivo: Ordenação) / Filtro |
+| Enrichment | Enriquecimento |
+| Waterfall | Cascata |
+| Formula | Fórmula |
+| Run / Auto-run | Executar / Execução automática |
+| Run condition / Run settings / Delay run | Condição de execução / Configurações de execução / Atrasar execução |
+| Column mapping | Mapeamento de colunas |
+| Use case / Output / Template | Caso de uso / Saída / Modelo |
+| Pin / Unpin / Hide | Fixar / Desafixar / Ocultar |
+| Dedupe / Text to columns | Remover duplicatas / Texto em colunas |
+| Header (HTTP) / Provider / Latency | Cabeçalho / Provedor / Latência |
+| Run outcome: hit / miss / skipped | Encontrado / Sem resultado / Ignorado |
+| All of / Any of (filter conditions) | Todas as condições / Qualquer condição |
+| Default view | Visualização padrão |
+| Undo / Redo / Duplicate / Stop | Desfazer / Refazer / Duplicar / Parar |
+| Default names stored in the database ("Untitled workbook", "Column N", column-type names) | Ficam em inglês: dado gravado, nunca texto traduzido |
