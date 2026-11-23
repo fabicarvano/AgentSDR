@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -35,50 +36,29 @@ import WorkbookIcon from "./WorkbookIcon";
 // Favorites view — a tab that can only ever be empty is a control that lies.
 type View = "all" | "recents";
 
-const VIEW_LABEL: Record<View, string> = { all: "All", recents: "Recents" };
+const VIEW_LABEL_KEY = { all: "viewAll", recents: "viewRecents" } as const satisfies Record<View, string>;
 
 /** Which row the shared rename/move/delete dialogs are currently acting on. */
 type Target =
   | { kind: "folder"; id: string; name: string; parentId: string | null }
   | { kind: "workbook"; id: string; name: string; folderId: string | null };
 
-function formatDate(value: Date | string | null) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
+function folderTarget(folder: FolderSummary): Target {
+  return { kind: "folder", id: folder.id, name: folder.name, parentId: folder.parentId };
 }
 
-const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
-
-/**
- * "0 tables · 0 rows" was both wrong (the counts never loaded) and useless
- * once fixed — an empty workbook is worth saying in words, and real counts
- * are worth thousands separators.
- */
-function workbookContents(workbook: WorkbookSummary) {
-  if (workbook.tableCount === 0) return "Empty workbook";
-  if (workbook.rowCount === 0) return `${plural(workbook.tableCount, "table")} · no rows yet`;
-  return `${plural(workbook.tableCount, "table")} · ${plural(workbook.rowCount, "row")}`;
+function workbookTarget(workbook: WorkbookSummary): Target {
+  return { kind: "workbook", id: workbook.id, name: workbook.name, folderId: workbook.folderId };
 }
 
-function folderContents(folder: FolderSummary) {
-  const parts: string[] = [];
-  if (folder.folderCount) parts.push(plural(folder.folderCount, "folder"));
-  if (folder.workbookCount) parts.push(plural(folder.workbookCount, "workbook"));
-  return parts.length ? parts.join(" · ") : "Empty folder";
-}
-
-async function send(url: string, method: string, body?: unknown) {
+async function request(url: string, method: string, fallbackError: string, body?: unknown) {
   const response = await fetch(url, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error ?? "Something went wrong");
+  if (!response.ok) throw new Error(data.error ?? fallbackError);
   return data;
 }
 
@@ -97,6 +77,8 @@ export default function WorkbookListClient({
   /** Every folder in the workspace — the destinations for "Move to…". */
   allFolders: GridFolder[];
 }) {
+  const t = useTranslations("gridMain.list");
+  const format = useFormatter();
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const dialogs = useDialogs();
@@ -107,6 +89,36 @@ export default function WorkbookListClient({
   const [dragging, setDragging] = useState<Target | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [dragError, setDragError] = useState<string | null>(null);
+
+  const send = useCallback(
+    (url: string, method: string, body?: unknown) => request(url, method, t("somethingWrong"), body),
+    [t],
+  );
+
+  function formatDate(value: Date | string | null) {
+    if (!value) return "—";
+    return format.dateTime(new Date(value), { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  /**
+   * "0 tables · 0 rows" was both wrong (the counts never loaded) and useless
+   * once fixed — an empty workbook is worth saying in words, and real counts
+   * are worth thousands separators.
+   */
+  function workbookContents(workbook: WorkbookSummary) {
+    if (workbook.tableCount === 0) return t("workbookEmpty");
+    if (workbook.rowCount === 0) return t("workbookNoRows", { tables: workbook.tableCount });
+    return t("workbookContents", { tables: workbook.tableCount, rows: workbook.rowCount });
+  }
+
+  function folderContents(folder: FolderSummary) {
+    if (folder.folderCount && folder.workbookCount) {
+      return t("folderBoth", { folders: folder.folderCount, workbooks: folder.workbookCount });
+    }
+    if (folder.folderCount) return t("folderFolders", { folders: folder.folderCount });
+    if (folder.workbookCount) return t("folderWorkbooks", { workbooks: folder.workbookCount });
+    return t("folderEmpty");
+  }
 
   const here = breadcrumbs.at(-1) ?? null;
   const query = search.trim().toLowerCase();
@@ -180,10 +192,10 @@ export default function WorkbookListClient({
         }
         startTransition(() => router.refresh());
       } catch (cause) {
-        setDragError(cause instanceof Error ? cause.message : "Could not move that item");
+        setDragError(cause instanceof Error ? cause.message : t("moveFailed"));
       }
     },
-    [router],
+    [router, send, t],
   );
 
   /**
@@ -237,27 +249,28 @@ export default function WorkbookListClient({
 
   async function createFolder() {
     const name = await dialogs.prompt({
-      title: "New folder",
-      description: here ? `It will be created inside “${here.name}”.` : undefined,
-      label: "Folder name",
-      placeholder: "Untitled folder",
-      confirmLabel: "Create",
+      title: t("newFolderTitle"),
+      description: here ? t("newFolderDescription", { name: here.name }) : undefined,
+      label: t("folderName"),
+      // Not stored: the placeholder only hints at the name; an empty name is rejected.
+      placeholder: t("folderNamePlaceholder"),
+      confirmLabel: t("create"),
     });
     if (!name?.trim()) return;
     try {
       await send("/api/grid/folders", "POST", { name: name.trim(), parentId: folderId });
       startTransition(() => router.refresh());
     } catch (cause) {
-      setDragError(cause instanceof Error ? cause.message : "Could not create that folder");
+      setDragError(cause instanceof Error ? cause.message : t("createFolderFailed"));
     }
   }
 
   async function rename(target: Target) {
     const name = await dialogs.prompt({
-      title: target.kind === "folder" ? "Rename folder" : "Rename workbook",
-      label: "Name",
+      title: target.kind === "folder" ? t("renameFolderTitle") : t("renameWorkbookTitle"),
+      label: t("nameLabel"),
       defaultValue: target.name,
-      confirmLabel: "Rename",
+      confirmLabel: t("rename"),
     });
     if (!name?.trim() || name.trim() === target.name) return;
     const base = target.kind === "folder" ? "/api/grid/folders" : "/api/grid/workbooks";
@@ -265,7 +278,7 @@ export default function WorkbookListClient({
       await send(`${base}/${target.id}`, "PATCH", { name: name.trim() });
       startTransition(() => router.refresh());
     } catch (cause) {
-      setDragError(cause instanceof Error ? cause.message : "Could not rename that item");
+      setDragError(cause instanceof Error ? cause.message : t("renameFailed"));
     }
   }
 
@@ -282,12 +295,12 @@ export default function WorkbookListClient({
 
   async function remove(target: Target) {
     const ok = await dialogs.confirm({
-      title: target.kind === "folder" ? "Delete folder?" : "Delete workbook?",
+      title: target.kind === "folder" ? t("deleteFolderTitle") : t("deleteWorkbookTitle"),
       description:
         target.kind === "folder"
-          ? `“${target.name}” and any folders inside it will be deleted. Workbooks filed in them are not deleted — they move back to All Files.`
-          : `“${target.name}” and every table, column and row inside it will be permanently deleted. This cannot be undone.`,
-      confirmLabel: target.kind === "folder" ? "Delete folder" : "Delete workbook",
+          ? t("deleteFolderDescription", { name: target.name })
+          : t("deleteWorkbookDescription", { name: target.name }),
+      confirmLabel: target.kind === "folder" ? t("deleteFolderConfirm") : t("deleteWorkbookConfirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -297,7 +310,7 @@ export default function WorkbookListClient({
       await send(`${base}/${target.id}`, "DELETE");
       startTransition(() => router.refresh());
     } catch (cause) {
-      setDragError(cause instanceof Error ? cause.message : "Could not delete that item");
+      setDragError(cause instanceof Error ? cause.message : t("deleteFailed"));
     }
   }
 
@@ -305,20 +318,20 @@ export default function WorkbookListClient({
     return (
       <Dropdown.Root>
         <Dropdown.Trigger asChild>
-          <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={`Actions for ${target.name}`}>
+          <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={t("rowActions", { name: target.name })}>
             <Button.Icon as={RiMoreLine} />
           </Button.Root>
         </Dropdown.Trigger>
         <Dropdown.Content align="end">
           <Dropdown.Item onSelect={() => void rename(target)}>
-            <Dropdown.ItemIcon as={RiPencilLine} />Rename
+            <Dropdown.ItemIcon as={RiPencilLine} />{t("rename")}
           </Dropdown.Item>
           <Dropdown.Item onSelect={() => setMoving(target)}>
-            <Dropdown.ItemIcon as={RiFolderTransferLine} />Move to folder
+            <Dropdown.ItemIcon as={RiFolderTransferLine} />{t("moveToFolder")}
           </Dropdown.Item>
           <Dropdown.Separator />
           <Dropdown.Item destructive onSelect={() => void remove(target)}>
-            <Dropdown.ItemIcon as={RiDeleteBinLine} />Delete
+            <Dropdown.ItemIcon as={RiDeleteBinLine} />{t("delete")}
           </Dropdown.Item>
         </Dropdown.Content>
       </Dropdown.Root>
@@ -342,16 +355,16 @@ export default function WorkbookListClient({
       <Dropdown.Trigger asChild>
         <Button.Root variant="primary" mode="filled" size="small">
           <Button.Icon as={RiAddLine} />
-          New
+          {t("new")}
           <Button.Icon as={RiArrowDownSLine} />
         </Button.Root>
       </Dropdown.Trigger>
       <Dropdown.Content align="end" className="w-[220px]">
         <Dropdown.Item onSelect={() => void createFolder()}>
-          <Dropdown.ItemIcon as={RiFolder3Line} />Folder
+          <Dropdown.ItemIcon as={RiFolder3Line} />{t("folder")}
         </Dropdown.Item>
         <Dropdown.Item onSelect={() => setNewWorkbookOpen(true)}>
-          <Dropdown.ItemIcon as={WorkbookIcon} />Workbook
+          <Dropdown.ItemIcon as={WorkbookIcon} />{t("workbook")}
         </Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
@@ -365,10 +378,10 @@ export default function WorkbookListClient({
   return (
     <PageContainer>
       <PageHeader
-        title={here?.name ?? "Tables"}
+        title={here?.name ?? t("title")}
         description={
           breadcrumbs.length > 0 ? (
-            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1">
+            <nav aria-label={t("breadcrumb")} className="flex flex-wrap items-center gap-1">
               {/* Crumbs are drop targets too — otherwise there is no way
                   to drag something back OUT of the folder you are in. */}
               <Link
@@ -377,7 +390,7 @@ export default function WorkbookListClient({
                 {...dropZone(null)}
                 className={cn("rounded px-1 py-0.5 transition hover:text-text-strong-950", dropTarget === "root" && dropClass)}
               >
-                All files
+                {t("allFiles")}
               </Link>
               {breadcrumbs.map((crumb, index) => (
                 <span key={crumb.id} className="flex items-center gap-1">
@@ -398,7 +411,7 @@ export default function WorkbookListClient({
               ))}
             </nav>
           ) : (
-            "Workbooks and folders that hold your tables, imports and scraped data."
+            t("description")
           )
         }
         actions={newMenu}
@@ -406,14 +419,14 @@ export default function WorkbookListClient({
 
       <Frame className="mt-6">
         <FrameHeader
-          title={here ? "This folder" : "All files"}
+          title={here ? t("thisFolder") : t("allFiles")}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <SegmentedControl.Root value={view} onValueChange={(v) => setView(v as View)}>
                 <SegmentedControl.List className="w-auto">
-                  {(Object.keys(VIEW_LABEL) as View[]).map((item) => (
+                  {(Object.keys(VIEW_LABEL_KEY) as View[]).map((item) => (
                     <SegmentedControl.Trigger key={item} value={item} className="gap-1.5 px-3">
-                      {VIEW_LABEL[item]}
+                      {t(VIEW_LABEL_KEY[item])}
                       <span className="tabular-nums text-text-soft-400">{counts[item]}</span>
                     </SegmentedControl.Trigger>
                   ))}
@@ -422,7 +435,7 @@ export default function WorkbookListClient({
               <Input.Root size="small" className="w-56">
                 <Input.Wrapper>
                   <Input.Icon as={RiSearchLine} />
-                  <Input.Input type="search" aria-label="Search files" placeholder="Search files…" value={search} onChange={(event) => setSearch(event.target.value)} />
+                  <Input.Input type="search" aria-label={t("searchLabel")} placeholder={t("searchPlaceholder")} value={search} onChange={(event) => setSearch(event.target.value)} />
                 </Input.Wrapper>
               </Input.Root>
             </div>
@@ -436,18 +449,18 @@ export default function WorkbookListClient({
             nothingYet ? (
               <EmptyState
                 icon={WorkbookIcon}
-                title={here ? `“${here.name}” is empty` : "No workbooks yet"}
-                description="Create a workbook, import a spreadsheet, or add a folder to organise them."
+                title={here ? t("emptyFolderTitle", { name: here.name }) : t("emptyTitle")}
+                description={t("emptyDescription")}
                 action={newMenu}
               />
             ) : (
               <EmptyState
                 icon={RiSearchLine}
-                title="Nothing matches that search"
-                description="Try a different name, or clear the search."
+                title={t("noMatchTitle")}
+                description={t("noMatchDescription")}
                 action={
                   <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setSearch("")}>
-                    Clear search
+                    {t("clearSearch")}
                   </Button.Root>
                 }
               />
@@ -457,15 +470,15 @@ export default function WorkbookListClient({
               <Table.Root className="min-w-[640px]">
                 <Table.Header>
                   <Table.Row>
-                    <Table.Head scope="col" className="px-4">Name</Table.Head>
-                    <Table.Head scope="col" className="w-36 px-4">Created</Table.Head>
-                    <Table.Head scope="col" className="w-36 px-4">Last updated</Table.Head>
-                    <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">Actions</span></Table.Head>
+                    <Table.Head scope="col" className="px-4">{t("colName")}</Table.Head>
+                    <Table.Head scope="col" className="w-36 px-4">{t("colCreated")}</Table.Head>
+                    <Table.Head scope="col" className="w-36 px-4">{t("colUpdated")}</Table.Head>
+                    <Table.Head scope="col" className="w-16 px-4"><span className="sr-only">{t("colActions")}</span></Table.Head>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body spacing={4}>
                   {visibleFolders.map((folder) => {
-                    const item: Target = { kind: "folder", id: folder.id, name: folder.name, parentId: folder.parentId };
+                    const item = folderTarget(folder);
                     const isDropTarget = dropTarget === folder.id;
                     return (
                       <Table.Row
@@ -488,7 +501,7 @@ export default function WorkbookListClient({
                                 {folder.name}
                               </Link>
                               <p className={cn("mt-0.5 truncate text-paragraph-xs", isDropTarget ? "text-primary-base" : "text-text-sub-600")}>
-                                {isDropTarget ? "Drop to move here" : folderContents(folder)}
+                                {isDropTarget ? t("dropHere") : folderContents(folder)}
                               </p>
                             </div>
                           </div>
@@ -503,7 +516,7 @@ export default function WorkbookListClient({
                   })}
 
                   {visibleWorkbooks.map((workbook) => {
-                    const item: Target = { kind: "workbook", id: workbook.id, name: workbook.name, folderId: workbook.folderId };
+                    const item = workbookTarget(workbook);
                     return (
                       <Table.Row
                         key={workbook.id}
@@ -539,7 +552,7 @@ export default function WorkbookListClient({
             </div>
           )}
         </FramePanel>
-        {folders.length + workbooks.length > 0 && <FrameFooter>Drag a row onto a folder, or a breadcrumb, to file it there.</FrameFooter>}
+        {folders.length + workbooks.length > 0 && <FrameFooter>{t("dragHint")}</FrameFooter>}
       </Frame>
 
       <NewWorkbookDialog
@@ -554,7 +567,7 @@ export default function WorkbookListClient({
 
       <MoveToFolderDialog
         open={moving !== null}
-        title={moving?.kind === "folder" ? "Move folder" : "Move workbook"}
+        title={moving?.kind === "folder" ? t("moveFolderTitle") : t("moveWorkbookTitle")}
         itemName={moving?.name ?? ""}
         currentFolderId={moving?.kind === "folder" ? moving.parentId : (moving?.folderId ?? null)}
         folders={allFolders}

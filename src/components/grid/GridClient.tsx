@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact, type CustomCellEditorProps } from "ag-grid-react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   AllCommunityModule,
   ModuleRegistry,
@@ -77,7 +78,7 @@ import ImportDialog from "./ImportDialog";
 import CreateCampaignFromGridDialog from "./CreateCampaignFromGridDialog";
 import Popover from "./Popover";
 import SortPanel from "./SortPanel";
-import { columnTypeMeta } from "./columnTypes";
+import { columnTypeDefaultName, columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
 import { clampGridPage, GRID_PAGE_SIZE, gridPageCount, gridPageRange } from "@/lib/grid/pagination";
 import * as Checkbox from "@/components/alignui/checkbox";
 
@@ -216,6 +217,7 @@ function selectOptions(column: GridColumn): { value: string; label: string }[] {
 
 /** Popup editor for multiselect cells: a checkbox per option, plus any stored value the list lacks. */
 function MultiSelectEditor(props: CustomCellEditorProps<RowData, unknown> & { options: string[] }) {
+  const t = useTranslations("gridMain.grid");
   const current = Array.isArray(props.value) ? props.value.map(String) : [];
   const choices = [...props.options, ...current.filter((value) => !props.options.includes(value))];
   const toggle = (value: string) => {
@@ -224,7 +226,7 @@ function MultiSelectEditor(props: CustomCellEditorProps<RowData, unknown> & { op
   };
   return (
     <div className="max-h-64 min-w-[200px] overflow-auto rounded-lg border border-stroke-soft-200 bg-bg-white-0 p-1.5 shadow-lg">
-      {choices.length === 0 && <p className="px-2 py-1.5 text-[12px] text-text-sub-600">This column has no options.</p>}
+      {choices.length === 0 && <p className="px-2 py-1.5 text-[12px] text-text-sub-600">{t("noOptions")}</p>}
       {choices.map((value) => (
         <label key={value} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-text-strong-950 hover:bg-bg-weak-50">
           <input type="checkbox" checked={current.includes(value)} onChange={() => toggle(value)} />
@@ -366,6 +368,7 @@ function ColumnHeader(props: IHeaderParams & {
   onOpen: (rect: DOMRect) => void;
   onRun?: (rect: DOMRect) => void;
 }) {
+  const t = useTranslations("gridMain.grid");
   const meta = columnTypeMeta(props.valueType ?? props.colType);
   const integration = props.integrationKey ? getIntegration(props.integrationKey) : null;
   const iconClass = props.active ? "text-white" : "text-text-sub-600";
@@ -385,7 +388,7 @@ function ColumnHeader(props: IHeaderParams & {
     <div className={`-mx-3 flex h-full w-[calc(100%+24px)] items-center overflow-hidden transition ${props.active ? "bg-blue-600 text-white" : "hover:bg-bg-weak-50"}`}>
       <button
         type="button"
-        title="Select column (Shift-click to extend)"
+        title={t("selectColumn")}
         onClick={(event) => props.onSelect(event.shiftKey)}
         onDoubleClick={(event) => {
           event.preventDefault();
@@ -398,8 +401,8 @@ function ColumnHeader(props: IHeaderParams & {
       </button>
       <button
         type="button"
-        title={`Configure ${props.displayName}`}
-        aria-label={`Configure ${props.displayName}`}
+        title={t("configureColumn", { name: props.displayName })}
+        aria-label={t("configureColumn", { name: props.displayName })}
         onClick={(event) => {
           event.stopPropagation();
           props.onOpen(event.currentTarget.getBoundingClientRect());
@@ -409,7 +412,7 @@ function ColumnHeader(props: IHeaderParams & {
         <RiArrowDownSLine className="size-4" />
       </button>
       {props.onRun && (
-        <button type="button" title="Run column" aria-label={`Run ${props.displayName}`} onClick={(event) => { event.stopPropagation(); props.onRun?.(event.currentTarget.getBoundingClientRect()); }} className={`mr-1 rounded-md border p-1.5 ${props.active ? "border-blue-400 text-white hover:bg-blue-500" : "border-stroke-soft-200 bg-bg-white-0 text-text-strong-950 hover:bg-bg-weak-50"}`}>
+        <button type="button" title={t("runColumn")} aria-label={t("runColumnNamed", { name: props.displayName })} onClick={(event) => { event.stopPropagation(); props.onRun?.(event.currentTarget.getBoundingClientRect()); }} className={`mr-1 rounded-md border p-1.5 ${props.active ? "border-blue-400 text-white hover:bg-blue-500" : "border-stroke-soft-200 bg-bg-white-0 text-text-strong-950 hover:bg-bg-weak-50"}`}>
           <RiPlayLine className="size-4" />
         </button>
       )}
@@ -419,6 +422,7 @@ function ColumnHeader(props: IHeaderParams & {
 
 /** The trailing "+ Add column" header cell. */
 function AddColumnHeader(props: IHeaderParams & { onOpen: (rect: DOMRect) => void }) {
+  const t = useTranslations("gridMain.grid");
   return (
     <button
       type="button"
@@ -426,7 +430,7 @@ function AddColumnHeader(props: IHeaderParams & { onOpen: (rect: DOMRect) => voi
       className="-mx-3 flex h-full w-[calc(100%+24px)] items-center gap-1.5 px-3 text-text-sub-600 transition hover:bg-bg-weak-50"
     >
       <RiAddLine className="size-[15px] shrink-0" />
-      <span className="font-medium">Add column</span>
+      <span className="font-medium">{t("addColumn")}</span>
     </button>
   );
 }
@@ -436,12 +440,13 @@ function GutterHeader(props: IHeaderParams & {
   checked: boolean | "indeterminate";
   onCheckedChange: (checked: boolean) => void;
 }) {
+  const t = useTranslations("gridMain.grid");
   return (
     <div className="flex size-full items-center justify-center">
       <Checkbox.Root
         checked={props.checked}
         onCheckedChange={(checked) => props.onCheckedChange(checked !== false)}
-        aria-label="Select all rows on this page"
+        aria-label={t("selectAllRows")}
       />
     </div>
   );
@@ -451,6 +456,7 @@ function GutterCell(props: ICellRendererParams<RowData> & {
   isSelected: (rowId: string) => boolean;
   onToggle: (rowId: string) => void;
 }) {
+  const t = useTranslations("gridMain.grid");
   if (props.node.rowPinned === "top") {
     return <span className="text-[11px] font-medium text-text-soft-400">%</span>;
   }
@@ -464,7 +470,7 @@ function GutterCell(props: ICellRendererParams<RowData> & {
       <Checkbox.Root
         checked={selected}
         onCheckedChange={() => props.onToggle(props.data!.__id)}
-        aria-label={`${selected ? "Deselect" : "Select"} row ${rowOffset + (props.node.rowIndex ?? 0) + 1}`}
+        aria-label={t(selected ? "deselectRow" : "selectRow", { number: rowOffset + (props.node.rowIndex ?? 0) + 1 })}
         className={`absolute inset-0 m-auto ${selected ? "" : "invisible group-hover:visible group-focus-within:visible"}`}
       />
     </div>
@@ -477,28 +483,32 @@ function isMiss(meta: CellMeta | undefined): boolean {
 }
 
 /** A run that finished without finding anything, as opposed to one that has not run. */
-const NO_RESULT = <span className="italic text-text-soft-400">No result</span>;
+function NoResult() {
+  const t = useTranslations("gridMain.grid");
+  return <span className="italic text-text-soft-400">{t("noResult")}</span>;
+}
 
 function IntegrationActionCell(props: ICellRendererParams<RowData> & { onRun?: (rowId: string) => void; disabled?: boolean }) {
+  const t = useTranslations("gridMain.grid");
   if (props.node.rowPinned === "top") return props.value ?? "";
   const meta = props.data?.__meta?.[props.colDef?.field ?? ""] as CellMeta | undefined;
   const inProgress = meta?.status === "queued" || meta?.status === "running" || meta?.status === "processing";
 
   let content: React.ReactNode;
   if (meta?.status === "queued") {
-    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiTimeLine className="size-4" />Queued…</span>;
+    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiTimeLine className="size-4" />{t("queued")}</span>;
   } else if (meta?.status === "running") {
-    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" />Running…</span>;
+    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" />{t("running")}</span>;
   } else if (meta?.status === "processing") {
-    content = <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><RiLoader4Line className="size-4 animate-spin" />Waiting for provider…</span>;
+    content = <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><RiLoader4Line className="size-4 animate-spin" />{t("waitingProvider")}</span>;
   } else if (meta?.status === "error") {
-    content = <span title={meta.error} className="flex items-center gap-1.5 truncate font-medium text-red-700 dark:text-red-400"><RiCloseCircleLine className="size-4 shrink-0" /><span className="truncate">{meta.error || "API call failed"}</span></span>;
+    content = <span title={meta.error} className="flex items-center gap-1.5 truncate font-medium text-red-700 dark:text-red-400"><RiCloseCircleLine className="size-4 shrink-0" /><span className="truncate">{meta.error || t("apiCallFailed")}</span></span>;
   } else if (meta?.status === "success" && isMiss(meta) && (props.value === undefined || props.value === null || props.value === "")) {
-    content = NO_RESULT;
+    content = <NoResult />;
   } else if (meta?.status === "success") {
-    content = <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400"><RiCheckboxCircleLine className="size-4" />{String(props.value ?? "Completed")}</span>;
+    content = <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400"><RiCheckboxCircleLine className="size-4" />{String(props.value ?? t("completed"))}</span>;
   } else {
-    content = <span className="text-text-soft-400">Not run</span>;
+    content = <span className="text-text-soft-400">{t("notRun")}</span>;
   }
 
   return (
@@ -508,8 +518,8 @@ function IntegrationActionCell(props: ICellRendererParams<RowData> & { onRun?: (
         <button
           type="button"
           disabled={props.disabled}
-          title="Run this row"
-          aria-label="Run this row"
+          title={t("runRow")}
+          aria-label={t("runRow")}
           onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation();
@@ -526,6 +536,7 @@ function IntegrationActionCell(props: ICellRendererParams<RowData> & { onRun?: (
 
 /** Result cell for HTTP and formula columns: the value, or why there isn't one yet. */
 function RunnerValueCell(props: ICellRendererParams<RowData> & { onRun?: (rowId: string) => void; disabled?: boolean }) {
+  const t = useTranslations("gridMain.grid");
   if (props.node.rowPinned === "top") return props.valueFormatted ?? props.value ?? "";
   const meta = props.data?.__meta?.[props.colDef?.field ?? ""] as CellMeta | undefined;
   const inProgress = meta?.status === "queued" || meta?.status === "running" || meta?.status === "processing";
@@ -533,13 +544,13 @@ function RunnerValueCell(props: ICellRendererParams<RowData> & { onRun?: (rowId:
 
   let content: React.ReactNode;
   if (meta?.status === "queued") {
-    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiTimeLine className="size-4" />Queued…</span>;
+    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiTimeLine className="size-4" />{t("queued")}</span>;
   } else if (meta?.status === "running" || meta?.status === "processing") {
-    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" />Running…</span>;
+    content = <span className="flex items-center gap-1.5 text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" />{t("running")}</span>;
   } else if (meta?.status === "error") {
-    content = <span title={meta.error} className="flex items-center gap-1.5 truncate font-medium text-red-700 dark:text-red-400"><RiCloseCircleLine className="size-4 shrink-0" /><span className="truncate">{meta.error || "Run failed"}</span></span>;
+    content = <span title={meta.error} className="flex items-center gap-1.5 truncate font-medium text-red-700 dark:text-red-400"><RiCloseCircleLine className="size-4 shrink-0" /><span className="truncate">{meta.error || t("runFailed")}</span></span>;
   } else if (isMiss(meta) && text === "") {
-    content = NO_RESULT;
+    content = <NoResult />;
   } else {
     content = <span title={text}>{text}</span>;
   }
@@ -551,8 +562,8 @@ function RunnerValueCell(props: ICellRendererParams<RowData> & { onRun?: (rowId:
         <button
           type="button"
           disabled={props.disabled}
-          title="Run this row"
-          aria-label="Run this row"
+          title={t("runRow")}
+          aria-label={t("runRow")}
           onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation();
@@ -568,6 +579,8 @@ function RunnerValueCell(props: ICellRendererParams<RowData> & { onRun?: (rowId:
 }
 
 function IntegrationOutputCell(props: ICellRendererParams<RowData> & { sourceColumnKey?: string; valueType?: ColumnType; ungrouped?: boolean }) {
+  const t = useTranslations("gridMain.grid");
+  const format = useFormatter();
   if (props.node.rowPinned === "top") return props.value ?? "";
   if (props.value !== undefined && props.value !== null && props.value !== "") {
     const type = props.valueType ?? "text";
@@ -575,7 +588,7 @@ function IntegrationOutputCell(props: ICellRendererParams<RowData> & { sourceCol
       const src = props.value.trim();
       if (/^(?:https?:\/\/|data:image\/)/i.test(src)) {
         // eslint-disable-next-line @next/next/no-img-element
-        return <img src={src} alt="Generated result" className="h-8 max-w-full rounded object-cover" />;
+        return <img src={src} alt={t("generatedResult")} className="h-8 max-w-full rounded object-cover" />;
       }
     }
     const href = displayHref(props.value, type);
@@ -586,12 +599,12 @@ function IntegrationOutputCell(props: ICellRendererParams<RowData> & { sourceCol
       const raw = String(props.value);
       if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
       const parsed = new Date(raw);
-      if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleString();
+      if (!Number.isNaN(parsed.getTime())) return format.dateTime(parsed, { dateStyle: "short", timeStyle: "medium" });
     }
-    if (type === "number" && Number.isFinite(Number(props.value))) return Number(props.value).toLocaleString(undefined, props.ungrouped ? { useGrouping: false } : undefined);
+    if (type === "number" && Number.isFinite(Number(props.value))) return format.number(Number(props.value), props.ungrouped ? { useGrouping: false } : undefined);
     if (type === "boolean") {
       const checked = props.value === true || props.value === 1 || String(props.value).toLowerCase() === "true";
-      return <span className="flex items-center gap-1.5"><RiCheckboxCircleLine className={`size-4 ${checked ? "text-emerald-600 dark:text-emerald-400" : "text-text-disabled-300"}`} />{checked ? "True" : "False"}</span>;
+      return <span className="flex items-center gap-1.5"><RiCheckboxCircleLine className={`size-4 ${checked ? "text-emerald-600 dark:text-emerald-400" : "text-text-disabled-300"}`} />{checked ? t("true") : t("false")}</span>;
     }
     if (type === "json" || typeof props.value === "object") {
       const json = JSON.stringify(props.value);
@@ -603,12 +616,12 @@ function IntegrationOutputCell(props: ICellRendererParams<RowData> & { sourceCol
     ? props.data?.__meta?.[props.sourceColumnKey] as CellMeta | undefined
     : undefined;
   if (sourceMeta?.status === "queued" || sourceMeta?.status === "running" || sourceMeta?.status === "processing") {
-    return <span className="flex items-center gap-1.5 italic text-text-soft-400"><RiTimeLine className="size-4" />Waiting for result…</span>;
+    return <span className="flex items-center gap-1.5 italic text-text-soft-400"><RiTimeLine className="size-4" />{t("waitingResult")}</span>;
   }
   if (sourceMeta?.status === "error") {
-    return <span className="italic text-text-soft-400">Action failed</span>;
+    return <span className="italic text-text-soft-400">{t("actionFailed")}</span>;
   }
-  if (isMiss(sourceMeta)) return NO_RESULT;
+  if (isMiss(sourceMeta)) return <NoResult />;
   return "";
 }
 
@@ -618,6 +631,7 @@ function AddRowsControl(props: {
   onAdd: () => void;
   onCountChange: (count: number) => void;
 }) {
+  const t = useTranslations("gridMain.grid");
   return (
     <div className="flex h-full items-center gap-2 bg-bg-white-0 px-3">
       <button
@@ -627,7 +641,7 @@ function AddRowsControl(props: {
         className="flex items-center gap-1.5 rounded-lg border border-stroke-soft-200 px-2.5 py-[7px] text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:opacity-50"
       >
         <RiAddLine className="size-4" />
-        Add
+        {t("add")}
       </button>
       <input
         type="number"
@@ -639,7 +653,7 @@ function AddRowsControl(props: {
         }
         className="w-[68px] rounded-lg border border-stroke-soft-200 px-2 py-[7px] text-[13px] text-text-strong-950 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
-      <span className="text-[13px] text-text-sub-600">more rows at the bottom</span>
+      <span className="text-[13px] text-text-sub-600">{t("moreRowsAtBottom")}</span>
     </div>
   );
 }
@@ -669,6 +683,9 @@ export default function GridClient({
   view: TableView;
   onTableChanged?: () => void;
 }) {
+  const t = useTranslations("gridMain.grid");
+  const format = useFormatter();
+  const labelOf = useColumnTypeLabel();
   const dialogs = useDialogs();
   const [columns, setColumns] = useState(initialColumns);
   const [rowData, setRowData] = useState<RowData[]>(() => toRowData(initialRows));
@@ -968,7 +985,7 @@ export default function GridClient({
       let { response: res, data: d } = await requestPage(pageIndex);
       if (sequence !== refetchSequence.current) return;
       if (!res.ok) {
-        setError(d.error ?? "Could not load rows");
+        setError(d.error ?? t("loadRowsFailed"));
         return;
       }
       const safePage = clampGridPage(pageIndex, d.total);
@@ -976,7 +993,7 @@ export default function GridClient({
         ({ response: res, data: d } = await requestPage(safePage));
         if (sequence !== refetchSequence.current) return;
         if (!res.ok) {
-          setError(d.error ?? "Could not load rows");
+          setError(d.error ?? t("loadRowsFailed"));
           return;
         }
       }
@@ -1005,7 +1022,7 @@ export default function GridClient({
       setFillTargetRow(null);
       cursorRef.current = d.cursor;
     },
-    [table.id, appliedSearch, page],
+    [table.id, appliedSearch, page, t],
   );
 
   /**
@@ -1028,7 +1045,7 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          throw new Error(b.error ?? "Could not save the view");
+          throw new Error(b.error ?? t("saveViewFailed"));
         }
         saved = true;
         committedViewRef.current = next;
@@ -1036,7 +1053,7 @@ export default function GridClient({
         // Put back what the server still has, unless a newer save has already
         // replaced the optimistic view (that one decides the final state).
         if (sequence === viewSaveSequence.current) setView(committedViewRef.current);
-        setError(cause instanceof Error ? cause.message : "Could not save the view");
+        setError(cause instanceof Error ? cause.message : t("saveViewFailed"));
       } finally {
         viewSavesInFlight.current -= 1;
       }
@@ -1050,12 +1067,12 @@ export default function GridClient({
           await refetch(appliedSearch, 0);
         }
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Could not load rows");
+        setError(cause instanceof Error ? cause.message : t("loadRowsFailed"));
       } finally {
         setBusy(false);
       }
     },
-    [table.id, refetch, appliedSearch],
+    [table.id, refetch, appliedSearch, t],
   );
 
   const runSearch = useCallback(
@@ -1171,7 +1188,10 @@ export default function GridClient({
           setWatching(false);
           setPollSuspended(true);
           setError(
-            `Lost contact with the server while checking progress${cause instanceof Error ? ` (${cause.message})` : ""}. Reload the page to see the latest results.`,
+            t("lostContact", {
+              hasReason: cause instanceof Error ? "yes" : "no",
+              reason: cause instanceof Error ? cause.message : "",
+            }),
           );
           return;
         }
@@ -1185,7 +1205,7 @@ export default function GridClient({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [shouldPoll, table.id]);
+  }, [shouldPoll, table.id, t]);
 
   /* ---- mutations ---- */
 
@@ -1220,7 +1240,8 @@ export default function GridClient({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: columnTypeMeta(type).label,
+            // Stored as the new column's name (user-editable data); it starts as the English type label, never translated text.
+            name: columnTypeDefaultName(type),
             type,
             afterColumnId: addMenu?.afterColumnId,
             beforeColumnId: addMenu?.beforeColumnId,
@@ -1228,17 +1249,17 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          setError(b.error ?? "Could not add column");
+          setError(b.error ?? t("addColumnFailed"));
           return;
         }
         await refetch();
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Could not add column");
+        setError(cause instanceof Error ? cause.message : t("addColumnFailed"));
       } finally {
         setBusy(false);
       }
     },
-    [table.id, refetch, addMenu],
+    [table.id, refetch, addMenu, t],
   );
 
   const patchColumn = useCallback(
@@ -1250,10 +1271,10 @@ export default function GridClient({
         body: JSON.stringify(patch),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Could not update column");
+      if (!res.ok) throw new Error(data.error ?? t("updateColumnFailed"));
       await refetch();
     },
-    [refetch, table.id],
+    [refetch, table.id, t],
   );
 
   const duplicateColumn = useCallback(
@@ -1262,6 +1283,7 @@ export default function GridClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Stored as the new column's name (user data), so the suffix stays English.
           name: `${column.name} copy`,
           type: column.type,
           config: column.config,
@@ -1272,10 +1294,10 @@ export default function GridClient({
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Could not duplicate column");
+      if (!res.ok) throw new Error(data.error ?? t("duplicateColumnFailed"));
       await refetch();
     },
-    [refetch, table.id],
+    [refetch, table.id, t],
   );
 
   const splitColumn = useCallback(
@@ -1292,22 +1314,22 @@ export default function GridClient({
           },
         );
         const data: { columnsCreated?: number; rowsUpdated?: number; error?: string } = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error ?? "Could not split this column");
+        if (!response.ok) throw new Error(data.error ?? t("splitFailed"));
         await refetch();
-        setNotice(`Created ${data.columnsCreated ?? 0} text column${data.columnsCreated === 1 ? "" : "s"}.`);
+        setNotice(t("splitDone", { count: data.columnsCreated ?? 0 }));
       } finally {
         setBusy(false);
       }
     },
-    [refetch, table.id],
+    [refetch, table.id, t],
   );
 
   const dedupeColumn = useCallback(
     async (column: GridColumn) => {
       const confirmed = await dialogs.confirm({
-        title: `Remove duplicate ${column.name} rows?`,
-        description: `Rows with the same non-empty value in “${column.name}” will be deleted, keeping the first row. Other column values in those duplicate rows will also be deleted.`,
-        confirmLabel: "Remove duplicate rows",
+        title: t("dedupeTitle", { name: column.name }),
+        description: t("dedupeDescription", { name: column.name }),
+        confirmLabel: t("dedupeConfirm"),
         variant: "error",
       });
       if (!confirmed) return;
@@ -1320,7 +1342,7 @@ export default function GridClient({
           { method: "POST" },
         );
         const data: { deleted?: number; error?: string } = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error ?? "Could not remove duplicate rows");
+        if (!response.ok) throw new Error(data.error ?? t("dedupeFailed"));
         if (data.deleted) {
           undoStackRef.current = [];
           redoStackRef.current = [];
@@ -1332,13 +1354,13 @@ export default function GridClient({
         await refetch();
         const deleted = data.deleted ?? 0;
         setNotice(deleted
-          ? `Removed ${deleted.toLocaleString()} duplicate row${deleted === 1 ? "" : "s"}.`
-          : "No duplicate non-empty values were found.");
+          ? t("dedupeDone", { count: deleted })
+          : t("dedupeNone"));
       } finally {
         setBusy(false);
       }
     },
-    [dialogs, refetch, table.id],
+    [dialogs, refetch, table.id, t],
   );
 
   const deleteColumnFromMenu = useCallback(
@@ -1352,15 +1374,15 @@ export default function GridClient({
           !removing.has(candidate.key) && candidate.dependsOn.some((key) => removing.has(key)),
       );
       if (usedIn.length) {
-        setError(`“${column.name}” is used by ${usedIn.map((item) => item.name).join(", ")}. Remove those references first.`);
+        setError(t("columnInUse", { name: column.name, list: format.list(usedIn.map((item) => item.name)) }));
         return;
       }
       const ok = await dialogs.confirm({
-        title: outputs.length ? "Delete column and its outputs?" : "Delete column?",
+        title: outputs.length ? t("deleteColumnWithOutputsTitle") : t("deleteColumnTitle"),
         description: outputs.length
-          ? `“${column.name}” will be permanently deleted along with ${outputs.length} output column${outputs.length === 1 ? "" : "s"} (${outputs.map((output) => output.name).join(", ")}) and every value in them. This cannot be undone.`
-          : `“${column.name}” and every value in it will be permanently deleted. This cannot be undone.`,
-        confirmLabel: outputs.length ? `Delete ${outputs.length + 1} columns` : "Delete column",
+          ? t("deleteColumnWithOutputsDescription", { name: column.name, count: outputs.length, list: format.list(outputs.map((output) => output.name)) })
+          : t("deleteColumnDescription", { name: column.name }),
+        confirmLabel: outputs.length ? t("deleteColumnsConfirm", { count: outputs.length + 1 }) : t("deleteColumnConfirm"),
         variant: "error",
       });
       if (!ok) return;
@@ -1369,7 +1391,7 @@ export default function GridClient({
         { method: "DELETE" },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Could not delete column");
+      if (!res.ok) throw new Error(data.error ?? t("deleteColumnFailed"));
       // Cell history can reference this column, so discard it after a
       // destructive schema change instead of offering a stale undo action.
       undoStackRef.current = [];
@@ -1377,16 +1399,16 @@ export default function GridClient({
       setHistoryCounts({ undo: 0, redo: 0 });
       await refetch();
     },
-    [columns, dialogs, refetch, table.id],
+    [columns, dialogs, format, refetch, table.id, t],
   );
 
   const deleteSelectedRows = useCallback(async () => {
     if (!selectedRowIds.length) return;
     const count = selectedRowIds.length;
     const ok = await dialogs.confirm({
-      title: `Delete ${count} row${count === 1 ? "" : "s"}?`,
-      description: "The selected rows and all of their values will be permanently deleted. This cannot be undone.",
-      confirmLabel: `Delete ${count} row${count === 1 ? "" : "s"}`,
+      title: t("deleteRowsTitle", { count }),
+      description: t("deleteRowsDescription"),
+      confirmLabel: t("deleteRowsConfirm", { count }),
       variant: "error",
     });
     if (!ok) return;
@@ -1400,7 +1422,7 @@ export default function GridClient({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Could not delete rows");
+        setError(data.error ?? t("deleteRowsFailed"));
         return;
       }
       setSelectedRowIds([]);
@@ -1411,12 +1433,12 @@ export default function GridClient({
       undoStackRef.current = [];
       redoStackRef.current = [];
       setHistoryCounts({ undo: 0, redo: 0 });
-      setNotice(`Deleted ${data.deleted} row${data.deleted === 1 ? "" : "s"}.`);
+      setNotice(t("deleteRowsDone", { count: data.deleted }));
       await refetch();
     } finally {
       setBusy(false);
     }
-  }, [dialogs, refetch, selectedRowIds, table.id]);
+  }, [dialogs, refetch, selectedRowIds, table.id, t]);
 
   const exportSelectedRows = useCallback(async () => {
     if (!selectedRowIds.length) return;
@@ -1439,7 +1461,7 @@ export default function GridClient({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Could not export the selected rows");
+        setError(data.error ?? t("exportFailed"));
         return;
       }
 
@@ -1453,13 +1475,13 @@ export default function GridClient({
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      setNotice(`Exported ${orderedRowIds.length.toLocaleString()} selected row${orderedRowIds.length === 1 ? "" : "s"}.`);
+      setNotice(t("exportDone", { count: orderedRowIds.length }));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not export the selected rows");
+      setError(cause instanceof Error ? cause.message : t("exportFailed"));
     } finally {
       setBusy(false);
     }
-  }, [allMatchingSelected, displayedColumns, rowData, selectedRowIds, table.id]);
+  }, [allMatchingSelected, displayedColumns, rowData, selectedRowIds, table.id, t]);
 
   const appendRows = useCallback(async () => {
     setBusy(true);
@@ -1472,26 +1494,26 @@ export default function GridClient({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? "Could not add rows");
+        setError(data.error ?? t("addRowsFailed"));
         return;
       }
 
       const created = Array.isArray(data.rows) ? data.rows.length : addRows;
       const hasQuery = Boolean(appliedSearch) || activeFilterCount > 0 || sorts.length > 0;
       if (hasQuery) {
-        setNotice(`Added ${created} row${created === 1 ? "" : "s"}. Clear filters or sorting to view them at the end.`);
+        setNotice(t("addedRowsFiltered", { count: created }));
         await refetch();
       } else {
         const lastPage = clampGridPage(Number.MAX_SAFE_INTEGER, unfiltered + created);
-        setNotice(`Added ${created} row${created === 1 ? "" : "s"} and opened the last page.`);
+        setNotice(t("addedRowsLastPage", { count: created }));
         await refetch("", lastPage);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not add rows");
+      setError(cause instanceof Error ? cause.message : t("addRowsFailed"));
     } finally {
       setBusy(false);
     }
-  }, [table.id, addRows, refetch, appliedSearch, activeFilterCount, sorts.length, unfiltered]);
+  }, [table.id, addRows, refetch, appliedSearch, activeFilterCount, sorts.length, unfiltered, t]);
 
   const goToPage = useCallback(async (nextPage: number) => {
     const target = clampGridPage(nextPage, rowCount);
@@ -1504,11 +1526,11 @@ export default function GridClient({
     try {
       await refetch(appliedSearch, target);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not load rows");
+      setError(cause instanceof Error ? cause.message : t("loadRowsFailed"));
     } finally {
       setBusy(false);
     }
-  }, [appliedSearch, page, refetch, rowCount]);
+  }, [appliedSearch, page, refetch, rowCount, t]);
 
   const syncHistoryCounts = useCallback(() => {
     setHistoryCounts({
@@ -1531,20 +1553,20 @@ export default function GridClient({
     options: { lockAlreadyHeld?: boolean; recordHistory?: boolean; pendingLabel?: string } = {},
   ) => {
     if (!updates.length) {
-      setNotice("The selection has no editable cells.");
+      setNotice(t("noEditableCells"));
       return false;
     }
 
     if (!options.lockAlreadyHeld) {
       if (cellOperationRef.current) {
-        setNotice("Another cell update is still in progress.");
+        setNotice(t("updateInProgress"));
         return false;
       }
       cellOperationRef.current = true;
     }
 
     setBusy(true);
-    setCellSavingLabel(options.pendingLabel ?? "Saving changes…");
+    setCellSavingLabel(options.pendingLabel ?? t("savingChanges"));
     setError(null);
     try {
       let response: Response;
@@ -1555,12 +1577,12 @@ export default function GridClient({
           body: JSON.stringify({ updates }),
         });
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Could not update cells");
+        setError(cause instanceof Error ? cause.message : t("updateCellsFailed"));
         return false;
       }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? "Could not update cells");
+        setError(data.error ?? t("updateCellsFailed"));
         return false;
       }
       if (options.recordHistory !== false && Array.isArray(data.previousValues)) {
@@ -1584,8 +1606,8 @@ export default function GridClient({
         // The database mutation already succeeded. Keep history aligned with
         // that saved state even if a transient refresh request fails.
         setError(cause instanceof Error
-          ? `Changes were saved, but the table could not refresh: ${cause.message}`
-          : "Changes were saved, but the table could not refresh.");
+          ? t("savedRefreshFailedReason", { reason: cause.message })
+          : t("savedRefreshFailed"));
         return true;
       }
       if (successMessage) setNotice(successMessage);
@@ -1597,7 +1619,7 @@ export default function GridClient({
         setCellSavingLabel(null);
       }
     }
-  }, [recordCellCommand, refetch, startWatching, table.id]);
+  }, [recordCellCommand, refetch, startWatching, table.id, t]);
 
   const onCellValueChanged = useCallback(
     async (event: CellValueChangedEvent<RowData>) => {
@@ -1624,13 +1646,13 @@ export default function GridClient({
     syncHistoryCounts();
     const applied = await persistCellUpdates(
       command.undo,
-      `Undid ${command.undo.length.toLocaleString()} cell change${command.undo.length === 1 ? "" : "s"}.`,
+      t("undone", { count: command.undo.length }),
       { recordHistory: false },
     );
     if (applied) redoStackRef.current.push(command);
     else undoStackRef.current.push(command);
     syncHistoryCounts();
-  }, [persistCellUpdates, syncHistoryCounts]);
+  }, [persistCellUpdates, syncHistoryCounts, t]);
 
   const redoLastCellChange = useCallback(async () => {
     if (cellOperationRef.current) return;
@@ -1639,13 +1661,13 @@ export default function GridClient({
     syncHistoryCounts();
     const applied = await persistCellUpdates(
       command.redo,
-      `Redid ${command.redo.length.toLocaleString()} cell change${command.redo.length === 1 ? "" : "s"}.`,
+      t("redone", { count: command.redo.length }),
       { recordHistory: false },
     );
     if (applied) undoStackRef.current.push(command);
     else redoStackRef.current.push(command);
     syncHistoryCounts();
-  }, [persistCellUpdates, syncHistoryCounts]);
+  }, [persistCellUpdates, syncHistoryCounts, t]);
 
   const selectedCellMatrix = useCallback((): unknown[][] | null => {
     if (!normalizedCellRange) return null;
@@ -1672,9 +1694,9 @@ export default function GridClient({
     }
     await persistCellUpdates(
       updates,
-      `Cleared ${updates.length.toLocaleString()} cell${updates.length === 1 ? "" : "s"}.`,
+      t("cleared", { count: updates.length }),
     );
-  }, [displayedColumns, normalizedCellRange, persistCellUpdates, rowData]);
+  }, [displayedColumns, normalizedCellRange, persistCellUpdates, rowData, t]);
 
   const onGridCopy = useCallback((event: React.ClipboardEvent<HTMLDivElement>) => {
     if (isEditingClipboardTarget(event.target)) return;
@@ -1687,8 +1709,8 @@ export default function GridClient({
       // Some browsers reject custom clipboard MIME types; text/plain remains.
     }
     event.preventDefault();
-    setNotice(`Copied ${matrix.length * (matrix[0]?.length ?? 0)} cell${matrix.length * (matrix[0]?.length ?? 0) === 1 ? "" : "s"}.`);
-  }, [selectedCellMatrix]);
+    setNotice(t("copied", { count: matrix.length * (matrix[0]?.length ?? 0) }));
+  }, [selectedCellMatrix, t]);
 
   const onGridCut = useCallback((event: React.ClipboardEvent<HTMLDivElement>) => {
     if (isEditingClipboardTarget(event.target)) return;
@@ -1743,7 +1765,7 @@ export default function GridClient({
     const desiredRows = repeatIntoSelection ? selectionRows : sourceRows;
     const desiredColumns = repeatIntoSelection ? selectionColumns : sourceColumns;
     if (desiredRows > 1_000) {
-      setError("Paste supports up to 1,000 rows at a time. Use Import for a larger sheet.");
+      setError(t("pasteTooManyRows"));
       return;
     }
     const existingTargetColumns = displayedColumns.slice(
@@ -1752,23 +1774,23 @@ export default function GridClient({
     );
     const missingColumnCount = desiredColumns - existingTargetColumns.length;
     if (missingColumnCount > 100) {
-      setError("Paste can create up to 100 new columns at a time. Use Import for a wider dataset.");
+      setError(t("pasteTooManyColumns"));
       return;
     }
     const editableColumnCount = existingTargetColumns.filter((column) => isStaticColumnType(column.type)).length
       + missingColumnCount;
     const editableCellCount = desiredRows * editableColumnCount;
     if (editableCellCount > 50_000) {
-      setError("Paste is limited to 50,000 editable cells at a time.");
+      setError(t("pasteTooManyCells"));
       return;
     }
     if (cellOperationRef.current) {
-      setNotice("Another cell update is still in progress.");
+      setNotice(t("updateInProgress"));
       return;
     }
     cellOperationRef.current = true;
     setBusy(true);
-    setCellSavingLabel("Pasting…");
+    setCellSavingLabel(t("pasting"));
     setError(null);
 
     void (async () => {
@@ -1786,7 +1808,7 @@ export default function GridClient({
           const response = await fetch(`/api/grid/tables/${table.id}/selection?${qs}`);
           const data: { rowIds?: string[]; error?: string } = await response.json().catch(() => ({}));
           if (!response.ok || !Array.isArray(data.rowIds)) {
-            setError(data.error ?? "Could not resolve rows for this paste");
+            setError(data.error ?? t("pasteResolveRowsFailed"));
             return;
           }
           const startOffset = page * GRID_PAGE_SIZE + normalizedCellRange.startRow;
@@ -1794,19 +1816,20 @@ export default function GridClient({
         }
 
         if (missingColumnCount > 0) {
-          setCellSavingLabel(`Adding ${missingColumnCount.toLocaleString()} column${missingColumnCount === 1 ? "" : "s"}…`);
+          setCellSavingLabel(t("addingColumns", { count: missingColumnCount }));
           for (let index = 0; index < missingColumnCount; index += 1) {
             const response = await fetch(`/api/grid/tables/${table.id}/columns`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                // Stored as the column name (user data), so it stays English.
                 name: `Column ${columns.length + index + 1}`,
                 type: "text",
               }),
             });
             const data: { column?: GridColumn; error?: string } = await response.json().catch(() => ({}));
             if (!response.ok || !data.column) {
-              throw new Error(data.error ?? "Could not add columns for this paste");
+              throw new Error(data.error ?? t("pasteAddColumnsFailed"));
             }
             targetColumns.push(data.column);
             addedColumns += 1;
@@ -1815,7 +1838,7 @@ export default function GridClient({
 
         if (targetRowIds.length < desiredRows) {
           const missingRowCount = desiredRows - targetRowIds.length;
-          setCellSavingLabel(`Adding ${missingRowCount.toLocaleString()} row${missingRowCount === 1 ? "" : "s"}…`);
+          setCellSavingLabel(t("addingRows", { count: missingRowCount }));
           const addRowsResponse = await fetch(`/api/grid/tables/${table.id}/rows`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1823,11 +1846,11 @@ export default function GridClient({
           });
           const addRowsData: { rows?: GridRow[]; error?: string } = await addRowsResponse.json().catch(() => ({}));
           if (!addRowsResponse.ok || !Array.isArray(addRowsData.rows)) {
-            throw new Error(addRowsData.error ?? "Could not add rows for this paste");
+            throw new Error(addRowsData.error ?? t("pasteAddRowsFailed"));
           }
           const createdRowIds = addRowsData.rows.map((row) => row.id);
           if (createdRowIds.length !== missingRowCount) {
-            throw new Error("The table could not create every row needed for this paste");
+            throw new Error(t("pasteCreateRowsFailed"));
           }
           targetRowIds = [...targetRowIds, ...createdRowIds];
           addedRows = createdRowIds.length;
@@ -1865,18 +1888,15 @@ export default function GridClient({
             && sorts.length === 0
             && normalizedCellRange.startRow + desiredRows <= GRID_PAGE_SIZE;
         if (selectionFitsCurrentPage) setCellRange(pastedRange);
-        const expansionSummary = [
-          addedRows ? `${addedRows.toLocaleString()} row${addedRows === 1 ? "" : "s"}` : "",
-          addedColumns ? `${addedColumns.toLocaleString()} column${addedColumns === 1 ? "" : "s"}` : "",
-        ].filter(Boolean).join(" and ");
+        const expansion = addedRows && addedColumns ? "both" : addedRows ? "rows" : addedColumns ? "columns" : "none";
         const applied = await persistCellUpdates(
           updates,
-          `Pasted ${updates.length.toLocaleString()} editable cell${updates.length === 1 ? "" : "s"}${expansionSummary ? ` after adding ${expansionSummary}` : ""}.`,
-          { lockAlreadyHeld: true, pendingLabel: "Pasting…" },
+          t("pasted", { count: updates.length, expansion, rows: addedRows, columns: addedColumns }),
+          { lockAlreadyHeld: true, pendingLabel: t("pasting") },
         );
         if (applied && selectionFitsCurrentPage) setCellRange(pastedRange);
       } catch (cause) {
-        const message = cause instanceof Error ? cause.message : "Could not paste cells";
+        const message = cause instanceof Error ? cause.message : t("pasteFailed");
         if (addedColumns || addedRows) {
           await refetch().catch(() => undefined);
         }
@@ -1887,7 +1907,7 @@ export default function GridClient({
         setCellSavingLabel(null);
       }
     })();
-  }, [activeFilterCount, appliedSearch, busy, columns.length, displayedColumns, normalizedCellRange, page, persistCellUpdates, refetch, rowData, sorts.length, table.id]);
+  }, [activeFilterCount, appliedSearch, busy, columns.length, displayedColumns, normalizedCellRange, page, persistCellUpdates, refetch, rowData, sorts.length, table.id, t]);
 
   const onGridKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (isEditingClipboardTarget(event.target)) return;
@@ -1965,12 +1985,12 @@ export default function GridClient({
     }
     if (cellOperationRef.current) {
       setFillTargetRow(null);
-      setNotice("Another cell update is still in progress.");
+      setNotice(t("updateInProgress"));
       return;
     }
     cellOperationRef.current = true;
     setBusy(true);
-    setCellSavingLabel("Duplicating…");
+    setCellSavingLabel(t("duplicating"));
     setFillTargetRow(targetRow);
 
     // Yield a frame before doing any copy work or network I/O. This guarantees
@@ -2012,11 +2032,11 @@ export default function GridClient({
     try {
       applied = await persistCellUpdates(
         updates,
-        `Duplicated ${updates.length.toLocaleString()} editable cell${updates.length === 1 ? "" : "s"}.`,
-        { lockAlreadyHeld: true, pendingLabel: "Duplicating…" },
+        t("duplicated", { count: updates.length }),
+        { lockAlreadyHeld: true, pendingLabel: t("duplicating") },
       );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not duplicate cells");
+      setError(cause instanceof Error ? cause.message : t("duplicateCellsFailed"));
     } finally {
       cellOperationRef.current = false;
       setBusy(false);
@@ -2024,7 +2044,7 @@ export default function GridClient({
       setFillTargetRow(null);
     }
     setCellRange(applied ? expandedRange : originalRange);
-  }, [cellRange, displayedColumns, normalizedCellRange, persistCellUpdates, rowData]);
+  }, [cellRange, displayedColumns, normalizedCellRange, persistCellUpdates, rowData, t]);
 
   const onFillHandlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (!normalizedCellRange || event.button !== 0 || busy || cellOperationRef.current) return;
@@ -2139,20 +2159,20 @@ export default function GridClient({
       });
       if (!res.ok) {
         const b = await res.json().catch(() => ({}));
-        throw new Error(b.error ?? "Could not change Auto-run");
+        throw new Error(b.error ?? t("autoRunFailed"));
       }
       onTableChanged?.();
     } catch (cause) {
       setAutoRun(previous);
-      setError(cause instanceof Error ? cause.message : "Could not change Auto-run");
+      setError(cause instanceof Error ? cause.message : t("autoRunFailed"));
     }
-  }, [autoRun, table.id, onTableChanged]);
+  }, [autoRun, table.id, onTableChanged, t]);
 
   const runColumn = useCallback(async (column: GridColumn, rowIds?: string[], options: { onlyEmpty?: boolean } = {}) => {
     // An empty list means "no rows", never "every row".
     if (rowIds && rowIds.length === 0) {
       setRunMenu(null);
-      setNotice("There are no rows to run.");
+      setNotice(t("noRowsToRun"));
       return;
     }
     setBusy(true);
@@ -2164,35 +2184,35 @@ export default function GridClient({
         body: JSON.stringify({ columnKey: column.key, rowIds, ...(options.onlyEmpty ? { onlyEmpty: true } : {}) }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? "Could not start column");
+      if (!response.ok) throw new Error(data.error ?? t("startColumnFailed"));
       setActiveJobs(data.activeJobs ?? 0);
       startWatching();
       await refetch();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not start column");
+      setError(cause instanceof Error ? cause.message : t("startColumnFailed"));
     } finally {
       setRunMenu(null);
       setBusy(false);
     }
-  }, [refetch, startWatching, table.id]);
+  }, [refetch, startWatching, table.id, t]);
 
   const stopRun = useCallback(async () => {
     setStopping(true);
     try {
       const response = await fetch(`/api/grid/tables/${table.id}/run`, { method: "DELETE" });
       const data: { cancelled?: number; reset?: number; activeJobs?: number; error?: string } = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? "Could not stop the run");
+      if (!response.ok) throw new Error(data.error ?? t("stopFailed"));
       graceUntilRef.current = 0;
       setActiveJobs(data.activeJobs ?? 0);
       const total = (data.cancelled ?? 0) + (data.reset ?? 0);
-      setNotice(total > 0 ? `Stopped. ${total.toLocaleString()} queued cell${total === 1 ? "" : "s"} cleared.` : "Nothing was running.");
+      setNotice(total > 0 ? t("stopped", { count: total }) : t("nothingRunning"));
       await refetch();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not stop the run");
+      setError(cause instanceof Error ? cause.message : t("stopFailed"));
     } finally {
       setStopping(false);
     }
-  }, [refetch, table.id]);
+  }, [refetch, table.id, t]);
 
   /* ---- column defs ---- */
 
@@ -2249,7 +2269,7 @@ export default function GridClient({
       const res = await fetch(`/api/grid/tables/${table.id}/selection?${qs}`);
       const data: { rowIds?: string[]; error?: string } = await res.json().catch(() => ({}));
       if (!res.ok || !Array.isArray(data.rowIds)) {
-        setError(data.error ?? "Could not select all matching rows");
+        setError(data.error ?? t("selectAllFailed"));
         return;
       }
       setSelectedRowIds(data.rowIds);
@@ -2257,7 +2277,7 @@ export default function GridClient({
     } finally {
       setBusy(false);
     }
-  }, [appliedSearch, table.id]);
+  }, [appliedSearch, table.id, t]);
 
   const onDisplayedColumnsChanged = useCallback((event: DisplayedColumnsChangedEvent<RowData>) => {
     const known = new Set(visibleColumns.map((column) => column.key));
@@ -2316,14 +2336,14 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          throw new Error(b.error ?? "Could not move the column");
+          throw new Error(b.error ?? t("moveColumnFailed"));
         }
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Could not move the column");
+        setError(cause instanceof Error ? cause.message : t("moveColumnFailed"));
         await refetch().catch(() => undefined);
       }
     })();
-  }, [columns, hidden, pinned, refetch, table.id]);
+  }, [columns, hidden, pinned, refetch, table.id, t]);
 
   const selectColumn = useCallback((columnKey: string, extend: boolean) => {
     if (!rowData.length) return;
@@ -2485,17 +2505,15 @@ export default function GridClient({
     // change to a plain column replaces with {}: that is not undoable.
     if ((column.type === "formula" || column.type === "http") && isStaticColumnType(type)) {
       const ok = await dialogs.confirm({
-        title: `Change ${column.name} to a ${columnTypeMeta(type).label} column?`,
-        description: column.type === "formula"
-          ? "The formula will be discarded and the column will become a plain column. Existing values stay, but they will no longer be calculated."
-          : "The HTTP request setup (URL, headers, body and response path) will be discarded and the column will become a plain column. Existing values stay, but they will no longer be fetched.",
-        confirmLabel: "Change type",
+        title: t("changeTypeTitle", { name: column.name, type: labelOf(type) }),
+        description: column.type === "formula" ? t("changeTypeFormula") : t("changeTypeHttp"),
+        confirmLabel: t("changeTypeConfirm"),
         variant: "error",
       });
       if (!ok) return;
     }
     await patchColumn(column, { type, config: {} });
-  }, [dialogs, patchColumn]);
+  }, [dialogs, labelOf, patchColumn, t]);
 
   const pinnedTop = useMemo<RowData[]>(
     () => [{ __id: "__coverage", __meta: {}, ...coverage }],
@@ -2509,13 +2527,13 @@ export default function GridClient({
   const configureProps = (column: GridColumn): { configureLabel?: string; onConfigure?: () => void } => {
     switch (column.type) {
       case "enrichment":
-        return { configureLabel: "Edit enrichment", onConfigure: () => setEnrichmentPosition({ column }) };
+        return { configureLabel: t("editEnrichment"), onConfigure: () => setEnrichmentPosition({ column }) };
       case "ai":
-        return { configureLabel: "Edit AI column", onConfigure: () => setAiPosition({ column }) };
+        return { configureLabel: t("editAi"), onConfigure: () => setAiPosition({ column }) };
       case "http":
-        return { configureLabel: "Edit HTTP API", onConfigure: () => setConfiguring({ type: "http", column }) };
+        return { configureLabel: t("editHttp"), onConfigure: () => setConfiguring({ type: "http", column }) };
       case "formula":
-        return { configureLabel: "Edit formula", onConfigure: () => setConfiguring({ type: "formula", column }) };
+        return { configureLabel: t("editFormula"), onConfigure: () => setConfiguring({ type: "formula", column }) };
       default:
         return {};
     }
@@ -2539,7 +2557,7 @@ export default function GridClient({
             }`}
           >
             <RiRefreshLine className={`size-4 ${autoRun ? "text-emerald-500" : "text-text-disabled-300"}`} />
-            Auto-run
+            {t("autoRun")}
           </button>
           <div className="h-5 w-px bg-bg-soft-200" />
           <span className="flex items-center gap-1.5 px-2.5 py-[7px] text-[13px] text-text-sub-600">
@@ -2552,7 +2570,7 @@ export default function GridClient({
           <div className="flex items-center gap-1.5 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 py-[3px] pl-2.5 pr-[3px] text-[13px] font-medium text-blue-700 dark:text-blue-400">
             <RiLoader4Line className="size-4 animate-spin" />
             <span>
-              Running{activeJobs > 0 ? ` · ${activeJobs.toLocaleString()} left` : ""}
+              {activeJobs > 0 ? t("runningLeft", { count: activeJobs }) : t("runningBanner")}
             </span>
             <button
               type="button"
@@ -2561,7 +2579,7 @@ export default function GridClient({
               className="flex items-center gap-1 rounded-md bg-bg-white-0 px-2 py-1 text-[12px] font-semibold text-red-600 dark:text-red-400 shadow-sm ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
             >
               <RiStopCircleLine className="size-3.5" />
-              {stopping ? "Stopping…" : "Stop"}
+              {stopping ? t("stopping") : t("stop")}
             </button>
           </div>
         )}
@@ -2571,14 +2589,14 @@ export default function GridClient({
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50"
         >
           <RiTableLine className="size-4 text-text-soft-400" />
-          Default view
+          {t("defaultView")}
         </button>
 
         <div className="flex items-center rounded-lg border border-stroke-soft-200">
           <button
             type="button"
-            aria-label="Undo"
-            title="Undo (Ctrl/Cmd+Z)"
+            aria-label={t("undo")}
+            title={t("undoTitle")}
             disabled={busy || historyCounts.undo === 0}
             onClick={() => void undoLastCellChange()}
             className="rounded-l-lg p-[7px] text-text-sub-600 transition hover:bg-bg-weak-50 disabled:cursor-not-allowed disabled:text-text-disabled-300"
@@ -2588,8 +2606,8 @@ export default function GridClient({
           <div className="h-5 w-px bg-bg-soft-200" />
           <button
             type="button"
-            aria-label="Redo"
-            title="Redo (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)"
+            aria-label={t("redo")}
+            title={t("redoTitle")}
             disabled={busy || historyCounts.redo === 0}
             onClick={() => void redoLastCellChange()}
             className="rounded-r-lg p-[7px] text-text-sub-600 transition hover:bg-bg-weak-50 disabled:cursor-not-allowed disabled:text-text-disabled-300"
@@ -2600,7 +2618,7 @@ export default function GridClient({
 
         <ToolbarToggle
           icon={RiLayoutColumnLine}
-          label={`${visibleColumns.length}/${columns.length} columns`}
+          label={t("columnsCount", { visible: visibleColumns.length, total: columns.length })}
           active={panel?.name === "columns"}
           highlight={hidden.length > 0}
           onClick={openPanel("columns")}
@@ -2608,13 +2626,13 @@ export default function GridClient({
 
         <span className="flex items-center gap-1.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-text-strong-950">
           <RiTableLine className="size-4 text-text-soft-400" />
-          {rowCount}/{unfiltered} rows
+          {t("rowsCount", { shown: rowCount, total: unfiltered })}
         </span>
 
         <ToolbarToggle
           icon={RiFilter3Line}
           label={activeFilterCount ? String(activeFilterCount) : undefined}
-          title="Filter"
+          title={t("filter")}
           active={panel?.name === "filter"}
           highlight={activeFilterCount > 0}
           onClick={openPanel("filter")}
@@ -2622,14 +2640,14 @@ export default function GridClient({
         <ToolbarToggle
           icon={RiSortDesc}
           label={sorts.length ? String(sorts.length) : undefined}
-          title="Sort"
+          title={t("sort")}
           active={panel?.name === "sort"}
           highlight={sorts.length > 0}
           onClick={openPanel("sort")}
         />
         <ToolbarToggle
           icon={RiSearchLine}
-          title="Search"
+          title={t("search")}
           active={panel?.name === "search"}
           highlight={appliedSearch.length > 0}
           onClick={openPanel("search")}
@@ -2644,7 +2662,7 @@ export default function GridClient({
             }}
             className="flex items-center gap-1 rounded-md bg-blue-50 dark:bg-blue-500/10 px-2 py-1 text-[12px] font-medium text-blue-700 dark:text-blue-400"
           >
-            “{appliedSearch}”
+            {t("searchChip", { query: appliedSearch })}
             <RiCloseLine className="size-3.5" />
           </button>
         )}
@@ -2654,7 +2672,7 @@ export default function GridClient({
         <div className="ml-auto flex items-center gap-1.5">
           {selectedRowIds.length > 0 && (
             <span className="rounded-md bg-blue-50 dark:bg-blue-500/10 px-2.5 py-[7px] text-[13px] font-medium text-blue-700 dark:text-blue-400">
-              {selectedRowIds.length} selected
+              {t("selectedCount", { count: selectedRowIds.length })}
             </span>
           )}
           <button
@@ -2663,7 +2681,7 @@ export default function GridClient({
             className="flex items-center gap-1.5 rounded-lg border border-stroke-soft-200 px-2.5 py-[7px] text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50"
           >
             <RiUploadCloud2Line className="size-4 text-text-soft-400" />
-            Import
+            {t("import")}
           </button>
           <button
             type="button"
@@ -2671,7 +2689,7 @@ export default function GridClient({
             className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-[7px] text-[13px] font-medium text-white transition hover:bg-blue-700"
           >
             {selectedRowIds.length ? <RiMore2Line className="size-4" /> : <RiToolsLine className="size-4" />}
-            Actions
+            {t("actions")}
             <RiArrowDownSLine className="size-4" />
           </button>
         </div>
@@ -2681,8 +2699,8 @@ export default function GridClient({
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-primary-alpha-20 bg-primary-alpha-10 px-3 py-2 text-[13px] text-text-sub-600">
           <span>
             {allMatchingSelected
-              ? `All ${rowCount.toLocaleString()} matching rows are selected.`
-              : `${selectedOnPage.toLocaleString()} row${selectedOnPage === 1 ? "" : "s"} on this page selected.`}
+              ? t("allMatchingSelected", { count: rowCount })
+              : t("pageRowsSelected", { count: selectedOnPage })}
           </span>
           <div className="flex items-center gap-3 whitespace-nowrap">
             {!allMatchingSelected && selectedOnPage === pageRowIds.length && rowCount > pageRowIds.length && (
@@ -2692,7 +2710,7 @@ export default function GridClient({
                 disabled={busy}
                 className="font-semibold text-primary-base hover:text-primary-dark disabled:opacity-50"
               >
-                Select all {rowCount.toLocaleString()} matching rows
+                {t("selectAllMatching", { count: rowCount })}
               </button>
             )}
             <button
@@ -2703,7 +2721,7 @@ export default function GridClient({
               }}
               className="font-medium text-text-soft-400 hover:text-text-strong-950"
             >
-              Clear selection
+              {t("clearSelection")}
             </button>
           </div>
         </div>
@@ -2775,16 +2793,16 @@ export default function GridClient({
       <div className="flex min-h-14 shrink-0 items-center justify-between gap-4 border-t border-stroke-soft-200 bg-bg-white-0 px-3 text-[13px] text-text-sub-600">
         <AddRowsControl addRows={addRows} busy={busy} onAdd={appendRows} onCountChange={setAddRows} />
         <span className="ml-auto whitespace-nowrap tabular-nums">
-          {visibleRange.start.toLocaleString()}–{visibleRange.end.toLocaleString()} of {rowCount.toLocaleString()}
+          {t("rangeOf", { start: visibleRange.start, end: visibleRange.end, total: rowCount })}
         </span>
         <div className="flex items-center gap-1.5">
-          <button type="button" disabled={busy || page === 0} onClick={() => void goToPage(0)} className="rounded-lg border border-stroke-soft-200 px-2.5 py-1.5 font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40">First</button>
-          <button type="button" aria-label="Previous page" disabled={busy || page === 0} onClick={() => void goToPage(page - 1)} className="rounded-lg border border-stroke-soft-200 p-1.5 text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40"><RiArrowLeftSLine className="size-4" /></button>
+          <button type="button" disabled={busy || page === 0} onClick={() => void goToPage(0)} className="rounded-lg border border-stroke-soft-200 px-2.5 py-1.5 font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40">{t("first")}</button>
+          <button type="button" aria-label={t("previousPage")} disabled={busy || page === 0} onClick={() => void goToPage(page - 1)} className="rounded-lg border border-stroke-soft-200 p-1.5 text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40"><RiArrowLeftSLine className="size-4" /></button>
           <label className="flex items-center gap-1.5 tabular-nums">
-            <span>Page</span>
+            <span>{t("page")}</span>
             <input
               key={page}
-              aria-label="Page number"
+              aria-label={t("pageNumber")}
               type="number"
               min={1}
               max={totalPages}
@@ -2804,10 +2822,10 @@ export default function GridClient({
               }}
               className="w-16 rounded-lg border border-stroke-soft-200 px-2 py-1.5 text-center text-text-strong-950 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
-            <span>of {totalPages}</span>
+            <span>{t("pageOf", { total: totalPages })}</span>
           </label>
-          <button type="button" aria-label="Next page" disabled={busy || page >= totalPages - 1} onClick={() => void goToPage(page + 1)} className="rounded-lg border border-stroke-soft-200 p-1.5 text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40"><RiArrowRightSLine className="size-4" /></button>
-          <button type="button" disabled={busy || page >= totalPages - 1} onClick={() => void goToPage(totalPages - 1)} className="rounded-lg border border-stroke-soft-200 px-2.5 py-1.5 font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40">Last</button>
+          <button type="button" aria-label={t("nextPage")} disabled={busy || page >= totalPages - 1} onClick={() => void goToPage(page + 1)} className="rounded-lg border border-stroke-soft-200 p-1.5 text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40"><RiArrowRightSLine className="size-4" /></button>
+          <button type="button" disabled={busy || page >= totalPages - 1} onClick={() => void goToPage(totalPages - 1)} className="rounded-lg border border-stroke-soft-200 px-2.5 py-1.5 font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-40">{t("last")}</button>
         </div>
       </div>
 
@@ -2816,14 +2834,14 @@ export default function GridClient({
         <Popover anchorRect={runMenu.rect} onClose={closeRunMenu} width={260}>
           <div className="p-2">
             <p className="truncate px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-text-soft-400">
-              Run {runMenu.column.name}
+              {t("runMenuTitle", { name: runMenu.column.name })}
             </p>
             {selectedRowIds.length > 0 && (
-              <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, selectedRowIds)} className="flex w-full items-center gap-2 rounded-lg bg-primary-alpha-10 px-3 py-2 text-left text-[13px] font-semibold text-primary-base hover:bg-primary-alpha-20 disabled:opacity-50"><RiPlayLine className="size-4" />Run {selectedRowIds.length.toLocaleString()} selected row{selectedRowIds.length === 1 ? "" : "s"}</button>
+              <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, selectedRowIds)} className="flex w-full items-center gap-2 rounded-lg bg-primary-alpha-10 px-3 py-2 text-left text-[13px] font-semibold text-primary-base hover:bg-primary-alpha-20 disabled:opacity-50"><RiPlayLine className="size-4" />{t("runSelected", { count: selectedRowIds.length })}</button>
             )}
-            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, rowData.slice(0, 10).map((row) => row.__id))} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />Run first 10 rows on this page</button>
-            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />Run all rows</button>
-            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, undefined, { onlyEmpty: true })} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />Run empty cells only</button>
+            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, rowData.slice(0, 10).map((row) => row.__id))} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />{t("runFirstTen")}</button>
+            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />{t("runAll")}</button>
+            <button type="button" disabled={busy} onClick={() => void runColumn(runMenu.column, undefined, { onlyEmpty: true })} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50"><RiPlayLine className="size-4" />{t("runEmptyOnly")}</button>
           </div>
         </Popover>
       )}
@@ -2874,7 +2892,7 @@ export default function GridClient({
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search"
+                placeholder={t("search")}
                 className="min-w-0 flex-1 bg-transparent text-[13px] text-text-strong-950 outline-none placeholder:text-text-soft-400"
               />
             </div>
@@ -2882,7 +2900,7 @@ export default function GridClient({
               type="submit"
               className="shrink-0 rounded-lg border border-stroke-soft-200 px-2.5 py-2 text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50"
             >
-              Search
+              {t("search")}
             </button>
           </form>
         </Popover>
@@ -2978,7 +2996,7 @@ export default function GridClient({
                 keystroke away behind "More column types", rather than making
                 this menu a duplicate of the add-column list. */}
             <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-soft-400">
-              Add column
+              {t("addColumn")}
             </p>
             {QUICK_COLUMN_TYPES.map((type) => {
               const meta = columnTypeMeta(type);
@@ -2993,7 +3011,7 @@ export default function GridClient({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-text-strong-950 transition hover:bg-bg-weak-50"
                 >
                   <meta.icon className="size-[17px] shrink-0 text-text-soft-400" />
-                  {meta.label}
+                  {labelOf(type)}
                 </button>
               );
             })}
@@ -3007,12 +3025,12 @@ export default function GridClient({
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-text-strong-950 transition hover:bg-bg-weak-50"
             >
               <RiAddLine className="size-[17px] shrink-0 text-text-soft-400" />
-              More column types…
+              {t("moreColumnTypes")}
             </button>
 
             <div className="my-1.5 h-px bg-bg-weak-50" />
             <p className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-soft-400">
-              Table
+              {t("tableSection")}
             </p>
             <button
               type="button"
@@ -3023,7 +3041,7 @@ export default function GridClient({
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-text-strong-950 transition hover:bg-bg-weak-50"
             >
               <RiUploadCloud2Line className="size-[17px] shrink-0 text-text-soft-400" />
-              Import CSV or Excel
+              {t("importCsvExcel")}
             </button>
 
             {/* Row actions only exist when there is a selection, which is why
@@ -3033,7 +3051,7 @@ export default function GridClient({
               <>
                 <div className="my-1.5 h-px bg-bg-weak-50" />
                 <p className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-soft-400">
-                  {selectedRowIds.length} selected row{selectedRowIds.length === 1 ? "" : "s"}
+                  {t("selectedRowsHeading", { count: selectedRowIds.length })}
                 </p>
                 <button
                   type="button"
@@ -3042,12 +3060,12 @@ export default function GridClient({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <RiDownload2Line className="size-[17px] text-text-soft-400" />
-                  Export selected rows as CSV
+                  {t("exportSelected")}
                 </button>
                 <button
                   type="button"
                   disabled={selectedRowIds.length > 5000}
-                  title={selectedRowIds.length > 5000 ? "Campaigns can contain at most 5,000 selected rows" : undefined}
+                  title={selectedRowIds.length > 5000 ? t("campaignLimit") : undefined}
                   onClick={() => {
                     setRowActionsRect(null);
                     setCreateCampaignOpen(true);
@@ -3055,7 +3073,7 @@ export default function GridClient({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-blue-700 dark:text-blue-400 transition hover:bg-blue-50 dark:hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <RiMegaphoneLine className="size-[17px]" />
-                  Create campaign
+                  {t("createCampaign")}
                 </button>
                 <button
                   type="button"
@@ -3066,7 +3084,7 @@ export default function GridClient({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-red-600 dark:text-red-400 transition hover:bg-red-50 dark:hover:bg-red-500/10"
                 >
                   <RiDeleteBin6Line className="size-[17px]" />
-                  Delete {selectedRowIds.length} row{selectedRowIds.length === 1 ? "" : "s"}
+                  {t("deleteRowsConfirm", { count: selectedRowIds.length })}
                 </button>
               </>
             )}
@@ -3130,12 +3148,7 @@ export default function GridClient({
         onClose={() => setImportOpen(false)}
         onImported={async ({ rowsInserted, columnsCreated }) => {
           setImportOpen(false);
-          setNotice(
-            `Imported ${rowsInserted.toLocaleString()} row${rowsInserted === 1 ? "" : "s"}` +
-              (columnsCreated
-                ? ` and created ${columnsCreated} column${columnsCreated === 1 ? "" : "s"}`
-                : ""),
-          );
+          setNotice(t("importDone", { rows: rowsInserted, columns: columnsCreated }));
           await refetch(appliedSearch, 0);
         }}
       />
@@ -3151,7 +3164,7 @@ export default function GridClient({
             setCreateCampaignOpen(false);
             setSelectedRowIds([]);
             setAllMatchingSelected(false);
-            setNotice(`Created ${channel === "email" ? "email" : "LinkedIn"} campaign with ${created} person${created === 1 ? "" : "s"}${failed ? `; ${failed} row${failed === 1 ? "" : "s"} skipped` : ""}. Campaign ID: ${campaignId}`);
+            setNotice(t(channel === "email" ? "campaignCreatedEmail" : "campaignCreatedLinkedin", { created, failed, campaignId }));
           }}
         />
       )}
@@ -3183,7 +3196,7 @@ export default function GridClient({
           selection={cellDetails}
           onClose={() => setCellDetails(null)}
           onAdded={async (columnName) => {
-            setNotice(`Added “${columnName}” as a column.`);
+            setNotice(t("columnAdded", { name: columnName }));
             await refetch();
           }}
         />
@@ -3194,6 +3207,7 @@ export default function GridClient({
 
 /** Floating message over the grid: it never moves the rows underneath it. */
 function Toast({ tone, onClose, children }: { tone: "error" | "success"; onClose: () => void; children: React.ReactNode }) {
+  const t = useTranslations("gridMain.grid");
   return (
     <div
       className={`pointer-events-auto flex max-w-xl items-start gap-2 rounded-lg border px-3 py-2 text-[13px] shadow-lg ${
@@ -3203,7 +3217,7 @@ function Toast({ tone, onClose, children }: { tone: "error" | "success"; onClose
       }`}
     >
       <span className="min-w-0 flex-1 break-words">{children}</span>
-      <button type="button" aria-label="Dismiss" onClick={onClose} className="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100">
+      <button type="button" aria-label={t("dismiss")} onClick={onClose} className="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100">
         <RiCloseLine className="size-4" />
       </button>
     </div>

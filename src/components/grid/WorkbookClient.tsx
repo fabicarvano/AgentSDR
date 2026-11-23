@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -40,18 +41,19 @@ function WorkbookActionsMenu({
   onSettings: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("gridMain.workbook");
   return (
     <Dropdown.Root>
       <Dropdown.Trigger asChild>{children}</Dropdown.Trigger>
       <Dropdown.Content align="start" className="w-[280px] rounded-xl">
-        <Dropdown.Item onSelect={onRename}><Dropdown.ItemIcon as={RiEditLine} />Rename workbook</Dropdown.Item>
-        <Dropdown.Item onSelect={onSettings}><Dropdown.ItemIcon as={RiSettings3Line} />Edit workbook settings</Dropdown.Item>
-        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiFileCopyLine} />Duplicate</Dropdown.Item>
-        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiStarLine} />Add to favorites</Dropdown.Item>
-        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiDragMove2Line} />Move workbook</Dropdown.Item>
-        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiDatabase2Line} />View credit usage</Dropdown.Item>
+        <Dropdown.Item onSelect={onRename}><Dropdown.ItemIcon as={RiEditLine} />{t("renameWorkbook")}</Dropdown.Item>
+        <Dropdown.Item onSelect={onSettings}><Dropdown.ItemIcon as={RiSettings3Line} />{t("editWorkbookSettings")}</Dropdown.Item>
+        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiFileCopyLine} />{t("duplicate")}</Dropdown.Item>
+        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiStarLine} />{t("addToFavorites")}</Dropdown.Item>
+        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiDragMove2Line} />{t("moveWorkbook")}</Dropdown.Item>
+        <Dropdown.Item disabled><Dropdown.ItemIcon as={RiDatabase2Line} />{t("viewCreditUsage")}</Dropdown.Item>
         <Dropdown.Separator />
-        <Dropdown.Item destructive onSelect={onDelete}><Dropdown.ItemIcon as={RiDeleteBin6Line} />Delete workbook</Dropdown.Item>
+        <Dropdown.Item destructive onSelect={onDelete}><Dropdown.ItemIcon as={RiDeleteBin6Line} />{t("deleteWorkbook")}</Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
   );
@@ -82,31 +84,32 @@ function TableActionsMenu({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("gridMain.workbook");
   return (
     <Dropdown.Root>
       <Dropdown.Trigger asChild>{children}</Dropdown.Trigger>
       <Dropdown.Content align="start" className="w-[244px] rounded-xl">
-        <Dropdown.Item onSelect={onRename}><Dropdown.ItemIcon as={RiEditLine} />Rename</Dropdown.Item>
-        <Dropdown.Item onSelect={onSettings}><Dropdown.ItemIcon as={RiSettings3Line} />Edit table settings</Dropdown.Item>
+        <Dropdown.Item onSelect={onRename}><Dropdown.ItemIcon as={RiEditLine} />{t("rename")}</Dropdown.Item>
+        <Dropdown.Item onSelect={onSettings}><Dropdown.ItemIcon as={RiSettings3Line} />{t("editTableSettings")}</Dropdown.Item>
         <Dropdown.Separator />
         {/* The click-and-keyboard path to what dragging a tab does — dragging
             alone would leave reordering unreachable without a mouse. */}
         <Dropdown.Item disabled={!canMoveLeft} onSelect={onMoveLeft}>
-          <Dropdown.ItemIcon as={RiArrowLeftLine} />Move left
+          <Dropdown.ItemIcon as={RiArrowLeftLine} />{t("moveLeft")}
         </Dropdown.Item>
         <Dropdown.Item disabled={!canMoveRight} onSelect={onMoveRight}>
-          <Dropdown.ItemIcon as={RiArrowRightLine} />Move right
+          <Dropdown.ItemIcon as={RiArrowRightLine} />{t("moveRight")}
         </Dropdown.Item>
-        <Dropdown.Item onSelect={onMove}><Dropdown.ItemIcon as={RiDragMove2Line} />Move to workbook…</Dropdown.Item>
-        <Dropdown.Item onSelect={onDuplicate}><Dropdown.ItemIcon as={RiFileCopyLine} />Duplicate table</Dropdown.Item>
+        <Dropdown.Item onSelect={onMove}><Dropdown.ItemIcon as={RiDragMove2Line} />{t("moveToWorkbook")}</Dropdown.Item>
+        <Dropdown.Item onSelect={onDuplicate}><Dropdown.ItemIcon as={RiFileCopyLine} />{t("duplicateTable")}</Dropdown.Item>
         <Dropdown.Separator />
         <Dropdown.Item
           destructive
           disabled={!canDelete}
-          title={canDelete ? undefined : "A workbook needs at least one table"}
+          title={canDelete ? undefined : t("needsOneTable")}
           onSelect={onDelete}
         >
-          <Dropdown.ItemIcon as={RiDeleteBin6Line} />Delete
+          <Dropdown.ItemIcon as={RiDeleteBin6Line} />{t("delete")}
         </Dropdown.Item>
       </Dropdown.Content>
     </Dropdown.Root>
@@ -144,6 +147,7 @@ export default function WorkbookClient({
   breadcrumbs: FolderCrumb[];
   initialSheet: SheetPayload;
 }) {
+  const t = useTranslations("gridMain.workbook");
   const router = useRouter();
   const dialogs = useDialogs();
   const [currentWorkbook, setCurrentWorkbook] = useState(workbook);
@@ -243,8 +247,8 @@ export default function WorkbookClient({
         setSheet(payload);
       } else {
         void dialogs.alert({
-          title: "Could not open that table",
-          description: "The table did not load. Check your connection and try again.",
+          title: t("openFailedTitle"),
+          description: t("openFailedDescription"),
           variant: "error",
         });
       }
@@ -255,7 +259,7 @@ export default function WorkbookClient({
         setShowLoadingOverlay(false);
       }
     }
-  }, [activeId, dialogs, fetchSheet]);
+  }, [activeId, dialogs, fetchSheet, t]);
 
   // A switch that resolves from the prefetch cache finishes in a frame or two.
   // Showing the overlay only once it has actually taken a moment keeps those
@@ -282,7 +286,7 @@ export default function WorkbookClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         void dialogs.alert({
-          title: "Could not add a table",
+          title: t("addFailed"),
           description: data.error,
           variant: "error",
         });
@@ -293,15 +297,15 @@ export default function WorkbookClient({
     } finally {
       setSaving(false);
     }
-  }, [workbook.id, dialogs, refreshTabs, loadSheet]);
+  }, [workbook.id, dialogs, refreshTabs, loadSheet, t]);
 
   const renameWorkbook = useCallback(async () => {
     const name = (
       await dialogs.prompt({
-        title: "Rename workbook",
-        label: "Name",
+        title: t("renameWorkbookTitle"),
+        label: t("nameLabel"),
         defaultValue: currentWorkbook.name,
-        confirmLabel: "Rename",
+        confirmLabel: t("rename"),
       })
     )?.trim();
     if (!name || name === currentWorkbook.name) return;
@@ -313,20 +317,20 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return dialogs.alert({
-        title: "Could not rename workbook",
+        title: t("renameWorkbookFailed"),
         description: data.error,
         variant: "error",
       });
     }
     setCurrentWorkbook(data.workbook);
-  }, [currentWorkbook, dialogs]);
+  }, [currentWorkbook, dialogs, t]);
 
   const editWorkbookSettings = useCallback(async () => {
     const description = await dialogs.prompt({
-      title: "Workbook settings",
-      label: "Description",
+      title: t("workbookSettingsTitle"),
+      label: t("descriptionLabel"),
       defaultValue: currentWorkbook.description ?? "",
-      placeholder: "What this workbook is for",
+      placeholder: t("workbookDescriptionPlaceholder"),
       allowEmpty: true,
     });
     if (description === null) return;
@@ -338,19 +342,19 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return dialogs.alert({
-        title: "Could not update workbook",
+        title: t("updateWorkbookFailed"),
         description: data.error,
         variant: "error",
       });
     }
     setCurrentWorkbook(data.workbook);
-  }, [currentWorkbook, dialogs]);
+  }, [currentWorkbook, dialogs, t]);
 
   const removeWorkbook = useCallback(async () => {
     const ok = await dialogs.confirm({
-      title: "Delete workbook?",
-      description: `“${currentWorkbook.name}” and every table, column and row inside it will be permanently deleted. This cannot be undone.`,
-      confirmLabel: "Delete workbook",
+      title: t("deleteWorkbookTitle"),
+      description: t("deleteWorkbookDescription", { name: currentWorkbook.name }),
+      confirmLabel: t("deleteWorkbook"),
       variant: "error",
     });
     if (!ok) return;
@@ -358,15 +362,16 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return dialogs.alert({
-        title: "Could not delete workbook",
+        title: t("deleteWorkbookFailed"),
         description: data.error,
         variant: "error",
       });
     }
     router.push("/tables");
     router.refresh();
-  }, [currentWorkbook, dialogs, router]);
+  }, [currentWorkbook, dialogs, router, t]);
 
+  const updateTableFailed = t("updateTableFailed");
   const patchTable = useCallback(async (table: GridTable, patch: Record<string, unknown>) => {
     const res = await fetch(`/api/grid/tables/${table.id}`, {
       method: "PATCH",
@@ -376,7 +381,7 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       void dialogs.alert({
-        title: "Could not update table",
+        title: updateTableFailed,
         description: data.error,
         variant: "error",
       });
@@ -395,58 +400,59 @@ export default function WorkbookClient({
       setSheet((current) => ({ ...current, table: { ...current.table, ...changed } }));
     }
     return data.table as GridTable;
-  }, [activeId, dialogs]);
+  }, [activeId, dialogs, updateTableFailed]);
 
   // Inline rename from double-clicking a tab. `finishedRef` keeps Enter (which
   // unmounts the input and so blurs it) from committing a second time.
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const finishedRef = useRef(false);
-  const finishInlineRename = useCallback(async (table: GridTable, commit: boolean) => {
+  // Plain function: the React Compiler could not preserve a manual useCallback here once patchTable used the translator.
+  const finishInlineRename = async (table: GridTable, commit: boolean) => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     setEditingTableId(null);
     const name = editingName.trim();
     if (commit && name && name !== table.name) await patchTable(table, { name });
-  }, [editingName, patchTable]);
+  };
 
   const renameTable = useCallback(async (table: GridTable) => {
     const name = (
       await dialogs.prompt({
-        title: "Rename table",
-        label: "Name",
+        title: t("renameTableTitle"),
+        label: t("nameLabel"),
         defaultValue: table.name,
-        confirmLabel: "Rename",
+        confirmLabel: t("rename"),
       })
     )?.trim();
     if (!name || name === table.name) return;
     await patchTable(table, { name });
-  }, [dialogs, patchTable]);
+  }, [dialogs, patchTable, t]);
 
   const editTableSettings = useCallback(async (table: GridTable) => {
     const description = await dialogs.prompt({
-      title: "Table settings",
-      label: "Description",
+      title: t("tableSettingsTitle"),
+      label: t("descriptionLabel"),
       defaultValue: table.description ?? "",
-      placeholder: "What this table holds",
+      placeholder: t("tableDescriptionPlaceholder"),
       allowEmpty: true,
     });
     if (description === null) return;
     await patchTable(table, { description: description.trim() || null });
-  }, [dialogs, patchTable]);
+  }, [dialogs, patchTable, t]);
 
   const removeTable = useCallback(async (table: GridTable) => {
     if (tables.length === 1) {
       await dialogs.alert({
-        title: "This is the only table",
-        description: "A workbook must contain at least one table. Add another before deleting this one.",
+        title: t("onlyTableTitle"),
+        description: t("onlyTableDescription"),
       });
       return;
     }
     const ok = await dialogs.confirm({
-      title: "Delete table?",
-      description: `“${table.name}” and all of its columns and rows will be permanently deleted. This cannot be undone.`,
-      confirmLabel: "Delete table",
+      title: t("deleteTableTitle"),
+      description: t("deleteTableDescription", { name: table.name }),
+      confirmLabel: t("deleteTableConfirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -454,7 +460,7 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return dialogs.alert({
-        title: "Could not delete table",
+        title: t("deleteTableFailed"),
         description: data.error,
         variant: "error",
       });
@@ -465,7 +471,7 @@ export default function WorkbookClient({
     if (table.id === activeId) {
       await loadSheet(remaining[0].id);
     }
-  }, [activeId, dialogs, loadSheet, tables]);
+  }, [activeId, dialogs, loadSheet, tables, t]);
 
   const persistOrder = useCallback(async (ordered: GridTable[]) => {
     const res = await fetch(`/api/grid/workbooks/${workbook.id}/tables/reorder`, {
@@ -476,7 +482,7 @@ export default function WorkbookClient({
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       void dialogs.alert({
-        title: "Could not reorder those tables",
+        title: t("reorderFailed"),
         description: data.error,
         variant: "error",
       });
@@ -484,7 +490,7 @@ export default function WorkbookClient({
       return;
     }
     setTables(data.tables);
-  }, [dialogs, refreshTabs, workbook.id]);
+  }, [dialogs, refreshTabs, workbook.id, t]);
 
   /** Swaps a tab with its neighbour — the menu's Move left / Move right. */
   const nudgeTable = useCallback(async (table: GridTable, delta: -1 | 1) => {
@@ -544,7 +550,7 @@ export default function WorkbookClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         return dialogs.alert({
-          title: "Could not duplicate that table",
+          title: t("duplicateFailed"),
           description: data.error,
           variant: "error",
         });
@@ -554,7 +560,7 @@ export default function WorkbookClient({
     } finally {
       setSaving(false);
     }
-  }, [dialogs, loadSheet, refreshTabs]);
+  }, [dialogs, loadSheet, refreshTabs, t]);
 
   const moveTableToWorkbook = useCallback(async (destinationWorkbookId: string) => {
     const table = movingTable;
@@ -567,7 +573,7 @@ export default function WorkbookClient({
     });
     const data = await res.json().catch(() => ({}));
     // Thrown so MoveTableDialog can show the reason inline and stay open.
-    if (!res.ok) throw new Error(data.error ?? "Could not move that table");
+    if (!res.ok) throw new Error(data.error ?? t("moveFailed"));
 
     setMovingTable(null);
     const remaining = tablesRef.current.filter((t) => t.id !== table.id);
@@ -576,7 +582,7 @@ export default function WorkbookClient({
     // is still here rather than rendering a table that moved away.
     if (table.id === activeId && remaining.length) await loadSheet(remaining[0].id);
     router.refresh();
-  }, [activeId, loadSheet, movingTable, router]);
+  }, [activeId, loadSheet, movingTable, router, t]);
 
   // Keep the URL pointing at the open sheet, so a refresh or a shared link
   // reopens the same tab instead of snapping back to the first one.
@@ -597,7 +603,7 @@ export default function WorkbookClient({
           className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-text-sub-600 transition hover:bg-bg-weak-50"
         >
           <RiFolder3Line className="size-4 text-text-soft-400" />
-          All Files
+          {t("allFiles")}
         </Link>
         {/* The folders this workbook is filed under. Without them the trail
             claimed every workbook sat at the root, and the one link out went
@@ -656,7 +662,7 @@ export default function WorkbookClient({
           <div className="absolute inset-0 z-20 flex items-start justify-center bg-bg-white-0/70 pt-24">
             <span className="flex items-center gap-2 rounded-full border border-stroke-soft-200 bg-bg-white-0 px-3.5 py-2 text-[13px] font-medium text-text-sub-600 shadow-sm">
               <RiLoader4Line className="size-4 animate-spin text-blue-600 dark:text-blue-400" />
-              Loading {pendingTable?.name ?? "table"}…
+              {pendingTable ? t("loadingNamed", { name: pendingTable.name }) : t("loadingTable")}
             </span>
           </div>
         )}
@@ -678,19 +684,19 @@ export default function WorkbookClient({
       {/* ---------- sheet tabs ---------- */}
       <div className="flex h-[48px] shrink-0 items-center gap-1 border-t border-stroke-soft-200 px-3">
         <div className="flex items-center gap-1 overflow-x-auto">
-          {tables.map((t, index) => {
-            const active = t.id === selectedId;
-            const dragging = t.id === dragId;
+          {tables.map((tab, index) => {
+            const active = tab.id === selectedId;
+            const dragging = tab.id === dragId;
             return (
               <div
-                key={t.id}
-                draggable={editingTableId !== t.id}
+                key={tab.id}
+                draggable={editingTableId !== tab.id}
                 onDragStart={() => {
-                  setDragId(t.id);
+                  setDragId(tab.id);
                   orderAtDragStart.current = tablesRef.current.map((item) => item.id);
                   droppedRef.current = false;
                 }}
-                onDragOver={(event) => onTabDragOver(event, t.id)}
+                onDragOver={(event) => onTabDragOver(event, tab.id)}
                 onDrop={() => {
                   droppedRef.current = true;
                   void onTabDrop();
@@ -700,27 +706,27 @@ export default function WorkbookClient({
                   // put the tabs back instead of saving the live preview.
                   if (!droppedRef.current) cancelTabDrag();
                 }}
-                title="Drag to reorder"
+                title={t("dragToReorder")}
                 className={`flex shrink-0 cursor-grab items-center border-t-2 text-[13px] font-medium transition active:cursor-grabbing ${
                   active
                     ? "border-blue-600 text-blue-600 dark:text-blue-400"
                     : "border-transparent text-text-sub-600 hover:bg-bg-weak-50"
                 } ${dragging ? "opacity-40" : ""}`}
               >
-                {editingTableId === t.id ? (
+                {editingTableId === tab.id ? (
                   <span className="flex items-center gap-1.5 py-[5px] pl-2.5 pr-1">
                     <SheetIcon />
                     <input
                       autoFocus
-                      aria-label="Table name"
+                      aria-label={t("tableName")}
                       value={editingName}
                       maxLength={200}
                       onFocus={(event) => event.currentTarget.select()}
                       onChange={(event) => setEditingName(event.target.value)}
-                      onBlur={() => void finishInlineRename(t, true)}
+                      onBlur={() => void finishInlineRename(tab, true)}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter") void finishInlineRename(t, true);
-                        else if (event.key === "Escape") void finishInlineRename(t, false);
+                        if (event.key === "Enter") void finishInlineRename(tab, true);
+                        else if (event.key === "Escape") void finishInlineRename(tab, false);
                       }}
                       className="w-[140px] rounded border border-blue-500 bg-bg-white-0 px-1.5 py-0.5 text-[13px] font-medium text-text-strong-950 outline-none"
                     />
@@ -728,38 +734,38 @@ export default function WorkbookClient({
                 ) : (
                 <button
                   type="button"
-                  onClick={() => !active && loadSheet(t.id)}
+                  onClick={() => !active && loadSheet(tab.id)}
                   onDoubleClick={() => {
                     finishedRef.current = false;
-                    setEditingName(t.name);
-                    setEditingTableId(t.id);
+                    setEditingName(tab.name);
+                    setEditingTableId(tab.id);
                   }}
                   // Start the fetch on approach. A pointer takes a few hundred
                   // milliseconds to travel and press, which is most of what the
                   // switch used to spend waiting after the click.
-                  onPointerEnter={() => !active && void fetchSheet(t.id)}
-                  onFocus={() => !active && void fetchSheet(t.id)}
+                  onPointerEnter={() => !active && void fetchSheet(tab.id)}
+                  onFocus={() => !active && void fetchSheet(tab.id)}
                   className="flex items-center gap-1.5 py-[7px] pl-2.5 pr-1"
                 >
                   <SheetIcon />
-                  {t.name}
+                  {tab.name}
                 </button>
                 )}
                 <TableActionsMenu
                   canMoveLeft={index > 0}
                   canMoveRight={index < tables.length - 1}
                   canDelete={tables.length > 1}
-                  onRename={() => void renameTable(t)}
-                  onSettings={() => void editTableSettings(t)}
-                  onMoveLeft={() => void nudgeTable(t, -1)}
-                  onMoveRight={() => void nudgeTable(t, 1)}
-                  onMove={() => setMovingTable(t)}
-                  onDuplicate={() => void duplicateTable(t)}
-                  onDelete={() => void removeTable(t)}
+                  onRename={() => void renameTable(tab)}
+                  onSettings={() => void editTableSettings(tab)}
+                  onMoveLeft={() => void nudgeTable(tab, -1)}
+                  onMoveRight={() => void nudgeTable(tab, 1)}
+                  onMove={() => setMovingTable(tab)}
+                  onDuplicate={() => void duplicateTable(tab)}
+                  onDelete={() => void removeTable(tab)}
                 >
                   <button
                     type="button"
-                    aria-label={`Actions for ${t.name}`}
+                    aria-label={t("tableActions", { name: tab.name })}
                     className="py-[7px] pl-1 pr-2.5"
                   >
                     <RiArrowDownSLine className={`size-4 ${active ? "text-blue-500" : "text-text-soft-400"}`} />
@@ -777,13 +783,13 @@ export default function WorkbookClient({
           className="ml-1 flex shrink-0 items-center gap-1.5 rounded-lg border border-stroke-soft-200 px-2.5 py-[7px] text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:opacity-50"
         >
           {saving ? <RiLoader4Line className="size-4 animate-spin" /> : <RiAddLine className="size-4" />}
-          Add
+          {t("add")}
         </button>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <span className="flex items-center gap-1.5 px-2 text-[13px] text-text-sub-600">
             <RiCheckLine className="size-4 text-emerald-500" />
-            Table up to date
+            {t("upToDate")}
           </span>
         </div>
       </div>
@@ -794,7 +800,7 @@ export default function WorkbookClient({
         currentWorkbookId={currentWorkbook.id}
         blockedReason={
           tables.length <= 1
-            ? "This is the workbook's only table. Duplicate it first — a workbook must keep at least one."
+            ? t("blockedOnlyTable")
             : null
         }
         onClose={() => setMovingTable(null)}
