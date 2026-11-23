@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RiArrowLeftLine, RiArrowRightLine, RiCheckLine, RiDraftLine, RiFileExcel2Line, RiLoader4Line, RiRocketLine, RiStackLine, RiTeamLine, RiUserAddLine } from "@remixicon/react";
+import { RiArrowLeftLine, RiArrowRightLine, RiCheckLine, RiDraftLine, RiLoader4Line, RiRocketLine, RiStackLine, RiTeamLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
 import * as Textarea from "@/components/alignui/textarea";
@@ -26,6 +26,7 @@ import { launchBlocker } from "./metrics";
 import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
 import { SenderPicker } from "./SenderPicker";
 import { WhatsappSequenceEditor } from "./WhatsappSequenceEditor";
+import { LeadSourceCards, StepDot, StepHeading, SummaryRow, WizardStepList } from "@/components/campaigns/wizardParts";
 
 const STEPS = [
   { id: "setup", labelKey: "stepSetupLabel", hintKey: "stepSetupHint", icon: RiDraftLine },
@@ -33,19 +34,6 @@ const STEPS = [
   { id: "sequence", labelKey: "stepSequenceLabel", hintKey: "stepSequenceHint", icon: RiStackLine },
   { id: "review", labelKey: "stepReviewLabel", hintKey: "stepReviewHint", icon: RiCheckLine },
 ] as const;
-
-function StepDot({ index, active, done }: { index: number; active: boolean; done: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-lg text-label-xs transition",
-        done ? "bg-success-lighter text-success-base" : active ? "bg-primary-base text-static-white shadow-regular-xs" : "bg-bg-weak-50 text-text-soft-400",
-      )}
-    >
-      {done ? <RiCheckLine className="size-4" /> : index + 1}
-    </div>
-  );
-}
 
 export function WhatsappCampaignWizard() {
   const t = useTranslations("whatsappCampaigns.wizard");
@@ -146,32 +134,7 @@ export function WhatsappCampaignWizard() {
         <Frame>
           <FrameHeader title={t("stepsTitle")} description={t("stepProgress", { current: step + 1, total: STEPS.length })} />
           <FramePanel className="p-2 sm:p-2">
-            <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
-              {STEPS.map((item, index) => {
-                const active = index === step;
-                const done = index < step;
-                const reachable = index <= step;
-                const Icon = item.icon;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      disabled={!reachable || active || busy}
-                      onClick={() => setStep(index)}
-                      aria-current={active ? "step" : undefined}
-                      className={cn("flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition duration-200 ease-out", active ? "bg-bg-weak-50" : reachable ? "hover:bg-bg-weak-50" : "cursor-default")}
-                    >
-                      <StepDot index={index} active={active} done={done} />
-                      <span className="min-w-0">
-                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{t(item.labelKey)}</span>
-                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{t(item.hintKey)}</span>
-                      </span>
-                      <Icon className="ml-auto hidden size-4 text-text-soft-400 sm:block lg:hidden" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+            <WizardStepList items={STEPS.map((item) => ({ id: item.id, label: t(item.labelKey), hint: t(item.hintKey), icon: item.icon }))} step={step} busy={busy} onSelect={setStep} />
 
             <div className="mx-1 mb-1 mt-3 hidden border-t border-stroke-soft-200 px-2 pt-3 lg:block">
               <p className="text-paragraph-xs text-text-soft-400">{t("summary")}</p>
@@ -216,23 +179,17 @@ export function WhatsappCampaignWizard() {
             {step === 1 && campaignId && (
               <div className="mx-auto max-w-3xl">
                 <StepHeading title={t("leadsTitle")} description={t("leadsDescription")} />
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-stroke-sub-300 bg-bg-weak-50 p-6 text-center outline-none transition hover:border-primary-base focus-visible:ring-2 focus-visible:ring-primary-base">
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200"><RiFileExcel2Line className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">{t("importTitle")}</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("importBody")}</span>
-                  </button>
-                  <button type="button" onClick={() => setShowPeople(true)} className="flex min-h-44 flex-col items-center justify-center rounded-2xl bg-bg-white-0 p-6 text-center shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base">
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-bg-weak-50 ring-1 ring-inset ring-stroke-soft-200"><RiUserAddLine className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">{t("peopleTitle")}</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("peopleBody")}</span>
-                  </button>
-                </div>
-                <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => setPendingFile(event.target.files?.[0] ?? null)} />
-                <div role="status" className="mt-4 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
-                  <p className="text-label-sm text-text-strong-950">{t("leadsAdded", { count: leadCount })}</p>
-                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importNote ?? t("leadsAddedHint")}</p>
-                </div>
+                <LeadSourceCards
+                  fileRef={fileRef}
+                  onPickFile={setPendingFile}
+                  onPickPeople={() => setShowPeople(true)}
+                  importTitle={t("importTitle")}
+                  importBody={t("importBody")}
+                  peopleTitle={t("peopleTitle")}
+                  peopleBody={t("peopleBody")}
+                  addedText={t("leadsAdded", { count: leadCount })}
+                  hintText={importNote ?? t("leadsAddedHint")}
+                />
                 <WizardFooter error={error} onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel={t("continueToMessages")} />
                 {pendingFile && (
                   <CampaignCsvMappingDialog
@@ -313,24 +270,6 @@ export function WhatsappCampaignWizard() {
           </FramePanel>
         </Frame>
       </div>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-text-sub-600">{label}</dt>
-      <dd className={cn("text-label-sm tabular-nums text-text-strong-950", truncate && "min-w-0 truncate")}>{value}</dd>
-    </div>
-  );
-}
-
-function StepHeading({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <h2 className="text-label-lg text-text-strong-950">{title}</h2>
-      <p className="mt-1 text-paragraph-sm text-text-sub-600">{description}</p>
     </div>
   );
 }

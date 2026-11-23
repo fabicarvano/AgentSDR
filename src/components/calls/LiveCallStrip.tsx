@@ -178,39 +178,34 @@ function PhaseDot({ phase }: { phase: CloudCallPhase }) {
   }
 }
 
+// The phases whose status line is one fixed sentence. The rest (not-on-whatsapp, processing, done, error) are in the
+// switch below; its `default` only sees the kinds listed here, so a new phase without a text still fails the type check.
+type SimplePhaseKind = Exclude<CloudCallPhase["kind"], "not-on-whatsapp" | "processing" | "done" | "error">;
+const PHASE_TEXT = {
+  queued: "queued",
+  "starting-browser": "startingBrowser",
+  opening: "opening",
+  calling: "calling",
+  ringing: "ringing",
+  "on-call": "onCall",
+  "manual-dial": "manualDial",
+  "audio-blocked": "audioBlocked",
+  "not-answered": "notAnswered",
+} as const satisfies Record<SimplePhaseKind, string>;
+
 function PhaseStatus({ phase }: { phase: CloudCallPhase }) {
   const t = useTranslations("callsMain.liveCallStrip");
   switch (phase.kind) {
-    case "queued":
-      return <>{t("queued")}</>;
-    case "starting-browser":
-      return <>{t("startingBrowser")}</>;
-    case "opening":
-      return <>{t("opening")}</>;
-    case "calling":
-      return <>{t("calling")}</>;
-    case "ringing":
-      return <>{t("ringing")}</>;
-    case "on-call":
-      return <>{t("onCall")}</>;
-    case "manual-dial":
-      return <>{t("manualDial")}</>;
-    case "audio-blocked":
-      return <>{t("audioBlocked")}</>;
-    case "not-answered":
-      return <>{t("notAnswered")}</>;
     case "not-on-whatsapp":
-      return phase.noCallButton ? (
-        <>{t("noCallButton")}</>
-      ) : (
-        <>{t("notOnWhatsapp")}</>
-      );
+      return <>{phase.noCallButton ? t("noCallButton") : t("notOnWhatsapp")}</>;
     case "processing":
       return <>{phase.step === "uploading" ? t("savingRecording") : t("transcribing")}</>;
     case "done":
       return <>{t("done", { duration: formatElapsed(phase.durationMs) })}</>;
     case "error":
       return <>{phase.message}</>;
+    default:
+      return <>{t(PHASE_TEXT[phase.kind])}</>;
   }
 }
 

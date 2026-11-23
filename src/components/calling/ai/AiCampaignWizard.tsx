@@ -8,14 +8,12 @@ import {
   RiArrowRightLine,
   RiCheckLine,
   RiDraftLine,
-  RiFileExcel2Line,
   RiLoader4Line,
   RiRocketLine,
   RiSmartphoneLine,
   RiStackLine,
   RiTeamLine,
-  RiUserAddLine,
-} from "@remixicon/react";
+  } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { VoicePreviewButton } from "@/components/calls/VoicePreviewButton";
 import { KnowledgePicker } from "./KnowledgePicker";
@@ -52,6 +50,7 @@ import { cn } from "@/utils/cn";
 import { NumberPicker, useAiGoalText, useErrorText, useFormatDelay } from "./aiShared";
 import { useImportSummary } from "./AiLeadsTab";
 import { AiStepsEditor } from "./AiStepsEditor";
+import { LeadSourceCards, SummaryRow } from "@/components/campaigns/wizardParts";
 
 // Labels and hints live in the catalog under wizard.steps.<id>.
 const STEPS = [
@@ -292,23 +291,17 @@ export function AiCampaignWizard() {
             {step === 2 && campaign && (
               <div className="mx-auto max-w-3xl">
                 <Heading title={t("leads.title")} description={t("leads.description")} />
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-stroke-sub-300 bg-bg-weak-50 p-6 text-center outline-none transition hover:border-primary-base focus-visible:ring-2 focus-visible:ring-primary-base">
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200"><RiFileExcel2Line className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">{t("leads.importTitle")}</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("leads.importHint")}</span>
-                  </button>
-                  <button type="button" onClick={() => setShowPeople(true)} className="flex min-h-44 flex-col items-center justify-center rounded-2xl bg-bg-white-0 p-6 text-center shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base">
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-bg-weak-50 ring-1 ring-inset ring-stroke-soft-200"><RiUserAddLine className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">{t("leads.peopleTitle")}</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("leads.peopleHint")}</span>
-                  </button>
-                </div>
-                <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => setPendingFile(event.target.files?.[0] ?? null)} />
-                <div role="status" className="mt-4 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
-                  <p className="text-label-sm text-text-strong-950">{t("leads.added", { count: leadCount })}</p>
-                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importNote ?? t("leads.noneNote")}</p>
-                </div>
+                <LeadSourceCards
+                  fileRef={fileRef}
+                  onPickFile={setPendingFile}
+                  onPickPeople={() => setShowPeople(true)}
+                  importTitle={t("leads.importTitle")}
+                  importBody={t("leads.importHint")}
+                  peopleTitle={t("leads.peopleTitle")}
+                  peopleBody={t("leads.peopleHint")}
+                  addedText={t("leads.added", { count: leadCount })}
+                  hintText={importNote ?? t("leads.noneNote")}
+                />
                 <Footer error={error} onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel={t("leads.next")} />
                 {pendingFile && (
                   <CampaignCsvMappingDialog
@@ -440,15 +433,6 @@ export function AiCampaignWizard() {
           </FramePanel>
         </Frame>
       </div>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-text-sub-600">{label}</dt>
-      <dd className={cn("text-label-sm tabular-nums text-text-strong-950", truncate && "min-w-0 truncate")}>{value}</dd>
     </div>
   );
 }
