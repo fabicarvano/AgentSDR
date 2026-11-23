@@ -26,6 +26,9 @@ import type inboxMain from "../../messages/en/inboxMain.json";
 import type inboxShell from "../../messages/en/inboxShell.json";
 import type inboxThread from "../../messages/en/inboxThread.json";
 import type leads from "../../messages/en/leads.json";
+import type linkedinCampaigns from "../../messages/en/linkedinCampaigns.json";
+import type linkedinMain from "../../messages/en/linkedinMain.json";
+import type linkedinSearch from "../../messages/en/linkedinSearch.json";
 import type settings from "../../messages/en/settings.json";
 import type settingsAccounts from "../../messages/en/settingsAccounts.json";
 import type settingsAi from "../../messages/en/settingsAi.json";
@@ -54,6 +57,9 @@ type Catalog = {
   inboxShell: typeof inboxShell;
   inboxThread: typeof inboxThread;
   leads: typeof leads;
+  linkedinCampaigns: typeof linkedinCampaigns;
+  linkedinMain: typeof linkedinMain;
+  linkedinSearch: typeof linkedinSearch;
   settings: typeof settings;
   settingsAccounts: typeof settingsAccounts;
   settingsAi: typeof settingsAi;
@@ -66,7 +72,7 @@ type Catalog = {
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "inboxMain", "inboxShell", "inboxThread", "leads", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
+export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
 
 export type Domain = (typeof DOMAINS)[number];
 
