@@ -102,7 +102,7 @@ export function AiCampaignOverview({ campaign, stats }: { campaign: AiCampaignDe
         <KpiCell icon={RiPercentLine} label={t("kpiAnswered")} value={fmt.percent(s.callsPlaced > 0 ? s.callsAnswered / s.callsPlaced : null)} context={s.callsPlaced > 0 ? t("answeredOfCalls", { answered: s.callsAnswered, placed: s.callsPlaced }) : t("noCallsYet")} hint={t("answeredHint")} />
         <KpiCell icon={RiChat1Line} label={t("kpiConversations")} value={fmt.compact(s.conversations)} context={pct(s.conversations, s.callsPlaced) ? t("shareOfCalls", { share: pct(s.conversations, s.callsPlaced) ?? "" }) : undefined} hint={t("conversationsHint")} />
         <KpiCell icon={RiStarLine} label={t("kpiInterested")} value={fmt.compact(s.interested)} context={pct(s.interested, s.conversations) ? t("shareOfConversations", { share: pct(s.interested, s.conversations) ?? "" }) : undefined} hint={t("interestedHint")} />
-        <KpiCell icon={RiCalendarCheckLine} label={t("kpiBooked")} value={fmt.compact(s.booked)} context={s.handoffs > 0 ? t("handedToTeam", { count: fmt.compact(s.handoffs) }) : s.messagesSent > 0 ? t("messagesSent", { count: fmt.compact(s.messagesSent) }) : undefined} hint={t("bookedHint")} />
+        <KpiCell icon={RiCalendarCheckLine} label={t("kpiBooked")} value={fmt.compact(s.booked)} context={s.handoffs > 0 ? t("handedToTeam", { count: s.handoffs, shown: fmt.compact(s.handoffs) }) : s.messagesSent > 0 ? t("messagesSent", { count: s.messagesSent, shown: fmt.compact(s.messagesSent) }) : undefined} hint={t("bookedHint")} />
       </KpiStrip>
 
       <Frame className="self-start lg:col-span-5">

@@ -197,7 +197,7 @@ export function WhatsappCampaignsClient() {
 
       <KpiStrip className="mt-6" columns={4}>
         <KpiCell icon={RiTeamLine} label={t("kpiLeads")} value={formatCompact(totals.leads)} context={t("kpiLeadsContext", { count: formatCompact(totals.queued) })} />
-        <KpiCell icon={RiSendPlaneLine} label={t("kpiMessaged")} value={formatCompact(totals.messaged)} context={t("kpiMessagedContext", { count: formatCompact(totals.sent) })} hint={t("kpiMessagedHint")} />
+        <KpiCell icon={RiSendPlaneLine} label={t("kpiMessaged")} value={formatCompact(totals.messaged)} context={t("kpiMessagedContext", { count: totals.sent, shown: formatCompact(totals.sent) })} hint={t("kpiMessagedHint")} />
         <KpiCell icon={RiChat1Line} label={t("kpiReplied")} value={formatCompact(totals.replied)} context={totals.messaged > 0 ? t("kpiRepliedContext", { percent: formatPercent(totals.replied / totals.messaged) }) : undefined} hint={t("kpiRepliedHint")} />
         <KpiCell icon={RiPercentLine} label={t("kpiReplyRate")} value={formatPercent(totals.messaged > 0 ? totals.replied / totals.messaged : null)} context={t("kpiReplyRateContext", { active: counts.active, paused: counts.paused })} hint={t("kpiReplyRateHint")} />
       </KpiStrip>

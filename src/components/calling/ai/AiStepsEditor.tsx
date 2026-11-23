@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiArrowDownLine,
@@ -75,7 +75,6 @@ export function AiStepsEditor({
   emptyText: string;
 }) {
   const t = useTranslations("callingAiSetup.steps");
-  const format = useFormatter();
   const formatDelay = useFormatDelay();
   const [units, setUnits] = useState<Record<string, Unit>>({});
   const [rehearsing, setRehearsing] = useState<{ stepId: string; mode: "voice" | "text" } | null>(null);
@@ -152,7 +151,7 @@ export function AiStepsEditor({
                   {stat && stat.attempted > 0 && (
                     <span className="text-paragraph-xs tabular-nums text-text-soft-400">
                       {[
-                        t("statDone", { count: format.number(stat.done) }),
+                        t("statDone", { count: stat.done }),
                         stat.failed ? t("statFailed", { count: stat.failed }) : null,
                         stat.kind === "call" && stat.conversations ? t("statConversations", { count: stat.conversations }) : null,
                       ].filter(Boolean).join(" · ")}

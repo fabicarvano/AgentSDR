@@ -253,7 +253,7 @@ export function WhatsappSequenceEditor({
                     <span className="min-w-0 flex-1">
                       <span className="block text-label-sm text-text-strong-950">{stepLabel(i)}</span>
                       <span className="mt-0.5 block truncate text-paragraph-xs text-text-sub-600">{written ? candidate.body : t("notWritten")}</span>
-                      {sent !== undefined && sent > 0 && <span className="mt-0.5 block text-paragraph-xs tabular-nums text-text-soft-400">{t("sentCount", { count: cf.number(sent) })}</span>}
+                      {sent !== undefined && sent > 0 && <span className="mt-0.5 block text-paragraph-xs tabular-nums text-text-soft-400">{t("sentCount", { count: sent })}</span>}
                     </span>
                     {written && <RiCheckLine className="mt-0.5 size-4 shrink-0 text-success-base" aria-label={t("written")} />}
                   </button>
