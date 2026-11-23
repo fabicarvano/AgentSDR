@@ -70,7 +70,8 @@ import {
   UNREPLIED_FILTER,
 } from "@/lib/linkedin/messages/connectionList";
 import type { InboxCrmContext } from "@/lib/linkedin/messages/crmContext";
-import { inboxCrmStepLabel } from "@/lib/linkedin/messages/crmContext";
+import { inboxCrmStep } from "@/lib/linkedin/messages/crmContext";
+import { useInboxCrmStepLabel } from "@/components/crm/useInboxCrmStepLabel";
 
 export type { ConnectionItem };
 
@@ -183,6 +184,7 @@ export function MessagesLayout({
   const { categoryLabel: crmCategoryLabel } = useInboxCrmText();
   const { fullTime, rowTime, withRecencyBreaks } = useInboxTime();
   const workflowLabel = useWorkflowLabel();
+  const crmStepLabel = useInboxCrmStepLabel();
   const messageTypeLabel = useMessageTypeLabel();
   const statusLabel = useMessageStatusLabel();
   const [connections, setConnections] = useState(initialList.connections);
@@ -714,7 +716,7 @@ export function MessagesLayout({
                 categoryLabel: crmCategoryLabel(crmSummary),
                 stage: workflowLabel(crmSummary.workflowState),
                 sequence: crmSummary.sequenceName,
-                step: inboxCrmStepLabel(crmSummary),
+                step: crmStepLabel(crmSummary),
                 nextActionAt: crmSummary.nextActionAt,
                 lastInboundAt: record?.lastInboundAt,
                 lastOutboundAt: record?.lastOutboundAt,
@@ -885,8 +887,7 @@ export function MessagesLayout({
             const hasUnseen = conn.unseenCount > 0;
             const last = conn.lastMessage ? new Date(conn.lastMessage.createdAt) : null;
             const drafted = conn.crm?.hasDraft === true;
-            // The step label still comes from src/lib in English (batch I); the compare below depends on that text.
-            const step = conn.crm ? inboxCrmStepLabel(conn.crm) : null;
+            const step = conn.crm && inboxCrmStep(conn.crm).kind !== "none" ? crmStepLabel(conn.crm) : null;
             return (
               <Fragment key={conn.id}>
                 {heading && <DayHeading>{heading}</DayHeading>}
@@ -914,7 +915,7 @@ export function MessagesLayout({
                     <>
                       {drafted && <DraftChip />}
                       <RowStatus conn={conn} />
-                      {!drafted && step && step !== "No next step" && <RowMeta keep>{step}</RowMeta>}
+                      {!drafted && step && <RowMeta keep>{step}</RowMeta>}
                     </>
                   }
                 />

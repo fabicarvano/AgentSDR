@@ -347,6 +347,8 @@ export async function listCrmActions(input: CrmActionFilters = {}) {
       actionType,
       /** e.g. "Follow-up 2 · Share Information" for the draft on the row; null for a hand-written or reply draft. */
       draftStepLabel: draftStep && draftStep.stepType === "follow_up" ? followUpStepLabel(draftStep.position, draftStep.name) : null,
+      /** The same step as data, for the UI to word in its own language: the follow-up number and the step's stored name. */
+      draftStepInfo: draftStep && draftStep.stepType === "follow_up" ? { followUp: draftStep.position - 1, name: draftStep.name } : null,
       latestInbound: latestInbound.get(row.record.id) ?? null,
       latestInboundExcerpt: latestInbound.get(row.record.id)?.bodyText.slice(0, 240) ?? "",
       classification,

@@ -60,6 +60,7 @@ import { RowsSkeleton } from "./CrmSkeletons";
 import { categoryDisplayName, CategoryDot, ClassificationPicker, HoverPreview, HoverPreviewProvider, InlineDraftEditor, MoveStageDialog, RegenerateDraftDialog, humanize, useMoveStageSuccessMessage, type MoveStageBody, type RowMutation } from "./ActionRowTools";
 import { asList, asObject, crmFetch } from "./crm-utils";
 import { useCrmText } from "./useCrmText";
+import { useFollowUpStepLabel } from "./useInboxCrmStepLabel";
 import { prefetchRecordWorkspace } from "./recordPrefetch";
 import { useRecordChanged } from "./recordEvents";
 import { publishRecordQueue, withdrawRecordQueue, type RecordQueue } from "./recordQueue";
@@ -614,7 +615,8 @@ const TONE_LABEL: Record<Tone, string> = {
 function useActionText() {
   const t = useTranslations("crmActions.actions");
   const crm = useCrmText();
-  return useMemo(() => ({ t, crm }), [t, crm]);
+  const followUpLabel = useFollowUpStepLabel();
+  return useMemo(() => ({ t, crm, followUpLabel }), [t, crm, followUpLabel]);
 }
 type ActionText = ReturnType<typeof useActionText>;
 
@@ -677,7 +679,7 @@ function draftStateOf({ editable, draftFull, status, dnc, sendable, actionText, 
 
 /** Everything a row or card shows about one action, computed once. */
 export function describeAction(action: Action, categories: Data[], pipeline: boolean | undefined, now: number, text: ActionText) {
-  const { t, crm } = text;
+  const { t, crm, followUpLabel } = text;
   const record = asObject(action.record);
   const person = asObject(action.person);
   const company = asObject(action.company);
@@ -759,7 +761,8 @@ export function describeAction(action: Action, categories: Data[], pipeline: boo
   // it rides underneath it and simply disappears when nothing is running.
   // A drafted follow-up names its number so "Follow-up ready" on the right
   // reads as "Follow-up 2 · Share Information" here, not just the step's name.
-  const stepLabel = action.draftStepLabel ? String(action.draftStepLabel) : step.name ? String(step.name) : "";
+  const draftStepInfo = asObject(action.draftStepInfo);
+  const stepLabel = typeof draftStepInfo.followUp === "number" ? followUpLabel(draftStepInfo.followUp, String(draftStepInfo.name ?? "")) : step.name ? String(step.name) : "";
   const lastRun = asObject(action.lastRun);
   const sequenceLabel = sequence.name ? `${String(sequence.name)}${stepLabel ? ` · ${stepLabel}` : ""}`
     : stage === "exhausted" && lastRun.sequenceName ? t("sequenceCompleted", { name: String(lastRun.sequenceName) }) : "";

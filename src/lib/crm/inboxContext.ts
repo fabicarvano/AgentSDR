@@ -58,31 +58,70 @@ export type InboxCrmContext = InboxCrmSummary & {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function relativeDue(dueAt: string, now: Date): string {
+/** When a scheduled step is due, relative to now, as data the UI words in its own language. */
+export type InboxCrmStepPhase = "drafted" | "drafting" | "failed" | "scheduled" | "dueNow" | "dueHours" | "dueDays";
+
+/**
+ * The immediate step as data: `inboxCrmStepLabel` words it in English (tests, MCP, server);
+ * the UI words it from the `serverCrm.inboxStep` catalog (`useInboxCrmStepLabel`).
+ * `value` is the hours or days of `dueHours` / `dueDays`; `n` is the follow-up number.
+ */
+export type InboxCrmStepInfo =
+  | { kind: "closed" | "paused" | "attention" | "classifying" | "none" | "replyDrafted" }
+  | { kind: "reply"; phase: InboxCrmStepPhase; value?: number }
+  | { kind: "followUp"; n: number; phase: InboxCrmStepPhase; value?: number };
+
+function duePhase(dueAt: string, now: Date): { phase: InboxCrmStepPhase; value?: number } {
   const delta = new Date(dueAt).getTime() - now.getTime();
-  if (delta <= 0) return "due now";
-  if (delta < DAY_MS) {
-    const hours = Math.max(1, Math.round(delta / (60 * 60 * 1000)));
-    return `due in ${hours}h`;
+  if (delta <= 0) return { phase: "dueNow" };
+  if (delta < DAY_MS) return { phase: "dueHours", value: Math.max(1, Math.round(delta / (60 * 60 * 1000))) };
+  return { phase: "dueDays", value: Math.round(delta / DAY_MS) };
+}
+
+/** What the immediate step is, as structured data; see `InboxCrmStepInfo`. */
+export function inboxCrmStep(summary: InboxCrmSummary, now = new Date()): InboxCrmStepInfo {
+  if (summary.workflowState === "closed") return { kind: "closed" };
+  if (summary.workflowState === "paused") return { kind: "paused" };
+  if (summary.workflowState === "error") return { kind: "attention" };
+  if (summary.workflowState === "classifying" || summary.workflowState === "unclassified") return { kind: "classifying" };
+  const step = summary.step;
+  if (!step) return summary.hasDraft ? { kind: "replyDrafted" } : { kind: "none" };
+  const phase: { phase: InboxCrmStepPhase; value?: number } =
+    step.status === "awaiting_review" ? { phase: "drafted" }
+    : step.status === "drafting" ? { phase: "drafting" }
+    : step.status === "failed" ? { phase: "failed" }
+    : step.dueAt ? duePhase(step.dueAt, now)
+    : { phase: "scheduled" };
+  return step.type === "reply" ? { kind: "reply", ...phase } : { kind: "followUp", n: step.position - 1, ...phase };
+}
+
+function englishPhase(info: { phase: InboxCrmStepPhase; value?: number }): string {
+  switch (info.phase) {
+    case "drafted": return "drafted";
+    case "drafting": return "drafting";
+    case "failed": return "failed";
+    case "scheduled": return "scheduled";
+    case "dueNow": return "due now";
+    case "dueHours": return `due in ${info.value}h`;
+    case "dueDays": return `due in ${info.value}d`;
   }
-  const days = Math.round(delta / DAY_MS);
-  return `due in ${days}d`;
 }
 
 /**
  * One phrase for "what is the immediate step" — the list shows it where the
  * flat "Replied" status used to be, since every row there has replied.
+ * English only; screens use `useInboxCrmStepLabel()`.
  */
 export function inboxCrmStepLabel(summary: InboxCrmSummary, now = new Date()): string {
-  if (summary.workflowState === "closed") return "Closed";
-  if (summary.workflowState === "paused") return "Paused";
-  if (summary.workflowState === "error") return "Needs attention";
-  if (summary.workflowState === "classifying" || summary.workflowState === "unclassified") return "Classifying";
-  const step = summary.step;
-  if (!step) return summary.hasDraft ? "Reply drafted" : "No next step";
-  const name = step.type === "reply" ? "Reply" : `Follow-up ${step.position - 1}`;
-  if (step.status === "awaiting_review") return `${name} drafted`;
-  if (step.status === "drafting") return `${name} drafting`;
-  if (step.status === "failed") return `${name} failed`;
-  return step.dueAt ? `${name} ${relativeDue(step.dueAt, now)}` : `${name} scheduled`;
+  const info = inboxCrmStep(summary, now);
+  switch (info.kind) {
+    case "closed": return "Closed";
+    case "paused": return "Paused";
+    case "attention": return "Needs attention";
+    case "classifying": return "Classifying";
+    case "none": return "No next step";
+    case "replyDrafted": return "Reply drafted";
+    case "reply": return `Reply ${englishPhase(info)}`;
+    case "followUp": return `Follow-up ${info.n} ${englishPhase(info)}`;
+  }
 }
