@@ -32,6 +32,7 @@ import type { Messages } from "@/i18n/catalog";
 import { useAnalyticsFormat } from "@/components/analytics/useAnalyticsFormat";
 import { cn } from "@/utils/cn";
 import { AiStatusBadge, errorText, useAiFormat } from "./aiShared";
+import { useAiStepText } from "./useAiServerText";
 
 /** While a call is queued or on, the sheet refreshes this often. */
 const LIVE_REFRESH_MS = 5_000;
@@ -99,6 +100,7 @@ export function AiLeadDrawer({
   onChanged: () => void;
 }) {
   const t = useTranslations("callingAiWork.drawer");
+  const stepText = useAiStepText();
   const { formatWhen, actionRequiredText } = useAiFormat();
   const dialogs = useDialogs();
   const [detail, setDetail] = useState<AiLeadDetail | null>(null);
@@ -252,7 +254,7 @@ export function AiLeadDrawer({
               <section className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <AiStatusBadge status={lead.status} />
-                  {lead.currentStep && <span className="text-paragraph-sm text-text-sub-600">{lead.currentStep}</span>}
+                  {lead.currentStep && <span className="text-paragraph-sm text-text-sub-600">{lead.currentStepRef ? stepText.lead(lead.currentStepRef) : lead.currentStep}</span>}
                   {lead.numberName && <span className="text-paragraph-xs text-text-soft-400">{t("fromNumber", { name: lead.numberName })}</span>}
                 </div>
                 {lead.nextAt && <p className="text-paragraph-sm text-text-sub-600" suppressHydrationWarning>{t("nextAction", { when: formatWhen(lead.nextAt) })}</p>}
@@ -374,6 +376,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 function ActivityEntry({ entry }: { entry: AiLeadActivity }) {
   const t = useTranslations("callingAiWork.drawer");
+  const stepText = useAiStepText();
+  const stepLabel = entry.stepRef ? stepText.activity(entry.stepRef) : entry.stepLabel;
   const { formatWhen } = useAiFormat();
   const fmt = useAnalyticsFormat();
   const callTitle = (c: NonNullable<AiLeadActivity["call"]>): string => {
@@ -405,12 +409,12 @@ function ActivityEntry({ entry }: { entry: AiLeadActivity }) {
           {message?.delivery && <Badge.Root size="small" variant="light" color={DELIVERY[message.delivery].color}>{t(`delivery.${DELIVERY[message.delivery].labelKey}`)}</Badge.Root>}
           <span className="ml-auto text-paragraph-xs tabular-nums text-text-soft-400" suppressHydrationWarning>{formatWhen(entry.at)}</span>
         </div>
-        {(entry.stepLabel || entry.campaignName || where) && (
+        {(stepLabel || entry.campaignName || where) && (
           <p className="text-paragraph-xs text-text-sub-600">
-            {[entry.stepLabel, entry.campaignName ? t("campaignName", { name: entry.campaignName }) : null, where ? t(call?.direction === "inbound" ? "toNumber" : "viaNumber", { where }) : null].filter(Boolean).join(" · ")}
+            {[stepLabel, entry.campaignName ? t("campaignName", { name: entry.campaignName }) : null, where ? t(call?.direction === "inbound" ? "toNumber" : "viaNumber", { where }) : null].filter(Boolean).join(" · ")}
           </p>
         )}
-        {entry.error && <p className="text-paragraph-xs text-error-dark">{entry.error}</p>}
+        {entry.error && <p className="text-paragraph-xs text-error-dark">{entry.errorKind ? stepText.errorKind(entry.errorKind) : entry.error}</p>}
         {call?.error && call.result !== "connected" && <p className="text-paragraph-xs text-text-sub-600">{call.error}</p>}
         {message?.error && <p className="text-paragraph-xs text-error-dark">{message.error}</p>}
         {message && message.body && (

@@ -12,6 +12,7 @@ import * as Select from "@/components/alignui/select";
 import * as Input from "@/components/alignui/input";
 import * as Textarea from "@/components/alignui/textarea";
 import { DocsLink } from "@/components/page/DocsLink";
+import { useAgentVoiceLabel } from "./useAgentVoiceLabel";
 import { AGENT_VOICES, DEFAULT_AGENT_NAME, DEFAULT_AGENT_VOICE, MAX_AGENT_BRIEF_CHARS, MAX_AGENT_NAME_CHARS, MIN_AGENT_RECORDER_VERSION, MIN_RECORDER_VERSION, type RecorderAgent } from "@/lib/calls/contract";
 import type { DocsPage } from "@/lib/support";
 import { isOlderVersion, RECORDER_SETUP_PATH } from "@/lib/calls/recorderRelease";
@@ -63,6 +64,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
   numberMenu?: boolean;
 }) {
   const t = useTranslations("callsMain.callButton");
+  const voiceLabel = useAgentVoiceLabel();
   const { errorMessage } = useCrmText();
   // Anything that is not about the number itself — no extension, an
   // outdated one, the extension refusing — is a notice, not the number modal:
@@ -377,7 +379,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
                       <Select.Trigger aria-label={t("voice")}><Select.Value /></Select.Trigger>
                       <Select.Content>
                         {AGENT_VOICES.map((voice) => (
-                          <Select.Item key={voice.id} value={voice.id}>{voice.label}</Select.Item>
+                          <Select.Item key={voice.id} value={voice.id}>{voiceLabel(voice.id)}</Select.Item>
                         ))}
                       </Select.Content>
                     </Select.Root>

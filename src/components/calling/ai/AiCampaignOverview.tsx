@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/page/Skeletons";
 import { AGENT_OUTCOMES } from "@/lib/calls/contract";
 import type { AiCampaignDetail, AiCampaignStats } from "@/lib/calls/aiCampaigns/api";
 import { useAiOutcomeLabel } from "./AiLeadDrawer";
+import { useAiStepText } from "./useAiServerText";
 
 const WA = CHANNEL_META.whatsapp.color;
 const OUTCOME_COLOR: Record<(typeof AGENT_OUTCOMES)[number], string> = {
@@ -48,6 +49,7 @@ export function AiCampaignOverview({ campaign, stats }: { campaign: AiCampaignDe
   const t = useTranslations("callingAiWork.overview");
   const fmt = useAnalyticsFormat();
   const outcomeLabel = useAiOutcomeLabel();
+  const stepText = useAiStepText();
   const pct = (part: number, whole: number): string | undefined => (whole > 0 ? fmt.percent(part / whole) : undefined);
   const DAY_KEYS: SeriesKeys<"answered" | "unanswered"> = {
     answered: { label: t("answered"), color: WA },
@@ -114,14 +116,14 @@ export function AiCampaignOverview({ campaign, stats }: { campaign: AiCampaignDe
         <FrameHeader title={t("funnelTitle")} description={t("funnelDescription")} />
         <FramePanel>
           {reachSteps.some((step) => step.attempted > 0) ? (
-            <FunnelChart stages={reachSteps.map((step) => ({ key: step.key, label: step.label, value: step.attempted }))} />
+            <FunnelChart stages={reachSteps.map((step) => ({ key: step.key, label: stepText.stat(step.labelRef), value: step.attempted }))} />
           ) : (
             <p className="py-6 text-center text-paragraph-sm text-text-sub-600">{t("noStepsYet")}</p>
           )}
           {chaseSteps.some((step) => step.attempted > 0) && (
             <div className="mt-5 border-t border-stroke-soft-200 pt-4">
               <p className="mb-3 text-label-sm text-text-strong-950">{t("afterYes")}</p>
-              <BarList items={chaseSteps.filter((step) => step.attempted > 0).map((step) => ({ key: step.key, label: step.label, value: step.attempted, color: HUE.purple }))} />
+              <BarList items={chaseSteps.filter((step) => step.attempted > 0).map((step) => ({ key: step.key, label: stepText.stat(step.labelRef), value: step.attempted, color: HUE.purple }))} />
             </div>
           )}
         </FramePanel>

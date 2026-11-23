@@ -175,32 +175,84 @@ export const DEFAULT_CHASE_STEPS: AiCampaignStep[] = [
 /** The rules the engine reads (Settings → WhatsApp → Sending rules); see src/lib/channels/rules.ts. */
 export const CALLING_RULE_KEYS = ["callsPerDay", "callGapMinutes", "callingHours", "callWarmupDays"] as const;
 
-/** Problems with a sequence, for the editor and the API (null = fine). */
-export function aiCampaignStepsError(steps: unknown, options: { allowEmpty?: boolean } = {}): string | null {
-  if (!Array.isArray(steps)) return "The sequence must be a list of steps";
-  if (!steps.length) return options.allowEmpty ? null : "Add at least one step";
-  if (steps.length > AI_CAMPAIGN_MAX_STEPS) return `At most ${AI_CAMPAIGN_MAX_STEPS} steps`;
+/**
+ * What is wrong with a sequence, as a code plus its numbers. `n` is the 1-based
+ * position of the step. Screens word it from the catalog (serverCalling.steps);
+ * the API words it with aiCampaignStepsError.
+ */
+export type AiStepsProblem =
+  | { code: "notList" }
+  | { code: "empty" }
+  | { code: "tooMany"; max: number }
+  | { code: "notStep"; n: number }
+  | { code: "invalidId"; n: number }
+  | { code: "repeatedId"; n: number }
+  | { code: "waitRange"; n: number; max: number }
+  | { code: "callInstructionsLong"; n: number; max: number }
+  | { code: "messageEmpty"; n: number }
+  | { code: "messageLong"; n: number; max: number }
+  | { code: "badKind"; n: number };
+
+/** Problems with a sequence as a typed problem (null = fine); for the editor. */
+export function aiCampaignStepsProblem(steps: unknown, options: { allowEmpty?: boolean } = {}): AiStepsProblem | null {
+  if (!Array.isArray(steps)) return { code: "notList" };
+  if (!steps.length) return options.allowEmpty ? null : { code: "empty" };
+  if (steps.length > AI_CAMPAIGN_MAX_STEPS) return { code: "tooMany", max: AI_CAMPAIGN_MAX_STEPS };
   const ids = new Set<string>();
   for (const [index, raw] of steps.entries()) {
     const step = raw as { id?: unknown; kind?: unknown; delayHours?: unknown; instructions?: unknown; body?: unknown } | null;
-    const where = `Step ${index + 1}`;
-    if (!step || typeof step !== "object") return `${where} is not a step`;
-    if (typeof step.id !== "string" || !/^[a-z0-9-]{1,40}$/.test(step.id)) return `${where} has an invalid id`;
-    if (ids.has(step.id)) return `${where} repeats an id`;
+    const n = index + 1;
+    if (!step || typeof step !== "object") return { code: "notStep", n };
+    if (typeof step.id !== "string" || !/^[a-z0-9-]{1,40}$/.test(step.id)) return { code: "invalidId", n };
+    if (ids.has(step.id)) return { code: "repeatedId", n };
     ids.add(step.id);
     if (typeof step.delayHours !== "number" || !Number.isFinite(step.delayHours) || step.delayHours < 0 || step.delayHours > AI_CAMPAIGN_MAX_DELAY_HOURS) {
-      return `${where}: the wait must be between 0 and ${AI_CAMPAIGN_MAX_DELAY_HOURS} hours`;
+      return { code: "waitRange", n, max: AI_CAMPAIGN_MAX_DELAY_HOURS };
     }
     if (step.kind === "call") {
       if (typeof step.instructions !== "string" || step.instructions.length > AI_CAMPAIGN_MAX_INSTRUCTIONS_CHARS) {
-        return `${where}: instructions must be at most ${AI_CAMPAIGN_MAX_INSTRUCTIONS_CHARS} characters`;
+        return { code: "callInstructionsLong", n, max: AI_CAMPAIGN_MAX_INSTRUCTIONS_CHARS };
       }
     } else if (step.kind === "message") {
-      if (typeof step.body !== "string" || !step.body.trim()) return `${where}: the message is empty`;
-      if (step.body.length > AI_CAMPAIGN_MAX_MESSAGE_CHARS) return `${where}: the message is over ${AI_CAMPAIGN_MAX_MESSAGE_CHARS} characters`;
+      if (typeof step.body !== "string" || !step.body.trim()) return { code: "messageEmpty", n };
+      if (step.body.length > AI_CAMPAIGN_MAX_MESSAGE_CHARS) return { code: "messageLong", n, max: AI_CAMPAIGN_MAX_MESSAGE_CHARS };
     } else {
-      return `${where} must be a call or a message`;
+      return { code: "badKind", n };
     }
   }
   return null;
+}
+
+/** The problem in English, for the API (the screens use the catalog). */
+export function aiStepsProblemText(problem: AiStepsProblem): string {
+  switch (problem.code) {
+    case "notList":
+      return "The sequence must be a list of steps";
+    case "empty":
+      return "Add at least one step";
+    case "tooMany":
+      return `At most ${problem.max} steps`;
+    case "notStep":
+      return `Step ${problem.n} is not a step`;
+    case "invalidId":
+      return `Step ${problem.n} has an invalid id`;
+    case "repeatedId":
+      return `Step ${problem.n} repeats an id`;
+    case "waitRange":
+      return `Step ${problem.n}: the wait must be between 0 and ${problem.max} hours`;
+    case "callInstructionsLong":
+      return `Step ${problem.n}: instructions must be at most ${problem.max} characters`;
+    case "messageEmpty":
+      return `Step ${problem.n}: the message is empty`;
+    case "messageLong":
+      return `Step ${problem.n}: the message is over ${problem.max} characters`;
+    case "badKind":
+      return `Step ${problem.n} must be a call or a message`;
+  }
+}
+
+/** Problems with a sequence, for the editor and the API (null = fine). */
+export function aiCampaignStepsError(steps: unknown, options: { allowEmpty?: boolean } = {}): string | null {
+  const problem = aiCampaignStepsProblem(steps, options);
+  return problem ? aiStepsProblemText(problem) : null;
 }

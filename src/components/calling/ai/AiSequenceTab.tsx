@@ -5,11 +5,12 @@ import { useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiLoader4Line, RiSaveLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { Frame, FrameFooter, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
-import { aiSequencesError, type AiCampaignDetail, type AiStepStat } from "@/lib/calls/aiCampaigns/api";
+import { aiSequencesProblem, type AiCampaignDetail, type AiStepStat } from "@/lib/calls/aiCampaigns/api";
 import { updateAiCampaign } from "@/lib/calls/aiCampaigns/client";
 import type { AiCampaignStep } from "@/lib/calls/aiCampaigns/contract";
 import { cn } from "@/utils/cn";
 import { useBeforeUnload, useErrorText } from "./aiShared";
+import { useAiProblemText } from "./useAiServerText";
 import { AiStepsEditor } from "./AiStepsEditor";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -35,6 +36,7 @@ export function AiSequenceTab({
   onDirtyChange?: (dirty: boolean) => void;
 }) {
   const t = useTranslations("callingAiSetup.sequence");
+  const problemText = useAiProblemText();
   const errorText = useErrorText();
   const [steps, setSteps] = useState<AiCampaignStep[]>(() => campaign.steps.map((step) => ({ ...step })));
   const [chaseSteps, setChaseSteps] = useState<AiCampaignStep[]>(() => campaign.chaseSteps.map((step) => ({ ...step })));
@@ -48,7 +50,8 @@ export function AiSequenceTab({
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange]);
 
   const showChase = campaign.goal !== "human_callback";
-  const problem = useMemo(() => aiSequencesError(steps, showChase ? chaseSteps : []), [steps, chaseSteps, showChase]);
+  const problemFound = useMemo(() => aiSequencesProblem(steps, showChase ? chaseSteps : []), [steps, chaseSteps, showChase]);
+  const problem = problemFound ? problemText.sequences(problemFound) : null;
 
   async function save() {
     if (problem) { setError(problem); return; }

@@ -31,6 +31,7 @@ import type { AiCampaignDetail, AiCampaignStats } from "@/lib/calls/aiCampaigns/
 import { archiveAiCampaign, getAiCampaign, getAiCampaignStats, launchAiCampaign, updateAiCampaign } from "@/lib/calls/aiCampaigns/client";
 import { cn } from "@/utils/cn";
 import { AiAgentBadge, AiCampaignStateBadge, useErrorText } from "./aiShared";
+import { useAiProblemText } from "./useAiServerText";
 import { AiCampaignOverview } from "./AiCampaignOverview";
 import { AiLeadsTab } from "./AiLeadsTab";
 import { AiSequenceTab } from "./AiSequenceTab";
@@ -42,6 +43,7 @@ const LIST_HREF = "/calling/campaigns";
 
 export function AiCampaignDetailClient({ campaignId, initialTab }: { campaignId: string; initialTab: AiCampaignTab }) {
   const t = useTranslations("callingAiSetup.detail");
+  const problemText = useAiProblemText();
   const format = useFormatter();
   const errorText = useErrorText();
   const LIST = { href: LIST_HREF, label: t("back") };
@@ -145,6 +147,8 @@ export function AiCampaignDetailClient({ campaignId, initialTab }: { campaignId:
 
   const draft = campaign.state === "draft";
   const canLaunch = draft && !campaign.blocker;
+  // The server sends the blocker as a code too; an older response without it keeps its English text.
+  const blockerText = campaign.blockerProblem ? problemText.launch(campaign.blockerProblem) : (campaign.blocker ?? "");
   const created = format.dateTime(new Date(campaign.createdAt), { month: "short", day: "numeric", year: "numeric" });
   const numberNames = campaign.numbers.map((number) => number.name).join(", ");
 
@@ -169,7 +173,7 @@ export function AiCampaignDetailClient({ campaignId, initialTab }: { campaignId:
         actions={
           <>
             {draft ? (
-              <Button.Root variant="primary" mode="filled" size="small" onClick={() => void launch()} disabled={busy || !canLaunch} title={campaign.blocker ?? undefined}>
+              <Button.Root variant="primary" mode="filled" size="small" onClick={() => void launch()} disabled={busy || !canLaunch} title={blockerText || undefined}>
                 <Button.Icon as={busy ? RiLoader4Line : RiRocketLine} className={cn(busy && "animate-spin")} />
                 {t("launch")}
               </Button.Root>
@@ -193,8 +197,7 @@ export function AiCampaignDetailClient({ campaignId, initialTab }: { campaignId:
           </>
         }
       />
-      {draft && campaign.blocker && <p className="mt-3 text-paragraph-xs text-text-sub-600">{/* The blocker text comes from lib/calls/aiCampaigns (English, batch I). */}
-        {t("cannotLaunch", { blocker: campaign.blocker.charAt(0).toLowerCase() + campaign.blocker.slice(1) })}</p>}
+      {draft && campaign.blocker && <p className="mt-3 text-paragraph-xs text-text-sub-600">{t("cannotLaunch", { blocker: blockerText.charAt(0).toLowerCase() + blockerText.slice(1) })}</p>}
       {draft && !campaign.blocker && <p className="mt-3 text-paragraph-xs text-text-sub-600">{t("draftNote")}</p>}
 
       <StatRow

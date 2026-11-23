@@ -11,7 +11,9 @@ import type { StationStatus } from "../stationContract";
 import {
   AI_CAMPAIGN_MAX_CALLBACKS,
   AI_CAMPAIGN_GOALS,
-  aiCampaignStepsError,
+  aiCampaignStepsProblem,
+  aiStepsProblemText,
+  type AiStepsProblem,
   type AiCampaignGoal,
   type AiCampaignSettings,
   type AiCampaignStep,
@@ -63,6 +65,8 @@ export type AiCampaignDetail = AiCampaignSummary &
     knowledgeIds: string[] | null;
     /** Why it cannot launch yet (drafts only), or null. */
     blocker: string | null;
+    /** The same blocker as a code, so screens can word it in the interface language. */
+    blockerProblem: AiLaunchProblem | null;
     /** The most calls its numbers may place a day (their own limits or the organization's rule), before warm-up. */
     callsPerDayLimit: number;
   };
@@ -107,6 +111,8 @@ export type AiCampaignLead = {
   note: string | null;
   /** "Call 2 of 4", "Message 1 of 2 (follow-up)": the step it is on, or null once it is done. */
   currentStep: string | null;
+  /** The same step as data, so screens can word it in the interface language. */
+  currentStepRef: AiLeadStepRef | null;
   nextAt: string | null;
   /**
    * When it reaches (or reached) the CRM's Action required: a hand-off, a yes
@@ -155,6 +161,8 @@ export type AiLeadActivity = {
   kind: "call" | "message" | "step";
   /** This campaign's step it was ("Reach them · Call 1 of 3"), or null. */
   stepLabel: string | null;
+  /** The same step as data, so screens can word it in the interface language. */
+  stepRef: AiStepRef | null;
   /** Another calling campaign it belongs to, or null. */
   campaignName: string | null;
   call: {
@@ -189,6 +197,8 @@ export type AiLeadActivity = {
   } | null;
   /** A step that failed before any call or message existed: why. */
   error: string | null;
+  /** When `error` is a built-in text rather than a stored reason: which one, so screens can word it. */
+  errorKind?: "starting" | "notStarted" | null;
 };
 
 export type AiLeadActivitySummary = {
@@ -210,6 +220,8 @@ export type AiStepStat = {
   stepId: string | null;
   kind: AiStepRunKind;
   label: string;
+  /** The same label as data, so screens can word it in the interface language. */
+  labelRef: AiStepRef;
   /** Runs started (including failed ones). */
   attempted: number;
   done: number;
@@ -245,14 +257,38 @@ export type AiLaunchCheck = {
   leads: number;
 };
 
+export type AiLaunchProblem = { code: "noNumber" | "noCall" | "noInstructions" | "noBooking" | "noLeads" };
+
+/** Why a campaign cannot launch yet, as a code, or null. The screens word it from the catalog. */
+export function aiLaunchProblem(input: AiLaunchCheck): AiLaunchProblem | null {
+  if (input.numbers === 0) return { code: "noNumber" };
+  if (!input.steps.some((step) => step.kind === "call")) return { code: "noCall" };
+  if (!input.instructions.trim()) return { code: "noInstructions" };
+  if (input.goal !== "human_callback" && !input.bookingUrl) return { code: "noBooking" };
+  if (input.leads === 0) return { code: "noLeads" };
+  return null;
+}
+
+/** The launch problem in English, for the API. */
+export function aiLaunchProblemText(problem: AiLaunchProblem): string {
+  switch (problem.code) {
+    case "noNumber":
+      return "Choose at least one calling number";
+    case "noCall":
+      return "Add at least one call to the sequence";
+    case "noInstructions":
+      return "Write the campaign instructions (what every call is about)";
+    case "noBooking":
+      return "Add the booking link, or set the goal to hand over to the team";
+    case "noLeads":
+      return "Add at least one lead";
+  }
+}
+
 /** Why a campaign cannot launch yet, or null. The API runs the same check. */
 export function aiLaunchBlocker(input: AiLaunchCheck): string | null {
-  if (input.numbers === 0) return "Choose at least one calling number";
-  if (!input.steps.some((step) => step.kind === "call")) return "Add at least one call to the sequence";
-  if (!input.instructions.trim()) return "Write the campaign instructions (what every call is about)";
-  if (input.goal !== "human_callback" && !input.bookingUrl) return "Add the booking link, or set the goal to hand over to the team";
-  if (input.leads === 0) return "Add at least one lead";
-  return null;
+  const problem = aiLaunchProblem(input);
+  return problem ? aiLaunchProblemText(problem) : null;
 }
 
 /** An https URL as people paste it ("https://cal.com/acme/30min"), or null when it is not one. */
@@ -265,28 +301,71 @@ export function httpsUrl(value: string): string | null {
   }
 }
 
-/** Problems with the campaign's settings (null = fine); for the form and the API. */
-export function aiSettingsError(
-  settings: Pick<AiCampaignSettings, "goal" | "instructions" | "bookingUrl" | "bookingMessage" | "maxCallbacks">,
-): string | null {
-  if (!(AI_CAMPAIGN_GOALS as readonly string[]).includes(settings.goal)) return "Choose what the calls are for";
-  if (settings.instructions.length > AI_CAMPAIGN_MAX_INSTRUCTIONS) return `Instructions must be at most ${AI_CAMPAIGN_MAX_INSTRUCTIONS} characters`;
-  if (settings.bookingUrl && !httpsUrl(settings.bookingUrl)) return "The booking link must be an https:// address";
-  if (settings.bookingMessage.length > AI_CAMPAIGN_MAX_BOOKING_MESSAGE) return `The booking message must be at most ${AI_CAMPAIGN_MAX_BOOKING_MESSAGE} characters`;
-  if (settings.bookingUrl && !settings.bookingMessage.includes("{{bookingLink}}")) return "The booking message must include {{bookingLink}}";
+export type AiSettingsProblem =
+  | { code: "goal" }
+  | { code: "instructionsLong"; max: number }
+  | { code: "bookingUrl" }
+  | { code: "bookingMessageLong"; max: number }
+  | { code: "bookingMessageToken" }
+  | { code: "callbacks"; max: number };
+
+type AiSettingsInput = Pick<AiCampaignSettings, "goal" | "instructions" | "bookingUrl" | "bookingMessage" | "maxCallbacks">;
+
+/** Problems with the campaign's settings as a code (null = fine); for the form. */
+export function aiSettingsProblem(settings: AiSettingsInput): AiSettingsProblem | null {
+  if (!(AI_CAMPAIGN_GOALS as readonly string[]).includes(settings.goal)) return { code: "goal" };
+  if (settings.instructions.length > AI_CAMPAIGN_MAX_INSTRUCTIONS) return { code: "instructionsLong", max: AI_CAMPAIGN_MAX_INSTRUCTIONS };
+  if (settings.bookingUrl && !httpsUrl(settings.bookingUrl)) return { code: "bookingUrl" };
+  if (settings.bookingMessage.length > AI_CAMPAIGN_MAX_BOOKING_MESSAGE) return { code: "bookingMessageLong", max: AI_CAMPAIGN_MAX_BOOKING_MESSAGE };
+  if (settings.bookingUrl && !settings.bookingMessage.includes("{{bookingLink}}")) return { code: "bookingMessageToken" };
   if (!Number.isInteger(settings.maxCallbacks) || settings.maxCallbacks < 0 || settings.maxCallbacks > AI_CAMPAIGN_MAX_CALLBACKS) {
-    return `Call-backs must be between 0 and ${AI_CAMPAIGN_MAX_CALLBACKS}`;
+    return { code: "callbacks", max: AI_CAMPAIGN_MAX_CALLBACKS };
   }
   return null;
 }
 
-/** Both sequences, for the editor's save button and the API. The chase may be empty. */
-export function aiSequencesError(steps: unknown, chaseSteps: unknown): string | null {
-  const reach = aiCampaignStepsError(steps);
-  if (reach) return `Reach them: ${reach}`;
-  const chase = aiCampaignStepsError(chaseSteps, { allowEmpty: true });
-  if (chase) return `If they said yes but haven't booked: ${chase}`;
+/** The settings problem in English, for the API. */
+export function aiSettingsProblemText(problem: AiSettingsProblem): string {
+  switch (problem.code) {
+    case "goal":
+      return "Choose what the calls are for";
+    case "instructionsLong":
+      return `Instructions must be at most ${problem.max} characters`;
+    case "bookingUrl":
+      return "The booking link must be an https:// address";
+    case "bookingMessageLong":
+      return `The booking message must be at most ${problem.max} characters`;
+    case "bookingMessageToken":
+      return "The booking message must include {{bookingLink}}";
+    case "callbacks":
+      return `Call-backs must be between 0 and ${problem.max}`;
+  }
+}
+
+/** Problems with the campaign's settings (null = fine); for the API. */
+export function aiSettingsError(settings: AiSettingsInput): string | null {
+  const problem = aiSettingsProblem(settings);
+  return problem ? aiSettingsProblemText(problem) : null;
+}
+
+/** A problem with one of the two sequences: which one, and what is wrong in it. */
+export type AiSequencesProblem = { sequence: "reach" | "chase"; problem: AiStepsProblem };
+
+/** Both sequences as a typed problem, for the editor's save button. The chase may be empty. */
+export function aiSequencesProblem(steps: unknown, chaseSteps: unknown): AiSequencesProblem | null {
+  const reach = aiCampaignStepsProblem(steps);
+  if (reach) return { sequence: "reach", problem: reach };
+  const chase = aiCampaignStepsProblem(chaseSteps, { allowEmpty: true });
+  if (chase) return { sequence: "chase", problem: chase };
   return null;
+}
+
+/** Both sequences, for the API. The chase may be empty. */
+export function aiSequencesError(steps: unknown, chaseSteps: unknown): string | null {
+  const found = aiSequencesProblem(steps, chaseSteps);
+  if (!found) return null;
+  const text = aiStepsProblemText(found.problem);
+  return found.sequence === "reach" ? `Reach them: ${text}` : `If they said yes but haven't booked: ${text}`;
 }
 
 /** draft until launched, then the stored status. */
@@ -297,28 +376,57 @@ export function aiCampaignState(row: { launchedAt: string | Date | null; status:
 
 export const AI_CAMPAIGN_STATE_LABELS: Record<AiCampaignState, string> = { draft: "Draft", active: "Active", paused: "Paused" };
 
-/** "Call 2 of 4" for the step at `index` of `steps`. */
-export function aiStepLabel(steps: AiCampaignStep[], index: number, chase: boolean): string | null {
+/** Where a step sits among its kind: the 2nd of 4 calls. `chase`: it is in the sequence after a yes. */
+export type AiStepPosition = { kind: "call" | "message"; index: number; total: number; chase: boolean };
+
+/** The step at `index` of `steps` as data, or null when there is none. */
+export function aiStepPosition(steps: AiCampaignStep[], index: number, chase: boolean): AiStepPosition | null {
   const step = steps[index];
   if (!step) return null;
   const kindIndex = steps.slice(0, index + 1).filter((candidate) => candidate.kind === step.kind).length;
   const kindTotal = steps.filter((candidate) => candidate.kind === step.kind).length;
-  return `${step.kind === "call" ? "Call" : "Message"} ${kindIndex} of ${kindTotal}${chase ? " (chasing the booking)" : ""}`;
+  return { kind: step.kind, index: kindIndex, total: kindTotal, chase };
 }
 
+/** "Call 2 of 4" for the step at `index` of `steps` (English, for the API). */
+export function aiStepLabel(steps: AiCampaignStep[], index: number, chase: boolean): string | null {
+  const position = aiStepPosition(steps, index, chase);
+  if (!position) return null;
+  return `${position.kind === "call" ? "Call" : "Message"} ${position.index} of ${position.total}${position.chase ? " (chasing the booking)" : ""}`;
+}
+
+/** Where a lead is in its sequence, as data: a step, or the nth call-back. */
+export type AiLeadStepRef = { type: "step"; position: AiStepPosition } | { type: "callback"; n: number };
+
+/** A step the engine runs outside the configured sequences. */
+export type AiSystemStep =
+  | { type: "callback"; n: string }
+  | { type: "bookingLink" }
+  | { type: "inbound" }
+  | { type: "now" }
+  | { type: "other"; key: string };
+
+/**
+ * A step run as data: a configured step (`position` null when the step is gone
+ * from the sequence; `removed` when it was deleted) or one of the engine's own.
+ */
+export type AiStepRef =
+  | { type: "step"; phase: "reach" | "chase"; position: AiStepPosition | null; removed?: boolean }
+  | { type: "system"; system: AiSystemStep };
+
 /** The step key the engine stores for a step run, and what it means. */
-export function describeStepKey(stepKey: string): { phase: "reach" | "chase" | "system"; stepId: string | null; label: string } {
+export function describeStepKey(stepKey: string): { phase: "reach" | "chase" | "system"; stepId: string | null; label: string; system?: AiSystemStep } {
   // "@<id>": a run from before the lead was queued again (requeue retires its key).
   const current = stepKey.replace(/@[0-9a-f]{8}$/, "");
   const retry = /^retry:(.+):\d+$/.exec(current);
   const key = retry ? retry[1]! : current;
   if (key.startsWith("reach:")) return { phase: "reach", stepId: key.slice(6), label: "Reach them" };
   if (key.startsWith("chase:")) return { phase: "chase", stepId: key.slice(6), label: "Chasing the booking" };
-  if (key.startsWith("callback:")) return { phase: "system", stepId: null, label: `Call back ${key.slice(9)}` };
-  if (key === "booking-link") return { phase: "system", stepId: null, label: "Booking link" };
-  if (key.startsWith("inbound:")) return { phase: "system", stepId: null, label: "They called back" };
-  if (key.startsWith("now:")) return { phase: "system", stepId: null, label: "AI call from the lead page" };
-  return { phase: "system", stepId: null, label: key };
+  if (key.startsWith("callback:")) return { phase: "system", stepId: null, label: `Call back ${key.slice(9)}`, system: { type: "callback", n: key.slice(9) } };
+  if (key === "booking-link") return { phase: "system", stepId: null, label: "Booking link", system: { type: "bookingLink" } };
+  if (key.startsWith("inbound:")) return { phase: "system", stepId: null, label: "They called back", system: { type: "inbound" } };
+  if (key.startsWith("now:")) return { phase: "system", stepId: null, label: "AI call from the lead page", system: { type: "now" } };
+  return { phase: "system", stepId: null, label: key, system: { type: "other", key } };
 }
 
 /** A starting point for a message's merge fields preview. */
