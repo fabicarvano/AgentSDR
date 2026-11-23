@@ -1,0 +1,14 @@
+{
+  "serverMeta": {
+    "calling": {
+      "title": "WhatsApp Calling",
+      "description": "Call leads over WhatsApp and follow up"
+    },
+    "linkedin": {
+      "description": "LinkedIn outreach automation"
+    },
+    "whatsapp": {
+      "description": "Message leads over WhatsApp and follow up"
+    }
+  }
+}

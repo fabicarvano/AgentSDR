@@ -1,0 +1,34 @@
+{
+  "serverCrm": {
+    "inboxStep": {
+      "closed": "Encerrado",
+      "paused": "Pausado",
+      "attention": "Requer atenção",
+      "classifying": "Classificando",
+      "none": "Sem próximo passo",
+      "replyDrafted": "Resposta rascunhada",
+      "reply": {
+        "drafted": "Resposta rascunhada",
+        "drafting": "Rascunhando resposta",
+        "failed": "Resposta falhou",
+        "scheduled": "Resposta agendada",
+        "dueNow": "Resposta pendente",
+        "dueHours": "Resposta vence em {value}h",
+        "dueDays": "Resposta vence em {value}d"
+      },
+      "followUp": {
+        "drafted": "Follow-up {n} rascunhado",
+        "drafting": "Rascunhando follow-up {n}",
+        "failed": "Follow-up {n} falhou",
+        "scheduled": "Follow-up {n} agendado",
+        "dueNow": "Follow-up {n} pendente",
+        "dueHours": "Follow-up {n} vence em {value}h",
+        "dueDays": "Follow-up {n} vence em {value}d"
+      }
+    },
+    "followUpStep": {
+      "generic": "Follow-up {n}",
+      "named": "Follow-up {n} · {name}"
+    }
+  }
+}

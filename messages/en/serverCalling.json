@@ -1,0 +1,63 @@
+{
+  "serverCalling": {
+    "launch": {
+      "noNumber": "Choose at least one calling number",
+      "noCall": "Add at least one call to the sequence",
+      "noInstructions": "Write the campaign instructions (what every call is about)",
+      "noBooking": "Add the booking link, or set the goal to hand over to the team",
+      "noLeads": "Add at least one lead"
+    },
+    "settings": {
+      "goal": "Choose what the calls are for",
+      "instructionsLong": "Instructions must be at most {max} characters",
+      "bookingUrl": "The booking link must be an https:// address",
+      "bookingMessageLong": "The booking message must be at most {max} characters",
+      "bookingMessageToken": "The booking message must include '{{'bookingLink'}}'",
+      "callbacks": "Call-backs must be between 0 and {max}"
+    },
+    "steps": {
+      "notList": "The sequence must be a list of steps",
+      "empty": "Add at least one step",
+      "tooMany": "At most {max} steps",
+      "notStep": "Step {n} is not a step",
+      "invalidId": "Step {n} has an invalid id",
+      "repeatedId": "Step {n} repeats an id",
+      "waitRange": "Step {n}: the wait must be between 0 and {max} hours",
+      "callInstructionsLong": "Step {n}: instructions must be at most {max} characters",
+      "messageEmpty": "Step {n}: the message is empty",
+      "messageLong": "Step {n}: the message is over {max} characters",
+      "badKind": "Step {n} must be a call or a message"
+    },
+    "sequences": {
+      "reach": "Reach them: {problem}",
+      "chase": "If they said yes but haven't booked: {problem}"
+    },
+    "step": {
+      "call": "Call {index} of {total}",
+      "callChasing": "Call {index} of {total} (chasing the booking)",
+      "message": "Message {index} of {total}",
+      "messageChasing": "Message {index} of {total} (chasing the booking)",
+      "phaseReach": "Reach them",
+      "phaseChase": "Chasing the booking",
+      "withPosition": "{phase} · {position}",
+      "chaseConfigured": "Chase · {position}",
+      "removed": "{label} (removed step)",
+      "callback": "Call back {n}",
+      "bookingLink": "Booking link",
+      "inbound": "They called back",
+      "now": "AI call from the lead page",
+      "errorStarting": "Starting…",
+      "errorNotStarted": "It did not start"
+    },
+    "voice": {
+      "Kore": "Kore — firm, female",
+      "Aoede": "Aoede — breezy, female",
+      "Leda": "Leda — youthful, female",
+      "Sulafat": "Sulafat — warm, female",
+      "Despina": "Despina — smooth, female",
+      "Puck": "Puck — upbeat, male",
+      "Charon": "Charon — informative, male",
+      "Achird": "Achird — friendly, male"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "serverMeta": {
+    "calling": {
+      "title": "Chamadas pelo WhatsApp",
+      "description": "Ligue para leads pelo WhatsApp e faça o acompanhamento"
+    },
+    "linkedin": {
+      "description": "Automação de abordagem pelo LinkedIn"
+    },
+    "whatsapp": {
+      "description": "Envie mensagens a leads pelo WhatsApp e faça o acompanhamento"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "serverCalling": {
+    "launch": {
+      "noNumber": "Escolha ao menos um número de chamadas",
+      "noCall": "Adicione ao menos uma chamada à sequência",
+      "noInstructions": "Escreva as instruções da campanha (o assunto de cada chamada)",
+      "noBooking": "Adicione o link de agendamento ou defina o objetivo como passar para a equipe",
+      "noLeads": "Adicione ao menos um lead"
+    },
+    "settings": {
+      "goal": "Escolha o objetivo das chamadas",
+      "instructionsLong": "As instruções devem ter no máximo {max} caracteres",
+      "bookingUrl": "O link de agendamento deve ser um endereço https://",
+      "bookingMessageLong": "A mensagem de agendamento deve ter no máximo {max} caracteres",
+      "bookingMessageToken": "A mensagem de agendamento deve incluir '{{'bookingLink'}}'",
+      "callbacks": "Os retornos devem ficar entre 0 e {max}"
+    },
+    "steps": {
+      "notList": "A sequência deve ser uma lista de passos",
+      "empty": "Adicione ao menos um passo",
+      "tooMany": "No máximo {max} passos",
+      "notStep": "O passo {n} não é um passo válido",
+      "invalidId": "O passo {n} tem um id inválido",
+      "repeatedId": "O passo {n} repete um id",
+      "waitRange": "Passo {n}: a espera deve ficar entre 0 e {max} horas",
+      "callInstructionsLong": "Passo {n}: as instruções devem ter no máximo {max} caracteres",
+      "messageEmpty": "Passo {n}: a mensagem está vazia",
+      "messageLong": "Passo {n}: a mensagem passa de {max} caracteres",
+      "badKind": "O passo {n} deve ser uma chamada ou uma mensagem"
+    },
+    "sequences": {
+      "reach": "Abordagem: {problem}",
+      "chase": "Se disseram sim, mas não agendaram: {problem}"
+    },
+    "step": {
+      "call": "Chamada {index} de {total}",
+      "callChasing": "Chamada {index} de {total} (aguardando agendamento)",
+      "message": "Mensagem {index} de {total}",
+      "messageChasing": "Mensagem {index} de {total} (aguardando agendamento)",
+      "phaseReach": "Abordagem",
+      "phaseChase": "Aguardando agendamento",
+      "withPosition": "{phase} · {position}",
+      "chaseConfigured": "Aguardando agendamento · {position}",
+      "removed": "{label} (passo removido)",
+      "callback": "Retorno {n}",
+      "bookingLink": "Link de agendamento",
+      "inbound": "Ligaram de volta",
+      "now": "Chamada com IA pela página do lead",
+      "errorStarting": "Iniciando…",
+      "errorNotStarted": "Não chegou a iniciar"
+    },
+    "voice": {
+      "Kore": "Kore — firme, feminina",
+      "Aoede": "Aoede — leve, feminina",
+      "Leda": "Leda — jovem, feminina",
+      "Sulafat": "Sulafat — calorosa, feminina",
+      "Despina": "Despina — suave, feminina",
+      "Puck": "Puck — animado, masculino",
+      "Charon": "Charon — informativo, masculino",
+      "Achird": "Achird — amigável, masculino"
+    }
+  }
+}

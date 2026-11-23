@@ -1,0 +1,12 @@
+{
+  "serverWhatsapp": {
+    "stepsProblem": {
+      "tooManySteps": "A sequence has at most {max} messages",
+      "needsUniqueId": "{which, select, first {The first message} other {Follow-up {number}}} needs a unique id",
+      "empty": "{which, select, first {The first message} other {Follow-up {number}}} is empty",
+      "tooLong": "{which, select, first {The first message} other {Follow-up {number}}} is longer than {max} characters",
+      "delayNotWhole": "{which, select, first {The first message's wait} other {Follow-up {number}'s wait}} must be whole hours",
+      "delayRange": "{which, select, first {The first message} other {Follow-up {number}}} must wait between {minHours, plural, one {# hour} other {# hours}} and {maxDays, plural, one {# day} other {# days}}"
+    }
+  }
+}

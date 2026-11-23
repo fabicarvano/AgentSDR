@@ -21,6 +21,8 @@ const IDENTICAL_OK = new Set<string>([
   "callingAiWork.overview.callsTodayOfLimit", // only placeholders and a slash
   "callsMain.whatsappMessages.chatNoun", // "chat" is the word Brazilian Portuguese uses (plural included)
   "crmPipeline.client.board.countTitle", // "lead" is the kept product term (GLOSSARY.md), so the plural reads the same
+  "serverCalling.step.withPosition", // only placeholders and a separator
+  "serverCrm.followUpStep.named", // only placeholders and a separator
   "gridColumns.sortPanel.textAsc", // direction hint made only of letters/digits and arrows, same in both languages
   "gridColumns.sortPanel.textDesc", // direction hint made only of letters/digits and arrows, same in both languages
   "gridColumns.sortPanel.numberAsc", // direction hint made only of letters/digits and arrows, same in both languages
