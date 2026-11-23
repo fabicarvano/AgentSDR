@@ -1,0 +1,18 @@
+{
+  "apiErrors": {
+    "UNAUTHENTICATED": "Sign in to continue.",
+    "NO_ACTIVE_ORGANIZATION": "Choose or create an organization first.",
+    "NOT_A_MEMBER": "You are no longer a member of this organization.",
+    "FORBIDDEN": "You don't have permission to do this.",
+    "INVALID_ORIGIN": "This request came from another site and was refused.",
+    "INVALID_IDEMPOTENCY_KEY": "This request could not be checked. Reload the page and try again.",
+    "STALE_CONTEXT": "This record changed while you were working on it. Reload it and try again.",
+    "invalidJson": "The request was not valid JSON.",
+    "invalidBody": "The request is not valid.",
+    "notFound": "We couldn't find that.",
+    "campaignNotFound": "We couldn't find that campaign.",
+    "leadNotFound": "We couldn't find that lead.",
+    "missingIds": "No items were given.",
+    "unsupportedColumnType": "The column type \"{type}\" is not supported."
+  }
+}

@@ -10,6 +10,7 @@ import {
 } from "@/lib/leads/columns";
 import { PG_TYPE_FOR_COLUMN_TYPE, type LeadColumnType } from "@/lib/leads/types";
 import { columnErrorResponse } from "../route";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * PATCH /api/leads/columns/[id]
@@ -28,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidJson", "Invalid JSON"), { status: 400 });
   }
 
   try {
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
       if (typeof body.type === "string") {
         if (!(body.type in PG_TYPE_FOR_COLUMN_TYPE)) {
-          return NextResponse.json({ error: `Unsupported column type: ${body.type}` }, { status: 400 });
+          return NextResponse.json(apiErrorBody("unsupportedColumnType", `Unsupported column type: ${body.type}`, { type: String(body.type) }), { status: 400 });
         }
         return NextResponse.json({ column: await changeColumnType(id, body.type as LeadColumnType) });
       }

@@ -4,17 +4,18 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { inOrg } from "@/lib/tenancy/scope";
 import { searchBatches, searchQueries, searchResults } from "@/lib/linkedin/schema";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function GET(req: NextRequest) {
   return withLinkedinOrg(req, async () => {
     const idsParam = req.nextUrl.searchParams.get("ids");
     if (!idsParam) {
-      return NextResponse.json({ ok: false, error: "Missing ids" }, { status: 400 });
+      return NextResponse.json({ ok: false, ...apiErrorBody("missingIds", "Missing ids") }, { status: 400 });
     }
 
     const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
     if (ids.length === 0) {
-      return NextResponse.json({ ok: false, error: "Missing ids" }, { status: 400 });
+      return NextResponse.json({ ok: false, ...apiErrorBody("missingIds", "Missing ids") }, { status: 400 });
     }
 
     const rows = await db

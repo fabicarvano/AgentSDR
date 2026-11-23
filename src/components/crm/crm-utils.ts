@@ -1,3 +1,4 @@
+import { readApiErrorBody, type ApiErrorParams } from "@/lib/http/apiErrors";
 import { CRM_CATEGORY_COLOR } from "@/components/analytics/theme";
 
 export type CrmCategory = "customer" | "interested" | "not_interested" | "other";
@@ -116,11 +117,16 @@ export function relativeDate(value: unknown): string {
 export class CrmHttpError extends Error {
   readonly status: number;
   readonly fromServer: boolean;
-  constructor(message: string, status: number, fromServer: boolean) {
+  /** The route's stable error code and the values its sentence mentions (see lib/http/apiErrors.ts). */
+  readonly code: string | undefined;
+  readonly params: ApiErrorParams | undefined;
+  constructor(message: string, status: number, fromServer: boolean, code?: string, params?: ApiErrorParams) {
     super(message);
     this.name = "CrmHttpError";
     this.status = status;
     this.fromServer = fromServer;
+    this.code = code;
+    this.params = params;
   }
 }
 
@@ -135,7 +141,8 @@ export async function crmFetch<T = unknown>(path: string, init?: RequestInit): P
   if (!response.ok) {
     const fromServer = typeof body?.error === "string";
     const message = fromServer ? body.error : `Request failed (${response.status})`;
-    throw new CrmHttpError(message, response.status, fromServer);
+    const { code, params } = readApiErrorBody(body);
+    throw new CrmHttpError(message, response.status, fromServer, code, params);
   }
   return body as T;
 }

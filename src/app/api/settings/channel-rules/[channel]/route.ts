@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { isChannel } from "@/lib/channels/rules";
 import { channelRulesForSettings, saveChannelRules } from "@/lib/channels/rules.server";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // Sending rules for one channel (src/lib/channels/rules.ts). Every member can
 // read them; changing them takes the integrations permission (owners, admins).
@@ -31,7 +32,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   if (!isChannel(channel)) return NextResponse.json({ error: "Unknown channel" }, { status: 404 });
   const body: unknown = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "Invalid request body"), { status: 400 });
   }
   try {
     return await withOrgContext(req, async (ctx) => {

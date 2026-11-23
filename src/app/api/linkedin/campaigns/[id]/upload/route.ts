@@ -8,6 +8,7 @@ import { campaigns } from "@/lib/linkedin/schema";
 import { importLeadRows, mapSpreadsheetRowsWithMapping, suggestedLinkedinMapping, type LinkedinCsvMapping } from "@/lib/linkedin/importLeads";
 import { buildImportLeadsJsonResponse } from "@/lib/linkedin/importLeadsResponse";
 import { serializeError } from "@/lib/linkedin/serializeError";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withLinkedinOrg(req, async () => {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .where(and(inOrg(campaigns), eq(campaigns.id, campaignId)))
         .limit(1);
       if (!campaign) {
-        return NextResponse.json({ ok: false, error: "Campaign not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("campaignNotFound", "Campaign not found") }, { status: 404 });
       }
 
       const formData = await req.formData();

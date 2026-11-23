@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { isPlatformKey } from "@/lib/platform/catalog";
 import { disconnectPlatformIntegration, savePlatformIntegration } from "@/lib/platform/credentials";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // Behind the session cookie like every /api route not listed in proxy.ts PUBLIC.
 // Responses carry PlatformStatus only — never a secret value.
@@ -15,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 
   const body: unknown = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "Invalid request body"), { status: 400 });
   }
 
   try {
