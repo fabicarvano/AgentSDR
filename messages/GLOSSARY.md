@@ -69,3 +69,21 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Step (sequence) | Passo |
 | Launch campaign / Launching… | Iniciar campanha / Iniciando… |
 | Send campaigns | Campanhas de envio |
+
+## LinkedIn
+| English | pt-BR |
+|---|---|
+| Search (batch) / Search URL | Busca / URL de busca |
+| Run / Re-run | Executar / Executar de novo |
+| Network (1st, 2nd, 3rd) / Out of network | Rede (1º, 2º, 3º) / Fora da rede |
+| Headline / Followers | Título / Seguidores |
+| Queued / Paused — quota / At limit | Na fila / Pausada — limite / No limite |
+| Connection / Invitation | Conexão / Convite |
+| Connection request | Convite de conexão |
+| Invited / Request sent | Convidado / Convite enviado |
+| Awaiting acceptance | Aguardando aceite |
+| Acceptance rate / Acceptance message | Taxa de aceite / Mensagem de aceite |
+| Needs reply | Aguardando resposta |
+| Sender | Remetente |
+| Raw payload / Processing log | Payload bruto / Log de processamento |
+| Merge fields | Campos de mesclagem |

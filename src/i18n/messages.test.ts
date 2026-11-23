@@ -16,6 +16,7 @@ const DIR = join(import.meta.dir, "../../messages");
 const IDENTICAL_OK = new Set<string>([
   "auth.common.google", // brand name
   "emailCampaigns.legacyPage.subtitle", // only placeholders and a separator
+  "linkedinSearch.picker.quota", // only placeholders and a slash
   "crmPipeline.client.board.countTitle", // "lead" is the kept product term (GLOSSARY.md), so the plural reads the same
 ]);
 
