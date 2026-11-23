@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiChat3Line,
   RiCheckDoubleLine,
@@ -43,16 +44,14 @@ import {
   ThreadHeader,
   ThreadSkeleton,
   TriageTabs,
-  fullTime,
-  rowTime,
-  withRecencyBreaks,
+  useInboxTime,
 } from "@/components/inbox/shell/InboxShell";
 import { ComposerDock } from "@/components/inbox/shell/Conversation";
-import { ContactDetails, DetailsPanel, useCrmRecordSummary, useDetailsPanel, workflowLabel } from "@/components/inbox/shell/DetailsPanel";
+import { ContactDetails, DetailsPanel, useCrmRecordSummary, useDetailsPanel, useWorkflowLabel } from "@/components/inbox/shell/DetailsPanel";
 import { useInboxHotkeys } from "@/components/inbox/shell/hotkeys";
 import { WhatsappComposer, WhatsappMessageList } from "@/components/whatsapp/WhatsappThread";
 import { useVisiblePolling, WHATSAPP_POLL_INTERVAL_MS } from "@/components/whatsapp/usePolling";
-import { CATEGORY_LABELS, errorMessage, type CrmCategory } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { cn } from "@/utils/cn";
 import {
   getWhatsappChat,
@@ -63,16 +62,22 @@ import {
 } from "@/lib/whatsapp/client";
 import type { WhatsappAccountSummary, WhatsappChatSummary, WhatsappMessage } from "@/lib/whatsapp/contract";
 
-function chatTitle(chat: WhatsappChatSummary): string {
-  return chat.person?.fullName || chat.name || chat.phone || "Unknown number";
+type Translate = ReturnType<typeof useTranslations<"callsMain.whatsappMessages">>;
+
+function chatTitle(chat: WhatsappChatSummary, t: Translate): string {
+  return chat.person?.fullName || chat.name || chat.phone || t("unknownNumber");
 }
 
-function accountLabel(account: WhatsappAccountSummary): string {
-  return account.name || account.phone || "WhatsApp number";
+function accountLabel(account: WhatsappAccountSummary, t: Translate): string {
+  return account.name || account.phone || t("numberFallback");
 }
 
 /** `initialChatId` opens that chat on arrival (Messages?chat=…, e.g. from a campaign lead). */
 export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId?: string | null } = {}) {
+  const t = useTranslations("callsMain.whatsappMessages");
+  const { errorMessage, categoryLabel } = useCrmText();
+  const { fullTime, rowTime, withRecencyBreaks } = useInboxTime();
+  const workflowLabel = useWorkflowLabel();
   const [accounts, setAccounts] = useState<WhatsappAccountSummary[]>([]);
   const [accountFilter, setAccountFilter] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -125,7 +130,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
         if (request === listRequest.current) setLoadingList(false);
       }
     },
-    [accountFilter, search, unreadOnly],
+    [accountFilter, search, unreadOnly, errorMessage],
   );
 
   useEffect(() => {
@@ -168,7 +173,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
     } finally {
       if (request === threadRequest.current) setLoadingThread(false);
     }
-  }, []);
+  }, [errorMessage]);
 
   useEffect(() => {
     if (initialChatId) void loadThread(initialChatId);
@@ -197,12 +202,12 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
   };
 
   const accountOptions = useMemo(
-    () => accounts.map((account) => ({ value: account.id, label: accountLabel(account), sublabel: account.phone && account.name ? account.phone : undefined })),
-    [accounts],
+    () => accounts.map((account) => ({ value: account.id, label: accountLabel(account, t), sublabel: account.phone && account.name ? account.phone : undefined })),
+    [accounts, t],
   );
   const filtersActive = Boolean(search || unreadOnly || accountFilter);
   const selected = thread?.chat ?? chats.find((chat) => chat.id === selectedId) ?? null;
-  const grouped = useMemo(() => withRecencyBreaks(chats, (chat) => (chat.lastMessageAt ? new Date(chat.lastMessageAt) : null)), [chats]);
+  const grouped = useMemo(() => withRecencyBreaks(chats, (chat) => (chat.lastMessageAt ? new Date(chat.lastMessageAt) : null)), [chats, withRecencyBreaks]);
   const selectedAccount = selected ? accounts.find((item) => item.id === selected.accountId) : undefined;
   const clearFilters = () => {
     setSearchInput("");
@@ -222,7 +227,8 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
   // Unread across the chats loaded so far; with more pages to load it is a floor.
   const unreadLoaded = chats.filter((chat) => chat.unreadCount > 0).length;
 
-  const name = selected ? chatTitle(selected) : "";
+  const name = selected ? chatTitle(selected, t) : "";
+  const recordCategoryLabel = record ? (record.subcategory ?? categoryLabel(record.categoryKey)) : "";
   const person = selected?.person ?? null;
   const detailsPanel = selected ? (
     <DetailsPanel open={details.open} wide={details.wide} onClose={() => details.setOpen(false)}>
@@ -238,7 +244,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
             ? {
                 recordId,
                 categoryKey: record.categoryKey,
-                categoryLabel: record.subcategory ?? (record.categoryKey ? CATEGORY_LABELS[record.categoryKey as CrmCategory] ?? record.categoryKey : "Unclassified"),
+                categoryLabel: recordCategoryLabel,
                 stage: workflowLabel(record.workflowState),
                 sequence: record.sequence,
                 nextActionAt: record.nextActionAt,
@@ -250,9 +256,9 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
         }
         crmLoading={Boolean(recordId) && recordLoading}
         facts={[
-          ...(selectedAccount ? [{ label: "Number", value: accountLabel(selectedAccount), title: selectedAccount.phone ?? undefined }] : []),
-          ...(selected.lastMessageAt ? [{ label: "Last message", value: rowTime(new Date(selected.lastMessageAt)), title: fullTime(new Date(selected.lastMessageAt)) }] : []),
-          ...(!person ? [{ label: "In AgentSDR", value: "Not yet — add the number to People" }] : []),
+          ...(selectedAccount ? [{ label: t("factNumber"), value: accountLabel(selectedAccount, t), title: selectedAccount.phone ?? undefined }] : []),
+          ...(selected.lastMessageAt ? [{ label: t("factLastMessage"), value: rowTime(new Date(selected.lastMessageAt)), title: fullTime(new Date(selected.lastMessageAt)) }] : []),
+          ...(!person ? [{ label: t("factInAgentSdr"), value: t("factNotYet") }] : []),
         ]}
       />
     </DetailsPanel>
@@ -263,13 +269,13 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
       threadOpen={selectedId !== null}
       header={
         <PageHeader
-          title="Messages"
-          description="WhatsApp chats on your linked numbers, including what you send from the phone."
+          title={t("title")}
+          description={t("description")}
           actions={
             <Button.Root variant="neutral" mode="stroke" size="small" asChild>
               <Link href="/settings/whatsapp-accounts">
                 <Button.Icon as={RiSmartphoneLine} />
-                Numbers
+                {t("numbers")}
               </Link>
             </Button.Root>
           }
@@ -277,22 +283,22 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
       }
     >
       <ListPane
-        label="WhatsApp chats"
+        label={t("listLabel")}
         hidden={selectedId !== null}
         busy={loadingList && chats.length > 0}
         scrollRef={listRef}
         toolbar={
           <div className="flex items-center gap-2">
-            <ListSearch value={searchInput} onChange={setSearchInput} placeholder="Search name or number" label="Search chats" />
+            <ListSearch value={searchInput} onChange={setSearchInput} placeholder={t("searchPlaceholder")} label={t("searchLabel")} />
             {accounts.length > 1 && (
               <FilterPopover count={accountFilter ? 1 : 0} onClear={() => setAccountFilter("")}>
-                <FilterField label="WhatsApp number">
+                <FilterField label={t("filterNumber")}>
                   <Select.Root size="small" value={accountFilter} onValueChange={setAccountFilter}>
-                    <Select.Trigger aria-label="WhatsApp number">
-                      <Select.Value placeholder="All numbers" />
+                    <Select.Trigger aria-label={t("filterNumber")}>
+                      <Select.Value placeholder={t("allNumbers")} />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">All numbers</Select.Item>
+                      <Select.Item value="">{t("allNumbers")}</Select.Item>
                       {accountOptions.map((option) => (
                         <Select.Item key={option.value} value={option.value}>
                           {option.label}
@@ -308,16 +314,16 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
         }
         tabs={
           <TriageTabs
-            label="Filter chats"
+            label={t("filterTabs")}
             value={unreadOnly ? "unread" : "all"}
             onChange={(value) => setUnreadOnly(value === "unread")}
             tabs={[
-              { key: "all", label: "All" },
-              { key: "unread", label: "Unread", count: unreadLoaded || null, countTitle: `${unreadLoaded}${nextCursor ? "+" : ""} unread chats` },
+              { key: "all", label: t("tabAll") },
+              { key: "unread", label: t("tabUnread"), count: unreadLoaded || null, countTitle: t("unreadTitle", { count: unreadLoaded, plus: nextCursor ? "+" : "" }) },
             ]}
           />
         }
-        footer={<ListCount shown={chats.length} total={nextCursor ? null : chats.length} noun={chats.length === 1 ? "chat" : "chats"} loading={loadingList} />}
+        footer={<ListCount shown={chats.length} total={nextCursor ? null : chats.length} noun={t("chatNoun", { count: chats.length })} loading={loadingList} />}
       >
         {listError && (
           <InlineError className="m-3" onRetry={() => void loadList()}>
@@ -331,11 +337,11 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
             <EmptyState
               compact
               icon={unreadOnly && !search ? RiCheckDoubleLine : RiSearchLine}
-              title={unreadOnly && !search ? "You're all caught up" : "No chats match"}
-              description={unreadOnly && !search ? "Nothing unread right now." : "Try another name or number."}
+              title={unreadOnly && !search ? t("caughtUpTitle") : t("noMatchTitle")}
+              description={unreadOnly && !search ? t("caughtUpBody") : t("noMatchBody")}
               action={
                 <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={clearFilters}>
-                  Show all chats
+                  {t("showAll")}
                 </Button.Root>
               }
             />
@@ -343,16 +349,14 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
             <EmptyState
               compact
               icon={RiChat3Line}
-              title="No chats yet"
+              title={t("emptyTitle")}
               description={
-                accounts.length === 0
-                  ? "Link a WhatsApp number to start."
-                  : "Chats appear as leads reply, or import recent ones from your linked numbers."
+                accounts.length === 0 ? t("emptyNoAccounts") : t("emptyWithAccounts")
               }
               action={
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild>
-                    <Link href="/settings/whatsapp-accounts">{accounts.length === 0 ? "Link a number" : "WhatsApp numbers"}</Link>
+                    <Link href="/settings/whatsapp-accounts">{accounts.length === 0 ? t("linkNumber") : t("whatsappNumbers")}</Link>
                   </Button.Root>
                   {accounts.length === 0 && <DocsLink page="whatsapp/accounts#link-a-number" size="xsmall" />}
                 </div>
@@ -361,7 +365,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
           )
         ) : (
           grouped.map(({ row: chat, heading }) => {
-            const rowName = chatTitle(chat);
+            const rowName = chatTitle(chat, t);
             const unread = chat.unreadCount > 0;
             const account = accounts.length > 1 ? accounts.find((item) => item.id === chat.accountId) : undefined;
             const last = chat.lastMessageAt ? new Date(chat.lastMessageAt) : null;
@@ -382,18 +386,18 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
                   snippet={
                     chat.lastMessagePreview ? (
                       <>
-                        {chat.lastDirection === "outbound" && <span className="text-text-soft-400">You: </span>}
+                        {chat.lastDirection === "outbound" && <span className="text-text-soft-400">{t("youPrefix")}</span>}
                         {chat.lastMessagePreview}
                       </>
                     ) : (
-                      <span className="italic text-text-soft-400">No messages yet</span>
+                      <span className="italic text-text-soft-400">{t("noMessagesRow")}</span>
                     )
                   }
                   meta={
                     !chat.person || account ? (
                       <>
-                        {!chat.person && <RowBadge dot={false}>Not in AgentSDR</RowBadge>}
-                        {account && <RowMeta icon={RiSmartphoneLine}>{accountLabel(account)}</RowMeta>}
+                        {!chat.person && <RowBadge dot={false}>{t("notInAgentSdr")}</RowBadge>}
+                        {account && <RowMeta icon={RiSmartphoneLine}>{accountLabel(account, t)}</RowMeta>}
                       </>
                     ) : undefined
                   }
@@ -406,7 +410,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
           <div className="flex justify-center py-3">
             <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => void loadMore()} disabled={loadingMore}>
               {loadingMore && <Button.Icon as={RiLoader4Line} className="animate-spin" />}
-              Load more
+              {t("loadMore")}
             </Button.Root>
           </div>
         )}
@@ -414,27 +418,27 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
 
       <ReadingPane shown={selectedId !== null} aside={detailsPanel}>
         {!selected ? (
-          <ReadingEmpty icon={RiChat3Line} description="Pick a chat from the list to read it and reply." />
+          <ReadingEmpty icon={RiChat3Line} description={t("pickChat")} />
         ) : (
           <>
             <ThreadHeader
               onBack={closeChat}
-              backLabel="Back to chats"
+              backLabel={t("backToChats")}
               avatar={<InboxAvatar name={name} src={person?.profilePictureUrl} />}
               title={name}
               badges={
                 person ? (
                   recordId ? (
                     record ? (
-                      <CategoryBadge categoryKey={record.categoryKey} label={record.subcategory ?? (record.categoryKey ? CATEGORY_LABELS[record.categoryKey as CrmCategory] ?? record.categoryKey : "Unclassified")} />
+                      <CategoryBadge categoryKey={record.categoryKey} label={recordCategoryLabel} />
                     ) : (
                       <Skeleton className="h-6 w-20 rounded-md" />
                     )
                   ) : (
-                    <RowBadge dot={false}>Not in CRM</RowBadge>
+                    <RowBadge dot={false}>{t("notInCrm")}</RowBadge>
                   )
                 ) : (
-                  <RowBadge dot={false}>Not in AgentSDR</RowBadge>
+                  <RowBadge dot={false}>{t("notInAgentSdr")}</RowBadge>
                 )
               }
               channel="whatsapp"
@@ -442,15 +446,15 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
               actions={
                 <>
                   {recordId && (
-                    <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title="Open CRM record">
-                      <Link href={`/crm/records/${recordId}`} aria-label="Open CRM record">
+                    <Button.Root variant="neutral" mode="stroke" size="xsmall" asChild className="@max-3xl:w-8 @max-3xl:px-0" title={t("openRecord")}>
+                      <Link href={`/crm/records/${recordId}`} aria-label={t("openRecord")}>
                         <Button.Icon as={RiUserSearchLine} />
-                        <span className="hidden @3xl:inline">Record</span>
+                        <span className="hidden @3xl:inline">{t("record")}</span>
                       </Link>
                     </Button.Root>
                   )}
                   {person && <CallButton personId={person.id} crmRecordId={recordId} phone={selected.phone} numberMenu={false} />}
-                  <HeaderAction icon={RiLayoutRightLine} label={details.open ? "Hide details" : "Show details"} onClick={details.toggle} pressed={details.open} iconOnly />
+                  <HeaderAction icon={RiLayoutRightLine} label={details.open ? t("hideDetails") : t("showDetails")} onClick={details.toggle} pressed={details.open} iconOnly />
                 </>
               }
             />
@@ -468,7 +472,7 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
                 threadKey={selected.id}
                 leadName={name}
                 className="px-4 py-5 sm:px-6"
-                emptyText="No messages yet. Messages sent and received appear here."
+                emptyText={t("threadEmpty")}
               />
             )}
 
@@ -481,14 +485,12 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
                   onChange={setDraft}
                   onSend={send}
                   disabled={!thread}
-                  placeholder={`Message ${name.split(" ")[0] || "them"}…`}
+                  placeholder={t("composePlaceholder", { name: name.split(" ")[0] || t("them") })}
                   meta={
                     <span
-                      title={selectedAccount?.unipileAccountId.startsWith("station:")
-                        ? "Sent from the calling number's WhatsApp Web by the call worker, between its calls. New chats wait 24 h after a number is linked, and messages are spaced 10 s apart."
-                        : "Sent through Unipile. New chats wait 24 h after a number is linked, and messages are spaced 10 s apart."}
+                      title={selectedAccount?.unipileAccountId.startsWith("station:") ? t("metaStation") : t("metaUnipile")}
                     >
-                      <ChannelTag channel="whatsapp" label={selectedAccount ? `from ${accountLabel(selectedAccount)}` : "WhatsApp"} />
+                      <ChannelTag channel="whatsapp" label={selectedAccount ? t("fromNumber", { name: accountLabel(selectedAccount, t) }) : "WhatsApp" /* brand name, stays English */} />
                     </span>
                   }
                 />
@@ -503,9 +505,10 @@ export function WhatsappMessagesClient({ initialChatId = null }: { initialChatId
 
 /** The record's CRM category, tinted in its identity colour (read-only: WhatsApp has no reclassify route of its own). */
 function CategoryBadge({ categoryKey, label }: { categoryKey: string | null; label: string }) {
+  const t = useTranslations("callsMain.whatsappMessages");
   return (
     <span
-      title={`CRM category: ${label}`}
+      title={t("categoryTitle", { label })}
       className={cn(
         "inline-flex h-6 min-w-0 max-w-[11rem] items-center rounded-md px-2 text-label-xs ring-1 ring-inset",
         categoryToneClass[categoryKey ?? ""] ?? "bg-bg-weak-50 text-text-sub-600 ring-stroke-soft-200",

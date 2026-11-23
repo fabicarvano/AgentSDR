@@ -17,6 +17,9 @@ const IDENTICAL_OK = new Set<string>([
   "auth.common.google", // brand name
   "emailCampaigns.legacyPage.subtitle", // only placeholders and a separator
   "linkedinSearch.picker.quota", // only placeholders and a slash
+  "callingAiWork.leads.statusCount", // only placeholders
+  "callingAiWork.overview.callsTodayOfLimit", // only placeholders and a slash
+  "callsMain.whatsappMessages.chatNoun", // "chat" is the word Brazilian Portuguese uses (plural included)
   "crmPipeline.client.board.countTitle", // "lead" is the kept product term (GLOSSARY.md), so the plural reads the same
   "gridColumns.sortPanel.textAsc", // direction hint made only of letters/digits and arrows, same in both languages
   "gridColumns.sortPanel.textDesc", // direction hint made only of letters/digits and arrows, same in both languages

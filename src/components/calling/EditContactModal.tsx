@@ -2,15 +2,19 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiDeleteBinLine, RiLoader4Line, RiPencilLine, RiUpload2Line } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Modal from "@/components/alignui/modal";
 import { FormError, TextField } from "@/components/calls/fields";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { Avatar } from "@/components/calling/callingShared";
 import { CompanyNameField } from "@/components/calling/CompanyNameField";
 import { updateCampaignContactPerson, uploadContactPhoto } from "@/lib/calls/client";
 import { MAX_PHOTO_BYTES, type CampaignContact } from "@/lib/calls/contract";
+
+// Example website for the placeholder, not interface text.
+const EXAMPLE_WEBSITE = "acme.com";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -39,6 +43,9 @@ export function EditContactModal({
   /** The photo was uploaded or removed, with the contact as the server now has it. */
   onContactChanged?: (contact: CampaignContact) => void;
 }) {
+  const t = useTranslations("callingMain.editContact");
+  const tShared = useTranslations("callingMain.shared");
+  const { errorMessage } = useCrmText();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -75,17 +82,17 @@ export function EditContactModal({
   }, [open, contact.id]);
 
   const busy = submitting || photoBusy !== null;
-  const name = fullName.trim() || contact.person.fullName || contact.person.firstName || "Unnamed contact";
+  const name = fullName.trim() || contact.person.fullName || contact.person.firstName || tShared("unnamedContact");
   const typedLink = photoLink.trim();
   const previewUrl = /^https:\/\//i.test(typedLink) && typedLink !== savedLink ? typedLink : photoUrl;
 
   const upload = async (file: File) => {
     if (!PHOTO_TYPES.includes(file.type)) {
-      setError("Choose a JPG, PNG, WebP or GIF image.");
+      setError(t("photoTypeError"));
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setError(`That photo is ${(file.size / 1024 / 1024).toFixed(1)} MB; the limit is ${Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB.`);
+      setError(t("photoSizeError", { size: (file.size / 1024 / 1024).toFixed(1), max: Math.round(MAX_PHOTO_BYTES / 1024 / 1024) }));
       return;
     }
     setError("");
@@ -146,8 +153,8 @@ export function EditContactModal({
     <Modal.Root open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next); }}>
       <Modal.Content>
         <Modal.Header icon={RiPencilLine}>
-          <Modal.Title>Edit contact</Modal.Title>
-          <Modal.Description>Edits the People record — shared everywhere this person appears in AgentSDR.</Modal.Description>
+          <Modal.Title>{t("title")}</Modal.Title>
+          <Modal.Description>{t("description")}</Modal.Description>
         </Modal.Header>
         <Modal.Body className="space-y-3">
           {error && <FormError>{error}</FormError>}
@@ -174,39 +181,39 @@ export function EditContactModal({
               />
               <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={busy} onClick={() => fileInput.current?.click()}>
                 <Button.Icon as={RiUpload2Line} />
-                {photoBusy === "upload" ? "Uploading…" : "Upload photo"}
+                {photoBusy === "upload" ? t("uploading") : t("upload")}
               </Button.Root>
               {(photoUrl || typedLink) && (
                 <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} onClick={() => void removePhoto()}>
                   <Button.Icon as={RiDeleteBinLine} />
-                  {photoBusy === "remove" ? "Removing…" : "Remove photo"}
+                  {photoBusy === "remove" ? t("removing") : t("remove")}
                 </Button.Root>
               )}
-              <p className="w-full text-paragraph-xs text-text-soft-400">JPG, PNG, WebP or GIF, up to {Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB.</p>
+              <p className="w-full text-paragraph-xs text-text-soft-400">{t("photoHint", { max: Math.round(MAX_PHOTO_BYTES / 1024 / 1024) })}</p>
             </div>
           </div>
-          <TextField label="Photo link (optional)" value={photoLink} onChange={setPhotoLink} placeholder="https://…" disabled={busy} />
-          <TextField label="Full name" autoFocus value={fullName} onChange={setFullName} disabled={busy} />
-          <TextField label="WhatsApp number" value={phone} onChange={setPhone} disabled={busy} />
+          <TextField label={t("photoLink")} value={photoLink} onChange={setPhotoLink} placeholder="https://…" disabled={busy} />
+          <TextField label={t("fullName")} autoFocus value={fullName} onChange={setFullName} disabled={busy} />
+          <TextField label={t("whatsappNumber")} value={phone} onChange={setPhone} disabled={busy} />
           <div className="grid gap-3 sm:grid-cols-2">
             <CompanyNameField
-              label="Company name (optional)"
+              label={t("companyName")}
               value={companyName}
               onChange={setCompanyName}
               onPick={(company) => { setCompanyName(company.name ?? companyName); setCompanyWebsite(company.domain); }}
               disabled={busy}
             />
-            <TextField label="Company website (optional)" value={companyWebsite} onChange={setCompanyWebsite} placeholder="acme.com" disabled={busy} />
+            <TextField label={t("companyWebsite")} value={companyWebsite} onChange={setCompanyWebsite} placeholder={EXAMPLE_WEBSITE} disabled={busy} />
           </div>
-          <TextField label="Title (optional)" value={title} onChange={setTitle} disabled={busy} />
-          <TextField label="Email (optional)" value={email} onChange={setEmail} disabled={busy} />
+          <TextField label={t("jobTitle")} value={title} onChange={setTitle} disabled={busy} />
+          <TextField label={t("email")} value={email} onChange={setEmail} disabled={busy} />
         </Modal.Body>
         <Modal.Footer>
           <Modal.Close asChild>
-            <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>Cancel</Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>{t("cancel")}</Button.Root>
           </Modal.Close>
           <Button.Root variant="primary" mode="filled" size="small" disabled={busy || !fullName.trim() || !phone.trim()} onClick={() => void submit()}>
-            {submitting ? "Saving…" : "Save changes"}
+            {submitting ? t("saving") : t("save")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

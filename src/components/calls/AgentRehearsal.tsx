@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiLoader4Line, RiRestartLine, RiSendPlaneLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { AGENT_OUTCOME_LABELS } from "@/lib/calls/contract";
 
 type Turn = { role: "lead" | "agent"; text: string };
@@ -13,7 +14,7 @@ type Line = Turn & { tools?: Tool[] };
 
 const MAX_TURNS = 40;
 
-/** A tool call as a short chip: "record_outcome: meeting_booked — Thursday around 4 pm". */
+/** A tool call as a short chip (tool names and outcome values are identifiers, so they stay as the agent sent them): "record_outcome: meeting_booked — Thursday around 4 pm". */
 export function toolLabel(tool: Tool): string {
   const text = (key: string) => (typeof tool.args[key] === "string" ? (tool.args[key] as string) : "");
   if (tool.name === "record_outcome") {
@@ -40,6 +41,8 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
   name?: string;
   voice?: string;
 }) {
+  const t = useTranslations("callsMain.agentRehearsal");
+  const { errorMessage } = useCrmText();
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,7 +62,7 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
         body: JSON.stringify({ campaignId, contactId, stepId, brief, name, voice, turns }),
       });
       const body = (await response.json().catch(() => null)) as { reply?: string; tools?: Tool[]; error?: string } | null;
-      if (!response.ok || !body) throw new Error(body?.error ?? `The rehearsal failed (HTTP ${response.status})`);
+      if (!response.ok || !body) throw new Error(body?.error ?? t("failed", { status: response.status }));
       if (id !== requestId.current) return;
       setLines([...base, { role: "agent", text: body.reply ?? "", tools: body.tools ?? [] }]);
     } catch (caught) {
@@ -93,11 +96,11 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-paragraph-xs text-text-sub-600">Type as the lead to see what the agent says. No call is placed.</p>
+        <p className="text-paragraph-xs text-text-sub-600">{t("intro")}</p>
         {started ? (
           <Button.Root variant="neutral" mode="stroke" size="xxsmall" onClick={restart}>
             <Button.Icon as={RiRestartLine} />
-            Restart
+            {t("restart")}
           </Button.Root>
         ) : null}
       </div>
@@ -106,7 +109,7 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
         <div>
           <Button.Root variant="neutral" mode="stroke" size="xxsmall" onClick={start} disabled={busy}>
             {busy ? <Button.Icon as={RiLoader4Line} className="animate-spin" /> : null}
-            Start
+            {t("start")}
           </Button.Root>
         </div>
       ) : (
@@ -120,7 +123,7 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
                     : "max-w-[85%] rounded-xl bg-information-lighter px-3 py-2 text-paragraph-sm text-text-strong-950"
                 }
               >
-                {line.text || <span className="text-text-soft-400">(said nothing)</span>}
+                {line.text || <span className="text-text-soft-400">{t("saidNothing")}</span>}
               </div>
               {line.tools?.map((tool, toolIndex) => (
                 <span key={toolIndex} className="rounded-md bg-bg-weak-50 px-2 py-0.5 text-subheading-2xs text-text-sub-600">
@@ -129,7 +132,7 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
               ))}
             </div>
           ))}
-          {busy ? <RiLoader4Line className="size-4 animate-spin text-text-soft-400" aria-label="The agent is replying" /> : null}
+          {busy ? <RiLoader4Line className="size-4 animate-spin text-text-soft-400" aria-label={t("replying")} /> : null}
         </div>
       )}
 
@@ -149,14 +152,14 @@ export function AgentRehearsal({ campaignId, contactId, stepId, brief, name, voi
                 value={draft}
                 maxLength={1000}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder="What the lead says…"
+                placeholder={t("placeholder")}
                 disabled={busy || lines.length >= MAX_TURNS}
               />
             </Input.Wrapper>
           </Input.Root>
           <Button.Root type="submit" variant="neutral" size="xsmall" disabled={busy || !draft.trim() || lines.length >= MAX_TURNS}>
             <Button.Icon as={RiSendPlaneLine} />
-            Send
+            {t("send")}
           </Button.Root>
         </form>
       ) : null}

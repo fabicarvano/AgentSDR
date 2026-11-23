@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiArrowDownSLine, RiLoader4Line, RiPhoneLine, RiRobot2Line } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { VoicePreviewButton } from "@/components/calls/VoicePreviewButton";
@@ -17,8 +18,11 @@ import { isOlderVersion, RECORDER_SETUP_PATH } from "@/lib/calls/recorderRelease
 import { abandonCall, isRecorderInstalled, isRecorderOutdated, listCallingStations, recorderVersion, sendToRecorder, startCall } from "@/lib/calls/client";
 import type { CallingStation } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { FormError, TextField } from "./fields";
+
+// Example phone number for the placeholder, not interface text.
+const EXAMPLE_PHONE = "+91 98765 43210";
 
 type Phase = "idle" | "starting" | "opening";
 
@@ -58,6 +62,8 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
   /** Show the dropdown arrow with "Change number". Default true. */
   numberMenu?: boolean;
 }) {
+  const t = useTranslations("callsMain.callButton");
+  const { errorMessage } = useCrmText();
   // Anything that is not about the number itself — no extension, an
   // outdated one, the extension refusing — is a notice, not the number modal:
   // opening "Change number" for those sends the rep fixing the wrong thing.
@@ -126,13 +132,14 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
           // always "call:accepted" | "call:rejected" — the message:* branch
           // is unreachable but keeps this exhaustive against the bridge's
           // now-wider reply type.
-          const error = reply.type === "call:rejected" ? reply.error : "Something went wrong. Please try again.";
+          const error = reply.type === "call:rejected" ? reply.error : "Something went wrong. Please try again."; // sent to the server, so not translated
           void abandonCall(response.call.id, response.recorderToken, error);
-          failed("The call recorder couldn't start the call", new Error(error));
+          failed(t("recorderRejected"), new Error(reply.type === "call:rejected" ? error : t("genericError")));
         }
       } catch (cause) {
-        void abandonCall(response.call.id, response.recorderToken, errorMessage(cause));
-        failed("The call recorder didn't answer", cause);
+        // Sent to the server as the reason the call was abandoned: stays raw, never translated text.
+        void abandonCall(response.call.id, response.recorderToken, cause instanceof Error ? cause.message : String(cause));
+        failed(t("recorderNoAnswer"), cause);
       }
     } catch (cause) {
       // A number the rep just typed was rejected: keep them in the modal to
@@ -142,7 +149,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
         setNumberOpen(true);
         setPhase("idle");
       } else {
-        failed("Couldn't start the call", cause);
+        failed(t("couldNotStart"), cause);
       }
     }
   };
@@ -151,20 +158,20 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
   const recorderReady = (): boolean => {
     if (!isRecorderInstalled()) {
       setNotice({
-        title: "Call recorder not found",
-        description: "Install the AgentSDR Call Recorder extension to call from here.",
+        title: t("notFoundTitle"),
+        description: t("notFoundBody"),
         download: true,
-        guide: { page: "whatsapp/calling#install-the-extension", label: "How to install" },
+        guide: { page: "whatsapp/calling#install-the-extension", label: t("howToInstall") },
       });
       return false;
     }
     const version = recorderVersion();
     if (isRecorderOutdated(version)) {
       setNotice({
-        title: "Reload the call recorder",
-        description: `Chrome is running version ${version ?? "unknown"} of the extension; this page needs ${MIN_RECORDER_VERSION} or newer. Download the latest, replace the extension's folder with it, then click the reload arrow on AgentSDR Call Recorder in chrome://extensions and reload this page.`,
+        title: t("reloadTitle"),
+        description: t("outdatedBody", { version: version ?? t("unknownVersion"), required: MIN_RECORDER_VERSION }),
         download: true,
-        guide: { page: "whatsapp/calling#update-the-extension", label: "How to update" },
+        guide: { page: "whatsapp/calling#update-the-extension", label: t("howToUpdate") },
       });
       return false;
     }
@@ -188,8 +195,8 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
     const version = recorderVersion();
     if (!version || isOlderVersion(version, MIN_AGENT_RECORDER_VERSION)) {
       setNotice({
-        title: "Reload the call recorder",
-        description: `AI agent calls from this browser need version ${MIN_AGENT_RECORDER_VERSION} of the extension; Chrome is running ${version ?? "an unknown version"}. Rebuild it, click the reload arrow on AgentSDR Call Recorder in chrome://extensions, then reload this page and WhatsApp Web.`,
+        title: t("reloadTitle"),
+        description: t("agentOutdatedBody", { required: MIN_AGENT_RECORDER_VERSION, version: version ?? t("unknownVersion") }),
       });
       return false;
     }
@@ -233,7 +240,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
       onCallStarted?.(response.call.id);
       setTimeout(() => setPhase("idle"), 1500);
     } catch (cause) {
-      failed("Couldn't start the call", cause);
+      failed(t("couldNotStart"), cause);
     }
   };
 
@@ -255,7 +262,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
     void begin(undefined, { brief, name: name || null, voice: agentVoice });
   };
 
-  const label = phase === "starting" ? "Calling…" : phase === "opening" ? "Opening WhatsApp…" : "Call";
+  const label = phase === "starting" ? t("starting") : phase === "opening" ? t("opening") : t("call");
 
   return (
     <>
@@ -284,18 +291,18 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
                 mode="stroke"
                 size="xxsmall"
                 disabled={busy}
-                aria-label="Call options"
-                title={`Calling ${phone}`}
+                aria-label={t("callOptions")}
+                title={t("callingPhone", { phone })}
                 className="-ml-px w-6 shrink-0 rounded-l-none px-0"
               >
                 <RiArrowDownSLine className="size-3.5" aria-hidden="true" />
               </Button.Root>
             </Dropdown.Trigger>
             <Dropdown.Content align="end">
-              <Dropdown.Item onSelect={handleChangeNumber}>Change number</Dropdown.Item>
+              <Dropdown.Item onSelect={handleChangeNumber}>{t("changeNumber")}</Dropdown.Item>
               <Dropdown.Item onSelect={handleAgentCall}>
                 <RiRobot2Line className="size-4" aria-hidden="true" />
-                Call with AI agent (trial)
+                {t("callWithAgent")}
               </Dropdown.Item>
             </Dropdown.Content>
           </Dropdown.Root>
@@ -312,11 +319,11 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
             {notice?.guide && <DocsLink page={notice.guide.page}>{notice.guide.label}</DocsLink>}
             {notice?.download && (
               <Button.Root asChild variant="neutral" mode="stroke" size="small">
-                <Link href={RECORDER_SETUP_PATH} onClick={() => setNotice(null)}>Get the extension</Link>
+                <Link href={RECORDER_SETUP_PATH} onClick={() => setNotice(null)}>{t("getExtension")}</Link>
               </Button.Root>
             )}
             <Modal.Close asChild>
-              <Button.Root variant="primary" mode="filled" size="small">Got it</Button.Root>
+              <Button.Root variant="primary" mode="filled" size="small">{t("gotIt")}</Button.Root>
             </Modal.Close>
           </Modal.Footer>
         </Modal.Content>
@@ -325,30 +332,30 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
       <Modal.Root open={agentOpen} onOpenChange={(open) => { if (!busy) setAgentOpen(open); }}>
         <Modal.Content>
           <Modal.Header icon={RiRobot2Line}>
-            <Modal.Title>Call with the AI agent</Modal.Title>
+            <Modal.Title>{t("agentTitle")}</Modal.Title>
             <Modal.Description>
-              An AI voice talks to {phone ?? "the lead"} over WhatsApp instead of you. From this browser you&apos;ll hear both sides; it hangs up when it&apos;s done.
+              {t("agentDescription", { target: phone ?? t("theLead") })}
             </Modal.Description>
           </Modal.Header>
           <Modal.Body className="space-y-3">
             <div className="space-y-1.5">
-              <label className="block text-label-sm text-text-strong-950">Call from</label>
+              <label className="block text-label-sm text-text-strong-950">{t("callFrom")}</label>
               <Select.Root size="small" value={callFrom} onValueChange={setCallFrom} disabled={busy}>
-                <Select.Trigger aria-label="Call from"><Select.Value /></Select.Trigger>
+                <Select.Trigger aria-label={t("callFrom")}><Select.Value /></Select.Trigger>
                 <Select.Content>
-                  <Select.Item value={THIS_BROWSER}>This browser (extension)</Select.Item>
+                  <Select.Item value={THIS_BROWSER}>{t("thisBrowser")}</Select.Item>
                   {(stations ?? []).map((station) => (
-                    <Select.Item key={station.id} value={station.id}>{station.name} · {station.phone} (cloud)</Select.Item>
+                    <Select.Item key={station.id} value={station.id}>{t("stationOption", { name: station.name, phone: station.phone })}</Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
               {callFrom !== THIS_BROWSER && (
-                <p className="text-paragraph-xs text-text-sub-600">A call worker opens WhatsApp in the cloud and places the call; nothing runs in your browser.</p>
+                <p className="text-paragraph-xs text-text-sub-600">{t("cloudNote")}</p>
               )}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label htmlFor="agent-name" className="block text-label-sm text-text-strong-950">Agent name</label>
+                <label htmlFor="agent-name" className="block text-label-sm text-text-strong-950">{t("agentName")}</label>
                 <Input.Root size="small">
                   <Input.Wrapper>
                     <Input.Input
@@ -363,11 +370,11 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
                 </Input.Root>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-label-sm text-text-strong-950">Voice</label>
+                <label className="block text-label-sm text-text-strong-950">{t("voice")}</label>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
                     <Select.Root size="small" value={agentVoice} onValueChange={setAgentVoice} disabled={busy}>
-                      <Select.Trigger aria-label="Voice"><Select.Value /></Select.Trigger>
+                      <Select.Trigger aria-label={t("voice")}><Select.Value /></Select.Trigger>
                       <Select.Content>
                         {AGENT_VOICES.map((voice) => (
                           <Select.Item key={voice.id} value={voice.id}>{voice.label}</Select.Item>
@@ -380,7 +387,7 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
               </div>
             </div>
             <div className="space-y-1.5">
-            <label htmlFor="agent-brief" className="block text-label-sm text-text-strong-950">Goal of this call</label>
+            <label htmlFor="agent-brief" className="block text-label-sm text-text-strong-950">{t("goal")}</label>
             <Textarea.Root
               id="agent-brief"
               simple
@@ -390,20 +397,20 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
               value={agentBrief}
               onChange={(event) => setAgentBrief(event.target.value)}
               disabled={busy}
-              placeholder={"Find out who handles logistics at their company and book a 15-minute demo this week.\nIf they're busy, get a better time to call back."}
+              placeholder={t("goalPlaceholder")}
             />
-            <p className="text-paragraph-xs text-text-sub-600">What to find out and which next step to get. Company and product facts come from CRM Knowledge marked &quot;always include&quot;.</p>
+            <p className="text-paragraph-xs text-text-sub-600">{t("goalHint")}</p>
             </div>
           </Modal.Body>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>{t("cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root variant="primary" mode="filled" size="small" disabled={busy || !agentBrief.trim()} onClick={startAgentCall}>
               {busy
                 ? <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />
                 : <RiRobot2Line className="size-4" aria-hidden="true" />}
-              {busy ? label : "Start AI call"}
+              {busy ? label : t("startAiCall")}
             </Button.Root>
           </Modal.Footer>
         </Modal.Content>
@@ -412,16 +419,16 @@ export function CallButton({ personId, crmRecordId, campaignContactId, phone, on
       <Modal.Root open={numberOpen} onOpenChange={(open) => { if (!busy) setNumberOpen(open); }}>
         <Modal.Content>
           <Modal.Header icon={RiPhoneLine}>
-            <Modal.Title>{phone ? "Change WhatsApp number" : "Add a WhatsApp number"}</Modal.Title>
-            <Modal.Description>The call places through WhatsApp Web to this number.</Modal.Description>
+            <Modal.Title>{phone ? t("changeNumberTitle") : t("addNumberTitle")}</Modal.Title>
+            <Modal.Description>{t("numberDescription")}</Modal.Description>
           </Modal.Header>
           <Modal.Body className="space-y-3">
             {modalError && <FormError>{modalError}</FormError>}
-            <TextField label="WhatsApp number" autoFocus value={numberValue} onChange={setNumberValue} placeholder="+91 98765 43210" disabled={busy} />
+            <TextField label={t("whatsappNumber")} autoFocus value={numberValue} onChange={setNumberValue} placeholder={EXAMPLE_PHONE} disabled={busy} />
           </Modal.Body>
           <Modal.Footer>
             <Modal.Close asChild>
-              <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>Cancel</Button.Root>
+              <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy}>{t("cancel")}</Button.Root>
             </Modal.Close>
             <Button.Root
               variant="primary"

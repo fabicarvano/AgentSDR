@@ -1,9 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import { requirePageOrgContext } from "@/lib/auth/context";
 import { WhatsappCampaignDetailClient, type CampaignTab } from "@/components/whatsapp/campaigns/WhatsappCampaignDetailClient";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Message campaign" };
+export async function generateMetadata() {
+  const t = await getTranslations("whatsappCampaigns.page");
+  return { title: t("detailTitle") };
+}
 
 export default async function WhatsappCampaignPage({
   params,

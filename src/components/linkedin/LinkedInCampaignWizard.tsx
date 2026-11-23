@@ -19,6 +19,7 @@ import { DocsLink } from "@/components/page/DocsLink";
 import { PageHeader } from "@/components/page/PageHeader";
 import { EMPTY_LINKEDIN_SEQUENCE, type LinkedinCampaignSequence } from "@/lib/linkedin/campaignSequence";
 import { cn } from "@/utils/cn";
+import { StepDot, StepHeading, WizardStepList } from "@/components/campaigns/wizardParts";
 
 type Account = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
 
@@ -28,23 +29,6 @@ const STEPS = [
   { id: "sequence", labelKey: "stepSequenceLabel", hintKey: "stepSequenceHint", icon: RiStackLine },
   { id: "review", labelKey: "stepReviewLabel", hintKey: "stepReviewHint", icon: RiCheckLine },
 ] as const;
-
-function StepDot({ index, active, done }: { index: number; active: boolean; done: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-lg text-label-xs transition",
-        done
-          ? "bg-success-lighter text-success-base"
-          : active
-            ? "bg-primary-base text-static-white shadow-regular-xs"
-            : "bg-bg-weak-50 text-text-soft-400",
-      )}
-    >
-      {done ? <RiCheckLine className="size-4" /> : index + 1}
-    </div>
-  );
-}
 
 export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
   const t = useTranslations("linkedinCampaigns.wizard");
@@ -129,35 +113,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
         <Frame>
           <FrameHeader title={t("stepsTitle")} description={t("stepProgress", { current: step + 1, total: STEPS.length })} />
           <FramePanel className="p-2 sm:p-2">
-            <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
-              {STEPS.map((item, index) => {
-                const active = index === step;
-                const done = index < step;
-                const reachable = index <= step;
-                const Icon = item.icon;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      disabled={!reachable || active}
-                      onClick={() => reachable && setStep(index)}
-                      aria-current={active ? "step" : undefined}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition duration-200 ease-out",
-                        active ? "bg-bg-weak-50" : reachable ? "hover:bg-bg-weak-50" : "cursor-default",
-                      )}
-                    >
-                      <StepDot index={index} active={active} done={done} />
-                      <span className="min-w-0">
-                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{t(item.labelKey)}</span>
-                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{t(item.hintKey)}</span>
-                      </span>
-                      <Icon className="ml-auto hidden size-4 text-text-soft-400 sm:block lg:hidden" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+            <WizardStepList items={STEPS.map((item) => ({ id: item.id, label: t(item.labelKey), hint: t(item.hintKey), icon: item.icon }))} step={step} onSelect={setStep} />
 
             <div className="mx-1 mb-1 mt-3 hidden border-t border-stroke-soft-200 px-2 pt-3 lg:block">
               <p className="text-paragraph-xs text-text-soft-400">{t("summary")}</p>
@@ -353,15 +309,6 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
           </FramePanel>
         </Frame>
       </div>
-    </div>
-  );
-}
-
-function StepHeading({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <h2 className="text-label-lg text-text-strong-950">{title}</h2>
-      <p className="mt-1 text-paragraph-sm text-text-sub-600">{description}</p>
     </div>
   );
 }

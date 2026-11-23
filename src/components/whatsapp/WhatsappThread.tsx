@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiAttachment2, RiCheckDoubleLine, RiCheckLine } from "@remixicon/react";
 import { ChatComposer } from "@/components/inbox/shell/Conversation";
 import { ChannelTag } from "@/components/inbox/shell/InboxShell";
@@ -12,36 +13,12 @@ function dayKey(iso: string): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
-export function formatMessageTime(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(iso));
-}
-
-function dayLabel(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
-  if (dayKey(iso) === dayKey(now.toISOString())) return "Today";
-  if (dayKey(iso) === dayKey(yesterday.toISOString())) return "Yesterday";
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
-  }).format(date);
-}
-
-const ORIGIN_LABEL = {
-  lead: "",
-  agentsdr: "Sent from AgentSDR",
-  phone: "Sent from phone",
-} as const;
-
 function Ticks({ message }: { message: WhatsappMessage }) {
+  const t = useTranslations("callsMain.whatsappThread");
   if (message.direction !== "outbound") return null;
-  if (message.readAt) return <RiCheckDoubleLine className="size-3.5 text-primary-base" aria-label="Read" />;
-  if (message.deliveredAt) return <RiCheckDoubleLine className="size-3.5" aria-label="Delivered" />;
-  return <RiCheckLine className="size-3.5" aria-label="Sent" />;
+  if (message.readAt) return <RiCheckDoubleLine className="size-3.5 text-primary-base" aria-label={t("read")} />;
+  if (message.deliveredAt) return <RiCheckDoubleLine className="size-3.5" aria-label={t("delivered")} />;
+  return <RiCheckLine className="size-3.5" aria-label={t("sent")} />;
 }
 
 /**
@@ -55,17 +32,36 @@ export function WhatsappMessageList({
   messages,
   threadKey,
   className,
-  emptyText = "No messages yet",
+  emptyText,
   leadName,
 }: {
   messages: WhatsappMessage[];
   /** Changes when a different chat is opened, so the view jumps to the bottom. */
   threadKey: string;
   className?: string;
+  /** Defaults to the translated "No messages yet". */
   emptyText?: string;
   /** Who the inbound side is, for the run captions; without it inbound runs are uncaptioned. */
   leadName?: string;
 }) {
+  const t = useTranslations("callsMain.whatsappThread");
+  const format = useFormatter();
+  const formatMessageTime = (iso: string) => format.dateTime(new Date(iso), { hour: "numeric", minute: "2-digit" });
+  const dayLabel = (iso: string): string => {
+    const date = new Date(iso);
+    const now = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    if (dayKey(iso) === dayKey(now.toISOString())) return t("today");
+    if (dayKey(iso) === dayKey(yesterday.toISOString())) return t("yesterday");
+    return format.dateTime(date, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+    });
+  };
+  const originLabel = { lead: "", agentsdr: t("sentFromAgentSdr"), phone: t("sentFromPhone") } as const;
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastKey = useRef<string | null>(null);
   const lastCount = useRef(0);
@@ -86,7 +82,7 @@ export function WhatsappMessageList({
   return (
     <div ref={scrollRef} className={cn("min-h-0 flex-1 overflow-y-auto px-4 py-4", className)}>
       {messages.length === 0 ? (
-        <p className="py-8 text-center text-paragraph-sm text-text-soft-400">{emptyText}</p>
+        <p className="py-8 text-center text-paragraph-sm text-text-soft-400">{emptyText ?? t("noMessagesYet")}</p>
       ) : (
         messages.map((message, index) => {
           const previous = messages[index - 1];
@@ -97,8 +93,8 @@ export function WhatsappMessageList({
             Boolean(other) && dayKey(other!.sentAt) === dayKey(message.sentAt) && other!.direction === message.direction && other!.origin === message.origin;
           const groupStart = !sameRun(previous);
           const groupEnd = !sameRun(next);
-          const label = outbound ? ORIGIN_LABEL[message.origin] : "";
-          const who = outbound ? "You" : firstName;
+          const label = outbound ? originLabel[message.origin] : "";
+          const who = outbound ? t("you") : firstName;
           return (
             <div key={message.id}>
               {newDay && (
@@ -127,7 +123,7 @@ export function WhatsappMessageList({
                   {message.attachments.map((attachment, attachmentIndex) => (
                     <p key={attachment.id ?? attachmentIndex} className="mb-1 flex items-center gap-1 text-paragraph-xs text-text-sub-600">
                       <RiAttachment2 className="size-3.5 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{attachment.name || attachment.type || "Attachment"}</span>
+                      <span className="truncate">{attachment.name || attachment.type || t("attachment")}</span>
                     </p>
                   ))}
                   {message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
@@ -155,7 +151,7 @@ export function WhatsappComposer({
   onChange,
   onSend,
   disabled,
-  placeholder = "Write a WhatsApp message…",
+  placeholder,
   rows = 2,
   meta,
   className,
@@ -164,12 +160,14 @@ export function WhatsappComposer({
   onChange: (value: string) => void;
   onSend: (text: string) => Promise<unknown>;
   disabled?: boolean;
+  /** Defaults to the translated "Write a WhatsApp message…". */
   placeholder?: string;
   rows?: number;
   /** The composer's meta line — which number it sends from. Defaults to the channel. */
   meta?: ReactNode;
   className?: string;
 }) {
+  const t = useTranslations("callsMain.whatsappThread");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   // A different draft (another chat, a new prefill) clears the previous error.
@@ -189,7 +187,7 @@ export function WhatsappComposer({
     try {
       await onSend(text);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not send the message.");
+      setError(cause instanceof Error ? cause.message : t("sendFailed"));
     } finally {
       setSending(false);
     }
@@ -208,8 +206,8 @@ export function WhatsappComposer({
         onSubmit={() => void submit()}
         sending={sending}
         disabled={disabled}
-        placeholder={placeholder}
-        ariaLabel="WhatsApp message"
+        placeholder={placeholder ?? t("composerPlaceholder")}
+        ariaLabel={t("composerAriaLabel")}
         minRows={Math.max(1, rows - 1)}
         meta={meta ?? <ChannelTag channel="whatsapp" />}
       />

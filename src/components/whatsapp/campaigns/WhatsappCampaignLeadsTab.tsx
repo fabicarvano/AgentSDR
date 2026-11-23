@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
@@ -41,26 +42,11 @@ import {
 } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
 import { apiJson, errorText } from "./api";
-import { LEAD_STATUS, relativeTime } from "./metrics";
+import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
 
 const PAGE_SIZE = 25;
 
 type StatusFilter = WhatsappCampaignLeadStatus | "all";
-
-/** "Message 2 of 3": how far the sequence has got for this lead. */
-function progressLabel(lead: WhatsappCampaignLead, stepCount: number): string {
-  if (lead.status === "queued") return `Message 1 of ${stepCount}`;
-  if (lead.status === "in_sequence") return `Message ${Math.min(lead.currentStep + 1, stepCount)} of ${stepCount}`;
-  return `${lead.currentStep} of ${stepCount} sent`;
-}
-
-function nextOrLast(lead: WhatsappCampaignLead): string {
-  if (lead.status === "queued" || lead.status === "in_sequence") {
-    return lead.nextSendAt ? `Next ${relativeTime(lead.nextSendAt)}` : "Waiting for a number";
-  }
-  if (lead.status === "replied") return lead.repliedAt ? `Replied ${relativeTime(lead.repliedAt)}` : "Replied";
-  return lead.lastSentAt ? `Last sent ${relativeTime(lead.lastSentAt)}` : "Nothing sent";
-}
 
 /**
  * The Leads tab of a message campaign: import (spreadsheet or People),
@@ -81,6 +67,23 @@ export function WhatsappCampaignLeadsTab({
 }) {
   const dialogs = useDialogs();
   const router = useRouter();
+  const t = useTranslations("whatsappCampaigns.leads");
+  const te = useTranslations("whatsappCampaigns.errors");
+  const cf = useCampaignFormat();
+  const importSummary = useImportSummary();
+  /** "Message 2 of 3": how far the sequence has got for this lead. */
+  const progressLabel = (lead: WhatsappCampaignLead): string => {
+    if (lead.status === "queued") return t("progressQueued", { total: stepCount });
+    if (lead.status === "in_sequence") return t("progressInSequence", { current: Math.min(lead.currentStep + 1, stepCount), total: stepCount });
+    return t("progressSent", { sent: lead.currentStep, total: stepCount });
+  };
+  const nextOrLast = (lead: WhatsappCampaignLead): string => {
+    if (lead.status === "queued" || lead.status === "in_sequence") {
+      return lead.nextSendAt ? t("next", { when: cf.relative(lead.nextSendAt) }) : t("waitingForNumber");
+    }
+    if (lead.status === "replied") return lead.repliedAt ? t("repliedWhen", { when: cf.relative(lead.repliedAt) }) : t("replied");
+    return lead.lastSentAt ? t("lastSent", { when: cf.relative(lead.lastSentAt) }) : t("nothingSent");
+  };
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
@@ -108,11 +111,11 @@ export function WhatsappCampaignLeadsTab({
       setData(result);
       setLoadError(null);
     } catch (cause) {
-      setLoadError(errorText(cause, "Could not load leads"));
+      setLoadError(errorText(cause, t("loadFailed")));
     } finally {
       setLoading(false);
     }
-  }, [campaignId, page, status, debounced]);
+  }, [campaignId, page, status, debounced, t]);
 
   useEffect(() => {
     // Fetch on mount and whenever the query changes; state is set after the response.
@@ -140,7 +143,7 @@ export function WhatsappCampaignLeadsTab({
       await apiJson(`/api/whatsapp/campaigns/${campaignId}/leads/${lead.id}`, { method: "PATCH", body: JSON.stringify({ action } satisfies UpdateWhatsappCampaignLeadRequest) });
       refreshAll();
     } catch (cause) {
-      await dialogs.alert({ title: action === "stop" ? "Could not stop the lead" : "Could not resume the lead", description: errorText(cause), variant: "error" });
+      await dialogs.alert({ title: action === "stop" ? t("stopFailed") : t("resumeFailed"), description: errorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -148,9 +151,9 @@ export function WhatsappCampaignLeadsTab({
 
   async function remove(lead: WhatsappCampaignLead) {
     const ok = await dialogs.confirm({
-      title: "Remove lead?",
-      description: `${lead.name || lead.phone} leaves this campaign and gets no more messages. Messages already sent stay in Messages and the CRM.`,
-      confirmLabel: "Remove lead",
+      title: t("removeConfirmTitle"),
+      description: t("removeConfirmDescription", { name: lead.name || lead.phone }),
+      confirmLabel: t("removeConfirm"),
       variant: "error",
     });
     if (!ok) return;
@@ -159,7 +162,7 @@ export function WhatsappCampaignLeadsTab({
       await apiJson(`/api/whatsapp/campaigns/${campaignId}/leads/${lead.id}`, { method: "DELETE" });
       refreshAll();
     } catch (cause) {
-      await dialogs.alert({ title: "Could not remove the lead", description: errorText(cause), variant: "error" });
+      await dialogs.alert({ title: t("removeFailed"), description: errorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -173,11 +176,11 @@ export function WhatsappCampaignLeadsTab({
     <>
       <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => fileRef.current?.click()}>
         <Button.Icon as={RiFileExcel2Line} />
-        Import spreadsheet
+        {t("importSpreadsheet")}
       </Button.Root>
       <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setShowPeople(true)}>
         <Button.Icon as={RiUserAddLine} />
-        Add from People
+        {t("addFromPeople")}
       </Button.Root>
     </>
   );
@@ -185,8 +188,8 @@ export function WhatsappCampaignLeadsTab({
   return (
     <Frame>
       <FrameHeader
-        title="Leads"
-        description="Everyone enrolled in this campaign and where they are in the sequence."
+        title={t("title")}
+        description={t("description")}
         actions={<div className="flex flex-wrap items-center gap-2">{importActions}</div>}
       />
       <FramePanel className="p-2 sm:p-2">
@@ -195,11 +198,11 @@ export function WhatsappCampaignLeadsTab({
             <SegmentedControl.Root value={status} onValueChange={(v) => { setStatus(v as StatusFilter); setPage(1); }}>
               <SegmentedControl.List className="w-auto">
                 <SegmentedControl.Trigger value="all" className="gap-1.5 px-3">
-                  All <span className="tabular-nums text-text-soft-400">{stats.total}</span>
+                  {t("filterAll")} <span className="tabular-nums text-text-soft-400">{stats.total}</span>
                 </SegmentedControl.Trigger>
                 {WHATSAPP_CAMPAIGN_LEAD_STATUSES.map((s) => (
                   <SegmentedControl.Trigger key={s} value={s} className="gap-1.5 px-3">
-                    {LEAD_STATUS[s].label} <span className="tabular-nums text-text-soft-400">{stats[s]}</span>
+                    {cf.leadStatus(s).label} <span className="tabular-nums text-text-soft-400">{stats[s]}</span>
                   </SegmentedControl.Trigger>
                 ))}
               </SegmentedControl.List>
@@ -208,7 +211,7 @@ export function WhatsappCampaignLeadsTab({
           <Input.Root size="small" className="w-full lg:w-64">
             <Input.Wrapper>
               <Input.Icon as={RiSearchLine} />
-              <Input.Input type="search" aria-label="Search leads" placeholder="Search name, phone, company…" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input.Input type="search" aria-label={t("searchLabel")} placeholder={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
             </Input.Wrapper>
           </Input.Root>
         </div>
@@ -219,19 +222,19 @@ export function WhatsappCampaignLeadsTab({
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div aria-busy="true" aria-label="Loading" className="space-y-2 p-2">
+            <div aria-busy="true" aria-label={t("loading")} className="space-y-2 p-2">
               {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
             </div>
           ) : loadError ? (
-            <EmptyState icon={RiErrorWarningLine} title="Could not load leads" description={loadError} action={<Button.Root variant="neutral" mode="stroke" size="small" onClick={() => { setLoading(true); void load(); }}>Try again</Button.Root>} />
+            <EmptyState icon={RiErrorWarningLine} title={t("loadFailed")} description={loadError} action={<Button.Root variant="neutral" mode="stroke" size="small" onClick={() => { setLoading(true); void load(); }}>{t("tryAgain")}</Button.Root>} />
           ) : !data || data.leads.length === 0 ? (
             filtering ? (
-              <EmptyState icon={RiSearchLine} title="No leads match" description="Try another status or search." action={<Button.Root variant="neutral" mode="stroke" size="small" onClick={() => { setSearch(""); setStatus("all"); }}>Clear filters</Button.Root>} />
+              <EmptyState icon={RiSearchLine} title={t("noMatchTitle")} description={t("noMatchDescription")} action={<Button.Root variant="neutral" mode="stroke" size="small" onClick={() => { setSearch(""); setStatus("all"); }}>{t("clearFilters")}</Button.Root>} />
             ) : (
               <EmptyState
                 icon={RiTeamLine}
-                title="No leads yet"
-                description="Import a spreadsheet with phone numbers, or add people from your lead database."
+                title={t("emptyTitle")}
+                description={t("emptyDescription")}
                 action={<div className="flex flex-wrap justify-center gap-2">{importActions}</div>}
               />
             )
@@ -239,22 +242,22 @@ export function WhatsappCampaignLeadsTab({
             <Table.Root className="min-w-[860px] [&>table]:table-fixed">
               <Table.Header>
                 <Table.Row>
-                  <Table.Head scope="col" className="px-4">Lead</Table.Head>
-                  <Table.Head scope="col" className="w-40 px-4">Phone</Table.Head>
-                  <Table.Head scope="col" className="w-32 px-4">Status</Table.Head>
-                  <Table.Head scope="col" className="w-36 px-4">Progress</Table.Head>
-                  <Table.Head scope="col" className="w-44 px-4">When</Table.Head>
-                  <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">Actions</span></Table.Head>
+                  <Table.Head scope="col" className="px-4">{t("colLead")}</Table.Head>
+                  <Table.Head scope="col" className="w-40 px-4">{t("colPhone")}</Table.Head>
+                  <Table.Head scope="col" className="w-32 px-4">{t("colStatus")}</Table.Head>
+                  <Table.Head scope="col" className="w-36 px-4">{t("colProgress")}</Table.Head>
+                  <Table.Head scope="col" className="w-44 px-4">{t("colWhen")}</Table.Head>
+                  <Table.Head scope="col" className="w-14 px-4"><span className="sr-only">{t("colActions")}</span></Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body spacing={4}>
                 {data.leads.map((lead) => {
-                  const meta = LEAD_STATUS[lead.status];
+                  const meta = cf.leadStatus(lead.status);
                   const busy = busyId === lead.id;
                   return (
                     <Table.Row key={lead.id} aria-busy={busy || undefined} className={cn(busy && "pointer-events-none opacity-60")}>
                       <Table.Cell className="px-4">
-                        <p className="truncate text-label-sm text-text-strong-950" title={lead.name ?? undefined}>{lead.name || "Unnamed"}</p>
+                        <p className="truncate text-label-sm text-text-strong-950" title={lead.name ?? undefined}>{lead.name || t("unnamed")}</p>
                         <p className="mt-0.5 truncate text-paragraph-xs text-text-sub-600">{[lead.title, lead.companyName].filter(Boolean).join(" · ") || "—"}</p>
                       </Table.Cell>
                       <Table.Cell className="px-4 text-paragraph-sm tabular-nums text-text-sub-600">{lead.phone}</Table.Cell>
@@ -264,7 +267,7 @@ export function WhatsappCampaignLeadsTab({
                           {meta.label}
                         </Badge.Root>
                       </Table.Cell>
-                      <Table.Cell className="px-4 text-paragraph-sm tabular-nums text-text-sub-600">{progressLabel(lead, stepCount)}</Table.Cell>
+                      <Table.Cell className="px-4 text-paragraph-sm tabular-nums text-text-sub-600">{progressLabel(lead)}</Table.Cell>
                       <Table.Cell className="px-4">
                         <p className="text-paragraph-sm text-text-sub-600" suppressHydrationWarning>{nextOrLast(lead)}</p>
                         {lead.status === "failed" && lead.lastError && (
@@ -275,7 +278,7 @@ export function WhatsappCampaignLeadsTab({
                         <div className="flex justify-end">
                           <Dropdown.Root>
                             <Dropdown.Trigger asChild>
-                              <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={`More actions for ${lead.name || lead.phone}`}>
+                              <Button.Root variant="neutral" mode="ghost" size="xsmall" disabled={busy} aria-label={t("moreActionsFor", { name: lead.name || lead.phone })}>
                                 <Button.Icon as={busy ? RiLoader4Line : RiMoreLine} className={cn(busy && "animate-spin")} />
                               </Button.Root>
                             </Dropdown.Trigger>
@@ -283,26 +286,26 @@ export function WhatsappCampaignLeadsTab({
                               {openStatuses.has(lead.status) && (
                                 <Dropdown.Item onSelect={() => void act(lead, "stop")}>
                                   <Dropdown.ItemIcon as={RiStopCircleLine} />
-                                  Stop sequence
+                                  {t("stopSequence")}
                                 </Dropdown.Item>
                               )}
                               {(lead.status === "stopped" || lead.status === "failed") && (
                                 <Dropdown.Item onSelect={() => void act(lead, "resume")}>
                                   <Dropdown.ItemIcon as={RiPlayCircleLine} />
-                                  Resume sequence
+                                  {t("resumeSequence")}
                                 </Dropdown.Item>
                               )}
                               {lead.chatId && (
                                 <Dropdown.Item onSelect={() => router.push(`/calling/messages?chat=${encodeURIComponent(lead.chatId!)}`)}>
                                   <Dropdown.ItemIcon as={RiChat1Line} />
-                                  Open chat
+                                  {t("openChat")}
                                   <Dropdown.ItemIcon as={RiExternalLinkLine} className="ml-auto" />
                                 </Dropdown.Item>
                               )}
                               <Dropdown.Separator />
                               <Dropdown.Item destructive onSelect={() => void remove(lead)}>
                                 <Dropdown.ItemIcon as={RiDeleteBinLine} />
-                                Remove from campaign
+                                {t("removeFromCampaign")}
                               </Dropdown.Item>
                             </Dropdown.Content>
                           </Dropdown.Root>
@@ -319,14 +322,14 @@ export function WhatsappCampaignLeadsTab({
         {data && data.total > data.pageSize && (
           <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-3">
             <p className="text-paragraph-xs tabular-nums text-text-sub-600">
-              {((data.page - 1) * data.pageSize + 1).toLocaleString("en-US")}–{Math.min(data.page * data.pageSize, data.total).toLocaleString("en-US")} of {data.total.toLocaleString("en-US")}
+              {t("range", { from: cf.number((data.page - 1) * data.pageSize + 1), to: cf.number(Math.min(data.page * data.pageSize, data.total)), total: cf.number(data.total) })}
             </p>
             <div className="flex items-center gap-1">
-              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={data.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} aria-label="Previous page">
+              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={data.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} aria-label={t("previousPage")}>
                 <Button.Icon as={RiArrowLeftSLine} />
               </Button.Root>
-              <span className="px-2 text-paragraph-xs tabular-nums text-text-sub-600">Page {data.page} of {pages}</span>
-              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={data.page >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
+              <span className="px-2 text-paragraph-xs tabular-nums text-text-sub-600">{t("pageOf", { page: data.page, pages })}</span>
+              <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={data.page >= pages} onClick={() => setPage((p) => p + 1)} aria-label={t("nextPage")}>
                 <Button.Icon as={RiArrowRightSLine} />
               </Button.Root>
             </div>
@@ -356,18 +359,11 @@ export function WhatsappCampaignLeadsTab({
           channel="whatsapp"
           onClose={() => setShowPeople(false)}
           onAdded={(result) => {
-            setNotice(`${result.added} added from People${result.skippedDuplicate ? ` · ${result.skippedDuplicate} already in the campaign` : ""}${result.skippedMissingIdentity ? ` · ${result.skippedMissingIdentity} without a phone number` : ""}`);
+            setNotice(t("peopleSummary", { added: result.added, duplicates: result.skippedDuplicate, missing: result.skippedMissingIdentity }));
             refreshAll();
           }}
         />
       )}
     </Frame>
   );
-}
-
-export function importSummary(result: WhatsappCampaignImportResponse): string {
-  const parts = [`${result.added.toLocaleString("en-US")} added`];
-  if (result.alreadyInCampaign) parts.push(`${result.alreadyInCampaign.toLocaleString("en-US")} already in the campaign`);
-  if (result.skipped.length) parts.push(`${result.skipped.length} skipped (${result.skipped[0]}${result.skipped.length > 1 ? ", …" : ""})`);
-  return parts.join(" · ");
 }

@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { RiSparklingLine } from "@remixicon/react";
 import * as Badge from "@/components/alignui/badge";
 import { ClassificationPicker } from "@/components/crm/ActionRowTools";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
+import type { Messages } from "@/i18n/catalog";
 import { listCrmCategories, setLeadStage } from "@/lib/calls/client";
 import {
-  type CallCampaignStatus,
   CONTACT_CALL_STATUS_DEFINITIONS,
   RETRY_AFTER_DAYS,
+  type CallDisposition,
+  type CallCampaignStatus,
   type CampaignContact,
+  type CampaignContactStage,
   type ContactCallStatus,
   type LeadStageCategory,
 } from "@/lib/calls/contract";
@@ -19,33 +23,94 @@ import { cn } from "@/utils/cn";
 /** Total calls the retry schedule allows before a lead is done: the first plus one per retry step, plus the last unanswered one. */
 export const MAX_UNANSWERED_ATTEMPTS = RETRY_AFTER_DAYS.length + 1;
 
+type SharedMessages = Messages["callingMain"]["shared"];
+
+// Compile-time exhaustiveness: a status, stage or outcome added to lib/calls/contract.ts without a label fails tsc here.
+const CALL_STATUS_KEYS: Record<ContactCallStatus, true> = { new: true, calling: true, no_answer: true, busy: true, connected: true, not_on_whatsapp: true, wrong_number: true, failed: true };
+const STAGE_KEYS: Record<CampaignContactStage, true> = { to_call: true, follow_up: true, done: true };
+const DISPOSITION_KEYS: Record<CallDisposition, true> = { no_answer: true, busy: true, not_on_whatsapp: true, wrong_number: true, interested: true, meeting_booked: true, callback: true, send_details: true, not_interested: true, do_not_call: true };
+const _callStatusCovered: Exclude<ContactCallStatus, keyof SharedMessages["callStatus"]> extends never ? true : false = true;
+const _stageCovered: Exclude<CampaignContactStage, keyof SharedMessages["stage"]> extends never ? true : false = true;
+const _dispositionCovered: Exclude<CallDisposition, keyof SharedMessages["disposition"]> extends never ? true : false = true;
+void _callStatusCovered;
+void _stageCovered;
+void _dispositionCovered;
+
+/**
+ * Translated labels for the enums of lib/calls/contract.ts (the code and the database keep the stable
+ * values; only the text comes from the catalog). A value this build does not know is shown as stored.
+ */
+export function useCallingLabels() {
+  const t = useTranslations("callingMain.shared");
+  const callStatusLabel = useCallback(
+    (status: string) => (Object.hasOwn(CALL_STATUS_KEYS, status) ? t(`callStatus.${status as ContactCallStatus}`) : status),
+    [t],
+  );
+  const stageLabel = useCallback(
+    (stage: string) => (Object.hasOwn(STAGE_KEYS, stage) ? t(`stage.${stage as CampaignContactStage}`) : stage),
+    [t],
+  );
+  const dispositionLabel = useCallback(
+    (disposition: string) => (Object.hasOwn(DISPOSITION_KEYS, disposition) ? t(`disposition.${disposition as CallDisposition}`) : disposition),
+    [t],
+  );
+  return useMemo(() => ({ callStatusLabel, stageLabel, dispositionLabel }), [callStatusLabel, stageLabel, dispositionLabel]);
+}
+
 /** Where the lead is in the calling flow, spelled out; the colour only reinforces it. */
 export function CallStatusBadge({ status }: { status: ContactCallStatus }) {
+  const { callStatusLabel } = useCallingLabels();
   const definition = CONTACT_CALL_STATUS_DEFINITIONS[status];
   return (
     <Badge.Root variant="lighter" size="medium" color={definition.tone} className="shrink-0 whitespace-nowrap">
       <Badge.Dot />
-      {definition.label}
+      {callStatusLabel(status)}
     </Badge.Root>
   );
 }
 
 /** Active / Paused, as the campaign list and the campaign page show it. */
 export function CampaignStatusBadge({ status }: { status: CallCampaignStatus }) {
+  const t = useTranslations("callingMain.shared");
   const paused = status === "paused";
   return (
     <Badge.Root variant="lighter" size="medium" color={paused ? "orange" : "green"} className="shrink-0">
       <Badge.Dot />
-      {paused ? "Paused" : "Active"}
+      {paused ? t("campaignStatus.paused") : t("campaignStatus.active")}
     </Badge.Root>
   );
 }
 
-/** "Attempt 2 of 4", for statuses that count toward the retry schedule. */
-export function attemptHint(contact: Pick<CampaignContact, "callStatus" | "unansweredAttempts">): string | null {
-  if (contact.callStatus !== "no_answer" && contact.callStatus !== "busy") return null;
-  if (contact.unansweredAttempts <= 0) return null;
-  return `attempt ${Math.min(contact.unansweredAttempts, MAX_UNANSWERED_ATTEMPTS)} of ${MAX_UNANSWERED_ATTEMPTS}`;
+/**
+ * The translated hints of a contact row: `attemptHint` ("Attempt 2 of 4", for statuses that count toward the
+ * retry schedule) and `followUpHint` ("Due today", "Due in 3 days", or "Overdue · 12 Sep" with overdue: true).
+ */
+export function useCallingHints() {
+  const t = useTranslations("callingMain.shared");
+  const format = useFormatter();
+  const attemptHint = useCallback(
+    (contact: Pick<CampaignContact, "callStatus" | "unansweredAttempts">): string | null => {
+      if (contact.callStatus !== "no_answer" && contact.callStatus !== "busy") return null;
+      if (contact.unansweredAttempts <= 0) return null;
+      return t("attempt", { current: Math.min(contact.unansweredAttempts, MAX_UNANSWERED_ATTEMPTS), total: MAX_UNANSWERED_ATTEMPTS });
+    },
+    [t],
+  );
+  const followUpHint = useCallback(
+    (contact: Pick<CampaignContact, "stage" | "followUpAt">, now = new Date()): { text: string; overdue: boolean } | null => {
+      if (!contact.followUpAt || contact.stage === "done") return null;
+      const due = new Date(contact.followUpAt);
+      if (Number.isNaN(due.getTime())) return null;
+      const day = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+      const days = Math.round((day(due) - day(now)) / 86_400_000);
+      if (days < 0) return { text: t("followUp.overdue", { date: format.dateTime(due, { day: "numeric", month: "short" }) }), overdue: true };
+      if (days === 0) return { text: t("followUp.today"), overdue: false };
+      if (days === 1) return { text: t("followUp.tomorrow"), overdue: false };
+      return { text: t("followUp.inDays", { count: days }), overdue: false };
+    },
+    [t, format],
+  );
+  return useMemo(() => ({ attemptHint, followUpHint }), [attemptHint, followUpHint]);
 }
 
 /** The company's favicon; one that fails to load is dropped, not left broken. */
@@ -93,6 +158,8 @@ export function LeadStagePicker({
   compact?: boolean;
   onUpdated: (contact: CampaignContact) => void;
 }) {
+  const t = useTranslations("callingMain.shared");
+  const { errorMessage } = useCrmText();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const crm = contact.crm;
@@ -124,8 +191,8 @@ export function LeadStagePicker({
           }}
         />
         {byModel && crm?.categoryKey && (
-          <span title="Set by the AI from the call transcript" className={cn("inline-flex h-5 shrink-0 items-center gap-0.5 rounded px-1 text-label-xs text-feature-dark ring-1 ring-inset ring-feature-light bg-feature-lighter")}>
-            <RiSparklingLine className="size-3" aria-hidden="true" />AI
+          <span title={t("aiStageTitle")} className={cn("inline-flex h-5 shrink-0 items-center gap-0.5 rounded px-1 text-label-xs text-feature-dark ring-1 ring-inset ring-feature-light bg-feature-lighter")}>
+            <RiSparklingLine className="size-3" aria-hidden="true" />{t("aiTag")}
           </span>
         )}
       </div>
@@ -181,23 +248,4 @@ export function titleAtCompany(person: { title: string | null; companyName: stri
   const company = person.companyName?.trim();
   if (title && company) return `${title} @ ${company}`;
   return title || company || null;
-}
-
-/** The follow-up date compactly: "Due today", "Due tomorrow", "Due in 3 days", or "Overdue · 12 Sep" (overdue: true). */
-export function followUpHint(
-  contact: Pick<CampaignContact, "stage" | "followUpAt">,
-  now = new Date(),
-): { text: string; overdue: boolean } | null {
-  if (!contact.followUpAt || contact.stage === "done") return null;
-  const due = new Date(contact.followUpAt);
-  if (Number.isNaN(due.getTime())) return null;
-  const day = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const days = Math.round((day(due) - day(now)) / 86_400_000);
-  if (days < 0) {
-    const short = due.toLocaleDateString(undefined, { day: "numeric", month: "short" });
-    return { text: `Overdue \u00b7 ${short}`, overdue: true };
-  }
-  if (days === 0) return { text: "Due today", overdue: false };
-  if (days === 1) return { text: "Due tomorrow", overdue: false };
-  return { text: `Due in ${days} days`, overdue: false };
 }

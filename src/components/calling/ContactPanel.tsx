@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRefreshOnReturn } from "./useRefreshOnReturn";
+import { useTranslations } from "next-intl";
 import {
   RiArrowDownSLine,
   RiDeleteBinLine,
@@ -24,7 +25,7 @@ import * as Select from "@/components/alignui/select";
 import * as Textarea from "@/components/alignui/textarea";
 import { ErrorState } from "@/components/analytics/kit/ErrorState";
 import { Skeleton } from "@/components/page/Skeletons";
-import { errorMessage, formatDate } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { CallButton } from "@/components/calls/CallButton";
 import { LiveCallStrip } from "@/components/calls/LiveCallStrip";
 import { useLatestLiveCall, useLiveCall } from "@/components/calls/useLiveCall";
@@ -37,7 +38,6 @@ import {
   updateCampaignContact,
 } from "@/lib/calls/client";
 import {
-  CALL_DISPOSITION_DEFINITIONS,
   CONTACT_CALL_STATUSES,
   CONTACT_CALL_STATUS_DEFINITIONS,
   type CallDetail,
@@ -53,7 +53,7 @@ import { CALL_POLL_INTERVAL_MS, CALL_POLL_TIMEOUT_MS } from "@/components/calls/
 import { RecordingPlayer } from "@/components/calls/RecordingPlayer";
 import { PersonWhatsappPanel } from "@/components/whatsapp/PersonWhatsappPanel";
 import { EditContactModal } from "@/components/calling/EditContactModal";
-import { Avatar, CallStatusBadge, LeadStagePicker, attemptHint, titleAtCompany, useCrmCategories } from "@/components/calling/callingShared";
+import { Avatar, CallStatusBadge, LeadStagePicker, titleAtCompany, useCallingHints, useCallingLabels, useCrmCategories } from "@/components/calling/callingShared";
 import { CallSessionBadge } from "@/components/calls/CallSessionBadge";
 import { FormError } from "@/components/calls/fields";
 
@@ -77,6 +77,11 @@ export function ContactPanel({
   /** Called after any save that can move the contact between tabs, so the table behind refreshes. */
   onChanged?: () => void;
 }) {
+  const t = useTranslations("callingMain.panel");
+  const tShared = useTranslations("callingMain.shared");
+  const { errorMessage, formatDate } = useCrmText();
+  const { callStatusLabel } = useCallingLabels();
+  const { attemptHint } = useCallingHints();
   const [detail, setDetail] = useState<CampaignContactDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -91,7 +96,7 @@ export function ContactPanel({
     } finally {
       setLoading(false);
     }
-  }, [contactId]);
+  }, [contactId, errorMessage]);
 
   useEffect(() => {
     setLoading(true);
@@ -251,7 +256,7 @@ export function ContactPanel({
   // No linked number: the old flow — log the message, open WhatsApp Web with it prefilled.
   const openInWhatsAppWeb = async (text: string) => {
     const phone = detail?.contact.person.phone;
-    if (!phone) throw new Error("This contact has no phone number yet.");
+    if (!phone) throw new Error(t("noPhoneError"));
     await logCallMessage(contactId, { body: text, callId: latestCall?.id ?? null });
     await openWhatsAppMessage(phone, text);
   };
@@ -275,7 +280,7 @@ export function ContactPanel({
 
   const contact = detail?.contact ?? null;
   const person = contact?.person ?? null;
-  const name = person ? person.fullName || person.firstName || "Unnamed contact" : "";
+  const name = person ? person.fullName || person.firstName || tShared("unnamedContact") : "";
 
   return (
     <>
@@ -290,26 +295,26 @@ export function ContactPanel({
                 <Skeleton className="size-10 shrink-0 rounded-full" />
               )}
               <div className="min-w-0">
-                <Modal.Title className="truncate">{loading ? "Loading…" : name || "Contact"}</Modal.Title>
+                <Modal.Title className="truncate">{loading ? t("loading") : name || t("contactFallback")}</Modal.Title>
                 {person && <Modal.Description className="mt-0.5 truncate">{titleAtCompany(person) ?? (person.companyWebsite || person.phone || undefined)}</Modal.Description>}
               </div>
             </div>
             {contact && (
               <Dropdown.Root>
                 <Dropdown.Trigger asChild>
-                  <Button.Root variant="neutral" mode="ghost" size="xxsmall" className="shrink-0" aria-label={`More actions for ${name}`}>
+                  <Button.Root variant="neutral" mode="ghost" size="xxsmall" className="shrink-0" aria-label={t("moreActionsFor", { name })}>
                     <Button.Icon as={RiMoreLine} />
                   </Button.Root>
                 </Dropdown.Trigger>
                 <Dropdown.Content align="end">
                   <Dropdown.Item onSelect={() => setEditDetailsOpen(true)}>
                     <Dropdown.ItemIcon as={RiPencilLine} />
-                    Edit contact
+                    {t("editContact")}
                   </Dropdown.Item>
                   <Dropdown.Separator />
                   <Dropdown.Item destructive onSelect={() => setRemoveOpen(true)}>
                     <Dropdown.ItemIcon as={RiDeleteBinLine} />
-                    Remove from campaign
+                    {t("removeFromCampaign")}
                   </Dropdown.Item>
                 </Dropdown.Content>
               </Dropdown.Root>
@@ -318,7 +323,7 @@ export function ContactPanel({
         </Modal.Header>
         <Modal.Body className="space-y-5">
           {loading ? (
-            <div aria-busy="true" aria-label="Loading contact" className="space-y-5">
+            <div aria-busy="true" aria-label={t("loadingContact")} className="space-y-5">
               <Skeleton className="h-16 w-full rounded-xl" />
               <div className="space-y-3">
                 <Skeleton className="h-4 w-24" />
@@ -334,7 +339,7 @@ export function ContactPanel({
             <ErrorState message={error} onRetry={() => void load()} />
           ) : contact && person ? (
             <>
-              {error && <FormError>Couldn&apos;t refresh this contact: {error}</FormError>}
+              {error && <FormError>{t("refreshError", { error })}</FormError>}
               <LiveCallStrip
                 callId={liveCallId}
                 serverStatus={sortedCalls.find((call) => call.id === liveCallId)?.status ?? null}
@@ -346,15 +351,15 @@ export function ContactPanel({
               />
 
               {/* Who to call, and the button that calls them. */}
-              <section aria-label="Contact details" className="flex items-center justify-between gap-3 rounded-xl bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200">
+              <section aria-label={t("detailsAria")} className="flex items-center justify-between gap-3 rounded-xl bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200">
                 <dl className="min-w-0 space-y-1 text-paragraph-sm">
                   <div className="flex items-center gap-2">
-                    <dt><RiPhoneLine className="size-4 text-text-soft-400" aria-label="WhatsApp number" /></dt>
-                    <dd className={person.phone ? "tabular-nums text-text-strong-950" : "text-text-soft-400"}>{person.phone || "No number yet"}</dd>
+                    <dt><RiPhoneLine className="size-4 text-text-soft-400" aria-label={t("whatsappNumberAria")} /></dt>
+                    <dd className={person.phone ? "tabular-nums text-text-strong-950" : "text-text-soft-400"}>{person.phone || t("noNumber")}</dd>
                   </div>
                   {person.email && (
                     <div className="flex min-w-0 items-center gap-2">
-                      <dt><RiMailLine className="size-4 text-text-soft-400" aria-label="Email" /></dt>
+                      <dt><RiMailLine className="size-4 text-text-soft-400" aria-label={t("emailAria")} /></dt>
                       <dd className="truncate text-text-sub-600" title={person.email}>{person.email}</dd>
                     </div>
                   )}
@@ -362,12 +367,12 @@ export function ContactPanel({
                 <CallButton personId={person.id} campaignContactId={contact.id} phone={person.phone} onCallStarted={() => void load()} />
               </section>
 
-              <PanelSection title="Status" aside={<CallStatusBadge status={contact.callStatus} />}>
+              <PanelSection title={t("status")} aside={<CallStatusBadge status={contact.callStatus} />}>
                 {outcomeError && <FormError>{outcomeError}</FormError>}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <span className="mb-1.5 flex items-center gap-2 text-label-xs text-text-sub-600">
-                      Call status
+                      {t("callStatus")}
                       {attemptHint(contact) && <span className="text-text-soft-400">{attemptHint(contact)}</span>}
                     </span>
                     <Select.Root
@@ -376,27 +381,27 @@ export function ContactPanel({
                       disabled={savingField === "status"}
                       onValueChange={(next) => void saveCallStatus(next as ContactCallStatus)}
                     >
-                      <Select.Trigger aria-label="Call status">
-                        <Select.Value>{CONTACT_CALL_STATUS_DEFINITIONS[contact.callStatus].label}</Select.Value>
+                      <Select.Trigger aria-label={t("callStatus")}>
+                        <Select.Value>{callStatusLabel(contact.callStatus)}</Select.Value>
                       </Select.Trigger>
                       <Select.Content>
                         {/* The current status is listed even when set by a call, so the trigger can show it. */}
                         {CONTACT_CALL_STATUSES.filter((status) => CONTACT_CALL_STATUS_DEFINITIONS[status].manual || status === contact.callStatus).map((status) => (
                           <Select.Item key={status} value={status} disabled={!CONTACT_CALL_STATUS_DEFINITIONS[status].manual}>
-                            {CONTACT_CALL_STATUS_DEFINITIONS[status].label}
+                            {callStatusLabel(status)}
                           </Select.Item>
                         ))}
                       </Select.Content>
                     </Select.Root>
-                    <p className="mt-1 text-paragraph-xs text-text-soft-400">Set automatically by calls. Correct it here when the call misled it.</p>
+                    <p className="mt-1 text-paragraph-xs text-text-soft-400">{t("callStatusHelp")}</p>
                   </div>
                   <div>
-                    <span className="mb-1.5 block text-label-xs text-text-sub-600">Lead status</span>
+                    <span className="mb-1.5 block text-label-xs text-text-sub-600">{t("leadStatus")}</span>
                     <LeadStagePicker contact={contact} categories={categories} onUpdated={() => { void load(); onChanged?.(); }} />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor={`follow-up-${contactId}`} className="mb-1.5 block text-label-xs text-text-sub-600">Next follow-up</label>
+                  <label htmlFor={`follow-up-${contactId}`} className="mb-1.5 block text-label-xs text-text-sub-600">{t("nextFollowUp")}</label>
                   <div className="flex items-center gap-2">
                     <Input.Root size="small" className="flex-1">
                       <Input.Wrapper>
@@ -418,7 +423,7 @@ export function ContactPanel({
                         disabled={savingField === "followUp"}
                         onClick={() => { setFollowUpAt(""); void saveFollowUp(""); }}
                       >
-                        Clear
+                        {t("clear")}
                       </Button.Root>
                     )}
                   </div>
@@ -426,13 +431,13 @@ export function ContactPanel({
                 {CONTACT_CALL_STATUS_DEFINITIONS[contact.callStatus].template !== null && (
                   <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={() => offerFollowUp(contact.callStatus)}>
                     <Button.Icon as={RiSendPlaneLine} />
-                    Write a WhatsApp follow-up
+                    {t("writeFollowUp")}
                   </Button.Root>
                 )}
               </PanelSection>
 
               {/* WhatsApp thread + composer; a call-status template lands in the box. */}
-              <PanelSection title="WhatsApp">
+              <PanelSection title={t("whatsappSection")}>
                 <PersonWhatsappPanel
                   personId={person.id}
                   campaignContactId={contact.id}
@@ -443,17 +448,17 @@ export function ContactPanel({
                 />
               </PanelSection>
 
-              <PanelSection title="Notes">
-                <Textarea.Root simple rows={3} aria-label="Notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Anything worth remembering for next time…" />
+              <PanelSection title={t("notes")}>
+                <Textarea.Root simple rows={3} aria-label={t("notes")} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={t("notesPlaceholder")} />
                 {notesError && <FormError>{notesError}</FormError>}
                 <div className="flex justify-end">
                   <Button.Root variant="neutral" mode="stroke" size="xsmall" disabled={notesSaving} onClick={() => void saveNotes()}>
-                    {notesSaving ? "Saving…" : "Save notes"}
+                    {notesSaving ? t("saving") : t("saveNotes")}
                   </Button.Root>
                 </div>
               </PanelSection>
 
-              <PanelSection title="Calls" count={sortedCalls.length}>
+              <PanelSection title={t("calls")} count={sortedCalls.length}>
                 {sortedCalls.length ? (
                   <div className="space-y-2">
                     {sortedCalls.map((call) => (
@@ -468,11 +473,11 @@ export function ContactPanel({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-paragraph-sm text-text-sub-600">No calls yet. The Call button above places one through WhatsApp and records it.</p>
+                  <p className="text-paragraph-sm text-text-sub-600">{t("noCalls")}</p>
                 )}
               </PanelSection>
 
-              <PanelSection title="Messages logged" count={sortedMessages.length}>
+              <PanelSection title={t("messagesLogged")} count={sortedMessages.length}>
                 {sortedMessages.length ? (
                   <div className="space-y-2">
                     {sortedMessages.map((message) => (
@@ -483,7 +488,7 @@ export function ContactPanel({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-paragraph-sm text-text-sub-600">No messages yet.</p>
+                  <p className="text-paragraph-sm text-text-sub-600">{t("noMessages")}</p>
                 )}
               </PanelSection>
             </>
@@ -524,9 +529,12 @@ export function RemoveContactModal({
   contact: CampaignContact;
   onRemoved: () => void;
 }) {
+  const t = useTranslations("callingMain.panel");
+  const tShared = useTranslations("callingMain.shared");
+  const { errorMessage } = useCrmText();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const name = contact.person.fullName || contact.person.firstName || "This contact";
+  const name = contact.person.fullName || contact.person.firstName || tShared("thisContact");
 
   useEffect(() => {
     if (open) {
@@ -551,9 +559,9 @@ export function RemoveContactModal({
     <Modal.Root open={open} onOpenChange={(next) => { if (!submitting) onOpenChange(next); }}>
       <Modal.Content>
         <Modal.Header icon={RiDeleteBinLine}>
-          <Modal.Title>Remove from campaign?</Modal.Title>
+          <Modal.Title>{t("removeTitle")}</Modal.Title>
           <Modal.Description>
-            Remove {name} from this campaign? They stay in People with their calls and recordings.
+            {t("removeBody", { name })}
           </Modal.Description>
         </Modal.Header>
         {error && (
@@ -563,10 +571,10 @@ export function RemoveContactModal({
         )}
         <Modal.Footer>
           <Modal.Close asChild>
-            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>Cancel</Button.Root>
+            <Button.Root variant="neutral" mode="stroke" size="small" disabled={submitting}>{t("cancel")}</Button.Root>
           </Modal.Close>
           <Button.Root variant="error" mode="filled" size="small" disabled={submitting} onClick={() => void submit()}>
-            {submitting ? "Removing…" : "Remove from campaign"}
+            {submitting ? t("removing") : t("removeFromCampaign")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>
@@ -587,6 +595,9 @@ function CallHistoryRow({
   onRetryTranscript: () => void;
   retrying: boolean;
 }) {
+  const t = useTranslations("callingMain.panel");
+  const { formatDate } = useCrmText();
+  const { dispositionLabel } = useCallingLabels();
   const duration = formatCallDuration(call.durationMs);
   return (
     <div className="space-y-2 rounded-xl bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200">
@@ -596,7 +607,7 @@ function CallHistoryRow({
         <span className="ml-auto flex flex-wrap items-center gap-1.5">
           <CallSessionBadge status={call.status} />
           {call.disposition && (
-            <Badge.Root variant="lighter" size="medium" color="blue">{CALL_DISPOSITION_DEFINITIONS[call.disposition].label}</Badge.Root>
+            <Badge.Root variant="lighter" size="medium" color="blue">{dispositionLabel(call.disposition)}</Badge.Root>
           )}
         </span>
       </div>
@@ -608,24 +619,24 @@ function CallHistoryRow({
       {call.transcriptStatus === "pending" && !transcriptLooksStuck(call) && (
         <p className="flex items-center gap-1.5 text-paragraph-xs text-text-sub-600">
           <RiLoader4Line className="size-3.5 animate-spin" aria-hidden="true" />
-          Transcribing…
+          {t("transcribing")}
         </p>
       )}
       {transcriptLooksStuck(call) && (
         <div className="flex items-center justify-between gap-2">
-          <p className="text-paragraph-xs text-text-sub-600">Transcription is taking much longer than usual — it may have stopped.</p>
+          <p className="text-paragraph-xs text-text-sub-600">{t("transcriptStuck")}</p>
           <Button.Root variant="neutral" mode="stroke" size="xxsmall" className="shrink-0 gap-1.5 text-label-xs" disabled={retrying} onClick={onRetryTranscript}>
             <RiRefreshLine className={retrying ? "size-3.5 animate-spin" : "size-3.5"} aria-hidden="true" />
-            Retry
+            {t("retry")}
           </Button.Root>
         </div>
       )}
       {call.transcriptStatus === "failed" && (
         <div className="flex items-center justify-between gap-2">
-          <p className="text-paragraph-xs text-error-dark">{call.transcriptError || "Transcription failed."}</p>
+          <p className="text-paragraph-xs text-error-dark">{call.transcriptError || t("transcriptionFailed")}</p>
           <Button.Root variant="neutral" mode="stroke" size="xxsmall" className="shrink-0 gap-1.5 text-label-xs" disabled={retrying} onClick={onRetryTranscript}>
             <RiRefreshLine className={retrying ? "size-3.5 animate-spin" : "size-3.5"} aria-hidden="true" />
-            Retry
+            {t("retry")}
           </Button.Root>
         </div>
       )}
@@ -637,7 +648,7 @@ function CallHistoryRow({
           </p>
           <Button.Root variant="neutral" mode="ghost" size="xxsmall" className="-ml-2 gap-1.5 text-label-xs" aria-expanded={expanded} onClick={onToggleExpand}>
             <RiArrowDownSLine className={expanded ? "size-3.5 rotate-180 transition" : "size-3.5 transition"} aria-hidden="true" />
-            {expanded ? "Hide transcript" : "Show transcript"}
+            {expanded ? t("hideTranscript") : t("showTranscript")}
           </Button.Root>
           {expanded && (
             <div className="space-y-1.5 rounded-lg bg-bg-white-0 p-3 ring-1 ring-inset ring-stroke-soft-200">
@@ -645,7 +656,7 @@ function CallHistoryRow({
                 <div key={index} className="flex gap-2 text-paragraph-xs">
                   <span className="w-14 shrink-0 text-text-soft-400">{formatOffset(utterance.startSeconds)}</span>
                   <span className={utterance.speaker === "rep" ? "w-10 shrink-0 font-medium text-information-base" : "w-10 shrink-0 font-medium text-text-sub-600"}>
-                    {utterance.speaker === "rep" ? "Rep" : "Lead"}
+                    {utterance.speaker === "rep" ? t("speakerRep") : t("speakerLead")}
                   </span>
                   <span className="text-text-strong-950">{utterance.text}</span>
                 </div>

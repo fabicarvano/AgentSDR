@@ -1,7 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { AiCampaignDetailClient } from "@/components/calling/ai/AiCampaignDetailClient";
 import { isAiCampaignTab } from "@/components/calling/ai/tabs";
 
-export const metadata = { title: "AI calling campaign" };
+export async function generateMetadata() {
+  const t = await getTranslations("callingAiSetup.page");
+  return { title: t("detailTitle") };
+}
 
 export default async function AiCallCampaignPage({
   params,

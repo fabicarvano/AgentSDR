@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/page/PageHeader";
 import { AiCampaignsSection } from "@/components/calling/ai/AiCampaignsSection";
 
@@ -11,11 +12,12 @@ import { AiCampaignsSection } from "@/components/calling/ai/AiCampaignsSection";
  * links (/calling/campaigns/:id); nothing lists or creates them any more.
  */
 export default function CampaignsClient() {
+  const t = useTranslations("callingMain.campaigns");
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <PageHeader
-        title="Call campaigns"
-        description="The AI agent calls your leads over WhatsApp, follows up, and hands interested people to you."
+        title={t("title")}
+        description={t("description")}
       />
       <AiCampaignsSection />
     </div>

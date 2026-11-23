@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiLoader4Line, RiSaveLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { Frame, FrameFooter, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
@@ -8,7 +9,7 @@ import { aiSequencesError, type AiCampaignDetail, type AiStepStat } from "@/lib/
 import { updateAiCampaign } from "@/lib/calls/aiCampaigns/client";
 import type { AiCampaignStep } from "@/lib/calls/aiCampaigns/contract";
 import { cn } from "@/utils/cn";
-import { errorText, useBeforeUnload } from "./aiShared";
+import { useBeforeUnload, useErrorText } from "./aiShared";
 import { AiStepsEditor } from "./AiStepsEditor";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -33,6 +34,8 @@ export function AiSequenceTab({
   onSaved: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
+  const t = useTranslations("callingAiSetup.sequence");
+  const errorText = useErrorText();
   const [steps, setSteps] = useState<AiCampaignStep[]>(() => campaign.steps.map((step) => ({ ...step })));
   const [chaseSteps, setChaseSteps] = useState<AiCampaignStep[]>(() => campaign.chaseSteps.map((step) => ({ ...step })));
   const [saved, setSaved] = useState({ steps: campaign.steps, chaseSteps: campaign.chaseSteps });
@@ -61,7 +64,7 @@ export function AiSequenceTab({
       setJustSaved(true);
       onSaved();
     } catch (cause) {
-      setError(errorText(cause, "Could not save the sequence"));
+      setError(errorText(cause, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -77,8 +80,8 @@ export function AiSequenceTab({
     <div className="space-y-4">
       <Frame>
         <FrameHeader
-          title="Reach them"
-          description="Runs for every lead, in order, until they have a real conversation. Picking up and saying nothing does not count as one."
+          title={t("reachTitle")}
+          description={t("reachDescription")}
         />
         <FramePanel>
           <AiStepsEditor
@@ -89,19 +92,19 @@ export function AiSequenceTab({
             agentVoice={campaign.agentVoice}
             stats={stats}
             statsPhase="reach"
-            emptyText="Add at least one call. A campaign without a call step cannot be launched."
+            emptyText={t("reachEmpty")}
           />
         </FramePanel>
         <FrameFooter>
-          The first step runs as soon as a lead is queued and a number is free. Each wait is counted from the previous step. Calls and messages respect the numbers&apos; calling hours and daily limits.
+          {t("reachFooter")}
         </FrameFooter>
       </Frame>
 
       {showChase && (
         <Frame>
           <FrameHeader
-            title="If they said yes but haven't booked"
-            description="After a call where they agree to a meeting, the booking message goes out on WhatsApp. These steps then run until a booking arrives, they reply, or the steps run out and a person takes over."
+            title={t("chaseTitle")}
+            description={t("chaseDescription")}
           />
           <FramePanel>
             <AiStepsEditor
@@ -113,7 +116,7 @@ export function AiSequenceTab({
               agentVoice={campaign.agentVoice}
               stats={stats}
               statsPhase="chase"
-              emptyText="No follow-ups: once the booking message is sent, a person takes over if they do not book."
+              emptyText={t("chaseEmpty")}
             />
           </FramePanel>
         </Frame>
@@ -125,11 +128,11 @@ export function AiSequenceTab({
             <RiErrorWarningLine className="size-4 shrink-0" />{error ?? problem}
           </p>
         )}
-        {dirty && !problem && <span className="text-paragraph-xs text-warning-dark">Unsaved changes</span>}
-        {justSaved && !dirty && <span role="status" className="text-paragraph-xs text-success-base">Saved</span>}
+        {dirty && !problem && <span className="text-paragraph-xs text-warning-dark">{t("unsaved")}</span>}
+        {justSaved && !dirty && <span role="status" className="text-paragraph-xs text-success-base">{t("saved")}</span>}
         <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || !dirty || Boolean(problem)}>
           <Button.Icon as={saving ? RiLoader4Line : RiSaveLine} className={cn(saving && "animate-spin")} />
-          {saving ? "Saving…" : "Save sequence"}
+          {saving ? t("saving") : t("save")}
         </Button.Root>
       </div>
     </div>

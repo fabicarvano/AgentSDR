@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import * as Input from "@/components/alignui/input";
 import * as Popover from "@/components/alignui/popover";
 import { CompanyFavicon } from "@/components/calling/callingShared";
@@ -26,6 +27,7 @@ export function CompanyNameField({
   onPick: (company: CompanySuggestion) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("callingMain.companyField");
   const id = useId();
   const listId = `${id}-list`;
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -117,7 +119,7 @@ export function CompanyNameField({
           }}
           className="w-[var(--radix-popover-trigger-width)] rounded-xl bg-bg-white-0 p-1 shadow-regular-md ring-1 ring-inset ring-stroke-soft-200"
         >
-          <ul id={listId} role="listbox" aria-label="Matching companies">
+          <ul id={listId} role="listbox" aria-label={t("matching")}>
             {suggestions.map((company, index) => (
               <li
                 key={company.id}
@@ -144,7 +146,7 @@ export function CompanyNameField({
                 </span>
                 {company.people > 0 && (
                   <span className="shrink-0 text-paragraph-xs text-text-soft-400">
-                    {company.people} {company.people === 1 ? "person" : "people"}
+                    {t("people", { count: company.people })}
                   </span>
                 )}
               </li>

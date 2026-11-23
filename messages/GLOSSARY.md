@@ -112,3 +112,25 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Default view | Visualização padrão |
 | Undo / Redo / Duplicate / Stop | Desfazer / Refazer / Duplicar / Parar |
 | Default names stored in the database ("Untitled workbook", "Column N", column-type names) | Ficam em inglês: dado gravado, nunca texto traduzido |
+
+## WhatsApp and calling
+| English | pt-BR |
+|---|---|
+| Call (noun) / Call (button) | Chamada / Ligar |
+| AI call | Chamada com IA |
+| Call campaigns | Campanhas de chamadas |
+| Call recorder / Rehearsal | Gravador de chamadas / Ensaio |
+| Cloud (calling station) | Nuvem |
+| Rep (speaker) | Vendedor |
+| Not called / Didn't pick up | Não chamado / Não atendeu |
+| Connect rate | Taxa de conexão |
+| To call / Due today | Para chamar / Para hoje |
+| Call back later / Call-backs | Retornar depois / Retornos |
+| Not on WhatsApp | Sem WhatsApp |
+| Reach (sequence) | Abordagem |
+| Chase (sequence: said yes, has not booked) | Se disseram sim, mas não agendaram |
+| Wizard step / Sequence step | Etapa / Passo |
+| Message campaign | Campanha de mensagens |
+| Launch / Preview | Lançar / Prévia |
+| In sequence | Em sequência |
+| Archive campaign | Arquivar campanha |

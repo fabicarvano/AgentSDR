@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import * as Checkbox from "@/components/alignui/checkbox";
 import type { WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 import { cn } from "@/utils/cn";
@@ -18,13 +19,14 @@ export function SenderPicker({
   loading?: boolean;
   error?: string | null;
 }) {
+  const t = useTranslations("whatsappCampaigns.sender");
   if (loading || accounts === null) {
-    return <p className="rounded-xl bg-bg-weak-50 p-3 text-paragraph-sm text-text-sub-600">{error ?? "Loading numbers…"}</p>;
+    return <p className="rounded-xl bg-bg-weak-50 p-3 text-paragraph-sm text-text-sub-600">{error ?? t("loading")}</p>;
   }
   if (accounts.length === 0) {
     return (
       <p className="rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">
-        No WhatsApp numbers yet. Link one in Unipile, then use Sync from Unipile on the Accounts page. You can still save this campaign paused.
+        {t("empty")}
       </p>
     );
   }
@@ -49,10 +51,11 @@ export function SenderPicker({
               onCheckedChange={() => onChange(checked ? selectedIds.filter((id) => id !== account.id) : [...selectedIds, account.id])}
             />
             <span className="min-w-0">
-              <span className="block truncate text-label-sm text-text-strong-950">{account.name || account.phone || "WhatsApp number"}</span>
+              <span className="block truncate text-label-sm text-text-strong-950">{account.name || account.phone || t("unnamed")}</span>
               <span className="block truncate text-paragraph-xs text-text-sub-600">
-                {account.phone ?? "No number reported"}
-                {!connected ? ` · ${account.status}` : account.warmUpEndsAt ? " · warming up" : ""}
+                {/* account.status is a stable enum value from the API, shown as is. */}
+                {account.phone ?? t("noNumber")}
+                {!connected ? ` · ${account.status}` : account.warmUpEndsAt ? ` · ${t("warmingUp")}` : ""}
               </span>
             </span>
           </label>
