@@ -1,0 +1,314 @@
+{
+  "gridEnrich": {
+    "registry": {
+      "categories": {
+        "ai": "IA",
+        "enrichCompanyInfo": "Enriquecer dados da empresa",
+        "enrichPersonInfo": "Enriquecer dados da pessoa",
+        "extract": "Extrair",
+        "normalize": "Normalizar",
+        "score": "Pontuar",
+        "organize": "Organizar",
+        "summarize": "Resumir",
+        "tools": "Ferramentas"
+      },
+      "authFields": {
+        "apiKey": {
+          "label": "Chave de API do {name}",
+          "placeholder": "Cole a chave de API do {name}"
+        },
+        "clientId": {
+          "label": "ID do cliente",
+          "placeholder": "Cole o ID do cliente do {name}"
+        },
+        "clientSecret": {
+          "label": "Segredo do cliente",
+          "placeholder": "Cole o segredo do cliente do {name}"
+        }
+      },
+      "integrations": {
+        "apollo": {
+          "description": "Encontre e enriqueça pessoas e empresas com os dados do Apollo."
+        },
+        "cleanlist": {
+          "description": "Busque pessoas e empresas B2B e enriqueça os registros de contatos e empresas."
+        },
+        "companyenrich": {
+          "description": "Pesquise empresas e perfis profissionais com a sua conta do CompanyEnrich. A busca de pessoas não encontra endereços de e-mail.",
+          "fields": {
+            "apiKey": {
+              "label": "Chave de API",
+              "placeholder": "Chave de API do CompanyEnrich, sem Bearer"
+            }
+          }
+        },
+        "snov": {
+          "description": "Encontre e-mails, enriqueça pessoas e empresas e verifique a entregabilidade de e-mails."
+        },
+        "millionverifier": {
+          "description": "Verifique a entregabilidade de e-mails em tempo real com o MillionVerifier."
+        },
+        "contactout": {
+          "description": "Encontre perfis profissionais, e-mails pessoais e números de celular.",
+          "fields": {
+            "apiKey": {
+              "label": "Token de API do ContactOut",
+              "placeholder": "Cole o token de API do ContactOut"
+            }
+          }
+        },
+        "findymail": {
+          "description": "Encontre e verifique e-mails corporativos e descubra telefones a partir de perfis profissionais."
+        },
+        "fullenrich": {
+          "description": "Encontre e-mails corporativos e celulares por meio de uma cascata de provedores."
+        },
+        "hunter": {
+          "description": "Verifique endereços de e-mail e descubra e-mails corporativos de empresas e pessoas."
+        },
+        "leadmagic": {
+          "description": "Valide e-mails e enriqueça pessoas, empresas, perfis, celulares e sinais de contratação.",
+          "fields": {
+            "apiKey": {
+              "placeholder": "lm_..."
+            }
+          }
+        },
+        "lusha": {
+          "description": "Enriqueça pessoas e empresas e obtenha sinais atuais de empresas e contatos."
+        },
+        "zerobounce": {
+          "description": "Valide a entregabilidade de e-mails em tempo real com o ZeroBounce."
+        },
+        "similarweb": {
+          "description": "Enriqueça empresas com dados de tráfego, engajamento, geografia, ranking e tecnologia do site."
+        },
+        "semrush": {
+          "description": "Analise o tráfego de empresas, concorrentes, públicos e o desempenho de sites com o Semrush."
+        },
+        "rocketreach": {
+          "description": "Encontre dados de contato verificados e enriqueça pessoas e empresas com o RocketReach."
+        },
+        "icypeas": {
+          "description": "Descubra e verifique e-mails, encontre perfis profissionais e enriqueça pessoas e empresas."
+        }
+      }
+    },
+    "enrichment": {
+      "title": "Adicionar enriquecimento",
+      "mapping": {
+        "selectAria": "Coluna da tabela",
+        "selectPlaceholder": "Selecione uma coluna da tabela",
+        "noCompatible": "Não existe uma coluna compatível do tipo {types}."
+      },
+      "errors": {
+        "loadAccounts": "Não foi possível carregar as contas",
+        "enterField": "Informe {field}.",
+        "addAccount": "Não foi possível adicionar a conta",
+        "connectFirst": "Conecte primeiro uma conta do {provider}.",
+        "providerFallback": "provedor",
+        "selectColumnFor": "Selecione uma coluna compatível para {name}.",
+        "minFilters": "Adicione e mapeie pelo menos {count, plural, one {# filtro de busca} other {# filtros de busca}}.",
+        "selectOutput": "Selecione pelo menos uma coluna de saída.",
+        "noRowsToRun": "Não há linhas nesta página para executar. Use Salvar e execute depois que as linhas carregarem.",
+        "addEnrichment": "Não foi possível adicionar o enriquecimento",
+        "savedRunFailed": "Colunas salvas, mas não foi possível iniciar a execução",
+        "save": "Não foi possível salvar este enriquecimento"
+      },
+      "action": {
+        "title": "Ação",
+        "viewDocs": "Ver documentação",
+        "categoryLine": "{category} · Enriquecimento"
+      },
+      "account": {
+        "title": "Conta",
+        "aria": "Conta do {provider}",
+        "integrationFallback": "Integração",
+        "select": "Selecionar conta do {provider}",
+        "needsVerification": "{name} (verificação necessária)",
+        "add": "Adicionar conta",
+        "namePlaceholder": "Nome da conta do {provider}",
+        "encryptedNote": "A chave é criptografada antes de ser armazenada e nunca é exibida novamente.",
+        "cancel": "Cancelar",
+        "verifying": "Verificando…",
+        "verifyConnect": "Verificar e conectar"
+      },
+      "columnMapping": {
+        "title": "Mapeamento de colunas",
+        "setupInputs": "Entradas de configuração",
+        "searchFilters": "Filtros de busca",
+        "filtersIntro": "Adicione um filtro do Cleanlist e escolha a coluna da tabela cujos valores devem ser enviados para ele.",
+        "legacyTitle": "Filtros JSON legados",
+        "legacyBody": "Este mapeamento salvo continua funcionando. Adicione filtros nomeados abaixo se quiser uma configuração guiada.",
+        "legacyRemoveAria": "Remover mapeamento de filtro JSON legado",
+        "filter": "Filtro",
+        "removeFilterAria": "Remover o filtro {name}",
+        "mapValuesFrom": "Mapear valores da coluna",
+        "addFilter": "Adicionar filtro",
+        "chooseFilter": "+ Escolher um filtro",
+        "needOneFilter": "Adicione e mapeie pelo menos um filtro para continuar.",
+        "advanced": "Configurações avançadas"
+      },
+      "run": {
+        "title": "Configurações de execução",
+        "autoRun": "Execução automática",
+        "inBatches": "Executar em lotes",
+        "comingLater": "Em breve",
+        "addCondition": "Adicionar condição de execução",
+        "conditionHelp": "Só executa se esta expressão resultar em verdadeiro.",
+        "conditionPlaceholder": "Exemplo: {example}",
+        "delay": "Atrasar execução",
+        "immediately": "Executar imediatamente",
+        "afterDelay": "Executar após um atraso",
+        "seconds": "segundos"
+      },
+      "footer": {
+        "accountConnected": "Conta conectada",
+        "apiKeyRequired": "Chave de API necessária",
+        "continue": "Continuar para adicionar campos"
+      },
+      "outputs": {
+        "title": "Adicione dados como colunas na sua tabela",
+        "intro": "Selecione os dados que você quer adicionar como colunas. A integração é executada uma vez por linha.",
+        "selected": "{count, plural, one {# selecionado} other {# selecionados}}",
+        "searchPlaceholder": "Buscar colunas de dados",
+        "typeAlreadyAdded": "{type} · já adicionada",
+        "saveChanges": "Salvar alterações",
+        "saveWithoutRunning": "Salvar sem executar",
+        "notImplemented": "O manipulador ao vivo do Apollo ainda não foi implementado",
+        "saveAndRun": "Salvar e executar 10 linhas"
+      },
+      "catalog": {
+        "searchPlaceholder": "Buscar provedores e enriquecimentos…",
+        "tabIntegrations": "Integrações",
+        "tabDiscover": "Descobrir",
+        "tabTemplates": "Modelos",
+        "tabFunctions": "Funções",
+        "checking": "Verificando conexão…",
+        "connected": "Conectado",
+        "addIntegration": "Adicionar integração",
+        "connectToUse": "Conecte o {name} para usar as ações dele",
+        "credentialsVerified": "Suas credenciais serão verificadas antes de a integração ser ativada.",
+        "addAccountTitle": "Adicionar conta do {name}",
+        "accountName": "Nome da conta",
+        "accountPlaceholder": "Conta do {name}",
+        "credentialsEncrypted": "As credenciais são criptografadas e nunca são exibidas novamente.",
+        "findApiKey": "Encontrar sua chave de API",
+        "enrichmentLine": "Enriquecimento · {name}",
+        "openDocsAria": "Abrir a documentação de {name}"
+      }
+    },
+    "ai": {
+      "title": "Usar IA",
+      "useCase": "Caso de uso",
+      "useCases": {
+        "webResearch": {
+          "name": "Pesquisa na web",
+          "description": "Tem acesso à internet para pesquisar e analisar sites"
+        },
+        "imageGeneration": {
+          "name": "Geração de imagens",
+          "description": "Gera imagens a partir de texto"
+        },
+        "content": {
+          "name": "Criar ou modificar conteúdo",
+          "description": "Útil para a maioria das tarefas (não tem acesso à internet)"
+        }
+      },
+      "model": "Modelo",
+      "loadingModels": "Carregando modelos…",
+      "selectModel": "Selecione um modelo",
+      "searchModels": "Buscar modelos...",
+      "noModels": "Nenhum modelo corresponde a essa busca.",
+      "openRouterModel": "Modelo do OpenRouter",
+      "notConfigured": "O OpenRouter não está configurado. Conecte-o e escolha os modelos BYOK permitidos em <link>Configurações de IA</link>.",
+      "configuration": "Configuração",
+      "prompt": "Prompt",
+      "promptPlaceholder": "Para a pessoa com a URL do LinkedIn {token}, encontre o cargo atual.",
+      "unknownTokens": "{count, plural, one {{tokens} não é uma coluna desta tabela e seria enviado em branco.} other {{tokens} não são colunas desta tabela e seriam enviados em branco.}} Substitua por uma coluna abaixo.",
+      "insertHint": "Digite <kbd>/</kbd> ou <kbd>{braces}</kbd> para inserir uma coluna.",
+      "defineOutputs": "Definir saídas",
+      "imageNote": "Modelos de imagem retornam uma única imagem, que vai para uma coluna de imagem.",
+      "formatFields": "Campos",
+      "formatSchema": "JSON Schema",
+      "outputNamePlaceholder": "resposta",
+      "outputTypeAria": "Tipo de saída",
+      "outputTypes": {
+        "text": "Texto",
+        "number": "Número",
+        "boolean": "Caixa de seleção",
+        "date": "Data",
+        "url": "URL",
+        "email": "E-mail",
+        "image": "Imagem",
+        "json": "JSON"
+      },
+      "removeOutputAria": "Remover {name}",
+      "addOutput": "Adicionar saída",
+      "examples": "Exemplos",
+      "examplesIntro": "Dê exemplos de como a IA deve responder — <soft>opcional</soft>",
+      "customExample": "Exemplo personalizado",
+      "removeExampleAria": "Remover exemplo",
+      "expectedResponse": "Resposta esperada:",
+      "addExamples": "Adicionar exemplos",
+      "runSettings": "Configurações de execução",
+      "autoRun": "Execução automática",
+      "addCondition": "Adicionar condição de execução",
+      "conditionHelp": "Só executa se esta fórmula resultar em verdadeiro.",
+      "delay": "Atrasar execução",
+      "immediately": "Executar imediatamente",
+      "afterDelay": "Executar após um atraso",
+      "perRow": "{credits} / linha",
+      "save": "Salvar",
+      "saveAndRun": "Salvar e executar 10 linhas",
+      "errors": {
+        "loadModels": "Não foi possível carregar os modelos do OpenRouter configurados",
+        "selectModel": "Selecione um modelo ativado nas Configurações de IA.",
+        "connectFirst": "Conecte primeiro uma conta do {provider}.",
+        "providerFallback": "provedor",
+        "writePrompt": "Escreva um prompt.",
+        "outputNeedsName": "Toda saída precisa de um nome.",
+        "outputNamesUnique": "Os nomes das saídas devem ser diferentes entre si.",
+        "noRowsToRun": "Não há linhas nesta página para executar. Use Salvar e execute depois que as linhas carregarem.",
+        "invalidSchema": "O JSON Schema não é um JSON válido.",
+        "save": "Não foi possível salvar esta coluna de IA",
+        "savedRunFailed": "Salvo, mas não foi possível iniciar a execução"
+      }
+    },
+    "campaign": {
+      "title": "Criar campanha a partir das linhas selecionadas",
+      "subtitle": "As pessoas só são criadas depois que você confirmar este mapeamento.",
+      "channel": "Canal",
+      "channelEmail": "E-mail",
+      "channelLinkedin": "LinkedIn",
+      "name": "Nome da campanha",
+      "namePlaceholder": "Abordagem do 3º trimestre",
+      "campaignField": "Campo da campanha",
+      "gridColumn": "Coluna da tabela",
+      "doNotMap": "Não mapear",
+      "columnAria": "Coluna de {field}",
+      "note": "Toda coluna não mapeada é preservada nos dados brutos de Pessoas e exposta como variável de modelo. Esta ação cria uma campanha e inscreve apenas {count, plural, one {a # linha selecionada} other {as # linhas selecionadas}}.",
+      "selected": "{count, plural, one {# selecionada} other {# selecionadas}}",
+      "cancel": "Cancelar",
+      "create": "Criar campanha",
+      "errors": {
+        "create": "Não foi possível criar a campanha"
+      },
+      "fields": {
+        "email": "E-mail",
+        "linkedinUrl": "URL do LinkedIn",
+        "firstName": "Nome",
+        "lastName": "Sobrenome",
+        "fullName": "Nome completo",
+        "title": "Cargo",
+        "companyName": "Nome da empresa",
+        "companyDomain": "Domínio da empresa",
+        "invitationMessage": "Mensagem de convite",
+        "acceptanceMessage": "Mensagem de aceitação",
+        "followUp1Message": "Follow-up 1",
+        "followUp2Message": "Follow-up 2",
+        "followUp3Message": "Follow-up 3"
+      }
+    }
+  }
+}

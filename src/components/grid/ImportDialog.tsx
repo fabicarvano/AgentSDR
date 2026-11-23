@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import {
   RiAlertLine,
   RiCloseLine,
@@ -11,12 +12,22 @@ import {
 } from "@remixicon/react";
 import * as Select from "@/components/alignui/select";
 import type { StaticColumnType } from "@/lib/grid/types";
-import { columnTypeMeta } from "./columnTypes";
+import { useColumnTypeLabel } from "./columnTypes";
 
 type Mapping =
   | { headerIndex: number; action: "map"; columnKey: string }
   | { headerIndex: number; action: "create"; name: string; type: StaticColumnType }
   | { headerIndex: number; action: "skip" };
+
+// File extensions, not interface text.
+const ACCEPTED_EXTENSIONS = ".csv, .tsv, .txt, .xlsx, .xls";
+
+/** Value of the mapping <select> for one header (internal option ids, not interface text). */
+function selectValue(m: Mapping | undefined): string {
+  if (m?.action === "skip") return "__skip";
+  if (m?.action === "map") return `col:${m.columnKey}`;
+  return "__new";
+}
 
 type Preview = {
   fileName: string;
@@ -56,6 +67,8 @@ export default function ImportDialog({
   onClose: () => void;
   onImported: (summary: { rowsInserted: number; columnsCreated: number }) => void;
 }) {
+  const t = useTranslations("gridMain.import");
+  const labelOf = useColumnTypeLabel();
   const [file, setFile] = useState<File | null>(null);
   const [sheet, setSheet] = useState<string | undefined>();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -96,7 +109,7 @@ export default function ImportDialog({
         });
         const d = await res.json();
         if (!res.ok) {
-          setError(d.error ?? "Could not read that file");
+          setError(d.error ?? t("readFailed"));
           setPreview(null);
           return;
         }
@@ -104,12 +117,12 @@ export default function ImportDialog({
         setMapping(d.mapping);
         setSheet(sheetName ?? d.sheetNames[0]);
       } catch {
-        setError("Upload failed — please try again");
+        setError(t("uploadFailed"));
       } finally {
         setBusy(false);
       }
     },
-    [tableId],
+    [tableId, t],
   );
 
   const startedWith = useRef<File | null>(null);
@@ -145,16 +158,16 @@ export default function ImportDialog({
       });
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error ?? "Import failed");
+        setError(d.error ?? t("importFailed"));
         return;
       }
       onImported({ rowsInserted: d.rowsInserted, columnsCreated: d.columnsCreated });
     } catch {
-      setError("Import failed — please try again");
+      setError(t("importFailedRetry"));
     } finally {
       setBusy(false);
     }
-  }, [file, preview, sheet, mapping, tableId, onImported]);
+  }, [file, preview, sheet, mapping, tableId, onImported, t]);
 
   if (!open || !mounted) return null;
 
@@ -168,15 +181,16 @@ export default function ImportDialog({
       <div className="relative z-10 flex max-h-[86vh] w-full max-w-4xl flex-col rounded-2xl bg-bg-white-0 shadow-xl ring-1 ring-inset ring-stroke-soft-200">
         <div className="flex shrink-0 items-start justify-between border-b border-stroke-soft-200 px-5 py-4">
           <div>
-            <h2 className="text-[15px] font-semibold text-text-strong-950">Import data</h2>
+            <h2 className="text-[15px] font-semibold text-text-strong-950">{t("title")}</h2>
             <p className="text-[13px] text-text-sub-600">
-              CSV, TSV or Excel. The first row is read as column headers.
+              {t("subtitle")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
+            aria-label={t("close")}
             className="rounded-md p-1 text-text-soft-400 transition hover:bg-bg-weak-50 hover:text-text-sub-600 disabled:opacity-50"
           >
             <RiCloseLine className="size-4" />
@@ -209,9 +223,9 @@ export default function ImportDialog({
                 <RiUploadCloud2Line className="mb-3 size-7 text-text-soft-400" />
               )}
               <span className="text-[13px] font-medium text-text-strong-950">
-                {busy ? "Reading file…" : "Drop a file here, or click to choose"}
+                {busy ? t("reading") : t("dropPrompt")}
               </span>
-              <span className="text-[13px] text-text-sub-600">.csv, .tsv, .txt, .xlsx, .xls</span>
+              <span className="text-[13px] text-text-sub-600">{ACCEPTED_EXTENSIONS}</span>
             </button>
           )}
 
@@ -232,9 +246,7 @@ export default function ImportDialog({
                   {preview.fileName}
                 </span>
                 <span className="text-[13px] text-text-sub-600">
-                  {preview.totalRows.toLocaleString()} row
-                  {preview.totalRows === 1 ? "" : "s"} · {included} of {preview.headers.length}{" "}
-                  column{preview.headers.length === 1 ? "" : "s"} included
+                  {t("summary", { rows: preview.totalRows, included, columns: preview.headers.length })}
                 </span>
 
                 {preview.sheetNames.length > 1 && (
@@ -244,7 +256,7 @@ export default function ImportDialog({
                     disabled={busy}
                     onValueChange={(next) => file && loadPreview(file, next)}
                   >
-                    <Select.Trigger aria-label="Sheet" className="ml-auto w-auto">
+                    <Select.Trigger aria-label={t("sheet")} className="ml-auto w-auto">
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
@@ -261,7 +273,7 @@ export default function ImportDialog({
               {preview.truncated && (
                 <p className="mb-3 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-400">
                   <RiAlertLine className="size-4 shrink-0" />
-                  Only the first {preview.maxRows.toLocaleString()} rows will be imported.
+                  {t("truncated", { max: preview.maxRows })}
                 </p>
               )}
 
@@ -269,9 +281,9 @@ export default function ImportDialog({
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-bg-weak-50 text-text-sub-600">
                     <tr>
-                      <th className="px-3 py-2 font-medium">File column</th>
-                      <th className="px-3 py-2 font-medium">Sample</th>
-                      <th className="px-3 py-2 font-medium">Import as</th>
+                      <th className="px-3 py-2 font-medium">{t("colFile")}</th>
+                      <th className="px-3 py-2 font-medium">{t("colSample")}</th>
+                      <th className="px-3 py-2 font-medium">{t("colImportAs")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -283,17 +295,12 @@ export default function ImportDialog({
                         .slice(0, 2)
                         .join(", ");
 
-                      const value =
-                        m?.action === "skip"
-                          ? "__skip"
-                          : m?.action === "map"
-                            ? `col:${m.columnKey}`
-                            : "__new";
+                      const value = selectValue(m);
 
                       return (
                         <tr key={i} className="border-t border-stroke-soft-200">
                           <td className="px-3 py-2 font-medium text-text-strong-950">
-                            {header || <span className="text-text-soft-400">(unnamed)</span>}
+                            {header || <span className="text-text-soft-400">{t("unnamed")}</span>}
                           </td>
                           <td className="max-w-[200px] truncate px-3 py-2 text-text-sub-600">
                             {samples || "—"}
@@ -311,6 +318,7 @@ export default function ImportDialog({
                                       next[i] = {
                                         headerIndex: i,
                                         action: "create",
+                                        // Stored as the column name (user data), so the default stays English.
                                         name: header || `Column ${i + 1}`,
                                         type: "text",
                                       };
@@ -324,23 +332,23 @@ export default function ImportDialog({
                                   });
                                 }}
                               >
-                                <Select.Trigger aria-label="Import as" className="min-w-[168px]">
+                                <Select.Trigger aria-label={t("colImportAs")} className="min-w-[168px]">
                                   <Select.Value />
                                 </Select.Trigger>
                                 <Select.Content>
-                                  <Select.Item value="__new">+ Create new column</Select.Item>
+                                  <Select.Item value="__new">{t("createNew")}</Select.Item>
                                   {preview.columns.map((c) => (
                                     <Select.Item key={c.key} value={`col:${c.key}`}>
                                       {c.name}
                                     </Select.Item>
                                   ))}
-                                  <Select.Item value="__skip">Skip this column</Select.Item>
+                                  <Select.Item value="__skip">{t("skip")}</Select.Item>
                                 </Select.Content>
                               </Select.Root>
 
                               {m?.action === "create" && (
                                 <input
-                                  aria-label="New column name"
+                                  aria-label={t("newColumnName")}
                                   value={m.name}
                                   placeholder={header || `Column ${i + 1}`}
                                   onChange={(e) =>
@@ -366,13 +374,13 @@ export default function ImportDialog({
                                     })
                                   }
                                 >
-                                  <Select.Trigger aria-label="Column type">
+                                  <Select.Trigger aria-label={t("columnType")}>
                                     <Select.Value />
                                   </Select.Trigger>
                                   <Select.Content>
-                                    {NEW_COLUMN_TYPES.map((t) => (
-                                      <Select.Item key={t} value={t}>
-                                        {columnTypeMeta(t).label}
+                                    {NEW_COLUMN_TYPES.map((type) => (
+                                      <Select.Item key={type} value={type}>
+                                        {labelOf(type)}
                                       </Select.Item>
                                     ))}
                                   </Select.Content>
@@ -407,7 +415,7 @@ export default function ImportDialog({
               disabled={busy}
               className="mr-auto rounded-lg px-3 py-2 text-[13px] font-medium text-text-sub-600 transition hover:bg-bg-weak-50 disabled:opacity-50"
             >
-              Choose a different file
+              {t("chooseAnother")}
             </button>
           )}
           <button
@@ -416,7 +424,7 @@ export default function ImportDialog({
             disabled={busy}
             className="rounded-lg border border-stroke-soft-200 px-3 py-2 text-[13px] font-medium text-text-sub-600 transition hover:bg-bg-weak-50 disabled:opacity-50"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -425,7 +433,7 @@ export default function ImportDialog({
             className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[13px] font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             {busy && <RiLoader4Line className="size-4 animate-spin" />}
-            {preview ? `Import ${preview.totalRows.toLocaleString()} rows` : "Import"}
+            {preview ? t("importRows", { count: preview.totalRows }) : t("import")}
           </button>
         </div>
       </div>

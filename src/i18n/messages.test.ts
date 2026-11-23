@@ -18,6 +18,10 @@ const IDENTICAL_OK = new Set<string>([
   "emailCampaigns.legacyPage.subtitle", // only placeholders and a separator
   "linkedinSearch.picker.quota", // only placeholders and a slash
   "crmPipeline.client.board.countTitle", // "lead" is the kept product term (GLOSSARY.md), so the plural reads the same
+  "gridColumns.sortPanel.textAsc", // direction hint made only of letters/digits and arrows, same in both languages
+  "gridColumns.sortPanel.textDesc", // direction hint made only of letters/digits and arrows, same in both languages
+  "gridColumns.sortPanel.numberAsc", // direction hint made only of letters/digits and arrows, same in both languages
+  "gridColumns.sortPanel.numberDesc", // direction hint made only of letters/digits and arrows, same in both languages
 ]);
 
 function readDomain(locale: Locale, domain: string): Record<string, unknown> {

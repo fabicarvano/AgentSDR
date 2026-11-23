@@ -22,6 +22,9 @@ import type emailLeads from "../../messages/en/emailLeads.json";
 import type emailMailboxes from "../../messages/en/emailMailboxes.json";
 import type emailSequence from "../../messages/en/emailSequence.json";
 import type emailWizard from "../../messages/en/emailWizard.json";
+import type gridColumns from "../../messages/en/gridColumns.json";
+import type gridEnrich from "../../messages/en/gridEnrich.json";
+import type gridMain from "../../messages/en/gridMain.json";
 import type inboxMain from "../../messages/en/inboxMain.json";
 import type inboxShell from "../../messages/en/inboxShell.json";
 import type inboxThread from "../../messages/en/inboxThread.json";
@@ -53,6 +56,9 @@ type Catalog = {
   emailMailboxes: typeof emailMailboxes;
   emailSequence: typeof emailSequence;
   emailWizard: typeof emailWizard;
+  gridColumns: typeof gridColumns;
+  gridEnrich: typeof gridEnrich;
+  gridMain: typeof gridMain;
   inboxMain: typeof inboxMain;
   inboxShell: typeof inboxShell;
   inboxThread: typeof inboxThread;
@@ -72,7 +78,7 @@ type Catalog = {
 };
 
 /** Same list as Catalog's keys: the loader and the tests walk it. */
-export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
+export const DOMAINS = ["analytics", "auth", "common", "crmActions", "crmPipeline", "crmRecord", "crmSequences", "crmShared", "emailCampaigns", "emailLeads", "emailMailboxes", "emailSequence", "emailWizard", "gridColumns", "gridEnrich", "gridMain", "inboxMain", "inboxShell", "inboxThread", "leads", "linkedinCampaigns", "linkedinMain", "linkedinSearch", "settings", "settingsAccounts", "settingsAi", "settingsChannels", "settingsKnowledge", "settingsOrg", "settingsStations", "shared", "shell"] as const satisfies readonly (keyof Catalog)[];
 
 export type Domain = (typeof DOMAINS)[number];
 

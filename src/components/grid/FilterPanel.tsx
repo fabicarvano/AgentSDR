@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RiAddLine, RiCloseLine, RiEyeLine, RiEyeOffLine, RiMoreLine } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import * as Select from "@/components/alignui/select";
+import type { Messages } from "@/i18n/catalog";
 import type { GridColumn } from "@/lib/grid/schema";
 import {
-  OPERATOR_LABELS,
   VALUELESS_OPERATORS,
   isFilterGroup,
   type FilterCondition,
@@ -29,6 +30,22 @@ const OPERATORS: FilterOperator[] = [
   "notContains",
 ];
 
+type OperatorLabelKey = keyof Messages["gridColumns"]["filterPanel"]["operators"];
+
+/** Compile-time exhaustive: a new FilterOperator in lib/grid/query breaks tsc until it gets a label key. */
+const OPERATOR_LABEL_KEYS: Record<FilterOperator, OperatorLabelKey> = {
+  eq: "eq",
+  neq: "neq",
+  gt: "gt",
+  gte: "gte",
+  lt: "lt",
+  lte: "lte",
+  empty: "empty",
+  notEmpty: "notEmpty",
+  contains: "contains",
+  notContains: "notContains",
+};
+
 const VALUE_DEBOUNCE_MS = 400;
 
 /**
@@ -37,6 +54,9 @@ const VALUE_DEBOUNCE_MS = 400;
  * presses Enter or leaves the box. While the box has focus the draft wins over
  * whatever the parent echoes back, so a slow round trip cannot snap it back.
  */
+// A column type value (stored enum), not interface text.
+const FALLBACK_COLUMN_TYPE = "text";
+
 function FilterValueInput({
   value,
   disabled,
@@ -118,6 +138,12 @@ export default function FilterPanel({
   value: FilterGroup;
   onChange: (next: FilterGroup) => void;
 }) {
+  const t = useTranslations("gridColumns.filterPanel");
+  const tOp = useTranslations("gridColumns.filterPanel.operators");
+  const operatorLabel = (op: FilterOperator) => {
+    const key = OPERATOR_LABEL_KEYS[op];
+    return key ? tOp(key) : op; // a value the code does not know shows as stored
+  };
   const [menuFor, setMenuFor] = useState<number | null>(null);
 
   const set = (conditions: (FilterCondition | FilterGroup)[]) =>
@@ -151,7 +177,7 @@ export default function FilterPanel({
     <div className="p-3">
       {value.conditions.length === 0 && (
         <p className="mb-2 px-1 text-[13px] text-text-sub-600">
-          No filters yet — every row is shown.
+          {t("noFilters")}
         </p>
       )}
 
@@ -176,12 +202,12 @@ export default function FilterPanel({
                       )
                     }
                   >
-                    <Select.Trigger aria-label="Group conjunction" className="w-auto">
+                    <Select.Trigger aria-label={t("groupConjunction")} className="w-auto">
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="and">All of</Select.Item>
-                      <Select.Item value="or">Any of</Select.Item>
+                      <Select.Item value="and">{t("allOf")}</Select.Item>
+                      <Select.Item value="or">{t("anyOf")}</Select.Item>
                     </Select.Content>
                   </Select.Root>
                   <button
@@ -204,14 +230,14 @@ export default function FilterPanel({
           }
 
           const col = columns.find((x) => x.key === c.columnKey);
-          const Icon = columnTypeMeta(col ? effectiveColumnType(col) : "text").icon;
+          const Icon = columnTypeMeta(col ? effectiveColumnType(col) : FALLBACK_COLUMN_TYPE).icon;
           const needsValue = !VALUELESS_OPERATORS.has(c.operator);
 
           return (
             <div key={i} className="flex items-center gap-2">
               <span className="w-11 shrink-0 text-[13px] text-text-sub-600">
                 {i === 0 ? (
-                  "Where"
+                  t("where")
                 ) : (
                   <Select.Root
                     size="xsmall"
@@ -220,12 +246,12 @@ export default function FilterPanel({
                       onChange({ ...value, conjunction: next as "and" | "or" })
                     }
                   >
-                    <Select.Trigger aria-label="Filter conjunction" className="w-full">
+                    <Select.Trigger aria-label={t("filterConjunction")} className="w-full">
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="and">and</Select.Item>
-                      <Select.Item value="or">or</Select.Item>
+                      <Select.Item value="and">{t("and")}</Select.Item>
+                      <Select.Item value="or">{t("or")}</Select.Item>
                     </Select.Content>
                   </Select.Root>
                 )}
@@ -236,7 +262,7 @@ export default function FilterPanel({
                 value={c.columnKey}
                 onValueChange={(next) => patchAt(i, { columnKey: next })}
               >
-                <Select.Trigger aria-label="Column" className="min-w-0 flex-1">
+                <Select.Trigger aria-label={t("column")} className="min-w-0 flex-1">
                   <Icon className="size-4 shrink-0 text-text-soft-400" />
                   <Select.Value />
                 </Select.Trigger>
@@ -254,13 +280,13 @@ export default function FilterPanel({
                 value={c.operator}
                 onValueChange={(next) => patchAt(i, { operator: next as FilterOperator })}
               >
-                <Select.Trigger aria-label="Operator" className="w-[150px] shrink-0">
+                <Select.Trigger aria-label={t("operator")} className="w-[150px] shrink-0">
                   <Select.Value />
                 </Select.Trigger>
                 <Select.Content>
                   {OPERATORS.map((op) => (
                     <Select.Item key={op} value={op}>
-                      {OPERATOR_LABELS[op]}
+                      {operatorLabel(op)}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -275,7 +301,7 @@ export default function FilterPanel({
 
               <button
                 type="button"
-                title={c.disabled ? "Filter is muted" : "Mute this filter"}
+                title={c.disabled ? t("muted") : t("mute")}
                 onClick={() => patchAt(i, { disabled: !c.disabled })}
                 className="shrink-0 rounded p-1 text-text-soft-400 hover:bg-bg-weak-50 hover:text-text-sub-600"
               >
@@ -304,7 +330,7 @@ export default function FilterPanel({
                       }}
                       className="w-full px-3 py-1.5 text-left text-[13px] text-red-600 dark:text-red-400 hover:bg-bg-weak-50"
                     >
-                      Remove
+                      {t("remove")}
                     </button>
                   </div>
                 )}
@@ -322,7 +348,7 @@ export default function FilterPanel({
           className="flex items-center gap-1.5 rounded-lg border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:opacity-50"
         >
           <RiAddLine className="size-4" />
-          Add filter
+          {t("addFilter")}
         </button>
         <button
           type="button"
@@ -331,7 +357,7 @@ export default function FilterPanel({
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:opacity-50"
         >
           <RiAddLine className="size-4" />
-          Add filter group
+          {t("addFilterGroup")}
         </button>
         <button
           type="button"
@@ -340,7 +366,7 @@ export default function FilterPanel({
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-red-600 dark:text-red-400 transition hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-40"
         >
           <RiCloseLine className="size-4" />
-          Clear filters
+          {t("clearFilters")}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -21,7 +22,7 @@ import {
 import type { RemixiconComponentType } from "@remixicon/react";
 import type { GridColumn } from "@/lib/grid/schema";
 import type { ColumnType, StaticColumnType } from "@/lib/grid/types";
-import { columnTypeMeta } from "./columnTypes";
+import { columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
 import { effectiveColumnType } from "@/lib/grid/value-types";
 
 const CHANGEABLE_TYPES: StaticColumnType[] = [
@@ -81,6 +82,9 @@ export default function ColumnMenu({
   onHide: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const t = useTranslations("gridColumns.columnMenu");
+  const tSort = useTranslations("gridColumns.sortPanel");
+  const typeLabel = useColumnTypeLabel();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(column.name);
   const [showTypes, setShowTypes] = useState(false);
@@ -118,7 +122,7 @@ export default function ColumnMenu({
       await onRename(trimmedName);
       onClose();
     } catch (error) {
-      setRenameError(error instanceof Error ? error.message : "Could not rename the column");
+      setRenameError(error instanceof Error ? error.message : t("renameFailed"));
     } finally {
       setBusy(false);
     }
@@ -130,7 +134,7 @@ export default function ColumnMenu({
       await action();
       onClose();
     } catch (error) {
-      onError(error instanceof Error ? error.message : "Column action failed");
+      onError(error instanceof Error ? error.message : t("actionFailed"));
     } finally {
       setBusy(false);
     }
@@ -149,11 +153,11 @@ export default function ColumnMenu({
           setOptionsError(null);
           onSaveOptions(options)
             .then(onClose)
-            .catch((error) => setOptionsError(error instanceof Error ? error.message : "Could not save the options"))
+            .catch((error) => setOptionsError(error instanceof Error ? error.message : t("saveOptionsFailed")))
             .finally(() => setBusy(false));
         }}
       >
-        <label className="mb-1.5 block text-[12px] font-medium text-text-sub-600">Options, one per line</label>
+        <label className="mb-1.5 block text-[12px] font-medium text-text-sub-600">{t("optionsLabel")}</label>
         <textarea
           autoFocus
           rows={6}
@@ -164,10 +168,10 @@ export default function ColumnMenu({
         {optionsError && <p className="mt-1.5 text-[12px] text-red-600 dark:text-red-400">{optionsError}</p>}
         <div className="mt-2 flex justify-end gap-2">
           <button type="button" onClick={() => setEditingOptions(false)} className="rounded-md px-2.5 py-1.5 text-[12px] text-text-sub-600 hover:bg-bg-weak-50">
-            Cancel
+            {t("cancel")}
           </button>
           <button type="submit" disabled={busy} className="rounded-md bg-blue-600 px-2.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-50">
-            Save {options.length} option{options.length === 1 ? "" : "s"}
+            {t("saveOptions", { count: options.length })}
           </button>
         </div>
       </form>
@@ -185,7 +189,7 @@ export default function ColumnMenu({
         }}
       >
         <label className="mb-1.5 block text-[12px] font-medium text-text-sub-600">
-          Rename column
+          {t("renameColumn")}
         </label>
         <input
           autoFocus
@@ -199,15 +203,15 @@ export default function ColumnMenu({
         />
         {(renameError || nameTaken) && (
           <p className="mt-1.5 text-[12px] text-red-600 dark:text-red-400">
-            {renameError ?? "Another column already has this name."}
+            {renameError ?? t("nameTaken")}
           </p>
         )}
         <div className="mt-2 flex justify-end gap-2">
           <button type="button" onClick={() => setRenaming(false)} className="rounded-md px-2.5 py-1.5 text-[12px] text-text-sub-600 hover:bg-bg-weak-50">
-            Cancel
+            {t("cancel")}
           </button>
           <button type="submit" disabled={!canSaveName} className="rounded-md bg-blue-600 px-2.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-50">
-            Save
+            {t("save")}
           </button>
         </div>
       </form>
@@ -218,77 +222,77 @@ export default function ColumnMenu({
     <div className="p-2">
       {onConfigure && (
         <>
-          <MenuButton icon={RiSettings3Line} label={configureLabel ?? "Configure…"} onClick={() => void run(async () => onConfigure())} />
+          <MenuButton icon={RiSettings3Line} label={configureLabel ?? t("configure")} onClick={() => void run(async () => onConfigure())} />
           <Divider />
         </>
       )}
-      <MenuButton icon={RiPencilLine} label="Rename column" onClick={() => setRenaming(true)} />
-      {hasOptions && <MenuButton icon={RiListCheck} label="Edit options" onClick={() => setEditingOptions(true)} />}
+      <MenuButton icon={RiPencilLine} label={t("renameColumn")} onClick={() => setRenaming(true)} />
+      {hasOptions && <MenuButton icon={RiListCheck} label={t("editOptions")} onClick={() => setEditingOptions(true)} />}
       <HoverSubmenu
         icon={RiArrowRightLine}
-        label="Insert column"
+        label={t("insertColumn")}
         open={submenu === "insert"}
         onOpen={() => setSubmenu("insert")}
         onClose={() => setSubmenu(null)}
       >
-        <MenuButton icon={RiArrowLeftLine} label="Left" compact onClick={(event) => onInsert("left", event.currentTarget.getBoundingClientRect())} />
-        <MenuButton icon={RiArrowRightLine} label="Right" compact onClick={(event) => onInsert("right", event.currentTarget.getBoundingClientRect())} />
+        <MenuButton icon={RiArrowLeftLine} label={t("left")} compact onClick={(event) => onInsert("left", event.currentTarget.getBoundingClientRect())} />
+        <MenuButton icon={RiArrowRightLine} label={t("right")} compact onClick={(event) => onInsert("right", event.currentTarget.getBoundingClientRect())} />
       </HoverSubmenu>
 
       <Divider />
-      <MenuButton icon={columnTypeMeta(valueType).icon} label={columnTypeMeta(valueType).label} suffix={canChangeType} active={showTypes} onClick={canChangeType ? () => setShowTypes((value) => !value) : undefined} />
+      <MenuButton icon={columnTypeMeta(valueType).icon} label={typeLabel(valueType)} suffix={canChangeType} active={showTypes} onClick={canChangeType ? () => setShowTypes((value) => !value) : undefined} />
       {showTypes && canChangeType && (
         <div className="ml-7 border-l border-stroke-soft-200 pl-1">
           {CHANGEABLE_TYPES.map((type) => {
             const meta = columnTypeMeta(type);
-            return <MenuButton key={type} icon={meta.icon} label={meta.label} active={column.type === type} onClick={() => void run(() => onChangeType(type))} compact />;
+            return <MenuButton key={type} icon={meta.icon} label={typeLabel(type)} active={column.type === type} onClick={() => void run(() => onChangeType(type))} compact />;
           })}
         </div>
       )}
 
       <Divider />
-      <MenuButton icon={RiGitBranchLine} label={`Used in${usedIn.length ? ` (${usedIn.length})` : "…"}`} suffix active={showUsedIn} onClick={() => setShowUsedIn((value) => !value)} />
+      <MenuButton icon={RiGitBranchLine} label={usedIn.length ? t("usedInCount", { count: usedIn.length }) : t("usedIn")} suffix active={showUsedIn} onClick={() => setShowUsedIn((value) => !value)} />
       {showUsedIn && (
         <div className="ml-7 border-l border-stroke-soft-200 py-1 pl-3 text-[12px] text-text-sub-600">
-          {usedIn.length ? usedIn.map((dependent) => <div key={dependent.id} className="py-1">{dependent.name}</div>) : "No columns depend on this one."}
+          {usedIn.length ? usedIn.map((dependent) => <div key={dependent.id} className="py-1">{dependent.name}</div>) : t("noDependents")}
         </div>
       )}
       {canDuplicate && (
-        <MenuButton icon={RiFileCopyLine} label="Duplicate" disabled={busy} onClick={() => void run(onDuplicate)} />
+        <MenuButton icon={RiFileCopyLine} label={t("duplicate")} disabled={busy} onClick={() => void run(onDuplicate)} />
       )}
       <HoverSubmenu
         icon={RiSplitCellsHorizontal}
-        label="Text to columns"
+        label={t("textToColumns")}
         open={submenu === "split"}
         disabled={!canSplit || busy}
-        title={canSplit ? undefined : "Change this column to Text before splitting it"}
+        title={canSplit ? undefined : t("splitDisabled")}
         onOpen={() => setSubmenu("split")}
         onClose={() => setSubmenu(null)}
       >
-        <MenuButton icon={RiSplitCellsHorizontal} label="Comma" compact onClick={() => void run(() => onSplit("comma"))} />
-        <MenuButton icon={RiSplitCellsHorizontal} label="Space" compact onClick={() => void run(() => onSplit("space"))} />
-        <MenuButton icon={RiSplitCellsHorizontal} label="Semicolon" compact onClick={() => void run(() => onSplit("semicolon"))} />
-        <MenuButton icon={RiSplitCellsHorizontal} label="Pipe (|)" compact onClick={() => void run(() => onSplit("pipe"))} />
+        <MenuButton icon={RiSplitCellsHorizontal} label={t("delimiterComma")} compact onClick={() => void run(() => onSplit("comma"))} />
+        <MenuButton icon={RiSplitCellsHorizontal} label={t("delimiterSpace")} compact onClick={() => void run(() => onSplit("space"))} />
+        <MenuButton icon={RiSplitCellsHorizontal} label={t("delimiterSemicolon")} compact onClick={() => void run(() => onSplit("semicolon"))} />
+        <MenuButton icon={RiSplitCellsHorizontal} label={t("delimiterPipe")} compact onClick={() => void run(() => onSplit("pipe"))} />
       </HoverSubmenu>
       <HoverSubmenu
         icon={RiSortAsc}
-        label="Sort"
+        label={t("sort")}
         open={submenu === "sort"}
         onOpen={() => setSubmenu("sort")}
         onClose={() => setSubmenu(null)}
       >
-        <MenuButton icon={RiSortAsc} label="A → Z" compact onClick={() => void run(() => onSort("asc"))} />
-        <MenuButton icon={RiSortDesc} label="Z → A" compact onClick={() => void run(() => onSort("desc"))} />
+        <MenuButton icon={RiSortAsc} label={tSort("textAsc")} compact onClick={() => void run(() => onSort("asc"))} />
+        <MenuButton icon={RiSortDesc} label={tSort("textDesc")} compact onClick={() => void run(() => onSort("desc"))} />
       </HoverSubmenu>
 
       <Divider />
-      <MenuButton icon={RiGitBranchLine} label="Dedupe rows" disabled={busy} title="Keep the first row for each value in this column" onClick={() => void run(onDedupe)} />
-      <MenuButton icon={RiFilter3Line} label="Filter on this column" onClick={(event) => void run(() => onFilter(event.currentTarget.getBoundingClientRect()))} />
+      <MenuButton icon={RiGitBranchLine} label={t("dedupeRows")} disabled={busy} title={t("dedupeHint")} onClick={() => void run(onDedupe)} />
+      <MenuButton icon={RiFilter3Line} label={t("filterOnColumn")} onClick={(event) => void run(() => onFilter(event.currentTarget.getBoundingClientRect()))} />
 
       <Divider />
-      <MenuButton icon={RiPushpinLine} label={pinned ? "Unpin" : "Pin"} onClick={() => void run(onPin)} />
-      <MenuButton icon={RiEyeOffLine} label="Hide" onClick={() => void run(onHide)} />
-      <MenuButton icon={RiDeleteBin6Line} label="Delete" danger disabled={busy} onClick={() => void run(onDelete)} />
+      <MenuButton icon={RiPushpinLine} label={pinned ? t("unpin") : t("pin")} onClick={() => void run(onPin)} />
+      <MenuButton icon={RiEyeOffLine} label={t("hide")} onClick={() => void run(onHide)} />
+      <MenuButton icon={RiDeleteBin6Line} label={t("delete")} danger disabled={busy} onClick={() => void run(onDelete)} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiCheckLine, RiFolder3Line, RiFolderTransferLine, RiHome4Line, RiLoader4Line } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Modal from "@/components/alignui/modal";
@@ -39,6 +40,7 @@ export default function MoveToFolderDialog({
   onClose: () => void;
   onMove: (folderId: string | null) => Promise<void> | void;
 }) {
+  const t = useTranslations("gridMain.moveToFolder");
   const [selected, setSelected] = useState<string | null>(currentFolderId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export default function MoveToFolderDialog({
     try {
       await onMove(selected);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not move that item");
+      setError(cause instanceof Error ? cause.message : t("moveFailed"));
       setBusy(false);
     }
   }
@@ -83,7 +85,7 @@ export default function MoveToFolderDialog({
       <Modal.Content size="max-w-md" className="max-h-[80vh]">
         <Modal.Header icon={RiFolderTransferLine}>
           <Modal.Title>{title}</Modal.Title>
-          <Modal.Description>Choose a destination for “{itemName}”.</Modal.Description>
+          <Modal.Description>{t("description", { name: itemName })}</Modal.Description>
         </Modal.Header>
 
         <Modal.Body className="pt-4">
@@ -97,7 +99,7 @@ export default function MoveToFolderDialog({
             }`}
           >
             <RiHome4Line className="size-4 shrink-0 text-text-soft-400" />
-            <span className="flex-1 truncate font-medium">All Files</span>
+            <span className="flex-1 truncate font-medium">{t("allFiles")}</span>
             {selected === null && <RiCheckLine className="size-4 shrink-0" />}
           </button>
 
@@ -121,7 +123,7 @@ export default function MoveToFolderDialog({
 
           {!options.length && (
             <p className="px-2 py-6 text-center text-paragraph-sm text-text-sub-600">
-              No folders yet — use New &gt; Folder to create one.
+              {t("empty")}
             </p>
           )}
 
@@ -132,7 +134,7 @@ export default function MoveToFolderDialog({
 
         <Modal.Footer>
           <Button.Root variant="neutral" mode="stroke" size="small" disabled={busy} onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button.Root>
           <Button.Root
             variant="primary"
@@ -142,7 +144,7 @@ export default function MoveToFolderDialog({
             onClick={() => void submit()}
           >
             {busy && <RiLoader4Line className="size-4 animate-spin" />}
-            Move
+            {t("move")}
           </Button.Root>
         </Modal.Footer>
       </Modal.Content>

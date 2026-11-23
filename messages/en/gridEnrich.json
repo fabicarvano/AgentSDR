@@ -1,0 +1,314 @@
+{
+  "gridEnrich": {
+    "registry": {
+      "categories": {
+        "ai": "AI",
+        "enrichCompanyInfo": "Enrich company info",
+        "enrichPersonInfo": "Enrich person info",
+        "extract": "Extract",
+        "normalize": "Normalize",
+        "score": "Score",
+        "organize": "Organize",
+        "summarize": "Summarize",
+        "tools": "Tools"
+      },
+      "authFields": {
+        "apiKey": {
+          "label": "{name} API key",
+          "placeholder": "Paste your {name} API key"
+        },
+        "clientId": {
+          "label": "Client ID",
+          "placeholder": "Paste your {name} client ID"
+        },
+        "clientSecret": {
+          "label": "Client secret",
+          "placeholder": "Paste your {name} client secret"
+        }
+      },
+      "integrations": {
+        "apollo": {
+          "description": "Find and enrich people and companies using Apollo data."
+        },
+        "cleanlist": {
+          "description": "Search for B2B people and companies, then enrich contact and company records."
+        },
+        "companyenrich": {
+          "description": "Research companies and professional profiles using your CompanyEnrich account. People search does not find email addresses.",
+          "fields": {
+            "apiKey": {
+              "label": "API key",
+              "placeholder": "CompanyEnrich API key, without Bearer"
+            }
+          }
+        },
+        "snov": {
+          "description": "Find emails, enrich people and companies, and verify email deliverability."
+        },
+        "millionverifier": {
+          "description": "Verify email deliverability in real time with MillionVerifier."
+        },
+        "contactout": {
+          "description": "Find professional profiles, personal emails, and mobile numbers.",
+          "fields": {
+            "apiKey": {
+              "label": "ContactOut API token",
+              "placeholder": "Paste your ContactOut API token"
+            }
+          }
+        },
+        "findymail": {
+          "description": "Find and verify work emails and find phone numbers from professional profiles."
+        },
+        "fullenrich": {
+          "description": "Find work emails and mobile phone numbers through a provider waterfall."
+        },
+        "hunter": {
+          "description": "Verify email addresses and discover company and person work emails."
+        },
+        "leadmagic": {
+          "description": "Validate emails and enrich people, companies, profiles, mobile numbers, and hiring signals.",
+          "fields": {
+            "apiKey": {
+              "placeholder": "lm_..."
+            }
+          }
+        },
+        "lusha": {
+          "description": "Enrich people and companies and retrieve current company and contact signals."
+        },
+        "zerobounce": {
+          "description": "Validate email deliverability in real time with ZeroBounce."
+        },
+        "similarweb": {
+          "description": "Enrich companies with website traffic, engagement, geography, rank, and technology data."
+        },
+        "semrush": {
+          "description": "Analyze company traffic, search competitors, audiences, and website performance with Semrush."
+        },
+        "rocketreach": {
+          "description": "Find verified contact details and enrich people and companies with RocketReach."
+        },
+        "icypeas": {
+          "description": "Discover and verify emails, find professional profiles, and enrich people and companies."
+        }
+      }
+    },
+    "enrichment": {
+      "title": "Add enrichment",
+      "mapping": {
+        "selectAria": "Table column",
+        "selectPlaceholder": "Select a table column",
+        "noCompatible": "No compatible {types} column exists."
+      },
+      "errors": {
+        "loadAccounts": "Could not load accounts",
+        "enterField": "Enter {field}.",
+        "addAccount": "Could not add account",
+        "connectFirst": "Connect a {provider} account first.",
+        "providerFallback": "provider",
+        "selectColumnFor": "Select a compatible column for {name}.",
+        "minFilters": "Add and map at least {count, plural, one {# search filter} other {# search filters}}.",
+        "selectOutput": "Select at least one output column.",
+        "noRowsToRun": "There are no rows on this page to run. Use Save, then run once rows are loaded.",
+        "addEnrichment": "Could not add enrichment",
+        "savedRunFailed": "Columns saved, but the run could not start",
+        "save": "Could not save this enrichment"
+      },
+      "action": {
+        "title": "Action",
+        "viewDocs": "View documentation",
+        "categoryLine": "{category} · Enrichment"
+      },
+      "account": {
+        "title": "Account",
+        "aria": "{provider} account",
+        "integrationFallback": "Integration",
+        "select": "Select {provider} account",
+        "needsVerification": "{name} (verification required)",
+        "add": "Add account",
+        "namePlaceholder": "{provider} account name",
+        "encryptedNote": "The key is encrypted before it is stored and is never shown again.",
+        "cancel": "Cancel",
+        "verifying": "Verifying…",
+        "verifyConnect": "Verify & connect"
+      },
+      "columnMapping": {
+        "title": "Column mapping",
+        "setupInputs": "Setup inputs",
+        "searchFilters": "Search filters",
+        "filtersIntro": "Add a Cleanlist filter, then choose the table column whose values should be sent for it.",
+        "legacyTitle": "Legacy JSON filters",
+        "legacyBody": "This saved mapping still works. Add named filters below when you want a guided setup.",
+        "legacyRemoveAria": "Remove legacy JSON filter mapping",
+        "filter": "Filter",
+        "removeFilterAria": "Remove {name} filter",
+        "mapValuesFrom": "Map values from",
+        "addFilter": "Add filter",
+        "chooseFilter": "+ Choose a filter",
+        "needOneFilter": "Add and map at least one filter to continue.",
+        "advanced": "Advanced settings"
+      },
+      "run": {
+        "title": "Run settings",
+        "autoRun": "Auto-run",
+        "inBatches": "Run in batches",
+        "comingLater": "Coming later",
+        "addCondition": "Add run condition",
+        "conditionHelp": "Only run if this expression resolves to true.",
+        "conditionPlaceholder": "Example: {example}",
+        "delay": "Delay run",
+        "immediately": "Run immediately",
+        "afterDelay": "Run after delay",
+        "seconds": "seconds"
+      },
+      "footer": {
+        "accountConnected": "Account connected",
+        "apiKeyRequired": "API key required",
+        "continue": "Continue to add fields"
+      },
+      "outputs": {
+        "title": "Add data as columns to your table",
+        "intro": "Select the data points you want added as columns. The integration runs once per row.",
+        "selected": "{count} selected",
+        "searchPlaceholder": "Search data columns",
+        "typeAlreadyAdded": "{type} · already added",
+        "saveChanges": "Save changes",
+        "saveWithoutRunning": "Save without running",
+        "notImplemented": "The live Apollo handler is not implemented yet",
+        "saveAndRun": "Save & run 10 rows"
+      },
+      "catalog": {
+        "searchPlaceholder": "Search providers and enrichments…",
+        "tabIntegrations": "Integrations",
+        "tabDiscover": "Discover",
+        "tabTemplates": "Templates",
+        "tabFunctions": "Functions",
+        "checking": "Checking connection…",
+        "connected": "Connected",
+        "addIntegration": "Add integration",
+        "connectToUse": "Connect {name} to use its actions",
+        "credentialsVerified": "Your credentials will be verified before the integration is enabled.",
+        "addAccountTitle": "Add {name} account",
+        "accountName": "Account name",
+        "accountPlaceholder": "{name} account",
+        "credentialsEncrypted": "Credentials are encrypted and never shown again.",
+        "findApiKey": "Find your API key",
+        "enrichmentLine": "Enrichment · {name}",
+        "openDocsAria": "Open documentation for {name}"
+      }
+    },
+    "ai": {
+      "title": "Use AI",
+      "useCase": "Use case",
+      "useCases": {
+        "webResearch": {
+          "name": "Web research",
+          "description": "Has access to the internet so you can research and analyse websites"
+        },
+        "imageGeneration": {
+          "name": "Image generation",
+          "description": "Generate images from text"
+        },
+        "content": {
+          "name": "Create or modify content",
+          "description": "Useful for most tasks (does not have access to the internet)"
+        }
+      },
+      "model": "Model",
+      "loadingModels": "Loading models…",
+      "selectModel": "Select a model",
+      "searchModels": "Search models...",
+      "noModels": "No models match that search.",
+      "openRouterModel": "OpenRouter model",
+      "notConfigured": "OpenRouter is not configured. Connect it and choose allowed BYOK models in <link>AI Settings</link>.",
+      "configuration": "Configuration",
+      "prompt": "Prompt",
+      "promptPlaceholder": "For the person with linkedin url {token}, find their current job title.",
+      "unknownTokens": "{count, plural, one {{tokens} is not a column in this table, so it would be sent blank.} other {{tokens} are not columns in this table, so they would be sent blank.}} Replace with a column below.",
+      "insertHint": "Type <kbd>/</kbd> or <kbd>{braces}</kbd> to insert a column.",
+      "defineOutputs": "Define outputs",
+      "imageNote": "Image models return a single image, which lands in one image column.",
+      "formatFields": "Fields",
+      "formatSchema": "JSON Schema",
+      "outputNamePlaceholder": "response",
+      "outputTypeAria": "Output type",
+      "outputTypes": {
+        "text": "Text",
+        "number": "Number",
+        "boolean": "Checkbox",
+        "date": "Date",
+        "url": "URL",
+        "email": "Email",
+        "image": "Image",
+        "json": "JSON"
+      },
+      "removeOutputAria": "Remove {name}",
+      "addOutput": "Add output",
+      "examples": "Examples",
+      "examplesIntro": "Give examples of how the AI should respond — <soft>optional</soft>",
+      "customExample": "Custom example",
+      "removeExampleAria": "Remove example",
+      "expectedResponse": "Expected response:",
+      "addExamples": "Add examples",
+      "runSettings": "Run settings",
+      "autoRun": "Auto-run",
+      "addCondition": "Add run condition",
+      "conditionHelp": "Only run if this formula resolves to true.",
+      "delay": "Delay run",
+      "immediately": "Run immediately",
+      "afterDelay": "Run after delay",
+      "perRow": "{credits} / row",
+      "save": "Save",
+      "saveAndRun": "Save and run 10 rows",
+      "errors": {
+        "loadModels": "Could not load configured OpenRouter models",
+        "selectModel": "Select a model enabled in AI Settings.",
+        "connectFirst": "Connect a {provider} account first.",
+        "providerFallback": "provider",
+        "writePrompt": "Write a prompt.",
+        "outputNeedsName": "Every output needs a name.",
+        "outputNamesUnique": "Output names must be different from each other.",
+        "noRowsToRun": "There are no rows on this page to run. Use Save, then run once rows are loaded.",
+        "invalidSchema": "The JSON Schema is not valid JSON.",
+        "save": "Could not save this AI column",
+        "savedRunFailed": "Saved, but the run could not start"
+      }
+    },
+    "campaign": {
+      "title": "Create campaign from selected rows",
+      "subtitle": "People are created only after you confirm this mapping.",
+      "channel": "Channel",
+      "channelEmail": "Email",
+      "channelLinkedin": "LinkedIn",
+      "name": "Campaign name",
+      "namePlaceholder": "Q3 outreach",
+      "campaignField": "Campaign field",
+      "gridColumn": "Grid column",
+      "doNotMap": "Do not map",
+      "columnAria": "{field} column",
+      "note": "Every unmapped column is preserved in People raw data and exposed as a template variable. This action creates one campaign and enrolls only the {count, plural, one {# selected row} other {# selected rows}}.",
+      "selected": "{count} selected",
+      "cancel": "Cancel",
+      "create": "Create campaign",
+      "errors": {
+        "create": "Could not create campaign"
+      },
+      "fields": {
+        "email": "Email",
+        "linkedinUrl": "LinkedIn URL",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "fullName": "Full name",
+        "title": "Job title",
+        "companyName": "Company name",
+        "companyDomain": "Company domain",
+        "invitationMessage": "Invitation message",
+        "acceptanceMessage": "Acceptance message",
+        "followUp1Message": "Follow-up 1",
+        "followUp2Message": "Follow-up 2",
+        "followUp3Message": "Follow-up 3"
+      }
+    }
+  }
+}

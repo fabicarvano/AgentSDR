@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { ColumnType } from "@/lib/grid/types";
 import { COLUMN_TYPE_GROUPS } from "./columnTypes";
 
@@ -21,6 +22,8 @@ export default function AddColumnMenu({
   onPick: (type: ColumnType) => void;
   anchorRect: DOMRect | null;
 }) {
+  const t = useTranslations("gridColumns.addColumnMenu");
+  const tType = useTranslations("gridColumns.columnTypes");
   const ref = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -67,7 +70,7 @@ export default function AddColumnMenu({
               key={m.type}
               type="button"
               disabled={!m.available}
-              title={m.available ? undefined : "Coming soon — see docs/design/enrichment-plan.md"}
+              title={m.available ? undefined : t("comingSoon")}
               onClick={() => {
                 if (!m.available) return;
                 onPick(m.type);
@@ -84,7 +87,7 @@ export default function AddColumnMenu({
                   m.available ? "text-text-soft-400" : "text-text-disabled-300"
                 }`}
               />
-              <span className="truncate">{m.label}</span>
+              <span className="truncate">{m.labelKey ? tType(m.labelKey) : m.type}</span>
             </button>
           ))}
         </div>
