@@ -9,6 +9,8 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-19
+
 ### Added
 
 - **AI assistants (MCP), 2026-11-13.** AgentSDR is an MCP server at
@@ -27,13 +29,80 @@ Each release lists the database migrations it needs; see
   (`POST /api/v1/campaigns/:id/leads`, the same duplicate and suppression
   rules as a sheet import) and stop a lead's sequence without suppressing
   them (`POST /api/v1/campaigns/:id/leads/stop`). See `docs/api.mdx`.
+- **Brazilian Portuguese interface (next-intl).** English and Brazilian
+  Portuguese, per-domain catalogs and a lint guard that fails on text typed
+  straight into components. Translated so far: sign-in and sign-up, the app
+  shell and menu, Settings, Analytics, Leads, Domains, the CRM (pipeline,
+  Action required queue, sequences, record page), the Inbox, and the email
+  campaign screens (batches 0, A to E).
+- **Email validation through Resend.** A new contact's address receives a
+  short personal note and its delivery, bounce and open events are tracked
+  through a signed webhook (`POST /api/webhooks/resend`). Addresses that
+  Resend rejects are suppressed, sending is queued, and there is a daily
+  limit. The People list shows the validation state in the Reach column.
+- **AI calling.** AI call campaigns on their own page, call-backs that answer
+  as the person who called, a fixed short calling prompt with the rest in the
+  instructions, Knowledge documents read whole, audio relayed through
+  AgentSDR instead of WebRTC, and prompts and traces kept in Langfuse
+  (a per-organization integration).
+- **CompanyEnrich** integration for company and people research, and an
+  "Add from People" dialog that asks the server which people a channel can
+  reach.
+- **CRM follow-ups.** Out-of-office replies resume outreach instead of
+  reaching Action required, and a "yes" that has not booked reaches Action
+  required.
+
+### Changed
+
+- The repository is now independent: proprietary license, Portuguese README,
+  and a manual workflow that builds the staging image.
+- The brand font ships with the app instead of coming from Google Fonts, and
+  booking links carry only a short code.
+
+### Breaking
+
+- New environment variables: `RESEND_WEBHOOK_SECRET`,
+  `EMAIL_VALIDATION_FROM`, `EMAIL_VALIDATION_REPLY_TO`,
+  `EMAIL_VALIDATION_DAILY_LIMIT` and `ACCESS_REQUEST_EMAIL`.
+- A new webhook: point Resend at `/api/webhooks/resend`. If the public URL of
+  the app changes, update the Gmail Pub/Sub push endpoint, the Google OAuth
+  redirect URI, the Resend webhook and the Unipile webhooks, and reconnect
+  AI assistant (MCP) clients.
 
 ### Migrations
 
-- `bun run scripts/create-api-keys.ts` creates the `api_keys` table.
-- `bun run scripts/create-oauth-provider-tables.ts` creates `jwks` and the
-  `oauth_*` tables for AI assistants (MCP).
-- `bun run scripts/add-api-key-scopes.ts` adds `api_keys.scopes`.
+Every script is additive and can be run again. Run them in this order:
+
+1. `bun run scripts/create-calling-stations.ts`
+2. `bun run scripts/add-cloak-launcher.ts`
+3. `bun run scripts/create-calling-proxies.ts`
+4. `bun run scripts/add-calling-station-linked-phone.ts`
+5. `bun run scripts/add-calling-station-link-fresh.ts`
+6. `bun run scripts/add-call-session-timeline.ts`
+7. `bun run scripts/add-crm-auto-follow-ups.ts`
+8. `bun run scripts/add-calling-station-lease.ts`
+9. `bun run scripts/add-call-session-agent-persona.ts`
+10. `bun run scripts/add-ai-calling-campaigns.ts`
+11. `bun run scripts/add-ai-campaign-knowledge.ts`
+12. `bun run scripts/add-crm-calling-instructions.ts`
+13. `bun run scripts/add-ai-lead-instructions.ts`
+14. `bun run scripts/add-call-session-direction.ts`
+15. `bun run scripts/add-call-session-remote-rep.ts`
+16. `bun run scripts/add-ai-booking-code.ts`
+17. `bun run scripts/add-ai-meeting-at.ts`
+18. `bun run scripts/create-api-keys.ts`
+19. `bun run scripts/add-api-key-scopes.ts`
+20. `bun run scripts/create-oauth-provider-tables.ts`
+21. `bun run scripts/create-email-validations.ts`
+
+Optional, only for installs that already use automatic follow-ups or Langfuse
+prompts:
+
+- `bun run scripts/queue-existing-crm-follow-ups.ts`
+- `bun run scripts/repair-crm-stale-step-versions.ts`
+- `bun run scripts/resume-out-of-office-backlog.ts`
+- `bun run scripts/retry-crm-failed-classifications.ts`
+- `bun run scripts/seed-langfuse-prompts.ts`
 
 ## [0.3.1] - 2026-10-08
 
@@ -215,7 +284,8 @@ The first public release.
   before deploying). The `WHATSAPP_*` sending variables are no longer read —
   set those limits in Settings → WhatsApp → Sending rules.
 
-[Unreleased]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/fabicarvano/AgentSDR/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.1.0...v0.2.0
