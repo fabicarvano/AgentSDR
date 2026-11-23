@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   RiBarChart2Line,
@@ -50,10 +51,6 @@ type Campaign = {
   createdAt: string;
 };
 
-function createdLabel(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
 type TabId = "overview" | "leads" | "sequence";
 
 function sequenceStepsBuilt(campaign: Pick<Campaign, "invitationMessage" | "acceptanceMessage" | "followUp1Message" | "followUp2Message" | "followUp3Message">) {
@@ -75,6 +72,8 @@ export function CampaignDetailClient({
   initialLeadsPage: InitialLeadsPage;
   accounts: LinkedInAccount[];
 }) {
+  const t = useTranslations("linkedinCampaigns.detail");
+  const format = useFormatter();
   const router = useRouter();
   const dialogs = useDialogs();
   const pathname = usePathname();
@@ -112,6 +111,7 @@ export function CampaignDetailClient({
   const senderOptions = campaign.accounts.length > 0 ? campaign.accounts : accounts;
   const status = CAMPAIGN_STATUS[campaign.status];
   const steps = sequenceStepsBuilt(campaign);
+  const createdDate = format.dateTime(new Date(campaign.createdAt), { month: "short", day: "numeric", year: "numeric" });
 
   async function toggleStatus() {
     const next = campaign.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
@@ -123,13 +123,13 @@ export function CampaignDetailClient({
         body: JSON.stringify({ status: next }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.ok === false) throw new Error(data.error ?? "Something went wrong. Please try again.");
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? t("genericError"));
       setCampaign((prev) => ({ ...prev, status: next }));
       router.refresh();
     } catch (cause) {
       await dialogs.alert({
-        title: `Could not ${next === "PAUSED" ? "pause" : "resume"} the campaign`,
-        description: cause instanceof Error ? cause.message : "Something went wrong. Please try again.",
+        title: next === "PAUSED" ? t("pauseFailedTitle") : t("resumeFailedTitle"),
+        description: cause instanceof Error ? cause.message : t("genericError"),
         variant: "error",
       });
     } finally {
@@ -140,20 +140,20 @@ export function CampaignDetailClient({
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <PageHeader
-        back={{ href: "/linkedin/campaigns", label: "LinkedIn campaigns" }}
+        back={{ href: "/linkedin/campaigns", label: t("backLabel") }}
         title={campaign.name}
         badge={
           <>
             <Badge.Root size="medium" variant="lighter" color={status.color}>
               <Badge.Dot />
-              {status.label}
+              {campaign.status === "ACTIVE" ? t("statusActive") : t("statusPaused")}
             </Badge.Root>
             {campaign.type === "PERSONAL" && (
-              <Badge.Root size="medium" variant="lighter" color="yellow">Personal</Badge.Root>
+              <Badge.Root size="medium" variant="lighter" color="yellow">{t("personal")}</Badge.Root>
             )}
           </>
         }
-        description={<span suppressHydrationWarning>{`Created ${createdLabel(campaign.createdAt)} · ${steps} of 5 sequence steps written${campaign.description ? ` · ${campaign.description}` : ""}`}</span>}
+        description={<span suppressHydrationWarning>{campaign.description ? t("subtitleWithDescription", { date: createdDate, steps, description: campaign.description }) : t("subtitle", { date: createdDate, steps })}</span>}
         actions={
           <>
             <span className="mr-1 hidden sm:inline-flex">
@@ -161,14 +161,14 @@ export function CampaignDetailClient({
             </span>
             <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => setShowEditCampaign(true)}>
               <Button.Icon as={RiPencilLine} />
-              Edit
+              {t("edit")}
             </Button.Root>
             <Button.Root variant="neutral" mode="stroke" size="small" onClick={() => void toggleStatus()} disabled={toggling}>
               <Button.Icon
                 as={toggling ? RiLoader4Line : campaign.status === "ACTIVE" ? RiPauseCircleLine : RiPlayCircleLine}
                 className={cn(toggling && "animate-spin")}
               />
-              {campaign.status === "ACTIVE" ? "Pause" : "Resume"}
+              {campaign.status === "ACTIVE" ? t("pause") : t("resume")}
             </Button.Root>
           </>
         }
@@ -177,22 +177,22 @@ export function CampaignDetailClient({
       <StatRow
         className="mt-5"
         items={[
-          { label: "Not invited yet", value: funnel.queued.toLocaleString("en-US"), icon: RiTimeLine, hint: "Leads still waiting for their connection request" },
-          { label: "Awaiting acceptance", value: funnel.awaiting.toLocaleString("en-US"), icon: RiHourglassLine, hint: "Connection requests sent and not yet accepted" },
-          { label: "In sequence", value: funnel.inSequence.toLocaleString("en-US"), icon: RiLoopRightLine, hint: "Accepted leads with messages or follow-ups still to come" },
-          { label: "Senders", value: campaign.accounts.length.toLocaleString("en-US"), icon: RiUserVoiceLine, hint: campaign.accounts.map((a) => a.name ?? a.username).join(", ") || "No sender accounts assigned" },
+          { label: t("statNotInvited"), value: format.number(funnel.queued), icon: RiTimeLine, hint: t("statNotInvitedHint") },
+          { label: t("statAwaiting"), value: format.number(funnel.awaiting), icon: RiHourglassLine, hint: t("statAwaitingHint") },
+          { label: t("statInSequence"), value: format.number(funnel.inSequence), icon: RiLoopRightLine, hint: t("statInSequenceHint") },
+          { label: t("statSenders"), value: format.number(campaign.accounts.length), icon: RiUserVoiceLine, hint: campaign.accounts.map((a) => a.name ?? a.username).join(", ") || t("noSenders") },
         ]}
       />
 
       <PageTabs
         className="mt-6"
-        label="Campaign sections"
+        label={t("tabsLabel")}
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "overview", label: "Overview", icon: RiBarChart2Line },
-          { value: "leads", label: "Leads", icon: RiTeamLine, count: campaign.totalLeads },
-          { value: "sequence", label: "Sequence", icon: RiListOrdered2, count: steps },
+          { value: "overview", label: t("tabOverview"), icon: RiBarChart2Line },
+          { value: "leads", label: t("tabLeads"), icon: RiTeamLine, count: campaign.totalLeads },
+          { value: "sequence", label: t("tabSequence"), icon: RiListOrdered2, count: steps },
         ]}
       />
 

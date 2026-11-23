@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle, Check, Eye, Loader2, Save, Timer } from "lucide-react";
 import * as AlignButton from "@/components/alignui/button";
 import * as Modal from "@/components/alignui/modal";
@@ -27,11 +28,20 @@ type PreviewResult = {
   lead: PreviewLead;
 };
 
-const DEFAULT_FIELDS: MergeField[] = [
-  { token: "firstName", label: "First name" },
-  { token: "lastName", label: "Last name" },
-  { token: "company", label: "Company" },
-];
+// The step's field is the key into the catalog (sequenceEditor.steps.<field>); LINKEDIN_SEQUENCE_STEPS only gives the order.
+// Coupled to linkedinSequenceError in src/lib/linkedin/campaignSequence.ts: it re-words that lib's rules; a new rule there needs wording here.
+function sequenceIssue(
+  sequence: LinkedinCampaignSequence,
+  t: ReturnType<typeof useTranslations<"linkedinCampaigns.sequenceEditor">>,
+): string | null {
+  // The lib decides whether there is a problem (it also guards the API); this only words it in the interface language.
+  if (!linkedinSequenceError(sequence)) return null;
+  if (sequence.invitationMessage.length > MAX_INVITATION_MESSAGE_LENGTH) {
+    return t("errorInvitationTooLong", { max: MAX_INVITATION_MESSAGE_LENGTH });
+  }
+  const followUps = [sequence.followUp1Message, sequence.followUp2Message, sequence.followUp3Message];
+  return t("errorFollowUpGap", { number: followUps.findIndex((message) => !message.trim()) + 1 });
+}
 
 function sequenceFromNullable(input: Partial<Record<LinkedinSequenceField, string | null>>): LinkedinCampaignSequence {
   return normalizeLinkedinSequence(input);
@@ -41,18 +51,23 @@ export function LinkedInSequenceEditor({
   campaignId,
   initialSequence,
   onSaved,
-  saveLabel = "Save sequence",
+  saveLabel,
 }: {
   campaignId: string;
   initialSequence?: Partial<Record<LinkedinSequenceField, string | null>>;
   onSaved?: (sequence: LinkedinCampaignSequence) => void;
   saveLabel?: string;
 }) {
+  const t = useTranslations("linkedinCampaigns.sequenceEditor");
   const [sequence, setSequence] = useState<LinkedinCampaignSequence>(() =>
     sequenceFromNullable(initialSequence ?? EMPTY_LINKEDIN_SEQUENCE),
   );
   const [selected, setSelected] = useState(0);
-  const [fields, setFields] = useState<MergeField[]>(DEFAULT_FIELDS);
+  const [fields, setFields] = useState<MergeField[]>(() => [
+    { token: "firstName", label: t("mergeFirstName") },
+    { token: "lastName", label: t("mergeLastName") },
+    { token: "company", label: t("mergeCompany") },
+  ]);
   const [leads, setLeads] = useState<PreviewLead[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -81,7 +96,7 @@ export function LinkedInSequenceEditor({
   }, [campaignId]);
 
   const step = LINKEDIN_SEQUENCE_STEPS[selected]!;
-  const validationError = useMemo(() => linkedinSequenceError(sequence), [sequence]);
+  const validationError = useMemo(() => sequenceIssue(sequence, t), [sequence, t]);
 
   function update(field: LinkedinSequenceField, value: string) {
     setSaved(false);
@@ -103,7 +118,7 @@ export function LinkedInSequenceEditor({
   }
 
   async function save() {
-    const issue = linkedinSequenceError(sequence);
+    const issue = sequenceIssue(sequence, t);
     if (issue) { setError(issue); return; }
     setSaving(true);
     setError(null);
@@ -114,13 +129,13 @@ export function LinkedInSequenceEditor({
         body: JSON.stringify(sequence),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? "Could not save sequence");
+      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("saveFailed"));
       const normalized = normalizeLinkedinSequence(sequence);
       setSequence(normalized);
       setSaved(true);
       onSaved?.(normalized);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save sequence");
+      setError(cause instanceof Error ? cause.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -136,11 +151,11 @@ export function LinkedInSequenceEditor({
         body: JSON.stringify({ field: step.field, template: sequence[step.field], leadId: leadId || undefined }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? "Could not render preview");
+      if (!response.ok) throw new Error(data.error ?? t("previewFailed"));
       setPreview(data as PreviewResult);
     } catch (cause) {
       setPreview(null);
-      setPreviewError(cause instanceof Error ? cause.message : "Could not render preview");
+      setPreviewError(cause instanceof Error ? cause.message : t("previewFailed"));
     } finally {
       setPreviewing(false);
     }
@@ -155,7 +170,7 @@ export function LinkedInSequenceEditor({
     <>
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-5">
         <Frame>
-          <FrameHeader title="Sequence flow" description="Applies to every lead, personalised at send time. Timing follows the live LinkedIn sender." />
+          <FrameHeader title={t("flowTitle")} description={t("flowDescription")} />
           <FramePanel className="p-2 sm:p-2">
             <ol className="flex flex-col">
               {LINKEDIN_SEQUENCE_STEPS.map((candidate, index) => {
@@ -167,7 +182,7 @@ export function LinkedInSequenceEditor({
                       <div className="flex items-center gap-2 py-1.5 pl-5 text-paragraph-xs text-text-soft-400">
                         <span aria-hidden="true" className="h-4 w-px bg-stroke-soft-200" />
                         <Timer className="size-3.5" aria-hidden="true" />
-                        {candidate.timing}
+                        {t(`steps.${candidate.field}.timing`)}
                       </div>
                     )}
                     <button
@@ -184,12 +199,12 @@ export function LinkedInSequenceEditor({
                         active ? "bg-primary-base text-static-white" : "bg-bg-weak-50 text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200",
                       )}>{index + 1}</span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-label-sm text-text-strong-950">{candidate.shortLabel}</span>
+                        <span className="block text-label-sm text-text-strong-950">{t(`steps.${candidate.field}.shortLabel`)}</span>
                         <span className="mt-0.5 block truncate text-paragraph-xs text-text-sub-600">
-                          {hasMessage ? sequence[candidate.field] : "No message — optional"}
+                          {hasMessage ? sequence[candidate.field] : t("noMessage")}
                         </span>
                       </span>
-                      {hasMessage && <Check className="mt-0.5 size-4 shrink-0 text-success-base" aria-label="Written" />}
+                      {hasMessage && <Check className="mt-0.5 size-4 shrink-0 text-success-base" aria-label={t("written")} />}
                     </button>
                   </li>
                 );
@@ -200,16 +215,16 @@ export function LinkedInSequenceEditor({
 
         <Frame>
           <FrameHeader
-            title={step.label}
-            description={step.description}
+            title={t(`steps.${step.field}.label`)}
+            description={t(`steps.${step.field}.description`)}
             actions={
               <AlignButton.Root variant="neutral" mode="stroke" size="xsmall" onClick={openPreview}>
-                <AlignButton.Icon as={Eye} />Preview
+                <AlignButton.Icon as={Eye} />{t("preview")}
               </AlignButton.Root>
             }
           />
           <FramePanel>
-            <p className="mb-2 text-paragraph-xs text-text-sub-600">Merge fields from People and imported raw columns — click one to insert it.</p>
+            <p className="mb-2 text-paragraph-xs text-text-sub-600">{t("mergeHint")}</p>
             <div className="max-h-24 overflow-y-auto rounded-xl bg-bg-weak-50 p-2.5 ring-1 ring-inset ring-stroke-soft-200">
               <div className="flex flex-wrap gap-1.5">
                 {fields.map((field) => (
@@ -228,11 +243,11 @@ export function LinkedInSequenceEditor({
                 ref={editorRef}
                 simple
                 rows={10}
-                aria-label={step.label}
+                aria-label={t(`steps.${step.field}.label`)}
                 maxLength={step.field === "invitationMessage" ? MAX_INVITATION_MESSAGE_LENGTH : undefined}
                 value={sequence[step.field]}
                 onChange={(event) => update(step.field, event.target.value)}
-                placeholder={`Write your ${step.label.toLowerCase()}…`}
+                placeholder={t(`steps.${step.field}.placeholder`)}
                 className="min-h-56"
                 hasError={Boolean(validationError)}
               />
@@ -249,10 +264,10 @@ export function LinkedInSequenceEditor({
               </p>
             )}
             <div className="mt-5 flex items-center justify-end gap-3 border-t border-stroke-soft-200 pt-4">
-              {saved && <span role="status" className="text-paragraph-xs text-success-base">Saved</span>}
+              {saved && <span role="status" className="text-paragraph-xs text-success-base">{t("saved")}</span>}
               <AlignButton.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || Boolean(validationError)}>
                 <AlignButton.Icon as={saving ? Loader2 : Save} className={saving ? "animate-spin" : undefined} />
-                {saving ? "Saving…" : saveLabel}
+                {saving ? t("saving") : (saveLabel ?? t("saveSequence"))}
               </AlignButton.Root>
             </div>
           </FramePanel>
@@ -263,14 +278,14 @@ export function LinkedInSequenceEditor({
         <Modal.Content size="max-w-2xl">
           <Modal.Header>
             <div>
-              <Modal.Title>Preview · {step.label}</Modal.Title>
-              <Modal.Description>This uses the same People variables and rendering path as the live sender.</Modal.Description>
+              <Modal.Title>{t("previewTitle", { step: t(`steps.${step.field}.label`) })}</Modal.Title>
+              <Modal.Description>{t("previewDescription")}</Modal.Description>
             </div>
           </Modal.Header>
           <Modal.Body>
             {leads.length > 0 && (
               <label className="block text-label-sm text-text-strong-950">
-                Preview as
+                {t("previewAs")}
                 <Select.Root size="small" value={previewLeadId} onValueChange={(value) => { setPreviewLeadId(value); void renderPreview(value); }}>
                   <Select.Trigger className="mt-1.5 w-full"><Select.Value /></Select.Trigger>
                   <Select.Content>
@@ -281,27 +296,27 @@ export function LinkedInSequenceEditor({
             )}
             <div className="mt-4 min-h-36 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
               {previewing ? (
-                <div className="flex h-28 items-center justify-center gap-2 text-paragraph-sm text-text-sub-600"><Loader2 className="size-4 animate-spin" />Rendering preview…</div>
+                <div className="flex h-28 items-center justify-center gap-2 text-paragraph-sm text-text-sub-600"><Loader2 className="size-4 animate-spin" />{t("rendering")}</div>
               ) : previewError ? (
                 <p className="text-paragraph-sm text-error-base">{previewError}</p>
               ) : preview ? (
                 <>
                   {preview.unresolved.length > 0 && (
                     <p className="mb-3 rounded-lg bg-warning-lighter px-3 py-2 text-paragraph-xs text-warning-dark">
-                      Empty for this person: {preview.unresolved.map((token) => `{{${token}}}`).join(", ")}
+                      {t("emptyFor", { fields: preview.unresolved.map((token) => `{{${token}}}`).join(", ") })}
                     </p>
                   )}
                   {preview.exceedsInvitationLimit && (
-                    <p className="mb-3 rounded-lg bg-red-alpha-10 px-3 py-2 text-paragraph-xs text-error-base">This rendered invitation exceeds 300 characters.</p>
+                    <p className="mb-3 rounded-lg bg-red-alpha-10 px-3 py-2 text-paragraph-xs text-error-base">{t("exceedsLimit", { max: MAX_INVITATION_MESSAGE_LENGTH })}</p>
                   )}
-                  <p className="whitespace-pre-wrap break-words text-paragraph-sm leading-6 text-text-strong-950">{preview.rendered || "(No message — this step will be skipped.)"}</p>
+                  <p className="whitespace-pre-wrap break-words text-paragraph-sm leading-6 text-text-strong-950">{preview.rendered || t("noMessageSkipped")}</p>
                 </>
               ) : null}
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={() => void renderPreview()} disabled={previewing}>Render again</AlignButton.Root>
-            <Modal.Close asChild><AlignButton.Root variant="primary" mode="filled" size="small">Done</AlignButton.Root></Modal.Close>
+            <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={() => void renderPreview()} disabled={previewing}>{t("renderAgain")}</AlignButton.Root>
+            <Modal.Close asChild><AlignButton.Root variant="primary" mode="filled" size="small">{t("done")}</AlignButton.Root></Modal.Close>
           </Modal.Footer>
         </Modal.Content>
       </Modal.Root>

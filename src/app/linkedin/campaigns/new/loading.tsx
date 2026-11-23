@@ -1,10 +1,12 @@
+import { useTranslations } from "next-intl";
 import { PageHeaderSkeleton, Skeleton } from "@/components/page/Skeletons";
 
 // The wizard's shell — steps frame beside the step frame — without a
 // PageContainer, since the LinkedIn layout already pads the page.
 export default function NewLinkedInCampaignLoading() {
+  const t = useTranslations("linkedinCampaigns.loading");
   return (
-    <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-[1440px] space-y-6">
+    <div aria-busy="true" aria-label={t("label")} className="mx-auto w-full max-w-[1440px] space-y-6">
       <PageHeaderSkeleton back action={false} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-5">
         <Skeleton className="h-40 rounded-2xl lg:h-80" />

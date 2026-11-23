@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, FileSpreadsheet, Loader2, Rocket, Users } from "lucide-react";
 import { RiCheckLine, RiDraftLine, RiStackLine, RiTeamLine } from "@remixicon/react";
@@ -22,10 +23,10 @@ import { cn } from "@/utils/cn";
 type Account = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
 
 const STEPS = [
-  { id: "setup", label: "Campaign details", hint: "Name and senders", icon: RiDraftLine },
-  { id: "leads", label: "Add leads", hint: "People or spreadsheet", icon: RiTeamLine },
-  { id: "sequence", label: "Build sequence", hint: "Write and preview messages", icon: RiStackLine },
-  { id: "review", label: "Review & launch", hint: "Confirm send readiness", icon: RiCheckLine },
+  { id: "setup", labelKey: "stepSetupLabel", hintKey: "stepSetupHint", icon: RiDraftLine },
+  { id: "leads", labelKey: "stepLeadsLabel", hintKey: "stepLeadsHint", icon: RiTeamLine },
+  { id: "sequence", labelKey: "stepSequenceLabel", hintKey: "stepSequenceHint", icon: RiStackLine },
+  { id: "review", labelKey: "stepReviewLabel", hintKey: "stepReviewHint", icon: RiCheckLine },
 ] as const;
 
 function StepDot({ index, active, done }: { index: number; active: boolean; done: boolean }) {
@@ -46,6 +47,8 @@ function StepDot({ index, active, done }: { index: number; active: boolean; done
 }
 
 export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
+  const t = useTranslations("linkedinCampaigns.wizard");
+  const format = useFormatter();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
@@ -63,7 +66,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
   const [importSummary, setImportSummary] = useState<string | null>(null);
 
   async function saveSetup() {
-    if (!name.trim()) { setError("Enter a campaign name"); return; }
+    if (!name.trim()) { setError(t("nameRequired")); return; }
     setBusy(true);
     setError(null);
     try {
@@ -73,11 +76,11 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
         body: JSON.stringify({ name: name.trim(), description: description.trim() || null, type, linkedinAccountIds: accountIds, ...(!campaignId ? { status: "PAUSED" } : {}) }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? "Could not save campaign");
+      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("saveFailed"));
       if (!campaignId) setCampaignId(data.campaign.id);
       setStep(1);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save campaign");
+      setError(cause instanceof Error ? cause.message : t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -94,30 +97,37 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
         body: JSON.stringify({ status }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? "Could not finish campaign");
+      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("finishFailed"));
       router.push(`/linkedin/campaigns/${campaignId}`);
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not finish campaign");
+      setError(cause instanceof Error ? cause.message : t("finishFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   const canLaunch = leadCount > 0 && accountIds.length > 0;
-  const sequenceStepsBuilt = STEPS_FOR_SUMMARY(sequence).filter((item) => item.enabled).length;
+  const summaryItems = [
+    { id: "invitation", label: t("itemInvitation"), enabled: Boolean(sequence.invitationMessage) },
+    { id: "acceptance", label: t("itemAcceptance"), enabled: Boolean(sequence.acceptanceMessage) },
+    { id: "followUp1", label: t("itemFollowUp", { number: 1 }), enabled: Boolean(sequence.followUp1Message) },
+    { id: "followUp2", label: t("itemFollowUp", { number: 2 }), enabled: Boolean(sequence.followUp2Message) },
+    { id: "followUp3", label: t("itemFollowUp", { number: 3 }), enabled: Boolean(sequence.followUp3Message) },
+  ];
+  const sequenceStepsBuilt = summaryItems.filter((item) => item.enabled).length;
 
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <PageHeader
-        back={{ href: "/linkedin/campaigns", label: "LinkedIn campaigns" }}
-        title="Create a LinkedIn campaign"
-        description="Choose senders, add leads, write the sequence and preview it with real lead data. It stays paused until you launch it."
+        back={{ href: "/linkedin/campaigns", label: t("backLabel") }}
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-5">
         <Frame>
-          <FrameHeader title="Steps" description={`Step ${step + 1} of ${STEPS.length}`} />
+          <FrameHeader title={t("stepsTitle")} description={t("stepProgress", { current: step + 1, total: STEPS.length })} />
           <FramePanel className="p-2 sm:p-2">
             <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
               {STEPS.map((item, index) => {
@@ -139,8 +149,8 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
                     >
                       <StepDot index={index} active={active} done={done} />
                       <span className="min-w-0">
-                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{item.label}</span>
-                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{item.hint}</span>
+                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{t(item.labelKey)}</span>
+                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{t(item.hintKey)}</span>
                       </span>
                       <Icon className="ml-auto hidden size-4 text-text-soft-400 sm:block lg:hidden" />
                     </button>
@@ -150,23 +160,23 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
             </ol>
 
             <div className="mx-1 mb-1 mt-3 hidden border-t border-stroke-soft-200 px-2 pt-3 lg:block">
-              <p className="text-paragraph-xs text-text-soft-400">Summary</p>
+              <p className="text-paragraph-xs text-text-soft-400">{t("summary")}</p>
               <dl className="mt-2 space-y-2 text-paragraph-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-text-sub-600">Name</dt>
-                  <dd className="min-w-0 truncate text-label-sm text-text-strong-950">{name || "Not named yet"}</dd>
+                  <dt className="text-text-sub-600">{t("summaryName")}</dt>
+                  <dd className="min-w-0 truncate text-label-sm text-text-strong-950">{name || t("notNamed")}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-text-sub-600">Senders</dt>
-                  <dd className="text-label-sm tabular-nums text-text-strong-950">{accountIds.length.toLocaleString()}</dd>
+                  <dt className="text-text-sub-600">{t("summarySenders")}</dt>
+                  <dd className="text-label-sm tabular-nums text-text-strong-950">{format.number(accountIds.length)}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-text-sub-600">Leads</dt>
-                  <dd className="text-label-sm tabular-nums text-text-strong-950">{leadCount.toLocaleString()}</dd>
+                  <dt className="text-text-sub-600">{t("summaryLeads")}</dt>
+                  <dd className="text-label-sm tabular-nums text-text-strong-950">{format.number(leadCount)}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-text-sub-600">Sequence</dt>
-                  <dd className="text-label-sm tabular-nums text-text-strong-950">{sequenceStepsBuilt} step{sequenceStepsBuilt === 1 ? "" : "s"}</dd>
+                  <dt className="text-text-sub-600">{t("summarySequence")}</dt>
+                  <dd className="text-label-sm tabular-nums text-text-strong-950">{t("sequenceSteps", { count: sequenceStepsBuilt })}</dd>
                 </div>
               </dl>
             </div>
@@ -177,22 +187,22 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
           <FramePanel className="min-h-[560px] p-5 sm:p-7">
             {step === 0 && (
               <div className="mx-auto max-w-2xl">
-                <StepHeading title="Campaign details" description="Choose a clear name and the LinkedIn accounts that can send." />
+                <StepHeading title={t("stepSetupLabel")} description={t("setupDescription")} />
                 <div className="mt-6 space-y-5">
                   <label className="block">
-                    <span className="mb-1.5 block text-label-sm text-text-strong-950">Campaign name</span>
+                    <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("nameLabel")}</span>
                     <Input.Root hasError={Boolean(error && !name.trim())}>
                       <Input.Wrapper>
-                        <Input.Input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. SaaS founders · India" autoFocus />
+                        <Input.Input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("namePlaceholder")} autoFocus />
                       </Input.Wrapper>
                     </Input.Root>
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 block text-label-sm text-text-strong-950">Description <span className="text-text-soft-400">(optional)</span></span>
-                    <Textarea.Root simple rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What is this campaign for?" />
+                    <span className="mb-1.5 block text-label-sm text-text-strong-950">{t.rich("descriptionLabel", { soft: (chunks) => <span className="text-text-soft-400">{chunks}</span> })}</span>
+                    <Textarea.Root simple rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder={t("descriptionPlaceholder")} />
                   </label>
                   <fieldset>
-                    <legend className="mb-2 block text-label-sm text-text-strong-950">Campaign type</legend>
+                    <legend className="mb-2 block text-label-sm text-text-strong-950">{t("typeLegend")}</legend>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {(["REGULAR", "PERSONAL"] as const).map((value) => (
                         <button
@@ -205,22 +215,22 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
                             type === value ? "bg-bg-weak-50 ring-primary-base" : "bg-bg-white-0 ring-stroke-soft-200 hover:bg-bg-weak-50",
                           )}
                         >
-                          <span className="text-label-sm text-text-strong-950">{value === "REGULAR" ? "Regular" : "Personal"}</span>
+                          <span className="text-label-sm text-text-strong-950">{value === "REGULAR" ? t("typeRegular") : t("typePersonal")}</span>
                           <span className="mt-1 block text-paragraph-xs text-text-sub-600">
-                            {value === "REGULAR" ? "Visible in Messages and shared with AgentSDR." : "Kept out of the shared Messages workspace."}
+                            {value === "REGULAR" ? t("typeRegularHint") : t("typePersonalHint")}
                           </span>
                         </button>
                       ))}
                     </div>
                   </fieldset>
                   <fieldset>
-                    <legend className="mb-2 block text-label-sm text-text-strong-950">LinkedIn senders</legend>
+                    <legend className="mb-2 block text-label-sm text-text-strong-950">{t("sendersLegend")}</legend>
                     {accounts.length === 0 ? (
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">
-                        <span className="min-w-0 flex-1">Connect a LinkedIn account before launching. You can still save this campaign paused.</span>
+                        <span className="min-w-0 flex-1">{t("noAccountsWarning")}</span>
                         <span className="flex flex-wrap items-center gap-3 text-paragraph-xs">
                           <Link href="/settings/linkedin-accounts" className="font-medium underline underline-offset-2">
-                            Connect an account
+                            {t("connectAccount")}
                           </Link>
                           <DocsLink page="linkedin/accounts#add-a-linkedin-account" appearance="inline" className="text-current underline" />
                         </span>
@@ -246,31 +256,31 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
                     )}
                   </fieldset>
                 </div>
-                <WizardFooter error={error} backLabel="Cancel" onBack={() => router.push("/linkedin/campaigns")} onNext={() => void saveSetup()} busy={busy} nextLabel="Continue to leads" />
+                <WizardFooter error={error} backLabel={t("cancel")} onBack={() => router.push("/linkedin/campaigns")} onNext={() => void saveSetup()} busy={busy} nextLabel={t("continueToLeads")} />
               </div>
             )}
 
             {step === 1 && campaignId && (
               <div className="mx-auto max-w-3xl">
-                <StepHeading title="Add leads" description="Import a spreadsheet and review its column mapping, or select people already in your database." />
+                <StepHeading title={t("stepLeadsLabel")} description={t("leadsDescription")} />
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-stroke-sub-300 bg-bg-weak-50 p-6 text-center outline-none transition hover:border-primary-base focus-visible:ring-2 focus-visible:ring-primary-base">
                     <span className="flex size-10 items-center justify-center rounded-xl bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200"><FileSpreadsheet className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">Import CSV or Excel</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">You will map every important column before anything is imported.</span>
+                    <span className="mt-3 text-label-md text-text-strong-950">{t("importTitle")}</span>
+                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("importBody")}</span>
                   </button>
                   <button type="button" onClick={() => setShowPeople(true)} className="flex min-h-44 flex-col items-center justify-center rounded-2xl bg-bg-white-0 p-6 text-center shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base">
                     <span className="flex size-10 items-center justify-center rounded-xl bg-bg-weak-50 ring-1 ring-inset ring-stroke-soft-200"><Users className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">Add from People</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">Select existing people who already have a LinkedIn profile.</span>
+                    <span className="mt-3 text-label-md text-text-strong-950">{t("peopleTitle")}</span>
+                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("peopleBody")}</span>
                   </button>
                 </div>
                 <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => setPendingFile(event.target.files?.[0] ?? null)} />
                 <div role="status" className="mt-4 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
-                  <p className="text-label-sm text-text-strong-950">{leadCount.toLocaleString()} {leadCount === 1 ? "lead" : "leads"} added</p>
-                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importSummary ?? "You can continue with no leads and add them later. The campaign stays paused."}</p>
+                  <p className="text-label-sm text-text-strong-950">{t("leadsAdded", { count: leadCount })}</p>
+                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importSummary ?? t("leadsAddedHint")}</p>
                 </div>
-                <WizardFooter error={error} onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Continue to sequence" />
+                <WizardFooter error={error} onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel={t("continueToSequence")} />
                 {pendingFile && (
                   <CampaignCsvMappingDialog
                     file={pendingFile}
@@ -280,7 +290,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
                     onImported={(result) => {
                       const added = Number(result.created ?? 0) + Number(result.attached ?? 0);
                       setLeadCount((current) => current + added);
-                      setImportSummary(`${added} added${Number(result.failed ?? 0) ? ` · ${Number(result.failed)} failed` : ""}`);
+                      setImportSummary(t("importSummary", { added, failed: Number(result.failed ?? 0) }));
                       setPendingFile(null);
                       if (fileRef.current) fileRef.current.value = "";
                     }}
@@ -293,7 +303,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
                     onClose={() => setShowPeople(false)}
                     onAdded={(result) => {
                       setLeadCount((current) => current + result.added);
-                      setImportSummary(`${result.added} added from People${result.skippedDuplicate ? ` · ${result.skippedDuplicate} already enrolled` : ""}`);
+                      setImportSummary(t("peopleSummary", { added: result.added, skipped: result.skippedDuplicate ?? 0 }));
                     }}
                   />
                 )}
@@ -302,13 +312,13 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
 
             {step === 2 && campaignId && (
               <div>
-                <StepHeading title="Build your sequence" description="Personalise each stage with People fields and preview the final message." />
+                <StepHeading title={t("sequenceTitle")} description={t("sequenceDescription")} />
                 <div className="mt-5">
-                  <LinkedInSequenceEditor campaignId={campaignId} initialSequence={sequence} saveLabel="Save and review" onSaved={(next) => { setSequence(next); setStep(3); }} />
+                  <LinkedInSequenceEditor campaignId={campaignId} initialSequence={sequence} saveLabel={t("saveAndReview")} onSaved={(next) => { setSequence(next); setStep(3); }} />
                 </div>
                 <div className="mt-5">
                   <AlignButton.Root variant="neutral" mode="ghost" size="small" onClick={() => setStep(1)}>
-                    <AlignButton.Icon as={ArrowLeft} />Back to leads
+                    <AlignButton.Icon as={ArrowLeft} />{t("backToLeads")}
                   </AlignButton.Root>
                 </div>
               </div>
@@ -316,28 +326,28 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
 
             {step === 3 && campaignId && (
               <div className="mx-auto max-w-3xl">
-                <StepHeading title="Review and launch" description="Your campaign is paused until you explicitly launch it." />
+                <StepHeading title={t("reviewTitle")} description={t("reviewDescription")} />
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <SummaryCard label="Campaign" value={name} detail={type === "PERSONAL" ? "Personal" : "Regular"} />
-                  <SummaryCard label="Leads" value={leadCount.toLocaleString()} detail="enrolled" />
-                  <SummaryCard label="Senders" value={accountIds.length.toLocaleString()} detail="connected accounts" />
+                  <SummaryCard label={t("cardCampaign")} value={name} detail={type === "PERSONAL" ? t("typePersonal") : t("typeRegular")} />
+                  <SummaryCard label={t("cardLeads")} value={format.number(leadCount)} detail={t("detailEnrolled")} />
+                  <SummaryCard label={t("cardSenders")} value={format.number(accountIds.length)} detail={t("detailConnected")} />
                 </div>
                 <div className="mt-4 rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
-                  <h3 className="px-3 pb-2 pt-2 text-label-sm text-text-strong-950">Sequence</h3>
+                  <h3 className="px-3 pb-2 pt-2 text-label-sm text-text-strong-950">{t("sequenceHeading")}</h3>
                   <ul className="divide-y divide-stroke-soft-200 rounded-xl bg-bg-white-0 px-4 ring-1 ring-inset ring-stroke-soft-200">
-                    {STEPS_FOR_SUMMARY(sequence).map((item) => (
-                      <li key={item.label} className="flex items-center justify-between gap-4 py-2.5 text-paragraph-sm">
+                    {summaryItems.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between gap-4 py-2.5 text-paragraph-sm">
                         <span className="text-text-sub-600">{item.label}</span>
                         <span className={cn("inline-flex items-center gap-1", item.enabled ? "text-success-base" : "text-text-soft-400")}>
                           {item.enabled && <RiCheckLine className="size-4" aria-hidden="true" />}
-                          {item.enabled ? "Ready" : "Skipped"}
+                          {item.enabled ? t("ready") : t("skipped")}
                         </span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                {!canLaunch && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">Add at least one lead and one sender before launching. You can save it paused and finish later.</p>}
-                <WizardFooter error={error} onBack={() => setStep(2)} busy={busy} secondaryLabel="Save paused" onSecondary={() => void finish("PAUSED")} nextLabel="Launch campaign" onNext={() => void finish("ACTIVE")} nextDisabled={!canLaunch} nextIcon={Rocket} />
+                {!canLaunch && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">{t("launchBlocked")}</p>}
+                <WizardFooter error={error} onBack={() => setStep(2)} busy={busy} secondaryLabel={t("savePaused")} onSecondary={() => void finish("PAUSED")} nextLabel={t("launch")} onNext={() => void finish("ACTIVE")} nextDisabled={!canLaunch} nextIcon={Rocket} />
               </div>
             )}
           </FramePanel>
@@ -357,8 +367,9 @@ function StepHeading({ title, description }: { title: string; description: strin
 }
 
 function SummaryCard({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-xl bg-bg-white-0 p-4 shadow-regular-xs ring-1 ring-inset ring-stroke-soft-200"><p className="text-paragraph-xs text-text-sub-600">{label}</p><p className="mt-1 truncate text-label-lg text-text-strong-950" title={value}>{value}</p><p className="text-paragraph-xs text-text-sub-600">{detail}</p></div>; }
-function STEPS_FOR_SUMMARY(sequence: LinkedinCampaignSequence) { return [{ label: "Connection request", enabled: Boolean(sequence.invitationMessage) }, { label: "Acceptance message", enabled: Boolean(sequence.acceptanceMessage) }, { label: "Follow-up 1", enabled: Boolean(sequence.followUp1Message) }, { label: "Follow-up 2", enabled: Boolean(sequence.followUp2Message) }, { label: "Follow-up 3", enabled: Boolean(sequence.followUp3Message) }]; }
 
-function WizardFooter({ error, onBack, onNext, busy, backLabel = "Back", nextLabel, nextDisabled, secondaryLabel, onSecondary, nextIcon: NextIcon = ArrowRight }: { error?: string | null; onBack: () => void; onNext: () => void; busy?: boolean; backLabel?: string; nextLabel: string; nextDisabled?: boolean; secondaryLabel?: string; onSecondary?: () => void; nextIcon?: typeof ArrowRight }) {
-  return <div className="mt-8 border-t border-stroke-soft-200 pt-5">{error && <p role="alert" className="mb-3 text-paragraph-sm text-error-base">{error}</p>}<div className="flex flex-wrap items-center justify-between gap-3"><AlignButton.Root variant="neutral" mode="ghost" size="small" onClick={onBack} disabled={busy}><AlignButton.Icon as={ArrowLeft} />{backLabel}</AlignButton.Root><div className="flex gap-2">{secondaryLabel && onSecondary && <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={onSecondary} disabled={busy}>{secondaryLabel}</AlignButton.Root>}<AlignButton.Root variant="primary" mode="filled" size="small" onClick={onNext} disabled={busy || nextDisabled}>{busy ? <AlignButton.Icon as={Loader2} className="animate-spin" /> : <AlignButton.Icon as={NextIcon} />}{busy ? "Saving…" : nextLabel}</AlignButton.Root></div></div></div>;
+
+function WizardFooter({ error, onBack, onNext, busy, backLabel, nextLabel, nextDisabled, secondaryLabel, onSecondary, nextIcon: NextIcon = ArrowRight }: { error?: string | null; onBack: () => void; onNext: () => void; busy?: boolean; backLabel?: string; nextLabel: string; nextDisabled?: boolean; secondaryLabel?: string; onSecondary?: () => void; nextIcon?: typeof ArrowRight }) {
+  const t = useTranslations("linkedinCampaigns.wizard");
+  return <div className="mt-8 border-t border-stroke-soft-200 pt-5">{error && <p role="alert" className="mb-3 text-paragraph-sm text-error-base">{error}</p>}<div className="flex flex-wrap items-center justify-between gap-3"><AlignButton.Root variant="neutral" mode="ghost" size="small" onClick={onBack} disabled={busy}><AlignButton.Icon as={ArrowLeft} />{backLabel ?? t("back")}</AlignButton.Root><div className="flex gap-2">{secondaryLabel && onSecondary && <AlignButton.Root variant="neutral" mode="stroke" size="small" onClick={onSecondary} disabled={busy}>{secondaryLabel}</AlignButton.Root>}<AlignButton.Root variant="primary" mode="filled" size="small" onClick={onNext} disabled={busy || nextDisabled}>{busy ? <AlignButton.Icon as={Loader2} className="animate-spin" /> : <AlignButton.Icon as={NextIcon} />}{busy ? t("saving") : nextLabel}</AlignButton.Root></div></div></div>;
 }
