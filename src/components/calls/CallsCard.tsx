@@ -2,12 +2,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiPhoneLine } from "@remixicon/react";
 import { ErrorState } from "@/components/analytics/kit/ErrorState";
 import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame";
 import { EmptyState } from "@/components/page/EmptyState";
 import { Skeleton } from "@/components/page/Skeletons";
-import { errorMessage, formatDate } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { formatCallDuration } from "./formatElapsed";
 import { CALL_POLL_INTERVAL_MS, CALL_POLL_TIMEOUT_MS } from "./polling";
 import { useRefreshOnReturn } from "@/components/calling/useRefreshOnReturn";
@@ -20,6 +21,8 @@ import { CallSessionBadge } from "./CallSessionBadge";
 import { AgentOutcomeLine } from "./AgentOutcomeLine";
 
 export function CallsCard({ personId, refreshKey }: { personId: string; refreshKey?: number }) {
+  const t = useTranslations("callsMain.callsCard");
+  const { errorMessage } = useCrmText();
   const [calls, setCalls] = useState<CallSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,7 +42,7 @@ export function CallsCard({ personId, refreshKey }: { personId: string; refreshK
       setLoading(false);
       setRefreshing(false);
     }
-  }, [personId]);
+  }, [personId, errorMessage]);
 
   useEffect(() => {
     if (loadedFor.current === personId) setRefreshing(true);
@@ -70,10 +73,10 @@ export function CallsCard({ personId, refreshKey }: { personId: string; refreshK
     <div className="space-y-3">
       <LiveCallStrip callId={mostRecentCallId} serverStatus={sorted[0]?.status ?? null} agentOutcome={sorted[0]?.agentOutcome ?? null} onCancelled={() => void load()} />
       <Frame>
-        <FrameHeader title="Calls" description={sorted.length ? `${sorted.length} WhatsApp call${sorted.length === 1 ? "" : "s"}, newest first` : "WhatsApp calls placed from AgentSDR"} />
+        <FrameHeader title={t("title")} description={sorted.length ? t("descriptionCount", { count: sorted.length }) : t("descriptionEmpty")} />
         <FramePanel aria-busy={refreshing || undefined} className={cn("p-0 transition-opacity sm:p-0", refreshing && "opacity-60")}>
           {loading ? (
-            <div aria-busy="true" aria-label="Loading calls" className="divide-y divide-stroke-soft-200">
+            <div aria-busy="true" aria-label={t("loadingAria")} className="divide-y divide-stroke-soft-200">
               {Array.from({ length: 3 }, (_, index) => (
                 <div key={index} className="flex items-center gap-3 px-4 py-3.5">
                   <Skeleton className="h-3.5 w-28" />
@@ -89,7 +92,7 @@ export function CallsCard({ personId, refreshKey }: { personId: string; refreshK
               {sorted.map((call) => <CallRow key={call.id} call={call} />)}
             </div>
           ) : (
-            <EmptyState compact icon={RiPhoneLine} title="No calls yet" description="Calls placed with the Call button show up here, with their recording." />
+            <EmptyState compact icon={RiPhoneLine} title={t("emptyTitle")} description={t("emptyDescription")} />
           )}
         </FramePanel>
       </Frame>
@@ -98,6 +101,7 @@ export function CallsCard({ personId, refreshKey }: { personId: string; refreshK
 }
 
 function CallRow({ call }: { call: CallSummary }) {
+  const { formatDate } = useCrmText();
   const duration = formatCallDuration(call.durationMs);
   return (
     <div className="space-y-2 px-4 py-3.5">

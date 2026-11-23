@@ -3,11 +3,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiLoader4Line } from "@remixicon/react";
 import { DocsLink } from "@/components/page/DocsLink";
 import { WhatsappComposer, WhatsappMessageList } from "@/components/whatsapp/WhatsappThread";
 import { useVisiblePolling, WHATSAPP_POLL_INTERVAL_MS } from "@/components/whatsapp/usePolling";
-import { errorMessage } from "@/components/crm/crm-utils";
+import { useCrmText } from "@/components/crm/useCrmText";
 import { getPersonWhatsappThread, sendWhatsapp } from "@/lib/whatsapp/client";
 import type { PersonWhatsappThreadResponse } from "@/lib/whatsapp/contract";
 import { cn } from "@/utils/cn";
@@ -42,6 +43,8 @@ export function PersonWhatsappPanel({
   heightClass?: string;
   className?: string;
 }) {
+  const t = useTranslations("callsMain.whatsappPanel");
+  const { errorMessage } = useCrmText();
   const [data, setData] = useState<PersonWhatsappThreadResponse | null>(null);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState("");
@@ -57,7 +60,7 @@ export function PersonWhatsappPanel({
     } catch (cause) {
       if (mine === request.current) setError(errorMessage(cause));
     }
-  }, [personId]);
+  }, [personId, errorMessage]);
 
   useEffect(() => {
     setData(null);
@@ -94,13 +97,13 @@ export function PersonWhatsappPanel({
         </div>
       ) : data ? (
         <div className={cn("flex flex-col overflow-hidden rounded-xl ring-1 ring-inset ring-stroke-soft-200", heightClass)}>
-          <WhatsappMessageList messages={data.messages} threadKey={personId} emptyText="No WhatsApp messages yet." className="px-3 py-2" />
+          <WhatsappMessageList messages={data.messages} threadKey={personId} emptyText={t("noMessages")} className="px-3 py-2" />
         </div>
       ) : null}
       {data && !canSend && (
         <p className="text-paragraph-xs text-text-sub-600">
-          {fallbackSend ? "No WhatsApp number is linked, so this opens WhatsApp Web instead. " : "No WhatsApp number is linked, so messages cannot be sent from here. "}
-          <Link href="/settings/whatsapp-accounts" className="text-primary-base hover:underline">Link a number</Link>
+          {fallbackSend ? t("noNumberFallback") : t("noNumberBlocked")}{" "}
+          <Link href="/settings/whatsapp-accounts" className="text-primary-base hover:underline">{t("linkNumber")}</Link>
           {" · "}
           <DocsLink page="whatsapp/accounts#link-a-number" appearance="inline" className="font-normal" />
         </p>
@@ -111,7 +114,7 @@ export function PersonWhatsappPanel({
         onSend={send}
         disabled={!data || (!canSend && !fallbackSend)}
         rows={3}
-        placeholder={canSend || !fallbackSend ? "Write a WhatsApp message… (Enter to send, Shift+Enter for new line)" : "Write a message to open in WhatsApp Web…"}
+        placeholder={canSend || !fallbackSend ? t("placeholderSend") : t("placeholderFallback")}
       />
     </div>
   );

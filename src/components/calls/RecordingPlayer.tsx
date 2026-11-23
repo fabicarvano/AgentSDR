@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { RiVolumeMuteLine } from "@remixicon/react";
 import { useDemoMode } from "@/components/demo/DemoProvider";
 
@@ -10,6 +11,7 @@ import { useDemoMode } from "@/components/demo/DemoProvider";
  * The rep can still scrub back to hear it.
  */
 export function RecordingPlayer({ callId, offsetMs }: { callId: string; offsetMs: number | null }) {
+  const t = useTranslations("callsMain.recordingPlayer");
   const demo = useDemoMode();
   const start = offsetMs && offsetMs > 0 ? offsetMs / 1000 : 0;
   // The demo's calls are fictional: there is a transcript, but no audio.
@@ -17,7 +19,7 @@ export function RecordingPlayer({ callId, offsetMs }: { callId: string; offsetMs
     return (
       <p className="flex items-center gap-2 rounded-lg bg-bg-weak-50 px-3 py-2 text-paragraph-xs text-text-sub-600">
         <RiVolumeMuteLine className="size-4 shrink-0 text-text-soft-400" />
-        Recordings don&apos;t play in the demo; the call&apos;s transcript and summary still show.
+        {t("demoNote")}
       </p>
     );
   }

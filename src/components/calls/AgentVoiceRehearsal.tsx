@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiLoader4Line, RiMicLine, RiPhoneFill, RiPhoneLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import type { AgentTokenResponse } from "@/lib/calls/contract";
@@ -45,6 +46,7 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
   name?: string;
   voice?: string;
 }) {
+  const t = useTranslations("callsMain.agentVoiceRehearsal");
   const [phase, setPhase] = useState<Phase>("idle");
   const [lines, setLines] = useState<Line[]>([]);
   const [log, setLog] = useState<string[]>([]);
@@ -81,7 +83,7 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
     } catch {
       void context.close();
       setPhase("idle");
-      setError("Allow the microphone to rehearse by voice.");
+      setError(t("micDenied"));
       return;
     }
 
@@ -134,14 +136,15 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
       hangup(reason) {
         // As on a call: let the goodbye finish, then hang up.
         const remaining = Math.max(0, playHead - context.currentTime) * 1000;
-        hangupTimer = window.setTimeout(() => stop(`The agent hung up (${reason}).`), remaining + 600);
+        hangupTimer = window.setTimeout(() => stop(t("agentHungUp", { reason })), remaining + 600);
       },
       trace(step) {
         setLog((current) => [...current.slice(-80), step]);
         // start() reports a refused token, and the session dropping, only here.
         const failed = /^AI agent: (no session — .*|disconnected .*)$/.exec(step);
         if (failed && !ended) {
-          setError(failed[1]!.replace(/^no session — /, "Could not start the agent: "));
+          // The reason after the prefix comes from the live agent (English trace text), shown as it arrives.
+          setError(/^no session — /.test(failed[1]!) ? t("couldNotStart", { reason: failed[1]!.replace(/^no session — /, "") }) : failed[1]!);
           stop();
         }
       },
@@ -212,18 +215,16 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-paragraph-xs text-text-sub-600">
-          Talk to the agent with your microphone, as the lead would. Use headphones, so it does not hear itself. No call is placed.
-        </p>
+        <p className="text-paragraph-xs text-text-sub-600">{t("intro")}</p>
         {busy ? (
           <Button.Root variant="error" mode="filled" size="xsmall" onClick={() => stopRef.current?.()}>
             <Button.Icon as={RiPhoneFill} className="rotate-[135deg]" />
-            Hang up
+            {t("hangUp")}
           </Button.Root>
         ) : (
           <Button.Root variant="primary" mode="filled" size="xsmall" onClick={() => void start()}>
             <Button.Icon as={RiPhoneLine} />
-            {phase === "ended" ? "Call again" : "Start rehearsal call"}
+            {phase === "ended" ? t("callAgain") : t("startCall")}
           </Button.Root>
         )}
       </div>
@@ -236,10 +237,10 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
             <RiMicLine className="size-4 text-success-base" aria-hidden />
           ) : null}
           <span>
-            {phase === "connecting" && "Connecting to the agent…"}
-            {phase === "ringing" && "Connecting… (it is preparing its greeting)"}
-            {phase === "live" && `On the call · ${minutes} — say hello`}
-            {phase === "ended" && `Call ended · ${minutes}`}
+            {phase === "connecting" && t("connecting")}
+            {phase === "ringing" && t("ringing")}
+            {phase === "live" && t("live", { time: minutes })}
+            {phase === "ended" && t("ended", { time: minutes })}
           </span>
         </div>
       )}
@@ -261,7 +262,7 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
                   }
                 >
                   {line.text}
-                  {line.cut ? <span className="text-text-soft-400"> — (you cut in)</span> : null}
+                  {line.cut ? <span className="text-text-soft-400"> {t("cutIn")}</span> : null}
                 </div>
               </div>
             ),
@@ -273,7 +274,7 @@ export function AgentVoiceRehearsal({ campaignId, contactId, stepId, brief, name
 
       {log.length > 0 && (
         <details className="text-paragraph-xs text-text-sub-600">
-          <summary className="cursor-pointer select-none">Timing log</summary>
+          <summary className="cursor-pointer select-none">{t("timingLog")}</summary>
           <ol className="mt-2 max-h-48 space-y-0.5 overflow-y-auto font-mono text-[11px] leading-4">
             {log.map((step, index) => (
               <li key={index}>{step}</li>

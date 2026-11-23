@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiCheckboxCircleLine, RiCloseCircleLine, RiErrorWarningLine, RiLoader4Line } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { Frame, FramePanel } from "@/components/analytics/kit/Frame";
@@ -44,6 +45,7 @@ export function LiveCallStrip({
   /** After a cancel, so the parent can reload the call. */
   onCancelled?: () => void;
 }) {
+  const t = useTranslations("callsMain.liveCallStrip");
   const { phase, cloud } = useLiveCallState(callId);
   const [ending, setEnding] = useState(false);
   const [endError, setEndError] = useState("");
@@ -75,7 +77,7 @@ export function LiveCallStrip({
       await cancelCall(callId);
       onCancelled?.();
     } catch (cause) {
-      setEndError(cause instanceof Error ? cause.message : "Couldn't cancel the call. Please try again.");
+      setEndError(cause instanceof Error ? cause.message : t("cancelFailed"));
     } finally {
       setEnding(false);
     }
@@ -88,14 +90,14 @@ export function LiveCallStrip({
     try {
       await endCallViaRecorder(callId);
     } catch (cause) {
-      setEndError(cause instanceof Error ? cause.message : "Couldn't end the call. Please try again.");
+      setEndError(cause instanceof Error ? cause.message : t("endFailed"));
     } finally {
       setEnding(false);
     }
   };
 
   return (
-    <Frame aria-label="Live call">
+    <Frame aria-label={t("ariaLabel")}>
       <FramePanel className="space-y-2 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -105,7 +107,7 @@ export function LiveCallStrip({
             </p>
             {cloud && (
               <span className="shrink-0 text-paragraph-xs text-text-soft-400">
-                {cloud.remoteRep ? "Rep" : "AI agent"}{cloud.stationName ? ` · ${cloud.stationName}` : ""}
+                {cloud.remoteRep ? t("rep") : t("aiAgent")}{cloud.stationName ? ` · ${cloud.stationName}` : ""}
               </span>
             )}
           </div>
@@ -121,7 +123,7 @@ export function LiveCallStrip({
               {ending
                 ? <RiLoader4Line className="size-3.5 animate-spin" aria-hidden="true" />
                 : <RiCloseCircleLine className="size-3.5" aria-hidden="true" />}
-              End call
+              {t("endCall")}
             </Button.Root>
           )}
           {CANCEL_PHASES.has(phase.kind) && (
@@ -136,7 +138,7 @@ export function LiveCallStrip({
               {ending
                 ? <RiLoader4Line className="size-3.5 animate-spin" aria-hidden="true" />
                 : <RiCloseCircleLine className="size-3.5" aria-hidden="true" />}
-              Cancel call
+              {t("cancelCall")}
             </Button.Root>
           )}
         </div>
@@ -177,41 +179,43 @@ function PhaseDot({ phase }: { phase: CloudCallPhase }) {
 }
 
 function PhaseStatus({ phase }: { phase: CloudCallPhase }) {
+  const t = useTranslations("callsMain.liveCallStrip");
   switch (phase.kind) {
     case "queued":
-      return <>Waiting for a cloud number…</>;
+      return <>{t("queued")}</>;
     case "starting-browser":
-      return <>Opening WhatsApp in the cloud…</>;
+      return <>{t("startingBrowser")}</>;
     case "opening":
-      return <>Opening WhatsApp…</>;
+      return <>{t("opening")}</>;
     case "calling":
-      return <>Calling…</>;
+      return <>{t("calling")}</>;
     case "ringing":
-      return <>Ringing — recording starts when they pick up</>;
+      return <>{t("ringing")}</>;
     case "on-call":
-      return <>Recording</>;
+      return <>{t("onCall")}</>;
     case "manual-dial":
-      return <>Couldn&apos;t press Voice call — switch to WhatsApp and click it; recording still starts on its own</>;
+      return <>{t("manualDial")}</>;
     case "audio-blocked":
-      return <>Chrome paused the call audio — switch to the WhatsApp tab and click anywhere</>;
+      return <>{t("audioBlocked")}</>;
     case "not-answered":
-      return <>Not answered — nothing was recorded</>;
+      return <>{t("notAnswered")}</>;
     case "not-on-whatsapp":
       return phase.noCallButton ? (
-        <>WhatsApp can&apos;t call this number (a business account, likely) — marked Not on WhatsApp</>
+        <>{t("noCallButton")}</>
       ) : (
-        <>This number isn&apos;t on WhatsApp</>
+        <>{t("notOnWhatsapp")}</>
       );
     case "processing":
-      return <>{phase.step === "uploading" ? "Saving the recording…" : "Transcribing…"}</>;
+      return <>{phase.step === "uploading" ? t("savingRecording") : t("transcribing")}</>;
     case "done":
-      return <>Call recorded ({formatElapsed(phase.durationMs)})</>;
+      return <>{t("done", { duration: formatElapsed(phase.durationMs) })}</>;
     case "error":
       return <>{phase.message}</>;
   }
 }
 
 function PhaseDetail({ phase }: { phase: CloudCallPhase }) {
+  const t = useTranslations("callsMain.liveCallStrip");
   switch (phase.kind) {
     case "on-call":
       return (
@@ -220,7 +224,7 @@ function PhaseDetail({ phase }: { phase: CloudCallPhase }) {
             <LiveTimer answeredAt={phase.answeredAt} />
           </p>
           {!phase.timerSeen && (
-            <p className="text-paragraph-xs text-text-soft-400">Call timer not detected — recording started as a fallback</p>
+            <p className="text-paragraph-xs text-text-soft-400">{t("timerNotSeen")}</p>
           )}
         </div>
       );
@@ -228,11 +232,11 @@ function PhaseDetail({ phase }: { phase: CloudCallPhase }) {
       return <p className="text-paragraph-sm tabular-nums text-text-sub-600">{formatElapsed(phase.durationMs)}</p>;
     case "done":
       if (phase.transcriptFailed) {
-        return <p className="text-paragraph-xs text-error-dark">Transcription failed — retry below</p>;
+        return <p className="text-paragraph-xs text-error-dark">{t("transcriptFailed")}</p>;
       }
       return phase.summary ? <p className="line-clamp-4 text-paragraph-sm text-text-sub-600">{phase.summary}</p> : null;
     case "error":
-      return phase.savedLocally ? <p className="text-paragraph-xs text-text-soft-400">The recording was saved to your Downloads.</p> : null;
+      return phase.savedLocally ? <p className="text-paragraph-xs text-text-soft-400">{t("savedLocally")}</p> : null;
     default:
       return null;
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import { RiCloseLine, RiErrorWarningLine, RiLoader4Line, RiMicLine, RiMicOffLine, RiPhoneFill, RiVolumeUpLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import { cn } from "@/utils/cn";
@@ -25,6 +26,7 @@ const ENDED_HIDE_MS = 10_000;
  * the root layout, so it stays on screen across pages while the call is on.
  */
 export function RemoteRepCallBar() {
+  const t = useTranslations("callsMain.remoteRepBar");
   const call = useSyncExternalStore(subscribeRemoteRepCall, remoteRepCallSnapshot, () => null);
   const [hangingUp, setHangingUp] = useState(false);
 
@@ -50,7 +52,7 @@ export function RemoteRepCallBar() {
   return (
     <div
       role="region"
-      aria-label="Call"
+      aria-label={t("ariaLabel")}
       // pointer-events-auto: a modal (the lead drawer) sets pointer-events: none on <body>.
       className="pointer-events-auto fixed inset-x-4 bottom-4 z-[90] mx-auto max-w-md rounded-2xl bg-bg-white-0 p-3 shadow-regular-md ring-1 ring-inset ring-stroke-soft-200 animate-in fade-in-0 slide-in-from-bottom-2 sm:inset-x-auto sm:left-1/2 sm:w-[26rem] sm:-translate-x-1/2"
     >
@@ -59,7 +61,7 @@ export function RemoteRepCallBar() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-label-sm text-text-strong-950">
             {call.leadName}
-            {call.numberName && <span className="font-normal text-text-soft-400"> · from {call.numberName}</span>}
+            {call.numberName && <span className="font-normal text-text-soft-400"> · {t("fromNumber", { name: call.numberName })}</span>}
           </p>
           <p aria-live="polite" className={cn("text-paragraph-xs", call.stage === "error" ? "text-error-dark" : "text-text-sub-600")}>
             <StageText call={call} />
@@ -72,8 +74,8 @@ export function RemoteRepCallBar() {
               mode="stroke"
               size="xsmall"
               aria-pressed={call.muted}
-              aria-label={call.muted ? "Unmute" : "Mute"}
-              title={call.muted ? "Unmute" : "Mute"}
+              aria-label={call.muted ? t("unmute") : t("mute")}
+              title={call.muted ? t("unmute") : t("mute")}
               disabled={call.stage === "mic"}
               onClick={() => setRemoteRepMuted(!call.muted)}
             >
@@ -81,11 +83,11 @@ export function RemoteRepCallBar() {
             </Button.Root>
             <Button.Root variant="error" mode="filled" size="xsmall" disabled={call.stage === "mic" || hangingUp} onClick={() => void hangUp()}>
               <Button.Icon as={hangingUp ? RiLoader4Line : RiPhoneFill} className={cn("rotate-[135deg]", hangingUp && "animate-spin")} />
-              {call.stage === "on-call" ? "Hang up" : "Cancel"}
+              {call.stage === "on-call" ? t("hangUp") : t("cancel")}
             </Button.Root>
           </div>
         ) : (
-          <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label="Close" title="Close" onClick={dismissRemoteRepCall}>
+          <Button.Root variant="neutral" mode="ghost" size="xsmall" aria-label={t("close")} title={t("close")} onClick={dismissRemoteRepCall}>
             <Button.Icon as={RiCloseLine} />
           </Button.Root>
         )}
@@ -93,12 +95,12 @@ export function RemoteRepCallBar() {
       {!over && call.audioBlocked && (
         <Button.Root variant="primary" mode="lighter" size="xxsmall" className="mt-2 w-full" onClick={resumeRemoteRepAudio}>
           <Button.Icon as={RiVolumeUpLine} />
-          The browser paused the call audio — click to hear them
+          {t("audioPaused")}
         </Button.Root>
       )}
       {!over && call.stage !== "mic" && (
         <p className="mt-2 text-paragraph-xs text-text-soft-400">
-          {call.stage === "on-call" ? "Use headphones for the best sound." : "Keep this tab open — the call runs through it. Use headphones for the best sound."}
+          {call.stage === "on-call" ? t("headphones") : t("keepOpen")}
         </p>
       )}
     </div>
@@ -120,31 +122,34 @@ function StageIcon({ call }: { call: RemoteRepCallState }) {
 }
 
 function StageText({ call }: { call: RemoteRepCallState }) {
-  const number = call.numberName ?? "the number";
+  const t = useTranslations("callsMain.remoteRepBar");
+  const number = call.numberName;
   switch (call.stage) {
     case "mic":
-      return <>Getting your microphone…</>;
+      return <>{t("mic")}</>;
     case "placing":
-      return <>Placing the call…</>;
+      return <>{t("placing")}</>;
     case "waiting":
-      return <>Waiting for {number} to be free…</>;
+      return <>{number ? t("waitingNamed", { number }) : t("waiting")}</>;
     case "opening":
-      return <>Opening {number}&apos;s WhatsApp…</>;
+      return <>{number ? t("openingNamed", { number }) : t("opening")}</>;
     case "dialing":
-      return <>Calling…</>;
+      return <>{t("dialing")}</>;
     case "ringing":
-      return <>Ringing…</>;
+      return <>{t("ringing")}</>;
     case "on-call":
       return (
         <>
-          On call · <OnCallTimer answeredAt={call.answeredAt} />
-          {call.muted && " · muted"}
-          {call.unstable && " · connection unstable…"}
+          {t.rich("onCall", {
+            timer: () => <OnCallTimer answeredAt={call.answeredAt} />,
+            muted: call.muted ? "yes" : "no",
+            unstable: call.unstable ? "yes" : "no",
+          })}
         </>
       );
     case "ended":
     case "error":
-      return <>{call.message ?? (call.stage === "error" ? "The call failed" : "Call ended")}</>;
+      return <>{call.message ?? (call.stage === "error" ? t("failed") : t("ended"))}</>;
   }
 }
 
