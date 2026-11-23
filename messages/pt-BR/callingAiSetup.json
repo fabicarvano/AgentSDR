@@ -1,3 +1,323 @@
 {
-  "callingAiSetup": {}
+  "callingAiSetup": {
+    "shared": {
+      "status": {
+        "queued": "Na fila",
+        "reaching": "Em contato",
+        "callback": "Retorno agendado",
+        "chasing": "Aguardando agendamento",
+        "booked": "Reunião agendada",
+        "handoff": "Para a equipe",
+        "notInterested": "Sem interesse",
+        "unreached": "Sem contato",
+        "replied": "Respondeu",
+        "stopped": "Parado",
+        "failed": "Falhou"
+      },
+      "state": {
+        "draft": "Rascunho",
+        "active": "Ativa",
+        "paused": "Pausada"
+      },
+      "goal": {
+        "bookMeeting": {
+          "label": "Agendar uma reunião",
+          "help": "Se a pessoa tiver interesse, o agente combina de enviar um link de agendamento pelo WhatsApp; os follow-ups insistem até ela agendar."
+        },
+        "humanCallback": {
+          "label": "Passar para a equipe",
+          "help": "Se a pessoa tiver interesse, o agente confirma e combina quando alguém da sua equipe vai ligar; o lead cai em Ação necessária."
+        },
+        "either": {
+          "label": "Qualquer um, à escolha da pessoa",
+          "help": "O agente oferece o link de agendamento ou uma chamada da equipe, se a pessoa preferir."
+        }
+      },
+      "agentBadge": "Agente de IA",
+      "errors": {
+        "generic": "Algo deu errado. Tente novamente."
+      },
+      "numberPicker": {
+        "loading": "Carregando números…",
+        "empty": "Nenhum número de chamada ainda. <link>Adicione um em Configurações → WhatsApp → Números de chamada</link>, vincule-o ao WhatsApp Web e volte aqui. Você ainda pode salvar esta campanha como rascunho.",
+        "status": {
+          "onboarding": "Ainda não vinculado",
+          "active": "Ativo",
+          "paused": "Pausado",
+          "loggedOut": "Desconectado",
+          "banned": "Banido"
+        },
+        "readyOn": "Pronto em {host}",
+        "readyOnTitle": "O WhatsApp Web fica aberto em {host}, então as chamadas começam na hora",
+        "linkBeforeLaunch": "Vincule o WhatsApp antes de lançar"
+      },
+      "when": {
+        "actionRequiredFrom": "Ação necessária a partir de {date}",
+        "actionRequiredSince": "Em Ação necessária desde {date}"
+      },
+      "callLength": {
+        "seconds": "{seconds}s",
+        "minutes": "{minutes}min {seconds}s"
+      },
+      "delay": {
+        "days": "{count, plural, one {# dia} other {# dias}}",
+        "hours": "{count, plural, one {# hora} other {# horas}}"
+      }
+    },
+    "section": {
+      "title": "Campanhas com agente de IA",
+      "description": "O agente liga para os leads por conta própria, a partir dos seus números de chamada, faz follow-up pelo WhatsApp e passa adiante quem tem interesse.",
+      "newCampaign": "Nova campanha de IA",
+      "loadingAria": "Carregando",
+      "emptyTitle": "Nenhuma campanha de IA ainda",
+      "emptyDescription": "Defina um objetivo, escolha números de chamada e adicione leads. O agente segue a sua sequência de chamadas e mensagens de WhatsApp.",
+      "colCampaign": "Campanha",
+      "colNumbers": "Números",
+      "colLeads": "Leads",
+      "colCallsToday": "Chamadas hoje",
+      "colBooked": "Agendados",
+      "goalSteps": "{goal} · {count, plural, one {# passo} other {# passos}}",
+      "noNumbers": "Nenhum ainda"
+    },
+    "detail": {
+      "pageTitle": "Campanha de chamadas com IA",
+      "back": "Campanhas de chamadas",
+      "loadingAria": "Carregando",
+      "loadFailed": "Não foi possível carregar a campanha",
+      "tryAgain": "Tentar de novo",
+      "launchFailed": "Não foi possível lançar a campanha",
+      "pauseFailed": "Não foi possível pausar a campanha",
+      "resumeFailed": "Não foi possível retomar a campanha",
+      "archiveFailed": "Não foi possível arquivar a campanha",
+      "archiveTitle": "Arquivar campanha?",
+      "archiveDescription": "As chamadas e mensagens são interrompidas e a campanha sai da lista. As chamadas já feitas continuam em cada lead, com gravações e transcrições.",
+      "archiveConfirm": "Arquivar campanha",
+      "created": "Criada em {date} · {count, plural, one {# passo} other {# passos}} na sequência",
+      "createdWithDescription": "Criada em {date} · {count, plural, one {# passo} other {# passos}} na sequência · {description}",
+      "launch": "Lançar",
+      "pause": "Pausar",
+      "resume": "Retomar",
+      "moreActions": "Mais ações",
+      "archiveItem": "Arquivar campanha",
+      "cannotLaunch": "Ainda não dá para lançar: {blocker}.",
+      "draftNote": "Esta campanha é um rascunho e não faz nenhuma chamada até você lançá-la.",
+      "stats": {
+        "leads": "Leads",
+        "leadsHint": "Pessoas inscritas nesta campanha",
+        "callsToday": "Chamadas hoje",
+        "callsTodayHint": "Chamadas feitas hoje, em relação ao que os números da campanha podem fazer por dia",
+        "booked": "Agendados",
+        "bookedHint": "Reuniões agendadas por leads desta campanha",
+        "numbers": "Números",
+        "numbersNone": "Nenhum número de chamada atribuído"
+      },
+      "tabs": {
+        "label": "Seções da campanha",
+        "overview": "Visão geral",
+        "leads": "Leads",
+        "sequence": "Sequência",
+        "settings": "Configurações"
+      }
+    },
+    "wizard": {
+      "pageTitle": "Nova campanha de chamadas com IA",
+      "pageDescription": "O agente de IA liga para os seus leads por conta própria, a partir dos seus números de chamada, faz follow-up pelo WhatsApp e passa adiante quem tem interesse. A campanha fica como rascunho até você lançá-la.",
+      "back": "Campanhas de chamadas",
+      "steps": {
+        "goal": {
+          "label": "Nome e objetivo",
+          "hint": "Para que servem as chamadas"
+        },
+        "numbers": {
+          "label": "Números",
+          "hint": "De onde saem as chamadas"
+        },
+        "leads": {
+          "label": "Leads",
+          "hint": "Pessoas ou planilha"
+        },
+        "sequence": {
+          "label": "Roteiro e sequência",
+          "hint": "Instruções e passos"
+        },
+        "review": {
+          "label": "Revisar e lançar",
+          "hint": "Confirmar que está pronto"
+        }
+      },
+      "stepsTitle": "Etapas",
+      "stepOf": "Etapa {current} de {total}",
+      "summary": {
+        "title": "Resumo",
+        "name": "Nome",
+        "notNamed": "Sem nome ainda",
+        "goal": "Objetivo",
+        "numbers": "Números",
+        "leads": "Leads",
+        "steps": "Passos"
+      },
+      "saveFirst": "Salve os detalhes primeiro",
+      "nameRequired": "Informe o nome da campanha",
+      "numbersLoadFailed": "Não foi possível carregar os números",
+      "goal": {
+        "title": "Nome e objetivo",
+        "description": "Dê um nome à campanha e diga para que servem as chamadas.",
+        "nameLabel": "Nome da campanha",
+        "namePlaceholder": "Ex.: fundadores de D2C, Índia",
+        "descriptionLabel": "Descrição",
+        "optional": "(opcional)",
+        "descriptionPlaceholder": "Para que serve esta campanha?",
+        "goalLabel": "Objetivo",
+        "cancel": "Cancelar",
+        "next": "Continuar para os números"
+      },
+      "numbers": {
+        "title": "Números de chamada",
+        "description": "Escolha os números dos quais esta campanha liga. Cada lead recebe chamadas e mensagens de um deles e continua sendo atendido sempre pelo mesmo.",
+        "hint": "Um número novo é aquecido aos poucos, e cada número tem o próprio limite diário e horário de chamadas (Configurações → WhatsApp → Números de chamada e Regras de envio). Você pode lançar com um número ainda sendo vinculado, mas nada é chamado até que ele esteja vinculado.",
+        "next": "Continuar para os leads"
+      },
+      "leads": {
+        "title": "Adicionar leads",
+        "description": "Importe uma planilha com telefones ou selecione pessoas que já estão na sua base.",
+        "importTitle": "Importar CSV ou Excel",
+        "importHint": "Você mapeia a coluna de telefone antes de importar qualquer coisa.",
+        "peopleTitle": "Adicionar de Pessoas",
+        "peopleHint": "Selecione pessoas que já têm telefone cadastrado.",
+        "added": "{count, plural, one {# lead adicionado} other {# leads adicionados}}",
+        "noneNote": "Você pode continuar sem leads e adicioná-los depois; a campanha só pode ser lançada quando tiver alguns.",
+        "peopleAdded": "{count} adicionados de Pessoas",
+        "peopleDuplicate": "{count} já estavam na campanha",
+        "peopleNoPhone": "{count} sem telefone",
+        "next": "Continuar para o roteiro"
+      },
+      "script": {
+        "title": "Roteiro e sequência",
+        "description": "Sobre o que é cada chamada, quem é o agente e quais chamadas e mensagens enviar. Os padrões são um bom ponto de partida.",
+        "knowledge": "Conhecimento",
+        "instructionsLabel": "Instruções da campanha",
+        "instructionsHint": "Sobre o que é cada chamada, além do Conhecimento acima: para quem você liga, o que oferece e o que descobrir.",
+        "instructionsPlaceholder": "Você está ligando para fundadores de marcas D2C que anunciam na Meta. Ajudamos essas pessoas a …",
+        "agentName": "Nome do agente",
+        "voice": "Voz",
+        "voiceDefault": "Padrão ({voice})",
+        "bookingLink": "Link de agendamento (Cal.com)",
+        "bookingMessage": "Mensagem de agendamento",
+        "bookingMessageHint": "O WhatsApp enviado logo depois que a pessoa aceita agendar. Precisa incluir <code>{token}</code>.",
+        "reachTitle": "Abordagem",
+        "reachEmpty": "Adicione pelo menos uma chamada.",
+        "chaseTitle": "Se disseram sim, mas não agendaram",
+        "chaseDescription": "Roda depois da mensagem de agendamento, até a pessoa agendar, responder ou os passos acabarem e alguém assumir.",
+        "chaseEmpty": "Nenhum follow-up.",
+        "next": "Salvar e revisar"
+      },
+      "review": {
+        "title": "Revisar e lançar",
+        "description": "Nada é chamado até você lançar. Você pode salvar como rascunho e terminar depois.",
+        "campaign": "Campanha",
+        "leads": "Leads",
+        "leadsDetail": "na fila para receber chamadas",
+        "numbers": "Números",
+        "numbersActive": "{count} ativos",
+        "agent": "Agente",
+        "sequence": "Sequência",
+        "kindCall": "Chamada de IA",
+        "kindMessage": "Mensagem de WhatsApp",
+        "stepAfter": "{kind} · após {delay}",
+        "stepFirst": "{kind} · primeiro",
+        "noInstructions": "Sem instruções extras",
+        "chase": "Depois, {count, plural, one {# passo de follow-up} other {# passos de follow-up}} para leads que dizem sim, mas não agendam.",
+        "hours": "As chamadas começam dentro do horário de chamadas dos números, espaçadas e limitadas por dia. Uma resposta em qualquer canal interrompe a sequência e cai em CRM → Ação necessária.",
+        "blocker": "{blocker} antes de lançar. Você pode salvar como rascunho e terminar depois.",
+        "saveDraft": "Salvar como rascunho",
+        "launch": "Lançar campanha"
+      },
+      "footer": {
+        "back": "Voltar",
+        "saving": "Salvando…"
+      }
+    },
+    "steps": {
+      "kindCall": "Chamada de IA",
+      "kindMessage": "Mensagem de WhatsApp",
+      "waitLine": "Aguardar {delay}, se a pessoa ainda não teve uma conversa de verdade",
+      "stepType": "Tipo do passo {number}",
+      "statDone": "{count} concluídos",
+      "statFailed": "{count} com falha",
+      "statConversations": "{count, plural, one {# conversa} other {# conversas}}",
+      "moveUp": "Mover passo para cima",
+      "moveDown": "Mover passo para baixo",
+      "remove": "Remover passo",
+      "wait": "Aguardar",
+      "waitAria": "Espera antes deste passo",
+      "waitUnit": "Unidade da espera",
+      "unitHours": "horas",
+      "unitDays": "dias",
+      "afterPrevious": "após o passo anterior",
+      "callPurpose": "Para que serve esta chamada?",
+      "callPlaceholder": "Além das instruções da campanha. Ex.: “Segunda tentativa: mencione que você ligou ontem.”",
+      "rehearsalCall": "Chamada de ensaio",
+      "rehearsalClose": "Fechar chamada de ensaio",
+      "rehearseTyping": "Ensaiar digitando",
+      "close": "Fechar",
+      "newStepWarning": "Este passo é novo: salve a sequência primeiro para o ensaio usá-lo.",
+      "rehearsalVoiceHint": "Uma chamada com o agente no seu navegador, com as últimas instruções salvas da campanha, este passo, a voz e o objetivo. Nada é chamado nem salvo.",
+      "rehearsalTextHint": "O agente conversa com você por texto, com as últimas instruções salvas da campanha e este passo. Nada é chamado nem salvo.",
+      "maxSteps": "Até {max} passos",
+      "addStep": "Adicionar passo",
+      "message": "Mensagem",
+      "field": {
+        "firstName": "Nome",
+        "company": "Empresa",
+        "agentName": "Nome do agente",
+        "bookingLink": "Link de agendamento"
+      },
+      "messagePlaceholder": "Oi {firstName}, aqui é {agentName} …",
+      "previewTitle": "Prévia com valores de exemplo",
+      "previewEmpty": "Escreva a mensagem para vê-la aqui."
+    },
+    "knowledge": {
+      "loading": "Carregando…",
+      "noDocuments": "Nenhum documento de Conhecimento ainda",
+      "noneSelected": "Nenhum — as chamadas só conhecem as instruções",
+      "ariaLabel": "Documentos de Conhecimento",
+      "more": "+{count}",
+      "selectAll": "Selecionar todos",
+      "selected": "{count} selecionados",
+      "metaChars": "{kind} · {count, plural, one {# caractere} other {# caracteres}}",
+      "metaCharsAlways": "{kind} · {count, plural, one {# caractere} other {# caracteres}} · sempre incluir",
+      "kind": {
+        "company": "Empresa",
+        "product": "Produto",
+        "pricing": "Preços",
+        "faq": "Perguntas frequentes",
+        "scheduling": "Agendamento",
+        "objection": "Objeção",
+        "caseStudy": "Estudo de caso",
+        "custom": "Personalizado"
+      },
+      "loadFailed": "Não foi possível carregar os documentos de Conhecimento: {error}",
+      "hint": "Fatos da empresa nos quais o agente pode se basear. Gerencie os documentos em CRM → Conhecimento.",
+      "hintUsed": "Fatos da empresa nos quais o agente pode se basear — {count, plural, one {# caractere} other {# caracteres}}, todos lidos em cada chamada. Gerencie os documentos em CRM → Conhecimento."
+    },
+    "sequence": {
+      "saveFailed": "Não foi possível salvar a sequência",
+      "reachTitle": "Abordagem",
+      "reachDescription": "Roda para cada lead, em ordem, até a pessoa ter uma conversa de verdade. Atender e não dizer nada não conta como conversa.",
+      "reachEmpty": "Adicione pelo menos uma chamada. Uma campanha sem passo de chamada não pode ser lançada.",
+      "reachFooter": "O primeiro passo roda assim que um lead entra na fila e um número está livre. Cada espera conta a partir do passo anterior. Chamadas e mensagens respeitam o horário de chamadas e os limites diários dos números.",
+      "chaseTitle": "Se disseram sim, mas não agendaram",
+      "chaseDescription": "Depois de uma chamada em que a pessoa aceita uma reunião, a mensagem de agendamento sai pelo WhatsApp. Estes passos rodam até chegar um agendamento, a pessoa responder ou os passos acabarem e alguém assumir.",
+      "chaseEmpty": "Sem follow-ups: depois que a mensagem de agendamento é enviada, alguém assume se a pessoa não agendar.",
+      "unsaved": "Alterações não salvas",
+      "saved": "Salvo",
+      "saving": "Salvando…",
+      "save": "Salvar sequência"
+    },
+    "page": {
+      "detailTitle": "Campanha de chamadas com IA",
+      "newTitle": "Nova campanha de chamadas com IA",
+      "loadingAria": "Carregando"
+    }
+  }
 }

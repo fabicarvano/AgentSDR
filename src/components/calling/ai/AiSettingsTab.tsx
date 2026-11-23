@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RiArchiveLine, RiErrorWarningLine, RiLoader4Line, RiPauseCircleLine, RiPlayCircleLine, RiSaveLine } from "@remixicon/react";
+import { useTranslations } from "next-intl";
 import * as Button from "@/components/alignui/button";
 import { VoicePreviewButton } from "@/components/calls/VoicePreviewButton";
 import { KnowledgePicker } from "./KnowledgePicker";
@@ -17,12 +18,12 @@ import {
   type AiCampaignDetail,
   type UpdateAiCampaignRequest,
 } from "@/lib/calls/aiCampaigns/api";
-import { AI_CAMPAIGN_GOALS, AI_CAMPAIGN_GOAL_LABELS, AI_CAMPAIGN_MAX_CALLBACKS, type AiCampaignGoal } from "@/lib/calls/aiCampaigns/contract";
+import { AI_CAMPAIGN_GOALS, AI_CAMPAIGN_MAX_CALLBACKS, type AiCampaignGoal } from "@/lib/calls/aiCampaigns/contract";
 import { listCallingStations } from "@/lib/calls/client";
 import { setAiCampaignStations, updateAiCampaign } from "@/lib/calls/aiCampaigns/client";
 import type { CallingStation } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
-import { errorText, NumberPicker, useBeforeUnload } from "./aiShared";
+import { errorText, NumberPicker, useAiGoalText, useBeforeUnload } from "./aiShared";
 
 const DEFAULT_VOICE = "default";
 
@@ -62,6 +63,8 @@ export function AiSettingsTab({
   onArchive: () => void;
   toggling: boolean;
 }) {
+  const t = useTranslations("callingAiWork.settings");
+  const goalText = useAiGoalText();
   const [draft, setDraft] = useState<Draft>(() => draftOf(campaign));
   const [saved, setSaved] = useState<Draft>(() => draftOf(campaign));
   const [saving, setSaving] = useState(false);
@@ -79,9 +82,9 @@ export function AiSettingsTab({
     let cancelled = false;
     listCallingStations()
       .then((response) => { if (!cancelled) setStations(response.stations); })
-      .catch((cause) => { if (!cancelled) setStationsError(errorText(cause, "Could not load numbers")); });
+      .catch((cause) => { if (!cancelled) setStationsError(errorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   const numbersDirty = [...numberIds].sort().join() !== [...savedNumberIds].sort().join();
@@ -125,7 +128,7 @@ export function AiSettingsTab({
       setJustSaved(true);
       onSaved();
     } catch (cause) {
-      setError(errorText(cause, "Could not save the settings"));
+      setError(errorText(cause, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -138,7 +141,7 @@ export function AiSettingsTab({
       await setAiCampaignStations(campaign.id, numberIds);
       onSaved();
     } catch (cause) {
-      setNumbersError(errorText(cause, "Could not save the numbers"));
+      setNumbersError(errorText(cause, t("saveNumbersFailed")));
     } finally {
       setSavingNumbers(false);
     }
@@ -149,9 +152,9 @@ export function AiSettingsTab({
   return (
     <div className="space-y-4">
       <Frame>
-        <FrameHeader title="What the calls are for" description="The goal decides what the agent agrees to when a lead is interested." />
+        <FrameHeader title={t("goalTitle")} description={t("goalDescription")} />
         <FramePanel>
-          <div role="radiogroup" aria-label="Goal" className="grid gap-2 sm:grid-cols-3">
+          <div role="radiogroup" aria-label={t("goalAria")} className="grid gap-2 sm:grid-cols-3">
             {AI_CAMPAIGN_GOALS.map((goal) => {
               const active = draft.goal === goal;
               return (
@@ -166,22 +169,22 @@ export function AiSettingsTab({
                     active ? "bg-bg-weak-50 ring-primary-base" : "ring-stroke-soft-200 hover:bg-bg-weak-50",
                   )}
                 >
-                  <span className="block text-label-sm text-text-strong-950">{AI_CAMPAIGN_GOAL_LABELS[goal].label}</span>
-                  <span className="mt-1 block text-paragraph-xs text-text-sub-600">{AI_CAMPAIGN_GOAL_LABELS[goal].help}</span>
+                  <span className="block text-label-sm text-text-strong-950">{goalText(goal).label}</span>
+                  <span className="mt-1 block text-paragraph-xs text-text-sub-600">{goalText(goal).help}</span>
                 </button>
               );
             })}
           </div>
 
           <div className="mt-5">
-            <label className="mb-1.5 block text-label-sm text-text-strong-950">Knowledge</label>
+            <label className="mb-1.5 block text-label-sm text-text-strong-950">{t("knowledge")}</label>
             <KnowledgePicker value={draft.knowledgeIds} onChange={(ids) => set("knowledgeIds", ids)} />
           </div>
 
           <div className="mt-5">
-            <label htmlFor="ai-instructions" className="mb-1.5 block text-label-sm text-text-strong-950">Campaign instructions</label>
+            <label htmlFor="ai-instructions" className="mb-1.5 block text-label-sm text-text-strong-950">{t("instructionsLabel")}</label>
             <p className="mb-2 text-paragraph-xs text-text-sub-600">
-              What every call in this campaign is about, on top of the Knowledge above: who you are calling, what you offer them, what to find out. Each call step can add its own instructions on top.
+              {t("instructionsHint")}
             </p>
             <Textarea.Root
               id="ai-instructions"
@@ -190,7 +193,7 @@ export function AiSettingsTab({
               maxLength={AI_CAMPAIGN_MAX_INSTRUCTIONS}
               value={draft.instructions}
               onChange={(event) => set("instructions", event.target.value)}
-              placeholder="You are calling founders of D2C brands who run Meta ads. We help them … Find out whether they spend more than ₹5 lakh a month on ads …"
+              placeholder={t("instructionsPlaceholder")}
             />
             <div className="mt-1 flex justify-end text-paragraph-xs tabular-nums text-text-soft-400">{draft.instructions.length}/{AI_CAMPAIGN_MAX_INSTRUCTIONS}</div>
           </div>
@@ -198,11 +201,11 @@ export function AiSettingsTab({
       </Frame>
 
       <Frame>
-        <FrameHeader title="The agent" description="How the agent introduces itself. Every call in this campaign uses the same name and voice, so a lead hears one person." />
+        <FrameHeader title={t("agentTitle")} description={t("agentDescription")} />
         <FramePanel>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
-              label="Agent name"
+              label={t("agentName")}
               value={draft.agentName}
               onChange={(value) => set("agentName", value)}
               placeholder={DEFAULT_AGENT_NAME}
@@ -210,13 +213,13 @@ export function AiSettingsTab({
               aria-invalid={nameTooLong || undefined}
             />
             <div>
-              <label className="mb-1.5 block text-label-sm text-text-strong-950">Voice</label>
+              <label className="mb-1.5 block text-label-sm text-text-strong-950">{t("voice")}</label>
               <div className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
                   <Select.Root size="small" value={draft.agentVoice} onValueChange={(value) => set("agentVoice", value)}>
-                    <Select.Trigger aria-label="Voice"><Select.Value /></Select.Trigger>
+                    <Select.Trigger aria-label={t("voice")}><Select.Value /></Select.Trigger>
                     <Select.Content>
-                      <Select.Item value={DEFAULT_VOICE}>Default ({DEFAULT_AGENT_VOICE})</Select.Item>
+                      <Select.Item value={DEFAULT_VOICE}>{t("voiceDefault", { voice: DEFAULT_AGENT_VOICE })}</Select.Item>
                       {AGENT_VOICES.map((voice) => <Select.Item key={voice.id} value={voice.id}>{voice.label}</Select.Item>)}
                     </Select.Content>
                   </Select.Root>
@@ -230,11 +233,11 @@ export function AiSettingsTab({
 
       {!handover && (
         <Frame>
-          <FrameHeader title="Booking" description="Where interested leads book a time with your team (a Cal.com page), and the WhatsApp that sends them there right after the call." />
+          <FrameHeader title={t("bookingTitle")} description={t("bookingDescription")} />
           <FramePanel className="space-y-4">
-            <TextField label="Booking link" value={draft.bookingUrl} onChange={(value) => set("bookingUrl", value)} placeholder="https://cal.com/acme/30min" inputMode="url" />
+            <TextField label={t("bookingLink")} value={draft.bookingUrl} onChange={(value) => set("bookingUrl", value)} placeholder="https://cal.com/acme/30min" inputMode="url" />
             <div>
-              <label htmlFor="ai-booking-message" className="mb-1.5 block text-label-sm text-text-strong-950">Booking message</label>
+              <label htmlFor="ai-booking-message" className="mb-1.5 block text-label-sm text-text-strong-950">{t("bookingMessage")}</label>
               <Textarea.Root
                 id="ai-booking-message"
                 simple
@@ -244,25 +247,25 @@ export function AiSettingsTab({
                 onChange={(event) => set("bookingMessage", event.target.value)}
                 hasError={Boolean(draft.bookingUrl.trim()) && !draft.bookingMessage.includes("{{bookingLink}}")}
               />
-              <p className="mt-1 text-paragraph-xs text-text-sub-600">Must include <code className="font-mono">{"{{bookingLink}}"}</code>. You can also use {"{{firstName}}"}, {"{{company}}"} and {"{{agentName}}"}.</p>
+              <p className="mt-1 text-paragraph-xs text-text-sub-600">{t.rich("bookingHint", { code: (chunks) => <code className="font-mono">{chunks}</code>, bookingLink: "{{bookingLink}}", firstName: "{{firstName}}", company: "{{company}}", agentName: "{{agentName}}" })}</p>
             </div>
           </FramePanel>
         </Frame>
       )}
 
       <Frame>
-        <FrameHeader title="Call-backs" description="When a lead asks to be called later, the agent calls back at the time they gave." />
+        <FrameHeader title={t("callbacksTitle")} description={t("callbacksDescription")} />
         <FramePanel>
-          <label className="mb-1.5 block text-label-sm text-text-strong-950" htmlFor="ai-callbacks">Most call-backs per lead</label>
+          <label className="mb-1.5 block text-label-sm text-text-strong-950" htmlFor="ai-callbacks">{t("callbacksMost")}</label>
           <Select.Root size="small" value={String(draft.maxCallbacks)} onValueChange={(value) => set("maxCallbacks", Number(value))}>
             <Select.Trigger id="ai-callbacks" className="w-40"><Select.Value /></Select.Trigger>
             <Select.Content>
               {Array.from({ length: AI_CAMPAIGN_MAX_CALLBACKS + 1 }, (_, n) => (
-                <Select.Item key={n} value={String(n)}>{n === 0 ? "None" : n}</Select.Item>
+                <Select.Item key={n} value={String(n)}>{n === 0 ? t("callbacksNone") : n}</Select.Item>
               ))}
             </Select.Content>
           </Select.Root>
-          <p className="mt-1.5 text-paragraph-xs text-text-sub-600">After the last one, a person takes the lead over.</p>
+          <p className="mt-1.5 text-paragraph-xs text-text-sub-600">{t("callbacksHint")}</p>
         </FramePanel>
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-stroke-soft-200 px-5 py-3.5">
           {(problem || error) && dirty && (
@@ -270,46 +273,46 @@ export function AiSettingsTab({
               <RiErrorWarningLine className="size-4 shrink-0" />{error ?? problem}
             </p>
           )}
-          {dirty && !problem && <span className="text-paragraph-xs text-warning-dark">Unsaved changes</span>}
-          {justSaved && !dirty && <span role="status" className="text-paragraph-xs text-success-base">Saved</span>}
+          {dirty && !problem && <span className="text-paragraph-xs text-warning-dark">{t("unsaved")}</span>}
+          {justSaved && !dirty && <span role="status" className="text-paragraph-xs text-success-base">{t("saved")}</span>}
           {error && !dirty && <p role="alert" className="mr-auto text-paragraph-sm text-error-base">{error}</p>}
           <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || !dirty || Boolean(problem) || nameTooLong}>
             <Button.Icon as={saving ? RiLoader4Line : RiSaveLine} className={cn(saving && "animate-spin")} />
-            {saving ? "Saving…" : "Save settings"}
+            {saving ? t("saving") : t("saveSettings")}
           </Button.Root>
         </div>
       </Frame>
 
       <Frame>
-        <FrameHeader title="Calling numbers" description="Every lead is called, and messaged, from one of these and keeps hearing from the same one." />
+        <FrameHeader title={t("numbersTitle")} description={t("numbersDescription")} />
         <FramePanel>
           <NumberPicker stations={stations} selectedIds={numberIds} onChange={(ids) => { setNumbersError(null); setNumberIds(ids); }} error={stationsError} />
           {numbersError && <p role="alert" className="mt-3 text-paragraph-sm text-error-base">{numbersError}</p>}
           <div className="mt-4 flex items-center justify-end gap-3">
-            {numbersDirty && <span className="text-paragraph-xs text-warning-dark">Unsaved changes</span>}
+            {numbersDirty && <span className="text-paragraph-xs text-warning-dark">{t("unsaved")}</span>}
             <Button.Root variant="primary" mode="filled" size="small" onClick={() => void saveNumbers()} disabled={savingNumbers || !numbersDirty}>
               <Button.Icon as={savingNumbers ? RiLoader4Line : RiSaveLine} className={cn(savingNumbers && "animate-spin")} />
-              {savingNumbers ? "Saving…" : "Save numbers"}
+              {savingNumbers ? t("saving") : t("saveNumbers")}
             </Button.Root>
           </div>
         </FramePanel>
-        <FrameFooter>Daily limits, gaps and calling hours are the organization&apos;s Sending rules, which each number can override in Settings → WhatsApp → Calling numbers.</FrameFooter>
+        <FrameFooter>{t("numbersFooter")}</FrameFooter>
       </Frame>
 
       <Frame>
-        <FrameHeader title="Pause or archive" description="Pausing stops new calls and messages; leads keep their place. Archiving removes the campaign from the list." />
+        <FrameHeader title={t("pauseTitle")} description={t("pauseDescription")} />
         <FramePanel className="flex flex-wrap items-center gap-2">
           {launched && (
             <Button.Root variant="neutral" mode="stroke" size="small" onClick={onToggle} disabled={toggling}>
               <Button.Icon as={toggling ? RiLoader4Line : campaign.state === "active" ? RiPauseCircleLine : RiPlayCircleLine} className={cn(toggling && "animate-spin")} />
-              {campaign.state === "active" ? "Pause campaign" : "Resume campaign"}
+              {campaign.state === "active" ? t("pauseCampaign") : t("resumeCampaign")}
             </Button.Root>
           )}
           <Button.Root variant="error" mode="stroke" size="small" onClick={onArchive}>
             <Button.Icon as={RiArchiveLine} />
-            Archive campaign
+            {t("archiveCampaign")}
           </Button.Root>
-          {!launched && <p className="text-paragraph-xs text-text-sub-600">This campaign is a draft; launch it from the header once it is ready.</p>}
+          {!launched && <p className="text-paragraph-xs text-text-sub-600">{t("draftNote")}</p>}
         </FramePanel>
       </Frame>
     </div>

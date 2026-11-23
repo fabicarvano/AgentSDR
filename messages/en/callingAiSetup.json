@@ -1,3 +1,323 @@
 {
-  "callingAiSetup": {}
+  "callingAiSetup": {
+    "shared": {
+      "status": {
+        "queued": "Queued",
+        "reaching": "Reaching",
+        "callback": "Call back scheduled",
+        "chasing": "Waiting for booking",
+        "booked": "Meeting booked",
+        "handoff": "For the team",
+        "notInterested": "Not interested",
+        "unreached": "Unreached",
+        "replied": "Replied",
+        "stopped": "Stopped",
+        "failed": "Failed"
+      },
+      "state": {
+        "draft": "Draft",
+        "active": "Active",
+        "paused": "Paused"
+      },
+      "goal": {
+        "bookMeeting": {
+          "label": "Book a meeting",
+          "help": "If they are interested, the agent agrees to send a booking link on WhatsApp; follow-ups chase until they book."
+        },
+        "humanCallback": {
+          "label": "Hand over to the team",
+          "help": "If they are interested, the agent confirms it and agrees when a person from your team will call; the lead lands in Action required."
+        },
+        "either": {
+          "label": "Either, their choice",
+          "help": "The agent offers the booking link, or a call from the team if they prefer."
+        }
+      },
+      "agentBadge": "AI agent",
+      "errors": {
+        "generic": "Something went wrong. Please try again."
+      },
+      "numberPicker": {
+        "loading": "Loading numbers…",
+        "empty": "No calling numbers yet. <link>Add one in Settings → WhatsApp → Calling numbers</link>, link it to WhatsApp Web, then come back. You can still save this campaign as a draft.",
+        "status": {
+          "onboarding": "Not linked yet",
+          "active": "Active",
+          "paused": "Paused",
+          "loggedOut": "Logged out",
+          "banned": "Banned"
+        },
+        "readyOn": "Ready on {host}",
+        "readyOnTitle": "WhatsApp Web is kept open on {host}, so calls start right away",
+        "linkBeforeLaunch": "Link WhatsApp before launching"
+      },
+      "when": {
+        "actionRequiredFrom": "Action required from {date}",
+        "actionRequiredSince": "In Action required since {date}"
+      },
+      "callLength": {
+        "seconds": "{seconds}s",
+        "minutes": "{minutes}m {seconds}s"
+      },
+      "delay": {
+        "days": "{count, plural, one {# day} other {# days}}",
+        "hours": "{count, plural, one {# hour} other {# hours}}"
+      }
+    },
+    "section": {
+      "title": "AI agent campaigns",
+      "description": "The agent calls the leads itself from your calling numbers, follows up on WhatsApp, and hands over interested people.",
+      "newCampaign": "New AI campaign",
+      "loadingAria": "Loading",
+      "emptyTitle": "No AI campaigns yet",
+      "emptyDescription": "Set a goal, pick calling numbers and add leads. The agent follows your sequence of calls and WhatsApp messages.",
+      "colCampaign": "Campaign",
+      "colNumbers": "Numbers",
+      "colLeads": "Leads",
+      "colCallsToday": "Calls today",
+      "colBooked": "Booked",
+      "goalSteps": "{goal} · {count, plural, one {# step} other {# steps}}",
+      "noNumbers": "None yet"
+    },
+    "detail": {
+      "pageTitle": "AI calling campaign",
+      "back": "Call campaigns",
+      "loadingAria": "Loading",
+      "loadFailed": "Could not load the campaign",
+      "tryAgain": "Try again",
+      "launchFailed": "Could not launch the campaign",
+      "pauseFailed": "Could not pause the campaign",
+      "resumeFailed": "Could not resume the campaign",
+      "archiveFailed": "Could not archive the campaign",
+      "archiveTitle": "Archive campaign?",
+      "archiveDescription": "Calls and messages stop and the campaign leaves the list. Calls already placed stay on each lead, with their recordings and transcripts.",
+      "archiveConfirm": "Archive campaign",
+      "created": "Created {date} · {count, plural, one {# step} other {# steps}} in the sequence",
+      "createdWithDescription": "Created {date} · {count, plural, one {# step} other {# steps}} in the sequence · {description}",
+      "launch": "Launch",
+      "pause": "Pause",
+      "resume": "Resume",
+      "moreActions": "More actions",
+      "archiveItem": "Archive campaign",
+      "cannotLaunch": "Cannot launch yet: {blocker}.",
+      "draftNote": "This campaign is a draft and places nothing until you launch it.",
+      "stats": {
+        "leads": "Leads",
+        "leadsHint": "People enrolled in this campaign",
+        "callsToday": "Calls today",
+        "callsTodayHint": "Calls placed today, against what the campaign's numbers may place a day",
+        "booked": "Booked",
+        "bookedHint": "Meetings booked by leads of this campaign",
+        "numbers": "Numbers",
+        "numbersNone": "No calling numbers assigned"
+      },
+      "tabs": {
+        "label": "Campaign sections",
+        "overview": "Overview",
+        "leads": "Leads",
+        "sequence": "Sequence",
+        "settings": "Settings"
+      }
+    },
+    "wizard": {
+      "pageTitle": "New AI calling campaign",
+      "pageDescription": "The AI agent calls your leads by itself from your calling numbers, follows up on WhatsApp, and hands over interested people. It stays a draft until you launch it.",
+      "back": "Call campaigns",
+      "steps": {
+        "goal": {
+          "label": "Name & goal",
+          "hint": "What the calls are for"
+        },
+        "numbers": {
+          "label": "Numbers",
+          "hint": "Where calls come from"
+        },
+        "leads": {
+          "label": "Leads",
+          "hint": "People or spreadsheet"
+        },
+        "sequence": {
+          "label": "Script & sequence",
+          "hint": "Instructions and steps"
+        },
+        "review": {
+          "label": "Review & launch",
+          "hint": "Confirm readiness"
+        }
+      },
+      "stepsTitle": "Steps",
+      "stepOf": "Step {current} of {total}",
+      "summary": {
+        "title": "Summary",
+        "name": "Name",
+        "notNamed": "Not named yet",
+        "goal": "Goal",
+        "numbers": "Numbers",
+        "leads": "Leads",
+        "steps": "Steps"
+      },
+      "saveFirst": "Save the details first",
+      "nameRequired": "Enter a campaign name",
+      "numbersLoadFailed": "Could not load numbers",
+      "goal": {
+        "title": "Name and goal",
+        "description": "Name the campaign and say what its calls are for.",
+        "nameLabel": "Campaign name",
+        "namePlaceholder": "e.g. D2C founders, India",
+        "descriptionLabel": "Description",
+        "optional": "(optional)",
+        "descriptionPlaceholder": "What is this campaign for?",
+        "goalLabel": "Goal",
+        "cancel": "Cancel",
+        "next": "Continue to numbers"
+      },
+      "numbers": {
+        "title": "Calling numbers",
+        "description": "Pick the numbers this campaign calls from. Each lead is called and messaged from one of them and keeps hearing from the same one.",
+        "hint": "A new number warms up gradually, and every number has its own daily limit and calling hours (Settings → WhatsApp → Calling numbers and Sending rules). You can launch with a number still being linked, but nothing is called until it is.",
+        "next": "Continue to leads"
+      },
+      "leads": {
+        "title": "Add leads",
+        "description": "Import a spreadsheet with phone numbers, or select people already in your database.",
+        "importTitle": "Import CSV or Excel",
+        "importHint": "You map the phone column before anything is imported.",
+        "peopleTitle": "Add from People",
+        "peopleHint": "Select existing people who already have a phone number.",
+        "added": "{count, plural, one {# lead added} other {# leads added}}",
+        "noneNote": "You can continue with no leads and add them later; the campaign cannot launch until it has some.",
+        "peopleAdded": "{count} added from People",
+        "peopleDuplicate": "{count} already in the campaign",
+        "peopleNoPhone": "{count} without a phone number",
+        "next": "Continue to the script"
+      },
+      "script": {
+        "title": "Script and sequence",
+        "description": "What every call is about, who the agent is, and the calls and messages to send. The defaults are a sensible start.",
+        "knowledge": "Knowledge",
+        "instructionsLabel": "Campaign instructions",
+        "instructionsHint": "What every call is about, on top of the Knowledge above: who you are calling, what you offer, what to find out.",
+        "instructionsPlaceholder": "You are calling founders of D2C brands who run Meta ads. We help them …",
+        "agentName": "Agent name",
+        "voice": "Voice",
+        "voiceDefault": "Default ({voice})",
+        "bookingLink": "Booking link (Cal.com)",
+        "bookingMessage": "Booking message",
+        "bookingMessageHint": "The WhatsApp sent right after they agree to book. Must include <code>{token}</code>.",
+        "reachTitle": "Reach them",
+        "reachEmpty": "Add at least one call.",
+        "chaseTitle": "If they said yes but haven't booked",
+        "chaseDescription": "Runs after the booking message, until they book, reply, or the steps run out and a person takes over.",
+        "chaseEmpty": "No follow-ups.",
+        "next": "Save and review"
+      },
+      "review": {
+        "title": "Review and launch",
+        "description": "Nothing is called until you launch. You can save it as a draft and finish later.",
+        "campaign": "Campaign",
+        "leads": "Leads",
+        "leadsDetail": "queued to be called",
+        "numbers": "Numbers",
+        "numbersActive": "{count} active",
+        "agent": "Agent",
+        "sequence": "Sequence",
+        "kindCall": "AI call",
+        "kindMessage": "WhatsApp message",
+        "stepAfter": "{kind} · after {delay}",
+        "stepFirst": "{kind} · first",
+        "noInstructions": "No extra instructions",
+        "chase": "Then {count, plural, one {# follow-up step} other {# follow-up steps}} for leads who say yes but do not book.",
+        "hours": "Calls start within the numbers' calling hours, spaced out and capped per day. A reply on any channel stops the sequence and lands in CRM → Action required.",
+        "blocker": "{blocker} before launching. You can save it as a draft and finish later.",
+        "saveDraft": "Save as draft",
+        "launch": "Launch campaign"
+      },
+      "footer": {
+        "back": "Back",
+        "saving": "Saving…"
+      }
+    },
+    "steps": {
+      "kindCall": "AI call",
+      "kindMessage": "WhatsApp message",
+      "waitLine": "Wait {delay}, if they have not had a real conversation",
+      "stepType": "Step {number} type",
+      "statDone": "{count} done",
+      "statFailed": "{count} failed",
+      "statConversations": "{count, plural, one {# conversation} other {# conversations}}",
+      "moveUp": "Move step up",
+      "moveDown": "Move step down",
+      "remove": "Remove step",
+      "wait": "Wait",
+      "waitAria": "Wait before this step",
+      "waitUnit": "Wait unit",
+      "unitHours": "hours",
+      "unitDays": "days",
+      "afterPrevious": "after the previous step",
+      "callPurpose": "What is this call for?",
+      "callPlaceholder": "On top of the campaign instructions: e.g. “Second try: mention you called yesterday.”",
+      "rehearsalCall": "Rehearsal call",
+      "rehearsalClose": "Close rehearsal call",
+      "rehearseTyping": "Rehearse by typing",
+      "close": "Close",
+      "newStepWarning": "This step is new: save the sequence first so the rehearsal uses it.",
+      "rehearsalVoiceHint": "A call with the agent in your browser, with the campaign's last saved instructions, this step, its voice and goal. Nothing is placed or saved.",
+      "rehearsalTextHint": "Plays the agent against you in text, with the campaign's last saved instructions and this step. Nothing is placed or saved.",
+      "maxSteps": "Up to {max} steps",
+      "addStep": "Add step",
+      "message": "Message",
+      "field": {
+        "firstName": "First name",
+        "company": "Company",
+        "agentName": "Agent name",
+        "bookingLink": "Booking link"
+      },
+      "messagePlaceholder": "Hi {firstName}, this is {agentName} …",
+      "previewTitle": "Preview with sample values",
+      "previewEmpty": "Write the message to see it here."
+    },
+    "knowledge": {
+      "loading": "Loading…",
+      "noDocuments": "No Knowledge documents yet",
+      "noneSelected": "None — the calls only know the instructions",
+      "ariaLabel": "Knowledge documents",
+      "more": "+{count}",
+      "selectAll": "Select all",
+      "selected": "{count} selected",
+      "metaChars": "{kind} · {count, plural, one {# character} other {# characters}}",
+      "metaCharsAlways": "{kind} · {count, plural, one {# character} other {# characters}} · always include",
+      "kind": {
+        "company": "Company",
+        "product": "Product",
+        "pricing": "Pricing",
+        "faq": "FAQ",
+        "scheduling": "Scheduling",
+        "objection": "Objection",
+        "caseStudy": "Case study",
+        "custom": "Custom"
+      },
+      "loadFailed": "Could not load the Knowledge documents: {error}",
+      "hint": "Company facts the agent can draw on. Manage documents in CRM → Knowledge.",
+      "hintUsed": "Company facts the agent can draw on — {count, plural, one {# character} other {# characters}}, all read on every call. Manage documents in CRM → Knowledge."
+    },
+    "sequence": {
+      "saveFailed": "Could not save the sequence",
+      "reachTitle": "Reach them",
+      "reachDescription": "Runs for every lead, in order, until they have a real conversation. Picking up and saying nothing does not count as one.",
+      "reachEmpty": "Add at least one call. A campaign without a call step cannot be launched.",
+      "reachFooter": "The first step runs as soon as a lead is queued and a number is free. Each wait is counted from the previous step. Calls and messages respect the numbers' calling hours and daily limits.",
+      "chaseTitle": "If they said yes but haven't booked",
+      "chaseDescription": "After a call where they agree to a meeting, the booking message goes out on WhatsApp. These steps then run until a booking arrives, they reply, or the steps run out and a person takes over.",
+      "chaseEmpty": "No follow-ups: once the booking message is sent, a person takes over if they do not book.",
+      "unsaved": "Unsaved changes",
+      "saved": "Saved",
+      "saving": "Saving…",
+      "save": "Save sequence"
+    },
+    "page": {
+      "detailTitle": "AI calling campaign",
+      "newTitle": "New AI calling campaign",
+      "loadingAria": "Loading"
+    }
+  }
 }
