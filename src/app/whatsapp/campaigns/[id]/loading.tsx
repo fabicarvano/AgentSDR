@@ -1,10 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import { KpiStripSkeleton, PageHeaderSkeleton, Skeleton } from "@/components/page/Skeletons";
 
 // DetailPageSkeleton's shape without its PageContainer: the layout
 // already pads the page. The body mirrors the Overview tab (KPIs, then charts).
-export default function WhatsappCampaignDetailLoading() {
+export default async function WhatsappCampaignDetailLoading() {
+  const t = await getTranslations("whatsappCampaigns.loading");
   return (
-    <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-[1440px] space-y-6">
+    <div aria-busy="true" aria-label={t("label")} className="mx-auto w-full max-w-[1440px] space-y-6">
       <PageHeaderSkeleton back />
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-stroke-soft-200 ring-1 ring-inset ring-stroke-soft-200 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (

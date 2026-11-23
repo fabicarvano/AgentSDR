@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { RiArrowLeftLine, RiArrowRightLine, RiCheckLine, RiDraftLine, RiFileExcel2Line, RiLoader4Line, RiRocketLine, RiStackLine, RiTeamLine, RiUserAddLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
@@ -21,16 +22,16 @@ import type {
 import type { WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 import { cn } from "@/utils/cn";
 import { apiJson, errorText, fetchWhatsappAccounts } from "./api";
-import { formatDelay, launchBlocker } from "./metrics";
-import { importSummary } from "./WhatsappCampaignLeadsTab";
+import { launchBlocker } from "./metrics";
+import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
 import { SenderPicker } from "./SenderPicker";
 import { WhatsappSequenceEditor } from "./WhatsappSequenceEditor";
 
 const STEPS = [
-  { id: "setup", label: "Details & numbers", hint: "Name and senders", icon: RiDraftLine },
-  { id: "leads", label: "Add leads", hint: "People or spreadsheet", icon: RiTeamLine },
-  { id: "sequence", label: "Write messages", hint: "First message and follow-ups", icon: RiStackLine },
-  { id: "review", label: "Review & launch", hint: "Confirm send readiness", icon: RiCheckLine },
+  { id: "setup", labelKey: "stepSetupLabel", hintKey: "stepSetupHint", icon: RiDraftLine },
+  { id: "leads", labelKey: "stepLeadsLabel", hintKey: "stepLeadsHint", icon: RiTeamLine },
+  { id: "sequence", labelKey: "stepSequenceLabel", hintKey: "stepSequenceHint", icon: RiStackLine },
+  { id: "review", labelKey: "stepReviewLabel", hintKey: "stepReviewHint", icon: RiCheckLine },
 ] as const;
 
 function StepDot({ index, active, done }: { index: number; active: boolean; done: boolean }) {
@@ -47,6 +48,9 @@ function StepDot({ index, active, done }: { index: number; active: boolean; done
 }
 
 export function WhatsappCampaignWizard() {
+  const t = useTranslations("whatsappCampaigns.wizard");
+  const cf = useCampaignFormat();
+  const importSummary = useImportSummary();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
@@ -68,9 +72,9 @@ export function WhatsappCampaignWizard() {
     let cancelled = false;
     fetchWhatsappAccounts()
       .then((list) => { if (!cancelled) setAccounts(list); })
-      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, "Could not load numbers")); });
+      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   // Review shows what the server holds, not what this page remembers.
   useEffect(() => {
@@ -94,7 +98,7 @@ export function WhatsappCampaignWizard() {
   const writtenSteps = steps.filter((s) => s.body.trim()).length;
 
   async function saveSetup() {
-    if (!name.trim()) { setError("Enter a campaign name"); return; }
+    if (!name.trim()) { setError(t("nameRequired")); return; }
     setBusy(true);
     setError(null);
     try {
@@ -108,7 +112,7 @@ export function WhatsappCampaignWizard() {
       }
       setStep(1);
     } catch (cause) {
-      setError(errorText(cause, "Could not save campaign"));
+      setError(errorText(cause, t("saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -125,7 +129,7 @@ export function WhatsappCampaignWizard() {
       }
       router.push(`/whatsapp/campaigns/${campaignId}`);
     } catch (cause) {
-      setError(errorText(cause, "Could not launch the campaign"));
+      setError(errorText(cause, t("launchFailed")));
       setBusy(false);
     }
   }
@@ -133,14 +137,14 @@ export function WhatsappCampaignWizard() {
   return (
     <div className="mx-auto w-full max-w-[1440px]">
       <PageHeader
-        back={{ href: "/whatsapp/campaigns", label: "Message campaigns" }}
-        title="Create a message campaign"
-        description="Choose your numbers, add leads, write the messages and preview them with real lead data. It stays paused until you launch it."
+        back={{ href: "/whatsapp/campaigns", label: t("backLabel") }}
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-5">
         <Frame>
-          <FrameHeader title="Steps" description={`Step ${step + 1} of ${STEPS.length}`} />
+          <FrameHeader title={t("stepsTitle")} description={t("stepProgress", { current: step + 1, total: STEPS.length })} />
           <FramePanel className="p-2 sm:p-2">
             <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
               {STEPS.map((item, index) => {
@@ -159,8 +163,8 @@ export function WhatsappCampaignWizard() {
                     >
                       <StepDot index={index} active={active} done={done} />
                       <span className="min-w-0">
-                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{item.label}</span>
-                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{item.hint}</span>
+                        <span className={cn("block text-label-sm", active ? "text-text-strong-950" : "text-text-sub-600")}>{t(item.labelKey)}</span>
+                        <span className="mt-0.5 hidden text-paragraph-xs text-text-soft-400 lg:block">{t(item.hintKey)}</span>
                       </span>
                       <Icon className="ml-auto hidden size-4 text-text-soft-400 sm:block lg:hidden" />
                     </button>
@@ -170,12 +174,12 @@ export function WhatsappCampaignWizard() {
             </ol>
 
             <div className="mx-1 mb-1 mt-3 hidden border-t border-stroke-soft-200 px-2 pt-3 lg:block">
-              <p className="text-paragraph-xs text-text-soft-400">Summary</p>
+              <p className="text-paragraph-xs text-text-soft-400">{t("summary")}</p>
               <dl className="mt-2 space-y-2 text-paragraph-sm">
-                <SummaryRow label="Name" value={name || "Not named yet"} truncate />
-                <SummaryRow label="Numbers" value={accountIds.length.toLocaleString()} />
-                <SummaryRow label="Leads" value={leadCount.toLocaleString()} />
-                <SummaryRow label="Messages" value={String(writtenSteps || steps.length)} />
+                <SummaryRow label={t("summaryName")} value={name || t("notNamed")} truncate />
+                <SummaryRow label={t("summaryNumbers")} value={cf.number(accountIds.length)} />
+                <SummaryRow label={t("summaryLeads")} value={cf.number(leadCount)} />
+                <SummaryRow label={t("summaryMessages")} value={cf.number(writtenSteps || steps.length)} />
               </dl>
             </div>
           </FramePanel>
@@ -185,51 +189,51 @@ export function WhatsappCampaignWizard() {
           <FramePanel className="min-h-[560px] p-5 sm:p-7">
             {step === 0 && (
               <div className="mx-auto max-w-2xl">
-                <StepHeading title="Campaign details" description="Choose a clear name and the WhatsApp numbers that can send." />
+                <StepHeading title={t("setupTitle")} description={t("setupDescription")} />
                 <div className="mt-6 space-y-5">
                   <label className="block">
-                    <span className="mb-1.5 block text-label-sm text-text-strong-950">Campaign name</span>
+                    <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("nameLabel")}</span>
                     <Input.Root hasError={Boolean(error && !name.trim())}>
                       <Input.Wrapper>
-                        <Input.Input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Founders, India outreach" autoFocus />
+                        <Input.Input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("namePlaceholder")} autoFocus />
                       </Input.Wrapper>
                     </Input.Root>
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 block text-label-sm text-text-strong-950">Description <span className="text-text-soft-400">(optional)</span></span>
-                    <Textarea.Root simple rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What is this campaign for?" />
+                    <span className="mb-1.5 block text-label-sm text-text-strong-950">{t.rich("descriptionLabel", { soft: (chunks) => <span className="text-text-soft-400">{chunks}</span> })}</span>
+                    <Textarea.Root simple rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder={t("descriptionPlaceholder")} />
                   </label>
                   <fieldset>
-                    <legend className="mb-2 block text-label-sm text-text-strong-950">WhatsApp numbers</legend>
+                    <legend className="mb-2 block text-label-sm text-text-strong-950">{t("numbersLegend")}</legend>
                     <SenderPicker accounts={accounts} selectedIds={accountIds} onChange={setAccountIds} error={accountsError} />
-                    <p className="mt-2 text-paragraph-xs text-text-sub-600">Each lead is messaged from one number and stays on it. A new number waits 24 hours before it can start chats.</p>
+                    <p className="mt-2 text-paragraph-xs text-text-sub-600">{t("numbersNote")}</p>
                   </fieldset>
                 </div>
-                <WizardFooter error={error} backLabel="Cancel" onBack={() => router.push("/whatsapp/campaigns")} onNext={() => void saveSetup()} busy={busy} nextLabel="Continue to leads" />
+                <WizardFooter error={error} backLabel={t("cancel")} onBack={() => router.push("/whatsapp/campaigns")} onNext={() => void saveSetup()} busy={busy} nextLabel={t("continueToLeads")} />
               </div>
             )}
 
             {step === 1 && campaignId && (
               <div className="mx-auto max-w-3xl">
-                <StepHeading title="Add leads" description="Import a spreadsheet with phone numbers, or select people already in your database." />
+                <StepHeading title={t("leadsTitle")} description={t("leadsDescription")} />
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-stroke-sub-300 bg-bg-weak-50 p-6 text-center outline-none transition hover:border-primary-base focus-visible:ring-2 focus-visible:ring-primary-base">
                     <span className="flex size-10 items-center justify-center rounded-xl bg-bg-white-0 ring-1 ring-inset ring-stroke-soft-200"><RiFileExcel2Line className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">Import CSV or Excel</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">You map the phone column before anything is imported.</span>
+                    <span className="mt-3 text-label-md text-text-strong-950">{t("importTitle")}</span>
+                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("importBody")}</span>
                   </button>
                   <button type="button" onClick={() => setShowPeople(true)} className="flex min-h-44 flex-col items-center justify-center rounded-2xl bg-bg-white-0 p-6 text-center shadow-regular-xs outline-none ring-1 ring-inset ring-stroke-soft-200 transition hover:bg-bg-weak-50 focus-visible:ring-2 focus-visible:ring-primary-base">
                     <span className="flex size-10 items-center justify-center rounded-xl bg-bg-weak-50 ring-1 ring-inset ring-stroke-soft-200"><RiUserAddLine className="size-5 text-text-sub-600" /></span>
-                    <span className="mt-3 text-label-md text-text-strong-950">Add from People</span>
-                    <span className="mt-1 text-paragraph-xs text-text-sub-600">Select existing people who already have a phone number.</span>
+                    <span className="mt-3 text-label-md text-text-strong-950">{t("peopleTitle")}</span>
+                    <span className="mt-1 text-paragraph-xs text-text-sub-600">{t("peopleBody")}</span>
                   </button>
                 </div>
                 <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => setPendingFile(event.target.files?.[0] ?? null)} />
                 <div role="status" className="mt-4 rounded-xl bg-bg-weak-50 p-4 ring-1 ring-inset ring-stroke-soft-200">
-                  <p className="text-label-sm text-text-strong-950">{leadCount.toLocaleString()} {leadCount === 1 ? "lead" : "leads"} added</p>
-                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importNote ?? "You can continue with no leads and add them later. The campaign stays paused."}</p>
+                  <p className="text-label-sm text-text-strong-950">{t("leadsAdded", { count: leadCount })}</p>
+                  <p className="mt-1 text-paragraph-xs text-text-sub-600">{importNote ?? t("leadsAddedHint")}</p>
                 </div>
-                <WizardFooter error={error} onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Continue to messages" />
+                <WizardFooter error={error} onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel={t("continueToMessages")} />
                 {pendingFile && (
                   <CampaignCsvMappingDialog
                     file={pendingFile}
@@ -252,7 +256,7 @@ export function WhatsappCampaignWizard() {
                     onClose={() => setShowPeople(false)}
                     onAdded={(result) => {
                       setLeadCount((current) => current + result.added);
-                      setImportNote(`${result.added} added from People${result.skippedDuplicate ? ` · ${result.skippedDuplicate} already enrolled` : ""}${result.skippedMissingIdentity ? ` · ${result.skippedMissingIdentity} without a phone number` : ""}`);
+                      setImportNote(t("peopleSummary", { added: result.added, duplicates: result.skippedDuplicate, missing: result.skippedMissingIdentity }));
                     }}
                   />
                 )}
@@ -261,19 +265,19 @@ export function WhatsappCampaignWizard() {
 
             {step === 2 && campaignId && (
               <div>
-                <StepHeading title="Write your messages" description="A first message and optional follow-ups. Personalise with People fields and preview against a real lead." />
+                <StepHeading title={t("sequenceTitle")} description={t("sequenceDescription")} />
                 <div className="mt-5">
                   <WhatsappSequenceEditor
                     campaignId={campaignId}
                     initialSteps={steps}
                     leadsVersion={leadCount}
-                    saveLabel="Save and review"
+                    saveLabel={t("saveAndReview")}
                     onSaved={(next) => { setSteps(next); setStep(3); }}
                   />
                 </div>
                 <div className="mt-5">
                   <Button.Root variant="neutral" mode="ghost" size="small" onClick={() => setStep(1)}>
-                    <Button.Icon as={RiArrowLeftLine} />Back to leads
+                    <Button.Icon as={RiArrowLeftLine} />{t("backToLeads")}
                   </Button.Root>
                 </div>
               </div>
@@ -281,29 +285,29 @@ export function WhatsappCampaignWizard() {
 
             {step === 3 && campaignId && (
               <div className="mx-auto max-w-3xl">
-                <StepHeading title="Review and launch" description="Your campaign is paused until you explicitly launch it." />
+                <StepHeading title={t("reviewTitle")} description={t("reviewDescription")} />
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <SummaryCard label="Campaign" value={name} detail="paused until launch" />
-                  <SummaryCard label="Leads" value={leadCount.toLocaleString()} detail="enrolled" />
-                  <SummaryCard label="Numbers" value={accountIds.length.toLocaleString()} detail={`${connectedSelected} connected`} />
+                  <SummaryCard label={t("cardCampaign")} value={name} detail={t("cardCampaignDetail")} />
+                  <SummaryCard label={t("cardLeads")} value={cf.number(leadCount)} detail={t("cardLeadsDetail")} />
+                  <SummaryCard label={t("cardNumbers")} value={cf.number(accountIds.length)} detail={t("cardNumbersDetail", { count: connectedSelected })} />
                 </div>
                 <div className="mt-4 rounded-2xl bg-bg-weak-50 p-1 ring-1 ring-inset ring-stroke-soft-200">
-                  <h3 className="px-3 pb-2 pt-2 text-label-sm text-text-strong-950">Sequence</h3>
+                  <h3 className="px-3 pb-2 pt-2 text-label-sm text-text-strong-950">{t("sequenceHeading")}</h3>
                   <ul className="divide-y divide-stroke-soft-200 rounded-xl bg-bg-white-0 px-4 ring-1 ring-inset ring-stroke-soft-200">
                     {steps.map((item, index) => (
                       <li key={item.id} className="flex items-center justify-between gap-4 py-2.5 text-paragraph-sm">
                         <span className="min-w-0">
-                          <span className="block text-text-sub-600">{index === 0 ? "First message" : `Follow-up ${index} · after ${formatDelay(item.delayHours)}`}</span>
+                          <span className="block text-text-sub-600">{index === 0 ? t("firstMessage") : t("followUpAfter", { number: index, delay: cf.delay(item.delayHours) })}</span>
                           <span className="block max-w-md truncate text-paragraph-xs text-text-soft-400">{item.body}</span>
                         </span>
-                        <span className="inline-flex shrink-0 items-center gap-1 text-success-base"><RiCheckLine className="size-4" aria-hidden="true" />Ready</span>
+                        <span className="inline-flex shrink-0 items-center gap-1 text-success-base"><RiCheckLine className="size-4" aria-hidden="true" />{t("ready")}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <p className="mt-4 text-paragraph-xs text-text-sub-600">First messages count against each number&apos;s new-chats-per-day limit (Settings → WhatsApp → Sending rules). A reply on any channel stops the sequence and lands in CRM → Action required.</p>
-                {blocker && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">{blocker} before launching. You can save it paused and finish later.</p>}
-                <WizardFooter error={error} onBack={() => setStep(2)} busy={busy} secondaryLabel="Save paused" onSecondary={() => void finish(false)} nextLabel="Launch campaign" onNext={() => void finish(true)} nextDisabled={Boolean(blocker)} nextIcon={RiRocketLine} />
+                <p className="mt-4 text-paragraph-xs text-text-sub-600">{t("sendingNote")}</p>
+                {blocker && <p className="mt-4 rounded-xl bg-warning-lighter p-3 text-paragraph-sm text-warning-dark">{t("blockedBeforeLaunch", { reason: blocker })}</p>}
+                <WizardFooter error={error} onBack={() => setStep(2)} busy={busy} secondaryLabel={t("savePaused")} onSecondary={() => void finish(false)} nextLabel={t("launch")} onNext={() => void finish(true)} nextDisabled={Boolean(blocker)} nextIcon={RiRocketLine} />
               </div>
             )}
           </FramePanel>
@@ -346,7 +350,7 @@ function WizardFooter({
   onBack,
   onNext,
   busy,
-  backLabel = "Back",
+  backLabel,
   nextLabel,
   nextDisabled,
   secondaryLabel,
@@ -364,12 +368,13 @@ function WizardFooter({
   onSecondary?: () => void;
   nextIcon?: typeof RiArrowRightLine;
 }) {
+  const t = useTranslations("whatsappCampaigns.wizard");
   return (
     <div className="mt-8 border-t border-stroke-soft-200 pt-5">
       {error && <p role="alert" className="mb-3 text-paragraph-sm text-error-base">{error}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button.Root variant="neutral" mode="ghost" size="small" onClick={onBack} disabled={busy}>
-          <Button.Icon as={RiArrowLeftLine} />{backLabel}
+          <Button.Icon as={RiArrowLeftLine} />{backLabel ?? t("back")}
         </Button.Root>
         <div className="flex gap-2">
           {secondaryLabel && onSecondary && (
@@ -377,7 +382,7 @@ function WizardFooter({
           )}
           <Button.Root variant="primary" mode="filled" size="small" onClick={onNext} disabled={busy || nextDisabled}>
             <Button.Icon as={busy ? RiLoader4Line : NextIcon} className={cn(busy && "animate-spin")} />
-            {busy ? "Saving…" : nextLabel}
+            {busy ? t("saving") : nextLabel}
           </Button.Root>
         </div>
       </div>

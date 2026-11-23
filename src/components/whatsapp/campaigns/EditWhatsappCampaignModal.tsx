@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiErrorWarningLine, RiLoader4Line, RiPencilLine, RiSaveLine } from "@remixicon/react";
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
@@ -37,6 +38,8 @@ export function EditWhatsappCampaignModal({
 }
 
 function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappCampaign; onCancel: () => void; onSaved: () => void }) {
+  const t = useTranslations("whatsappCampaigns.edit");
+  const te = useTranslations("whatsappCampaigns.errors");
   const [name, setName] = useState(campaign.name);
   const [description, setDescription] = useState(campaign.description ?? "");
   const [accountIds, setAccountIds] = useState<string[]>(campaign.senders.map((s) => s.accountId));
@@ -49,13 +52,13 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
     let cancelled = false;
     fetchWhatsappAccounts()
       .then((list) => { if (!cancelled) setAccounts(list); })
-      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, "Could not load numbers")); });
+      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   async function save() {
     const trimmed = name.trim();
-    if (!trimmed) { setError("Campaign name is required"); return; }
+    if (!trimmed) { setError(t("nameRequired")); return; }
     setSaving(true);
     setError(null);
     try {
@@ -63,7 +66,7 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
       await apiJson(`/api/whatsapp/campaigns/${campaign.id}`, { method: "PATCH", body: JSON.stringify(body) });
       onSaved();
     } catch (cause) {
-      setError(errorText(cause));
+      setError(errorText(cause, te("generic")));
     } finally {
       setSaving(false);
     }
@@ -72,12 +75,12 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
   return (
     <>
       <Modal.Header icon={RiPencilLine}>
-        <Modal.Title>Edit campaign</Modal.Title>
-        <Modal.Description>Rename it, or change which WhatsApp numbers send.</Modal.Description>
+        <Modal.Title>{t("title")}</Modal.Title>
+        <Modal.Description>{t("description")}</Modal.Description>
       </Modal.Header>
       <Modal.Body className="space-y-4">
         <label className="block">
-          <span className="mb-1.5 block text-label-sm text-text-strong-950">Campaign name</span>
+          <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("nameLabel")}</span>
           <Input.Root hasError={Boolean(error && !name.trim())}>
             <Input.Wrapper>
               <Input.Input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void save(); }} autoFocus />
@@ -86,12 +89,12 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label-sm text-text-strong-950">
-            Description <span className="text-text-soft-400">(optional)</span>
+            {t.rich("descriptionLabel", { soft: (chunks) => <span className="text-text-soft-400">{chunks}</span> })}
           </span>
-          <Textarea.Root simple rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional notes about this campaign…" />
+          <Textarea.Root simple rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} />
         </label>
         <div>
-          <span className="mb-1.5 block text-label-sm text-text-strong-950">WhatsApp numbers</span>
+          <span className="mb-1.5 block text-label-sm text-text-strong-950">{t("numbers")}</span>
           <SenderPicker accounts={accounts} selectedIds={accountIds} onChange={setAccountIds} error={accountsError} />
         </div>
         {error && (
@@ -101,10 +104,10 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
         )}
       </Modal.Body>
       <Modal.Footer>
-        <Button.Root variant="neutral" mode="stroke" size="small" onClick={onCancel}>Cancel</Button.Root>
+        <Button.Root variant="neutral" mode="stroke" size="small" onClick={onCancel}>{t("cancel")}</Button.Root>
         <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving}>
           <Button.Icon as={saving ? RiLoader4Line : RiSaveLine} className={cn(saving && "animate-spin")} />
-          Save changes
+          {t("save")}
         </Button.Root>
       </Modal.Footer>
     </>

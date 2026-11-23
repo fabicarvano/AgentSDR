@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   RiAddLine,
   RiAlertLine,
@@ -35,21 +36,11 @@ import {
 } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
 import { apiJson, errorText } from "./api";
-import { formatDelay } from "./metrics";
-
-const DEFAULT_FIELDS: WhatsappCampaignMergeField[] = [
-  { token: "firstName", label: "First name" },
-  { token: "lastName", label: "Last name" },
-  { token: "companyName", label: "Company" },
-];
+import { useCampaignFormat } from "./useCampaignFormat";
 
 type Unit = "hours" | "days";
 
 const newStep = (delayHours: number): WhatsappCampaignStep => ({ id: crypto.randomUUID(), body: "", delayHours });
-
-function stepLabel(index: number): string {
-  return index === 0 ? "First message" : `Follow-up ${index}`;
-}
 
 /** A step moved out of first place needs a real wait; one moved in does not. */
 function withValidDelays(steps: WhatsappCampaignStep[]): WhatsappCampaignStep[] {
@@ -64,7 +55,7 @@ export function WhatsappSequenceEditor({
   sentByStep,
   leadsVersion = 0,
   onSaved,
-  saveLabel = "Save sequence",
+  saveLabel,
 }: {
   campaignId: string;
   initialSteps: WhatsappCampaignStep[];
@@ -75,6 +66,9 @@ export function WhatsappSequenceEditor({
   onSaved?: (steps: WhatsappCampaignStep[]) => void;
   saveLabel?: string;
 }) {
+  const t = useTranslations("whatsappCampaigns.sequence");
+  const cf = useCampaignFormat();
+  const stepLabel = (i: number): string => (i === 0 ? t("firstMessage") : t("followUp", { number: i }));
   const [steps, setSteps] = useState<WhatsappCampaignStep[]>(() =>
     initialSteps.length > 0 ? initialSteps.map((s) => ({ ...s })) : [newStep(0)],
   );
@@ -82,7 +76,11 @@ export function WhatsappSequenceEditor({
     Object.fromEntries(initialSteps.map((s) => [s.id, s.delayHours > 0 && s.delayHours % 24 === 0 ? "days" : "hours"])),
   );
   const [selected, setSelected] = useState(0);
-  const [fields, setFields] = useState<WhatsappCampaignMergeField[]>(DEFAULT_FIELDS);
+  const [fields, setFields] = useState<WhatsappCampaignMergeField[]>(() => [
+    { token: "firstName", label: t("fieldFirstName") },
+    { token: "lastName", label: t("fieldLastName") },
+    { token: "companyName", label: t("fieldCompany") },
+  ]);
   const [leads, setLeads] = useState<WhatsappCampaignMergeFieldsResponse["leads"]>([]);
   const [previewLeadId, setPreviewLeadId] = useState("");
   const [preview, setPreview] = useState<PreviewWhatsappCampaignStepResponse | null>(null);
@@ -127,13 +125,13 @@ export function WhatsappSequenceEditor({
       } catch (cause) {
         if (cancelled) return;
         setPreview(null);
-        setPreviewError(errorText(cause, "Could not render preview"));
+        setPreviewError(errorText(cause, t("previewFailed")));
       } finally {
         if (!cancelled) setPreviewing(false);
       }
     }, 450);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [campaignId, body, previewLeadId]);
+  }, [campaignId, body, previewLeadId, t]);
 
   function change(next: WhatsappCampaignStep[]) {
     setSaved(false);
@@ -197,7 +195,7 @@ export function WhatsappSequenceEditor({
       setSaved(true);
       onSaved?.(normalized);
     } catch (cause) {
-      setError(errorText(cause, "Could not save sequence"));
+      setError(errorText(cause, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -211,7 +209,7 @@ export function WhatsappSequenceEditor({
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-5">
       <Frame>
-        <FrameHeader title="Sequence flow" description="Sent to every lead in order, personalised at send time." />
+        <FrameHeader title={t("flowTitle")} description={t("flowDescription")} />
         <FramePanel className="p-2 sm:p-2">
           <ol className="flex flex-col">
             {steps.map((candidate, i) => {
@@ -224,7 +222,7 @@ export function WhatsappSequenceEditor({
                     <div className="flex items-center gap-2 py-1.5 pl-5 text-paragraph-xs text-text-soft-400">
                       <span aria-hidden="true" className="h-4 w-px bg-stroke-soft-200" />
                       <RiTimerLine className="size-3.5" aria-hidden="true" />
-                      Wait {formatDelay(candidate.delayHours)}, if no reply
+                      {t("waitBetween", { delay: cf.delay(candidate.delayHours) })}
                     </div>
                   )}
                   <button
@@ -239,10 +237,10 @@ export function WhatsappSequenceEditor({
                     <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-md text-label-xs", active ? "bg-primary-base text-static-white" : "bg-bg-weak-50 text-text-sub-600 ring-1 ring-inset ring-stroke-soft-200")}>{i + 1}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-label-sm text-text-strong-950">{stepLabel(i)}</span>
-                      <span className="mt-0.5 block truncate text-paragraph-xs text-text-sub-600">{written ? candidate.body : "Not written yet"}</span>
-                      {sent !== undefined && sent > 0 && <span className="mt-0.5 block text-paragraph-xs tabular-nums text-text-soft-400">{sent.toLocaleString("en-US")} sent</span>}
+                      <span className="mt-0.5 block truncate text-paragraph-xs text-text-sub-600">{written ? candidate.body : t("notWritten")}</span>
+                      {sent !== undefined && sent > 0 && <span className="mt-0.5 block text-paragraph-xs tabular-nums text-text-soft-400">{t("sentCount", { count: cf.number(sent) })}</span>}
                     </span>
-                    {written && <RiCheckLine className="mt-0.5 size-4 shrink-0 text-success-base" aria-label="Written" />}
+                    {written && <RiCheckLine className="mt-0.5 size-4 shrink-0 text-success-base" aria-label={t("written")} />}
                   </button>
                 </li>
               );
@@ -251,7 +249,7 @@ export function WhatsappSequenceEditor({
           <div className="mt-2 border-t border-stroke-soft-200 p-1 pt-2">
             <Button.Root variant="neutral" mode="ghost" size="xsmall" className="w-full" onClick={addFollowUp} disabled={steps.length >= WHATSAPP_CAMPAIGN_MAX_STEPS}>
               <Button.Icon as={RiAddLine} />
-              {steps.length >= WHATSAPP_CAMPAIGN_MAX_STEPS ? `Up to ${WHATSAPP_CAMPAIGN_MAX_STEPS} messages` : "Add follow-up"}
+              {steps.length >= WHATSAPP_CAMPAIGN_MAX_STEPS ? t("upTo", { count: WHATSAPP_CAMPAIGN_MAX_STEPS }) : t("addFollowUp")}
             </Button.Root>
           </div>
         </FramePanel>
@@ -260,16 +258,16 @@ export function WhatsappSequenceEditor({
       <Frame>
         <FrameHeader
           title={stepLabel(index)}
-          description={index === 0 ? "Opens the chat. Sent once the number's new-chat limit allows." : "Sent in the same chat, only if the lead has not replied."}
+          description={index === 0 ? t("firstDescription") : t("followDescription")}
           actions={
             <div className="flex items-center gap-1">
-              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => move(-1)} disabled={index === 0} aria-label="Move message up">
+              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => move(-1)} disabled={index === 0} aria-label={t("moveUp")}>
                 <Button.Icon as={RiArrowUpLine} />
               </Button.Root>
-              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => move(1)} disabled={index === steps.length - 1} aria-label="Move message down">
+              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={() => move(1)} disabled={index === steps.length - 1} aria-label={t("moveDown")}>
                 <Button.Icon as={RiArrowDownLine} />
               </Button.Root>
-              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={remove} disabled={steps.length <= 1} aria-label="Remove message">
+              <Button.Root variant="neutral" mode="ghost" size="xsmall" onClick={remove} disabled={steps.length <= 1} aria-label={t("remove")}>
                 <Button.Icon as={RiDeleteBinLine} />
               </Button.Root>
             </div>
@@ -278,7 +276,7 @@ export function WhatsappSequenceEditor({
         <FramePanel>
           {index > 0 && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="text-label-sm text-text-strong-950">Wait</span>
+              <span className="text-label-sm text-text-strong-950">{t("waitLabel")}</span>
               <Input.Root size="small" className="w-24">
                 <Input.Wrapper>
                   <Input.Input
@@ -286,7 +284,7 @@ export function WhatsappSequenceEditor({
                     min={1}
                     max={maxDelay}
                     step={1}
-                    aria-label="Wait before this message"
+                    aria-label={t("waitAria")}
                     value={Number.isFinite(delayValue) ? String(delayValue) : ""}
                     onChange={(e) => setDelay(Number(e.target.value), unit)}
                   />
@@ -302,17 +300,17 @@ export function WhatsappSequenceEditor({
                   if (next === "days") updateStep({ delayHours: Math.max(24, Math.round(step.delayHours / 24) * 24) });
                 }}
               >
-                <Select.Trigger className="w-28" aria-label="Wait unit"><Select.Value /></Select.Trigger>
+                <Select.Trigger className="w-28" aria-label={t("unitAria")}><Select.Value /></Select.Trigger>
                 <Select.Content>
-                  <Select.Item value="hours">hours</Select.Item>
-                  <Select.Item value="days">days</Select.Item>
+                  <Select.Item value="hours">{t("unitHours")}</Select.Item>
+                  <Select.Item value="days">{t("unitDays")}</Select.Item>
                 </Select.Content>
               </Select.Root>
-              <span className="text-paragraph-sm text-text-sub-600">after the previous message</span>
+              <span className="text-paragraph-sm text-text-sub-600">{t("afterPrevious")}</span>
             </div>
           )}
 
-          <p className="mb-2 text-paragraph-xs text-text-sub-600">Merge fields from People and imported columns. Click one to insert it.</p>
+          <p className="mb-2 text-paragraph-xs text-text-sub-600">{t("mergeHelp")}</p>
           <div className="max-h-24 overflow-y-auto rounded-xl bg-bg-weak-50 p-2.5 ring-1 ring-inset ring-stroke-soft-200">
             <div className="flex flex-wrap gap-1.5">
               {fields.map((field) => (
@@ -336,22 +334,22 @@ export function WhatsappSequenceEditor({
               maxLength={WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH}
               value={body}
               onChange={(event) => updateStep({ body: event.target.value })}
-              placeholder={index === 0 ? "Hi {{firstName}}, …" : "Following up on my last message, …"}
+              placeholder={index === 0 ? t("placeholderFirst") : t("placeholderFollow")}
               className="min-h-44"
               hasError={Boolean(validationError) && !body.trim()}
             />
             <div className="mt-1.5 flex items-start justify-between gap-3 text-paragraph-xs text-text-soft-400">
-              <span>Spin text: {"{Hi|Hello|Hey}"} picks one option at random for each lead.</span>
+              <span>{t("spinText", { example: "{Hi|Hello|Hey}" })}</span>
               <span className="shrink-0 tabular-nums">{body.length}/{WHATSAPP_CAMPAIGN_MAX_BODY_LENGTH}</span>
             </div>
           </div>
 
           <div className="mt-4 rounded-xl bg-bg-weak-50 p-3 ring-1 ring-inset ring-stroke-soft-200">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-label-sm text-text-strong-950">Preview</span>
+              <span className="text-label-sm text-text-strong-950">{t("previewTitle")}</span>
               {leads.length > 0 && (
                 <Select.Root size="xsmall" value={previewLeadId} onValueChange={setPreviewLeadId}>
-                  <Select.Trigger className="w-56" aria-label="Preview as lead"><Select.Value placeholder="Preview as…" /></Select.Trigger>
+                  <Select.Trigger className="w-56" aria-label={t("previewAs")}><Select.Value placeholder={t("previewPlaceholder")} /></Select.Trigger>
                   <Select.Content>
                     {leads.map((lead) => <Select.Item key={lead.id} value={lead.id}>{lead.name || lead.phone}</Select.Item>)}
                   </Select.Content>
@@ -360,9 +358,9 @@ export function WhatsappSequenceEditor({
             </div>
             <div className="mt-2.5 min-h-16">
               {!showPreview ? (
-                <p className="text-paragraph-sm text-text-sub-600">Write the message to see it rendered for a real lead.</p>
+                <p className="text-paragraph-sm text-text-sub-600">{t("previewWrite")}</p>
               ) : leads.length === 0 ? (
-                <p className="text-paragraph-sm text-text-sub-600">Add a lead to preview this message with real data.</p>
+                <p className="text-paragraph-sm text-text-sub-600">{t("previewAddLead")}</p>
               ) : previewError ? (
                 <p className="text-paragraph-sm text-error-base">{previewError}</p>
               ) : preview ? (
@@ -370,13 +368,13 @@ export function WhatsappSequenceEditor({
                   {preview.unresolved.length > 0 && (
                     <p className="mb-2 flex items-start gap-1.5 rounded-lg bg-warning-lighter px-3 py-2 text-paragraph-xs text-warning-dark">
                       <RiAlertLine className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-                      <span>Empty for {preview.lead.name || preview.lead.phone}: {preview.unresolved.map((token) => `{{${token}}}`).join(", ")}. It sends as blank text.</span>
+                      <span>{t("previewUnresolved", { name: preview.lead.name || preview.lead.phone, tokens: preview.unresolved.map((token) => `{{${token}}}`).join(", ") })}</span>
                     </p>
                   )}
                   <p className="max-w-md whitespace-pre-wrap break-words rounded-xl rounded-tl-sm bg-bg-white-0 px-3.5 py-2.5 text-paragraph-sm leading-6 text-text-strong-950 ring-1 ring-inset ring-stroke-soft-200">{preview.rendered}</p>
                 </div>
               ) : (
-                <p className="flex items-center gap-2 text-paragraph-sm text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />Rendering…</p>
+                <p className="flex items-center gap-2 text-paragraph-sm text-text-sub-600"><RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />{t("rendering")}</p>
               )}
             </div>
           </div>
@@ -387,15 +385,15 @@ export function WhatsappSequenceEditor({
             </p>
           )}
           <div className="mt-5 flex items-center justify-end gap-3 border-t border-stroke-soft-200 pt-4">
-            {saved && <span role="status" className="text-paragraph-xs text-success-base">Saved</span>}
+            {saved && <span role="status" className="text-paragraph-xs text-success-base">{t("saved")}</span>}
             <Button.Root variant="primary" mode="filled" size="small" onClick={() => void save()} disabled={saving || Boolean(validationError)}>
               <Button.Icon as={saving ? RiLoader4Line : RiSaveLine} className={cn(saving && "animate-spin")} />
-              {saving ? "Saving…" : saveLabel}
+              {saving ? t("saving") : (saveLabel ?? t("save"))}
             </Button.Root>
           </div>
         </FramePanel>
         <FrameFooter>
-          First messages count against each number&apos;s new-chats-per-day limit (Settings → WhatsApp → Sending rules). A reply on any channel stops the lead&apos;s sequence and lands in CRM → Action required.
+          {t("footer")}
         </FrameFooter>
       </Frame>
     </div>
