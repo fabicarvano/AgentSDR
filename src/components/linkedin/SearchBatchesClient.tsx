@@ -39,25 +39,11 @@ import {
   type SearchPickerAccount,
 } from "@/components/linkedin/SearchAccountPicker";
 import { cn } from "@/utils/cn";
-import type { Messages } from "@/i18n/catalog";
 import type { SearchBatchSummary } from "@/lib/linkedin/searchBatches";
 import type { SearchQueryStatus } from "@/lib/linkedin/schema";
+import { STATUS_META, type BadgeColor, type StatusLabelKey } from "./searchStatus";
 
 export type SearchAccount = SearchPickerAccount & { profilePictureUrl: string | null };
-
-type BadgeColor = "gray" | "blue" | "orange" | "red" | "green" | "yellow" | "purple" | "sky" | "pink" | "teal";
-
-type StatusLabelKey = keyof Messages["linkedinSearch"]["status"];
-
-// Enum values stay stable; the label comes from a typed key (Record keeps it exhaustive).
-const STATUS_META: Record<SearchQueryStatus, { labelKey: StatusLabelKey; color: BadgeColor }> = {
-  QUEUED: { labelKey: "queued", color: "gray" },
-  RUNNING: { labelKey: "running", color: "blue" },
-  PAUSED_LIMIT: { labelKey: "pausedQuota", color: "orange" },
-  COMPLETED: { labelKey: "completed", color: "green" },
-  FAILED: { labelKey: "failed", color: "red" },
-  CANCELLED: { labelKey: "cancelled", color: "gray" },
-};
 
 function rollupStatus(counts: Partial<Record<SearchQueryStatus, number>>): { labelKey: StatusLabelKey; color: BadgeColor } {
   if ((counts.RUNNING ?? 0) > 0) return STATUS_META.RUNNING;

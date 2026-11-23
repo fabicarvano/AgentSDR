@@ -47,22 +47,9 @@ import { cn } from "@/utils/cn";
 import type { Messages } from "@/i18n/catalog";
 import type { SearchBatchDetail } from "@/lib/linkedin/searchBatches";
 import type { SearchQueryStatus } from "@/lib/linkedin/schema";
+import { STATUS_META, type BadgeColor, type StatusLabelKey } from "./searchStatus";
 
 export type SearchAccount = SearchPickerAccount & { profilePictureUrl: string | null };
-
-type BadgeColor = "gray" | "blue" | "orange" | "red" | "green" | "yellow" | "purple" | "sky" | "pink" | "teal";
-
-type StatusLabelKey = keyof Messages["linkedinSearch"]["status"];
-
-// Enum values stay stable; the label comes from a typed key (Record keeps it exhaustive).
-const STATUS_META: Record<SearchQueryStatus, { labelKey: StatusLabelKey; color: BadgeColor }> = {
-  QUEUED: { labelKey: "queued", color: "gray" },
-  RUNNING: { labelKey: "running", color: "blue" },
-  PAUSED_LIMIT: { labelKey: "pausedQuota", color: "orange" },
-  COMPLETED: { labelKey: "completed", color: "green" },
-  FAILED: { labelKey: "failed", color: "red" },
-  CANCELLED: { labelKey: "cancelled", color: "gray" },
-};
 
 /** The search's overall state, as on the list page. */
 // Example URLs for the textarea placeholder, not translatable.
