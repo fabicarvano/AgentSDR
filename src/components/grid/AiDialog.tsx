@@ -3,6 +3,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import {
   RiAddLine,
@@ -14,6 +15,7 @@ import {
   RiMagicLine,
   RiSearchLine,
 } from "@remixicon/react";
+import type { Messages } from "@/i18n/catalog";
 import type { GridColumn } from "@/lib/grid/schema";
 import type {
   AiConfig,
@@ -35,21 +37,36 @@ import * as Select from "@/components/alignui/select";
 
 type OpenRouterChoice = AiModelChoice & { upstreamProvider: string; upstreamProviderName: string };
 
-const OUTPUT_TYPES: Array<{ value: StaticColumnType; label: string }> = [
-  { value: "text", label: "Text" },
-  { value: "number", label: "Number" },
-  { value: "boolean", label: "Checkbox" },
-  { value: "date", label: "Date" },
-  { value: "url", label: "URL" },
-  { value: "email", label: "Email" },
-  { value: "image", label: "Image" },
-  { value: "json", label: "JSON" },
+// Labels are typed keys under gridEnrich.ai.outputTypes, rendered with t(labelKey).
+const OUTPUT_TYPES: Array<{ value: StaticColumnType; labelKey: keyof Messages["gridEnrich"]["ai"]["outputTypes"] }> = [
+  { value: "text", labelKey: "text" },
+  { value: "number", labelKey: "number" },
+  { value: "boolean", labelKey: "boolean" },
+  { value: "date", labelKey: "date" },
+  { value: "url", labelKey: "url" },
+  { value: "email", labelKey: "email" },
+  { value: "image", labelKey: "image" },
+  { value: "json", labelKey: "json" },
 ];
+
+/**
+ * The use cases' name and description live in the catalog (gridEnrich.ai.useCases), not in src/lib/ai/types.ts:
+ * that registry is read by server code and stays in English. The Record fails tsc when an AiUseCase has no text.
+ */
+const USE_CASE_KEY: Record<AiUseCase, keyof Messages["gridEnrich"]["ai"]["useCases"]> = {
+  "web-research": "webResearch",
+  "image-generation": "imageGeneration",
+  content: "content",
+};
 
 const PICKER_WIDTH = 260;
 const PICKER_MAX_HEIGHT = 220;
 
 /** Output field keys are stable and machine-facing; names are not. */
+// Technical values kept out of the JSX on purpose: enum values and a code sample, not interface text.
+const SCHEMA_MODES = ["fields", "json_schema"] as const;
+const JSON_SCHEMA_EXAMPLE = '{ "type": "object", "properties": { "name": { "type": "string" } } }';
+
 function fieldKey(name: string, taken: Set<string>) {
   const base =
     name
@@ -140,6 +157,7 @@ export default function AiDialog({
   onClose: () => void;
   onSaved: (activeJobs?: number) => void | Promise<void>;
 }) {
+  const t = useTranslations("gridEnrich.ai");
   // A column created by this dialog: if the run that follows fails, the dialog
   // stays open and a second save must update this column, not create another.
   const [created, setCreated] = useState<GridColumn | null>(null);
@@ -286,7 +304,7 @@ export default function AiDialog({
     if (!open) return;
     void fetch("/api/ai/openrouter/models").then(async (response) => {
       const body = await response.json() as { error?: string; models?: Array<{ id: string; name: string; description?: string; provider: string; providerName: string; outputModalities?: string[] }>; settings?: { connectionId?: string | null; defaultModel?: { provider: string; modelId: string } | null } };
-      if (!response.ok) return setError(body.error ?? "Could not load configured OpenRouter models");
+      if (!response.ok) return setError(body.error ?? t("errors.loadModels"));
       const provider = getAiProvider("openrouter");
       if (!provider) return;
       const next = (body.models ?? []).map((model) => {
@@ -302,7 +320,7 @@ export default function AiDialog({
             key: model.id,
             modelId: model.id,
             name: model.name,
-            description: model.description ?? "OpenRouter model",
+            description: model.description ?? t("openRouterModel"),
             useCases,
             creditsPerRun: 0,
           },
@@ -313,7 +331,7 @@ export default function AiDialog({
       setConnectionIdRaw((current) => body.settings?.connectionId || current);
       setDefaultModel(body.settings?.defaultModel ?? null);
     }).finally(() => setModelsLoading(false));
-  }, [open]);
+  }, [open, t]);
 
   // A new column starts on the AI Settings default when it suits the use
   // case — without replacing a model the person already picked.
@@ -382,18 +400,18 @@ export default function AiDialog({
   }
 
   async function save(runFirstTen: boolean) {
-    if (!model || !selectedChoice) return setError("Select a model enabled in AI Settings.");
-    if (!connectionId) return setError(`Connect a ${provider?.name ?? "provider"} account first.`);
-    if (!prompt.trim()) return setError("Write a prompt.");
+    if (!model || !selectedChoice) return setError(t("errors.selectModel"));
+    if (!connectionId) return setError(t("errors.connectFirst", { provider: provider?.name ?? t("errors.providerFallback") }));
+    if (!prompt.trim()) return setError(t("errors.writePrompt"));
     if (outputFormat === "fields" && !model.producesImages) {
       const names = outputs.map((field) => field.name.trim().toLowerCase());
-      if (names.some((name) => !name)) return setError("Every output needs a name.");
-      if (new Set(names).size !== names.length) return setError("Output names must be different from each other.");
+      if (names.some((name) => !name)) return setError(t("errors.outputNeedsName"));
+      if (new Set(names).size !== names.length) return setError(t("errors.outputNamesUnique"));
     }
     // The grid can hand over its coverage row, which is not a real row.
     const runRowIds = firstRowIds.filter((id) => id !== "__coverage").slice(0, 10);
     if (runFirstTen && runRowIds.length === 0) {
-      return setError("There are no rows on this page to run. Use Save, then run once rows are loaded.");
+      return setError(t("errors.noRowsToRun"));
     }
 
     let jsonSchema: Record<string, unknown> | undefined;
@@ -401,7 +419,7 @@ export default function AiDialog({
       try {
         jsonSchema = JSON.parse(schemaText);
       } catch {
-        return setError("The JSON Schema is not valid JSON.");
+        return setError(t("errors.invalidSchema"));
       }
     }
 
@@ -431,7 +449,7 @@ export default function AiDialog({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) return setError(data.error ?? "Could not save this AI column");
+      if (!response.ok) return setError(data.error ?? t("errors.save"));
       if (!column && Array.isArray(data.columns) && data.columns[0]) setCreated(data.columns[0] as GridColumn);
 
       let activeJobs: number | undefined;
@@ -445,7 +463,7 @@ export default function AiDialog({
         if (!run.ok) {
           // The column exists now: refresh the grid and keep the dialog open on it.
           await onSaved();
-          return setError(runData.error ?? "Saved, but the run could not start");
+          return setError(runData.error ?? t("errors.savedRunFailed"));
         }
         activeJobs = runData.activeJobs;
       }
@@ -453,7 +471,7 @@ export default function AiDialog({
       await onSaved(activeJobs);
       onClose();
     } catch {
-      setError("Could not save this AI column");
+      setError(t("errors.save"));
     } finally {
       setBusy(false);
     }
@@ -476,7 +494,7 @@ export default function AiDialog({
         <div className="flex shrink-0 items-center justify-between border-b border-stroke-soft-200 px-5 py-3.5">
           <div className="flex items-center gap-2">
             <RiMagicLine className="size-5 text-violet-500" />
-            <h2 className="text-[15px] font-semibold text-text-strong-950">Use AI</h2>
+            <h2 className="text-[15px] font-semibold text-text-strong-950">{t("title")}</h2>
           </div>
           <button type="button" onClick={onClose} disabled={busy} className="rounded-md p-1 text-text-soft-400 hover:bg-bg-weak-50 disabled:opacity-50">
             <RiCloseLine className="size-4" />
@@ -486,7 +504,7 @@ export default function AiDialog({
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
           {/* ---- use case ---- */}
           <div>
-            <label className="text-[13px] font-semibold text-text-strong-950">Use case</label>
+            <label className="text-[13px] font-semibold text-text-strong-950">{t("useCase")}</label>
             <div className="mt-2 space-y-1.5">
               {AI_USE_CASES.map((item) => (
                 <button
@@ -510,8 +528,8 @@ export default function AiDialog({
                   }`}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-medium text-text-strong-950">{item.name}</span>
-                    <span className="mt-0.5 block text-[12px] leading-4 text-text-sub-600">{item.description}</span>
+                    <span className="block text-[13px] font-medium text-text-strong-950">{t(`useCases.${USE_CASE_KEY[item.key]}.name`)}</span>
+                    <span className="mt-0.5 block text-[12px] leading-4 text-text-sub-600">{t(`useCases.${USE_CASE_KEY[item.key]}.description`)}</span>
                   </span>
                   {useCase === item.key && <RiCheckLine className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />}
                 </button>
@@ -521,7 +539,7 @@ export default function AiDialog({
 
           {/* ---- model ---- */}
           <div>
-            <label className="text-[13px] font-semibold text-text-strong-950">Model</label>
+            <label className="text-[13px] font-semibold text-text-strong-950">{t("model")}</label>
             <button
               type="button"
               onClick={() => setModelOpen((v) => !v)}
@@ -534,7 +552,7 @@ export default function AiDialog({
                   <span className="shrink-0 rounded-full border border-stroke-soft-200 px-2 py-0.5 text-[11px] text-text-sub-600">{model.creditsPerRun}</span>
                 </>
               ) : (
-                <span className="flex-1 text-text-soft-400">{modelsLoading ? "Loading models…" : "Select a model"}</span>
+                <span className="flex-1 text-text-soft-400">{modelsLoading ? t("loadingModels") : t("selectModel")}</span>
               )}
               <RiArrowDownSLine className="size-4 shrink-0 text-text-soft-400" />
             </button>
@@ -547,7 +565,7 @@ export default function AiDialog({
                     autoFocus
                     value={modelSearch}
                     onChange={(e) => setModelSearch(e.target.value)}
-                    placeholder="Search models..."
+                    placeholder={t("searchModels")}
                     className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-text-soft-400"
                   />
                 </label>
@@ -574,7 +592,7 @@ export default function AiDialog({
                     </button>
                   ))}
                   {!filteredChoices.length && (
-                    <p className="px-3 py-6 text-center text-[13px] text-text-sub-600">No models match that search.</p>
+                    <p className="px-3 py-6 text-center text-[13px] text-text-sub-600">{t("noModels")}</p>
                   )}
                 </div>
               </div>
@@ -583,15 +601,17 @@ export default function AiDialog({
 
           {provider && !connectionId && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 text-[13px] text-amber-900 dark:text-amber-400">
-              OpenRouter is not configured. Connect it and choose allowed BYOK models in <Link className="font-semibold underline" href="/settings/ai">AI Settings</Link>.{" "}
+              {t.rich("notConfigured", {
+                link: (chunks) => <Link className="font-semibold underline" href="/settings/ai">{chunks}</Link>,
+              })}{" "}
               <DocsLink page="integrations/openrouter#set-it-up" appearance="inline" className="ml-1 text-current underline" />
             </div>
           )}
 
           {/* ---- prompt ---- */}
-          <Section title="Configuration">
+          <Section title={t("configuration")}>
             <div>
-              <label className="text-[13px] font-medium text-text-strong-950">Prompt</label>
+              <label className="text-[13px] font-medium text-text-strong-950">{t("prompt")}</label>
               <div className="relative mt-1.5">
                 <textarea
                   ref={promptRef}
@@ -617,7 +637,8 @@ export default function AiDialog({
                       setPicker(null);
                     }
                   }}
-                  placeholder="For the person with linkedin url {{linkedin_url}}, find their current job title."
+                  // {{linkedin_url}} is the column-token syntax of the prompt: it stays as written.
+                  placeholder={t("promptPlaceholder", { token: "{{linkedin_url}}" })}
                   className="w-full resize-y rounded-lg border border-stroke-soft-200 px-3 py-2.5 text-[13px] leading-5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20"
                 />
                 {picker && pickerAt && pickerColumns.length > 0 && createPortal(
@@ -647,9 +668,10 @@ export default function AiDialog({
               </div>
               {unknownTokens.length > 0 && (
                 <p className="mt-1.5 text-[12px] text-amber-700 dark:text-amber-400">
-                  {unknownTokens.map((key) => `{{${key}}}`).join(", ")}{" "}
-                  {unknownTokens.length === 1 ? "is not a column" : "are not columns"} in this table, so{" "}
-                  {unknownTokens.length === 1 ? "it would be" : "they would be"} sent blank. Replace with a column below.
+                  {t("unknownTokens", {
+                    count: unknownTokens.length,
+                    tokens: unknownTokens.map((key) => `{{${key}}}`).join(", "),
+                  })}
                 </p>
               )}
               {usedColumns.length > 0 && (
@@ -663,25 +685,27 @@ export default function AiDialog({
                 </p>
               )}
               <p className="mt-1.5 text-[12px] text-text-soft-400">
-                Type <kbd className="rounded bg-bg-weak-50 px-1 font-mono">/</kbd> or{" "}
-                <kbd className="rounded bg-bg-weak-50 px-1 font-mono">{"{{"}</kbd> to insert a column.
+                {t.rich("insertHint", {
+                  braces: "{{",
+                  kbd: (chunks) => <kbd className="rounded bg-bg-weak-50 px-1 font-mono">{chunks}</kbd>,
+                })}
               </p>
             </div>
           </Section>
 
           {/* ---- outputs ---- */}
-          <Section title="Define outputs">
+          <Section title={t("defineOutputs")}>
             {model?.producesImages ? (
               <p className="text-[13px] text-text-sub-600">
-                Image models return a single image, which lands in one image column.
+                {t("imageNote")}
               </p>
             ) : (
               <>
                 <div className="flex gap-4">
-                  {(["fields", "json_schema"] as const).map((value) => (
+                  {SCHEMA_MODES.map((value) => (
                     <label key={value} className="flex items-center gap-2 text-[13px] text-text-strong-950">
                       <input type="radio" checked={outputFormat === value} onChange={() => setOutputFormat(value)} className="size-4" />
-                      {value === "fields" ? "Fields" : "JSON Schema"}
+                      {value === "fields" ? t("formatFields") : t("formatSchema")}
                     </label>
                   ))}
                 </div>
@@ -693,16 +717,16 @@ export default function AiDialog({
                         <input
                           value={field.name}
                           onChange={(e) => setOutput(index, { name: e.target.value })}
-                          placeholder="response"
+                          placeholder={t("outputNamePlaceholder")}
                           className="min-w-0 flex-1 rounded-lg border border-stroke-soft-200 px-3 py-2 text-[13px] outline-none focus:border-blue-400"
                         />
                         <Select.Root size="small" value={field.type} onValueChange={(next) => setOutput(index, { type: next as StaticColumnType })}>
-                          <Select.Trigger aria-label="Output type" className="w-[140px] shrink-0">
+                          <Select.Trigger aria-label={t("outputTypeAria")} className="w-[140px] shrink-0">
                             <Select.Value />
                           </Select.Trigger>
                           <Select.Content>
-                            {OUTPUT_TYPES.map((t) => (
-                              <Select.Item key={t.value} value={t.value}>{t.label}</Select.Item>
+                            {OUTPUT_TYPES.map((option) => (
+                              <Select.Item key={option.value} value={option.value}>{t(`outputTypes.${option.labelKey}`)}</Select.Item>
                             ))}
                           </Select.Content>
                         </Select.Root>
@@ -710,7 +734,7 @@ export default function AiDialog({
                           type="button"
                           disabled={outputs.length === 1}
                           onClick={() => setOutputs((c) => c.filter((_, i) => i !== index))}
-                          aria-label={`Remove ${field.name}`}
+                          aria-label={t("removeOutputAria", { name: field.name })}
                           className="shrink-0 rounded-md p-1.5 text-text-soft-400 transition hover:bg-bg-weak-50 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30"
                         >
                           <RiDeleteBinLine className="size-4" />
@@ -727,7 +751,7 @@ export default function AiDialog({
                       }
                       className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-stroke-sub-300 py-2 text-[13px] font-medium text-text-sub-600 transition hover:bg-bg-weak-50"
                     >
-                      <RiAddLine className="size-4" />Add output
+                      <RiAddLine className="size-4" />{t("addOutput")}
                     </button>
                   </div>
                 ) : (
@@ -735,7 +759,7 @@ export default function AiDialog({
                     value={schemaText}
                     rows={8}
                     onChange={(e) => setSchemaText(e.target.value)}
-                    placeholder='{ "type": "object", "properties": { "name": { "type": "string" } } }'
+                    placeholder={JSON_SCHEMA_EXAMPLE}
                     className="w-full resize-y rounded-lg border border-stroke-soft-200 px-3 py-2.5 font-mono text-[12px] outline-none focus:border-blue-400"
                   />
                 )}
@@ -744,18 +768,18 @@ export default function AiDialog({
           </Section>
 
           {/* ---- examples ---- */}
-          <Section title="Examples">
+          <Section title={t("examples")}>
             <p className="text-[13px] text-text-sub-600">
-              Give examples of how the AI should respond — <span className="text-text-soft-400">optional</span>
+              {t.rich("examplesIntro", { soft: (chunks) => <span className="text-text-soft-400">{chunks}</span> })}
             </p>
             {examples.map((example, index) => (
               <div key={index} className="rounded-lg border border-stroke-soft-200 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-medium text-text-strong-950">Custom example</span>
+                  <span className="text-[13px] font-medium text-text-strong-950">{t("customExample")}</span>
                   <button
                     type="button"
                     onClick={() => setExamples((c) => c.filter((_, i) => i !== index))}
-                    aria-label="Remove example"
+                    aria-label={t("removeExampleAria")}
                     className="rounded-md p-1 text-text-soft-400 transition hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                   >
                     <RiDeleteBinLine className="size-4" />
@@ -777,7 +801,7 @@ export default function AiDialog({
                     />
                   </div>
                 ))}
-                <label className="mt-2 block text-[12px] text-text-sub-600">Expected response:</label>
+                <label className="mt-2 block text-[12px] text-text-sub-600">{t("expectedResponse")}</label>
                 <textarea
                   value={example.response}
                   rows={2}
@@ -793,43 +817,44 @@ export default function AiDialog({
               onClick={() => setExamples((c) => [...c, { inputs: {}, response: "" }])}
               className="flex items-center gap-1.5 rounded-lg border border-stroke-soft-200 px-3 py-1.5 text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50"
             >
-              <RiAddLine className="size-4" />Add examples
+              <RiAddLine className="size-4" />{t("addExamples")}
             </button>
           </Section>
 
           {/* ---- run settings ---- */}
-          <Section title="Run settings">
+          <Section title={t("runSettings")}>
             <label className="flex items-center justify-between">
-              <span className="text-[13px] font-medium text-text-strong-950">Auto-run</span>
+              <span className="text-[13px] font-medium text-text-strong-950">{t("autoRun")}</span>
               <input type="checkbox" checked={autoRun} onChange={(e) => setAutoRun(e.target.checked)} className="size-4" />
             </label>
 
             <label className="flex items-start gap-2">
               <input type="checkbox" checked={conditionEnabled} onChange={(e) => setConditionEnabled(e.target.checked)} className="mt-0.5 size-4" />
               <span>
-                <span className="block text-[13px] text-text-strong-950">Add run condition</span>
-                <span className="block text-[12px] text-text-sub-600">Only run if this formula resolves to true.</span>
+                <span className="block text-[13px] text-text-strong-950">{t("addCondition")}</span>
+                <span className="block text-[12px] text-text-sub-600">{t("conditionHelp")}</span>
               </span>
             </label>
             {conditionEnabled && (
               <input
                 value={runCondition}
                 onChange={(e) => setRunCondition(e.target.value)}
-                placeholder="{{email}} != &quot;&quot;"
+                // Formula syntax, not prose: stays as written.
+                placeholder={`{{email}} != ""`}
                 className="w-full rounded-lg border border-stroke-soft-200 px-3 py-2 font-mono text-[12px] outline-none focus:border-blue-400"
               />
             )}
 
             <div>
-              <span className="text-[13px] font-medium text-text-strong-950">Delay run</span>
+              <span className="text-[13px] font-medium text-text-strong-950">{t("delay")}</span>
               <div className="mt-1.5 space-y-1.5">
                 <label className="flex items-center gap-2 text-[13px] text-text-strong-950">
                   <input type="radio" checked={!delayEnabled} onChange={() => setDelayEnabled(false)} className="size-4" />
-                  Run immediately
+                  {t("immediately")}
                 </label>
                 <label className="flex items-center gap-2 text-[13px] text-text-strong-950">
                   <input type="radio" checked={delayEnabled} onChange={() => setDelayEnabled(true)} className="size-4" />
-                  Run after delay
+                  {t("afterDelay")}
                 </label>
                 {delayEnabled && (
                   <input
@@ -850,7 +875,7 @@ export default function AiDialog({
         {error && <p role="alert" className="mx-5 mb-3 mt-3 shrink-0 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[13px] text-red-700 dark:text-red-400">{error}</p>}
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-stroke-soft-200 px-5 py-3.5">
           <span className="rounded-full border border-stroke-soft-200 px-2.5 py-1 text-[12px] text-text-sub-600">
-            {model ? `${model.creditsPerRun} / row` : "—"}
+            {model ? t("perRow", { credits: model.creditsPerRun }) : "—"}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -859,7 +884,7 @@ export default function AiDialog({
               disabled={busy}
               className="rounded-lg border border-stroke-soft-200 px-3 py-2 text-[13px] font-medium text-text-strong-950 transition hover:bg-bg-weak-50 disabled:opacity-50"
             >
-              Save
+              {t("save")}
             </button>
             <button
               type="button"
@@ -868,7 +893,7 @@ export default function AiDialog({
               className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[13px] font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
               {busy && <RiLoader4Line className="size-4 animate-spin" />}
-              Save and run 10 rows
+              {t("saveAndRun")}
             </button>
           </div>
         </div>
