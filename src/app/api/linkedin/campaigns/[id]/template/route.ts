@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { inOrg } from "@/lib/tenancy/scope";
 import { campaigns } from "@/lib/linkedin/schema";
 import { buildLeadsTemplateBuffer, campaignLeadTemplateFilename } from "@/lib/linkedin/leadsTemplate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withLinkedinOrg(_req, async () => {
@@ -17,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .limit(1);
 
     if (!campaign) {
-      return NextResponse.json({ ok: false, error: "Campaign not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, ...apiErrorBody("campaignNotFound", "Campaign not found") }, { status: 404 });
     }
 
     const filename = campaignLeadTemplateFilename(campaign.name);

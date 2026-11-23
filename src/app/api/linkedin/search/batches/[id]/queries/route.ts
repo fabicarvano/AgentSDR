@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { addSearchUrls, deleteSearchQueries, searchBatchExists, type SearchUrlInput } from "@/lib/linkedin/searchBatches";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isUrlRows = (v: unknown): v is { url: string; companyName?: string | null }[] =>
   Array.isArray(v) &&
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     try {
       const body: unknown = await req.json();
       if (typeof body !== "object" || body === null) {
-        return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "Invalid request body") }, { status: 400 });
       }
       const { urls } = body as Record<string, unknown>;
       if (!isUrlRows(urls)) {

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { inOrg } from "@/lib/tenancy/scope";
 import { webhookEvents } from "@/lib/linkedin/schema";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ async function readEvent(id: string): Promise<NextResponse> {
     .limit(1);
 
   if (!ev) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(apiErrorBody("notFound", "Not found"), { status: 404 });
   }
 
   return NextResponse.json({

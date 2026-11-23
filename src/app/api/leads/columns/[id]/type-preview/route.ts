@@ -3,6 +3,7 @@ import { withOrgContext } from "@/lib/auth/context";
 import { previewTypeChange } from "@/lib/leads/columns";
 import { PG_TYPE_FOR_COLUMN_TYPE, type LeadColumnType } from "@/lib/leads/types";
 import { columnErrorResponse } from "../../route";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * GET /api/leads/columns/[id]/type-preview?type=number
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const type = req.nextUrl.searchParams.get("type");
 
   if (!type || !(type in PG_TYPE_FOR_COLUMN_TYPE)) {
-    return NextResponse.json({ error: `Unsupported column type: ${type}` }, { status: 400 });
+    return NextResponse.json(apiErrorBody("unsupportedColumnType", `Unsupported column type: ${type}`, { type: String(type) }), { status: 400 });
   }
 
   try {

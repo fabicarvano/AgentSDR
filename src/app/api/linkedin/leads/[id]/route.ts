@@ -14,6 +14,7 @@ import {
 import { companies, people } from "@/lib/leads/schema";
 import { personProfile, personVariables } from "@/lib/leads/variables";
 import { renderLeadTemplates } from "@/lib/linkedin/renderLeadTemplates";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withLinkedinOrg(_req, async () => {
@@ -58,7 +59,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .limit(1);
 
     if (!row) {
-      return NextResponse.json({ ok: false, error: "Lead not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, ...apiErrorBody("leadNotFound", "Lead not found") }, { status: 404 });
     }
 
     const lead = row.lead;
@@ -221,7 +222,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // update, so fall back to reading the row when nothing was sent.
       const [nativeLead] = await db.select().from(leads).where(and(inOrg(leads), eq(leads.id, id))).limit(1);
       if (!nativeLead) {
-        return NextResponse.json({ ok: false, error: "Lead not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("leadNotFound", "Lead not found") }, { status: 404 });
       }
       if (!nativeLead.campaignId) {
         return NextResponse.json({ ok: false, error: "Lead has no campaign" }, { status: 400 });
@@ -238,7 +239,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }).from(campaigns).where(and(inOrg(campaigns), eq(campaigns.id, nativeLead.campaignId))).limit(1);
       const lead = { ...nativeLead, ...campaignMessages };
       if (!lead) {
-        return NextResponse.json({ ok: false, error: "Lead not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("leadNotFound", "Lead not found") }, { status: 404 });
       }
       return NextResponse.json({ ok: true, lead });
     } catch (err) {

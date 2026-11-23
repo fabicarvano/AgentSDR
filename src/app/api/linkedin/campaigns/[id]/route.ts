@@ -19,6 +19,7 @@ import {
   linkedinSequenceError,
   normalizeLinkedinSequence,
 } from "@/lib/linkedin/campaignSequence";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const ACCOUNT_SELECT = {
   id: linkedInAccounts.id,
@@ -46,7 +47,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const [campaign] = await db.select().from(campaigns).where(and(inOrg(campaigns), eq(campaigns.id, id))).limit(1);
 
     if (!campaign) {
-      return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, ...apiErrorBody("notFound", "Not found") }, { status: 404 });
     }
 
     const accounts = await campaignAccountsFor(id);
@@ -160,7 +161,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       const [existingCampaign] = await db.select().from(campaigns).where(and(inOrg(campaigns), eq(campaigns.id, id))).limit(1);
       if (!existingCampaign) {
-        return NextResponse.json({ ok: false, error: "Campaign not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("campaignNotFound", "Campaign not found") }, { status: 404 });
       }
       if (name !== undefined && (typeof name !== "string" || !name.trim())) {
         return NextResponse.json({ ok: false, error: "Name is required" }, { status: 400 });
@@ -273,7 +274,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // Prisma dereferenced `campaign!` here, so a missing id threw into the
       // catch below and answered 500; keep it an error rather than an `ok: true`
       // with a half-empty campaign.
-      if (!campaign) return NextResponse.json({ ok: false, error: "Campaign not found" }, { status: 404 });
+      if (!campaign) return NextResponse.json({ ok: false, ...apiErrorBody("campaignNotFound", "Campaign not found") }, { status: 404 });
       const accounts = await campaignAccountsFor(id);
 
       return NextResponse.json({ ok: true, campaign: { ...campaign, accounts } });

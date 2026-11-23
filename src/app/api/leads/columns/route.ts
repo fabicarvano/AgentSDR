@@ -7,6 +7,7 @@ import {
   type LeadColumnType,
   type LeadEntity,
 } from "@/lib/leads/types";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * A ColumnError is a message written for the user — a name collision, a busy
@@ -62,7 +63,7 @@ async function create(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidJson", "Invalid JSON"), { status: 400 });
   }
 
   if (!body.entity || !isLeadEntity(body.entity)) {
@@ -74,7 +75,7 @@ async function create(req: NextRequest) {
   // Validate against the type map rather than a separate list, so adding a
   // type in one place cannot leave the other behind.
   if (!body.type || !(body.type in PG_TYPE_FOR_COLUMN_TYPE)) {
-    return NextResponse.json({ error: `Unsupported column type: ${body.type}` }, { status: 400 });
+    return NextResponse.json(apiErrorBody("unsupportedColumnType", `Unsupported column type: ${body.type}`, { type: String(body.type) }), { status: 400 });
   }
 
   try {

@@ -7,6 +7,7 @@ import {
   type SearchUrlInput,
 } from "@/lib/linkedin/searchBatches";
 import type { SearchBatchKind } from "@/lib/linkedin/schema";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === "string");
 
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     try {
       const body: unknown = await req.json();
       if (typeof body !== "object" || body === null) {
-        return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "Invalid request body") }, { status: 400 });
       }
       const { name, kind, urls, accountIds, run } = body as Record<string, unknown>;
 

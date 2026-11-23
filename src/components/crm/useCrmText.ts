@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { Messages } from "@/i18n/catalog";
 import { CrmHttpError, displayNameOr, type CrmCategory, type CrmChannel } from "./crm-utils";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type CategoryKey = keyof Messages["crmShared"]["category"];
 type ChannelKey = keyof Messages["crmShared"]["channel"];
@@ -85,13 +86,14 @@ export function useCrmText() {
     [t],
   );
 
-  /** A server-supplied message is shown as it arrives (server text is batch I); our own fallbacks are translated. */
+  /** The route's coded error in our words, else its English message as it arrives; our own fallbacks are translated. */
+  const apiErrorText = useApiErrorText();
   const errorMessage = useCallback(
     (error: unknown): string => {
       if (error instanceof CrmHttpError && !error.fromServer) return t("requestFailed", { status: error.status });
-      return error instanceof Error ? error.message : t("somethingWentWrong");
+      return error instanceof Error ? apiErrorText(error, t("somethingWentWrong")) : t("somethingWentWrong");
     },
-    [t],
+    [t, apiErrorText],
   );
 
   return useMemo(

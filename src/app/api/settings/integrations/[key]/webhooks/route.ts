@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { isPlatformNotConnectedError, reregisterUnipileWebhooks, revealUnipileWebhookSetup } from "@/lib/platform/credentials";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // Unipile's webhooks, which AgentSDR registers itself when the integration
 // is saved (src/lib/platform/unipileWebhooks.ts). Behind the session cookie,
@@ -19,7 +20,7 @@ function failure(error: unknown, fallback: string): Response {
 // GET /api/settings/integrations/unipile/webhooks — the webhook URLs and the secret, to register by hand.
 export async function GET(req: NextRequest, { params }: Ctx) {
   const { key } = await params;
-  if (key !== "unipile") return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (key !== "unipile") return NextResponse.json(apiErrorBody("notFound", "Not found"), { status: 404 });
   try {
     return await withOrgContext(req, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 // POST /api/settings/integrations/unipile/webhooks — register the webhooks again.
 export async function POST(req: NextRequest, { params }: Ctx) {
   const { key } = await params;
-  if (key !== "unipile") return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (key !== "unipile") return NextResponse.json(apiErrorBody("notFound", "Not found"), { status: 404 });
   try {
     return await withOrgContext(req, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });

@@ -10,6 +10,7 @@ import type { AiCampaignGoal, AiContactStatus } from "@/lib/calls/aiCampaigns/co
 import type { AiCampaignState } from "@/lib/calls/aiCampaigns/api";
 import type { CallingStation, StationStatus } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type BadgeColor = React.ComponentProps<typeof Badge.Root>["color"];
 
@@ -108,8 +109,9 @@ export function errorText(cause: unknown, fallback = "Something went wrong. Plea
 /** `errorText` with a translated default fallback. */
 export function useErrorText(): (cause: unknown, fallback?: string) => string {
   const t = useTranslations("callingAiSetup.shared");
-  // Stable between renders, so it can sit in a hook's dependency list.
-  return useCallback((cause, fallback) => errorText(cause, fallback ?? t("errors.generic")), [t]);
+  const apiErrorText = useApiErrorText();
+  // Stable between renders, so it can sit in a hook's dependency list. A coded server error is shown in our words.
+  return useCallback((cause, fallback) => apiErrorText(cause instanceof Error ? cause : null, fallback ?? t("errors.generic")), [t, apiErrorText]);
 }
 
 /** Asks the browser to confirm leaving the page while `dirty`. */
