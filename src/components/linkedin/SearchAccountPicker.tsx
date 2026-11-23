@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RiArrowDownSLine, RiArrowUpSLine, RiDraggable } from "@remixicon/react";
 import { getSearchUsage } from "@/lib/linkedin/searchLeadLimit";
 import { LinkedInAccountTag } from "@/components/linkedin/LinkedInAccountTag";
@@ -42,11 +43,11 @@ export function storeRunAccountIds(ids: string[]): void {
 }
 
 function QuotaLabel({ account }: { account: SearchPickerAccount }) {
+  const t = useTranslations("linkedinSearch.picker");
   const usage = getSearchUsage(account.searchLeadsToday, account.searchLimit);
   return (
     <span className={`shrink-0 text-paragraph-xs tabular-nums ${usage.limitReached ? "text-warning-base" : "text-text-soft-400"}`}>
-      {usage.limitReached ? "At limit · " : ""}
-      {usage.used}/{usage.limit}
+      {usage.limitReached ? t("atLimit", { used: usage.used, limit: usage.limit }) : t("quota", { used: usage.used, limit: usage.limit })}
     </span>
   );
 }
@@ -80,6 +81,7 @@ export function SearchAccountPicker({
   order?: string[];
   onReorder?: (ids: string[]) => void;
 }) {
+  const t = useTranslations("linkedinSearch.picker");
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -150,30 +152,30 @@ export function SearchAccountPicker({
       {mode === "multi" && (onSelectAll || onClear) && (
         <div className="mb-2 flex items-center justify-between text-paragraph-xs">
           <span className="text-text-soft-400">
-            {selected.size} of {accounts.length} selected
+            {t("selectedOf", { selected: selected.size, total: accounts.length })}
           </span>
           <div className="flex gap-3">
             {onSelectAll && (
               <button type="button" className="text-text-sub-600 hover:text-text-strong-950" onClick={onSelectAll}>
-                Select all
+                {t("selectAll")}
               </button>
             )}
             {onClear && (
               <button type="button" className="text-text-sub-600 hover:text-text-strong-950" onClick={onClear}>
-                Clear
+                {t("clear")}
               </button>
             )}
           </div>
         </div>
       )}
       {accounts.length === 0 ? (
-        <p className="text-paragraph-sm text-text-soft-400">No connected accounts</p>
+        <p className="text-paragraph-sm text-text-soft-400">{t("noAccounts")}</p>
       ) : showOrdered ? (
         <div className="space-y-3">
           <div>
-            <p className="mb-1 text-label-xs text-text-soft-400">Order — the first account is used first</p>
+            <p className="mb-1 text-label-xs text-text-soft-400">{t("orderHint")}</p>
             {orderedAccounts.length === 0 ? (
-              <p className="text-paragraph-sm text-text-soft-400">No accounts selected</p>
+              <p className="text-paragraph-sm text-text-soft-400">{t("noneSelected")}</p>
             ) : (
               <ul className="space-y-1">
                 {orderedAccounts.map((a, i) => {
@@ -219,7 +221,7 @@ export function SearchAccountPicker({
                       <div className="flex shrink-0 flex-col">
                         <button
                           type="button"
-                          aria-label="Move up"
+                          aria-label={t("moveUp")}
                           disabled={i === 0}
                           onClick={() => moveByStep(a.id, -1)}
                           className="text-text-soft-400 hover:text-text-strong-950 disabled:cursor-not-allowed disabled:opacity-30"
@@ -228,7 +230,7 @@ export function SearchAccountPicker({
                         </button>
                         <button
                           type="button"
-                          aria-label="Move down"
+                          aria-label={t("moveDown")}
                           disabled={i === orderedAccounts.length - 1}
                           onClick={() => moveByStep(a.id, 1)}
                           className="text-text-soft-400 hover:text-text-strong-950 disabled:cursor-not-allowed disabled:opacity-30"
@@ -244,7 +246,7 @@ export function SearchAccountPicker({
           </div>
           {restAccounts.length > 0 && (
             <div>
-              <p className="mb-1 text-label-xs text-text-soft-400">Not used</p>
+              <p className="mb-1 text-label-xs text-text-soft-400">{t("notUsed")}</p>
               <ul className="max-h-56 space-y-1 overflow-y-auto">{restAccounts.map((a) => renderCheckboxRow(a))}</ul>
             </div>
           )}
