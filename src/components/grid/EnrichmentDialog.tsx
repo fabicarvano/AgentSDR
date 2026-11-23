@@ -412,6 +412,25 @@ export default function EnrichmentDialog({
     }
   }
 
+  // One mapped input: its label (and star when required), its description and the column picker. Shared by the
+  // standard and the advanced lists.
+  function renderMappedInput(input: ActionInputDefinition) {
+    return (
+      <label key={input.key} className="block">
+        <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
+          {registry.inputName(integrationKey, actionKey, input)}{input.required && <span className="text-red-500"> *</span>}
+        </span>
+        {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{registry.inputDescription(integrationKey, actionKey, input)}</span>}
+        <ColumnMappingSelect
+          input={input}
+          columns={inputColumns}
+          value={inputs[input.key] ?? ""}
+          onChange={(columnKey) => setInputColumn(input.key, columnKey)}
+        />
+      </label>
+    );
+  }
+
   function continueToOutputs() {
     if (!action) return;
     if (!connectionId) return setError(t("errors.connectFirst", { provider: integration?.name ?? t("errors.providerFallback") }));
@@ -637,20 +656,7 @@ export default function EnrichmentDialog({
                   {standardInputs.length > 0 && (
                     <div className="space-y-4">
                       <p className="text-[12px] font-semibold uppercase tracking-wide text-text-sub-600">{t("columnMapping.setupInputs")}</p>
-                      {standardInputs.map((input) => (
-                        <label key={input.key} className="block">
-                          <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
-                            {registry.inputName(integrationKey, actionKey, input)}{input.required && <span className="text-red-500"> *</span>}
-                          </span>
-                          {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{registry.inputDescription(integrationKey, actionKey, input)}</span>}
-                          <ColumnMappingSelect
-                            input={input}
-                            columns={inputColumns}
-                            value={inputs[input.key] ?? ""}
-                            onChange={(columnKey) => setInputColumn(input.key, columnKey)}
-                          />
-                        </label>
-                      ))}
+                      {standardInputs.map(renderMappedInput)}
                     </div>
                   )}
 
@@ -761,20 +767,7 @@ export default function EnrichmentDialog({
                         {t("columnMapping.advanced")}
                       </summary>
                       <div className="space-y-4 border-t border-stroke-soft-200 p-3">
-                        {advancedInputs.map((input) => (
-                          <label key={input.key} className="block">
-                            <span className="mb-1.5 block text-[13px] font-medium text-text-strong-950">
-                              {registry.inputName(integrationKey, actionKey, input)}{input.required && <span className="text-red-500"> *</span>}
-                            </span>
-                            {input.description && <span className="mb-2 block text-[12px] text-text-sub-600">{registry.inputDescription(integrationKey, actionKey, input)}</span>}
-                            <ColumnMappingSelect
-                              input={input}
-                              columns={inputColumns}
-                              value={inputs[input.key] ?? ""}
-                              onChange={(columnKey) => setInputColumn(input.key, columnKey)}
-                            />
-                          </label>
-                        ))}
+                        {advancedInputs.map(renderMappedInput)}
                       </div>
                     </details>
                   )}
