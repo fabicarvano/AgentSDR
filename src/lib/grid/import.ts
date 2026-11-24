@@ -8,6 +8,8 @@ import { MAX_NAME_LENGTH } from "./validate";
 import { insertRows } from "./rows";
 import { inOrgTables, tableInOrganization } from "./scope";
 import { isStaticColumnType, type CellValues, type ColumnType, type StaticColumnType } from "./types";
+import { SEED_COLUMN_NAMES } from "./seedColumn";
+import type { ApiErrorCode, ApiErrorParams } from "@/lib/http/apiErrors";
 
 /**
  * Ceiling on one import. Higher than the outreach importer's 5,000 because an
@@ -25,9 +27,14 @@ export type ParsedSheet = {
   truncated: boolean;
 };
 
-export type ParseResult =
-  | { ok: true; sheet: ParsedSheet; sheetNames: string[] }
-  | { ok: false; error: string };
+/** A failed parse or mapping: the English `error` as ever, plus the code and values the screen translates. */
+export type ImportFailure = { ok: false; error: string; code: ApiErrorCode; params?: ApiErrorParams };
+
+function failure(code: ApiErrorCode, error: string, params?: ApiErrorParams): ImportFailure {
+  return params ? { ok: false, error, code, params } : { ok: false, error, code };
+}
+
+export type ParseResult = { ok: true; sheet: ParsedSheet; sheetNames: string[] } | ImportFailure;
 
 function cell(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -52,11 +59,11 @@ export function parseSpreadsheet(buffer: ArrayBuffer, sheetName?: string): Parse
     // number, so "2024-03-01" arrives as 45352 and infers as a number column.
     workbook = XLSX.read(buffer, { type: "buffer", codepage: 65001, cellDates: true });
   } catch {
-    return { ok: false, error: "Could not read that file — is it a valid CSV or Excel file?" };
+    return failure("importUnreadable", "Could not read that file — is it a valid CSV or Excel file?");
   }
 
   const names = workbook.SheetNames;
-  if (!names.length) return { ok: false, error: "That file has no sheets" };
+  if (!names.length) return failure("importNoSheets", "That file has no sheets");
 
   const chosen = sheetName && names.includes(sheetName) ? sheetName : names[0];
   const raw = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[chosen], {
@@ -65,11 +72,11 @@ export function parseSpreadsheet(buffer: ArrayBuffer, sheetName?: string): Parse
     defval: "",
   });
 
-  if (!raw.length) return { ok: false, error: "That sheet is empty" };
+  if (!raw.length) return failure("importSheetEmpty", "That sheet is empty");
 
   const headers = (raw[0] ?? []).map((h) => cell(h));
   if (!headers.some(Boolean)) {
-    return { ok: false, error: "The first row is empty — it should hold the column headers" };
+    return failure("importHeaderEmpty", "The first row is empty — it should hold the column headers");
   }
 
   // XLSX can represent a visually blank, formatted Excel row as an array of
@@ -230,42 +237,42 @@ export function normalizeMapping(
   raw: unknown,
   headers: string[],
   knownKeys: ReadonlySet<string>,
-): { ok: true; mapping: ColumnMapping[] } | { ok: false; error: string } {
-  if (!Array.isArray(raw)) return { ok: false, error: "mapping must be an array" };
+): { ok: true; mapping: ColumnMapping[] } | ImportFailure {
+  if (!Array.isArray(raw)) return failure("importMappingInvalid", "mapping must be an array");
   const seen = new Set<number>();
   const mapping: ColumnMapping[] = [];
   for (const entry of raw as unknown[]) {
-    if (typeof entry !== "object" || entry === null) return { ok: false, error: "every mapping entry must be an object" };
+    if (typeof entry !== "object" || entry === null) return failure("importMappingInvalid", "every mapping entry must be an object");
     const m = entry as Record<string, unknown>;
     const index = m.headerIndex;
     if (typeof index !== "number" || !Number.isInteger(index) || index < 0 || index >= headers.length) {
-      return { ok: false, error: "headerIndex must point at a column in the file" };
+      return failure("importMappingInvalid", "headerIndex must point at a column in the file");
     }
-    if (seen.has(index)) return { ok: false, error: `file column ${index + 1} is mapped more than once` };
+    if (seen.has(index)) return failure("importColumnTwice", `file column ${index + 1} is mapped more than once`, { column: index + 1 });
     seen.add(index);
 
     if (m.action === "skip") {
       mapping.push({ headerIndex: index, action: "skip" });
     } else if (m.action === "map") {
       if (typeof m.columnKey !== "string" || !knownKeys.has(m.columnKey)) {
-        return { ok: false, error: `mapping targets unknown column "${String(m.columnKey)}"` };
+        return failure("importUnknownTarget", `mapping targets unknown column "${String(m.columnKey)}"`, { column: String(m.columnKey) });
       }
       mapping.push({ headerIndex: index, action: "map", columnKey: m.columnKey });
     } else if (m.action === "create") {
       if (typeof m.type !== "string" || !isStaticColumnType(m.type as ColumnType)) {
-        return { ok: false, error: `"${String(m.type)}" is not a column type an import can create` };
+        return failure("importColumnType", `"${String(m.type)}" is not a column type an import can create`, { type: String(m.type) });
       }
       if (m.name !== undefined && typeof m.name !== "string") {
-        return { ok: false, error: "a new column's name must be text" };
+        return failure("importMappingInvalid", "a new column's name must be text");
       }
       const name = (typeof m.name === "string" ? m.name.trim() : "") || headers[index].trim();
-      if (!name) return { ok: false, error: `name the new column for file column ${index + 1}` };
+      if (!name) return failure("importNameMissing", `name the new column for file column ${index + 1}`, { column: index + 1 });
       if (name.length > MAX_NAME_LENGTH) {
-        return { ok: false, error: `column names must be ${MAX_NAME_LENGTH} characters or fewer` };
+        return failure("importNameTooLong", `column names must be ${MAX_NAME_LENGTH} characters or fewer`, { max: MAX_NAME_LENGTH });
       }
       mapping.push({ headerIndex: index, action: "create", name, type: m.type as StaticColumnType });
     } else {
-      return { ok: false, error: "mapping action must be map, create or skip" };
+      return failure("importMappingInvalid", "mapping action must be map, create or skip");
     }
   }
   return { ok: true, mapping };
@@ -289,7 +296,7 @@ export function isInitialPlaceholderRow(
 
 /** New tables carry this editable starter column until their first import. */
 export function isInitialSeedColumn(columns: Array<{ key: string; name: string }>): boolean {
-  return columns.length === 1 && columns[0].key === "name" && columns[0].name === "New Column";
+  return columns.length === 1 && columns[0].key === "name" && SEED_COLUMN_NAMES.includes(columns[0].name);
 }
 
 /**

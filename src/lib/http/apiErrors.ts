@@ -43,6 +43,18 @@ export const API_ERROR_CODES = [
   "fileEmpty",
   "fileRequired",
   "fileTooLarge",
+  "requestFailed",
+  "importUnreadable",
+  "importNoSheets",
+  "importSheetEmpty",
+  "importHeaderEmpty",
+  "importMappingJson",
+  "importMappingInvalid",
+  "importColumnTwice",
+  "importUnknownTarget",
+  "importColumnType",
+  "importNameMissing",
+  "importNameTooLong",
   "formulaDescribe",
   "formulaRequired",
   "formulaTooLong",
@@ -133,4 +145,15 @@ export function readApiErrorBody(body: unknown): { code?: string; params?: ApiEr
     code: typeof code === "string" ? code : undefined,
     params: params && typeof params === "object" ? (params as ApiErrorParams) : undefined,
   };
+}
+
+/**
+ * The error of a failed response. A route's own `error` and `code` pass through; a response with no `error` text
+ * (a proxy's 502, an empty 500) becomes the coded `requestFailed`, so the screen can say it in its language.
+ */
+export function apiErrorFromResponse(body: unknown, status: number): ApiError {
+  const { code, params } = readApiErrorBody(body);
+  const message = body && typeof body === "object" ? (body as { error?: unknown }).error : undefined;
+  if (typeof message === "string") return new ApiError(message, status, code, params);
+  return new ApiError(`Request failed (${status})`, status, "requestFailed", { status });
 }
