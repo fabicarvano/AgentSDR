@@ -81,6 +81,7 @@ import SortPanel from "./SortPanel";
 import { columnTypeDefaultName, columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
 import { clampGridPage, GRID_PAGE_SIZE, gridPageCount, gridPageRange } from "@/lib/grid/pagination";
 import * as Checkbox from "@/components/alignui/checkbox";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /**
  * What the Actions menu offers in one click.
@@ -684,6 +685,7 @@ export default function GridClient({
   onTableChanged?: () => void;
 }) {
   const t = useTranslations("gridMain.grid");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const labelOf = useColumnTypeLabel();
   const dialogs = useDialogs();
@@ -985,7 +987,7 @@ export default function GridClient({
       let { response: res, data: d } = await requestPage(pageIndex);
       if (sequence !== refetchSequence.current) return;
       if (!res.ok) {
-        setError(d.error ?? t("loadRowsFailed"));
+        setError(apiErrorText(d, t("loadRowsFailed")));
         return;
       }
       const safePage = clampGridPage(pageIndex, d.total);
@@ -993,7 +995,7 @@ export default function GridClient({
         ({ response: res, data: d } = await requestPage(safePage));
         if (sequence !== refetchSequence.current) return;
         if (!res.ok) {
-          setError(d.error ?? t("loadRowsFailed"));
+          setError(apiErrorText(d, t("loadRowsFailed")));
           return;
         }
       }
@@ -1022,7 +1024,7 @@ export default function GridClient({
       setFillTargetRow(null);
       cursorRef.current = d.cursor;
     },
-    [table.id, appliedSearch, page, t],
+    [table.id, appliedSearch, page, t, apiErrorText],
   );
 
   /**
@@ -1045,7 +1047,7 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          throw new Error(b.error ?? t("saveViewFailed"));
+          throw new Error(apiErrorText(b, t("saveViewFailed")));
         }
         saved = true;
         committedViewRef.current = next;
@@ -1072,7 +1074,7 @@ export default function GridClient({
         setBusy(false);
       }
     },
-    [table.id, refetch, appliedSearch, t],
+    [table.id, refetch, appliedSearch, t, apiErrorText],
   );
 
   const runSearch = useCallback(
@@ -1249,7 +1251,7 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          setError(b.error ?? t("addColumnFailed"));
+          setError(apiErrorText(b, t("addColumnFailed")));
           return;
         }
         await refetch();
@@ -1259,7 +1261,7 @@ export default function GridClient({
         setBusy(false);
       }
     },
-    [table.id, refetch, addMenu, t],
+    [table.id, refetch, addMenu, t, apiErrorText],
   );
 
   const patchColumn = useCallback(
@@ -1271,10 +1273,10 @@ export default function GridClient({
         body: JSON.stringify(patch),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? t("updateColumnFailed"));
+      if (!res.ok) throw new Error(apiErrorText(data, t("updateColumnFailed")));
       await refetch();
     },
-    [refetch, table.id, t],
+    [refetch, table.id, t, apiErrorText],
   );
 
   const duplicateColumn = useCallback(
@@ -1294,10 +1296,10 @@ export default function GridClient({
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? t("duplicateColumnFailed"));
+      if (!res.ok) throw new Error(apiErrorText(data, t("duplicateColumnFailed")));
       await refetch();
     },
-    [refetch, table.id, t],
+    [refetch, table.id, t, apiErrorText],
   );
 
   const splitColumn = useCallback(
@@ -1314,14 +1316,14 @@ export default function GridClient({
           },
         );
         const data: { columnsCreated?: number; rowsUpdated?: number; error?: string } = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error ?? t("splitFailed"));
+        if (!response.ok) throw new Error(apiErrorText(data, t("splitFailed")));
         await refetch();
         setNotice(t("splitDone", { count: data.columnsCreated ?? 0 }));
       } finally {
         setBusy(false);
       }
     },
-    [refetch, table.id, t],
+    [refetch, table.id, t, apiErrorText],
   );
 
   const dedupeColumn = useCallback(
@@ -1342,7 +1344,7 @@ export default function GridClient({
           { method: "POST" },
         );
         const data: { deleted?: number; error?: string } = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error ?? t("dedupeFailed"));
+        if (!response.ok) throw new Error(apiErrorText(data, t("dedupeFailed")));
         if (data.deleted) {
           undoStackRef.current = [];
           redoStackRef.current = [];
@@ -1360,7 +1362,7 @@ export default function GridClient({
         setBusy(false);
       }
     },
-    [dialogs, refetch, table.id, t],
+    [dialogs, refetch, table.id, t, apiErrorText],
   );
 
   const deleteColumnFromMenu = useCallback(
@@ -1391,7 +1393,7 @@ export default function GridClient({
         { method: "DELETE" },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? t("deleteColumnFailed"));
+      if (!res.ok) throw new Error(apiErrorText(data, t("deleteColumnFailed")));
       // Cell history can reference this column, so discard it after a
       // destructive schema change instead of offering a stale undo action.
       undoStackRef.current = [];
@@ -1399,7 +1401,7 @@ export default function GridClient({
       setHistoryCounts({ undo: 0, redo: 0 });
       await refetch();
     },
-    [columns, dialogs, format, refetch, table.id, t],
+    [columns, dialogs, format, refetch, table.id, t, apiErrorText],
   );
 
   const deleteSelectedRows = useCallback(async () => {
@@ -1422,7 +1424,7 @@ export default function GridClient({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? t("deleteRowsFailed"));
+        setError(apiErrorText(data, t("deleteRowsFailed")));
         return;
       }
       setSelectedRowIds([]);
@@ -1438,7 +1440,7 @@ export default function GridClient({
     } finally {
       setBusy(false);
     }
-  }, [dialogs, refetch, selectedRowIds, table.id, t]);
+  }, [dialogs, refetch, selectedRowIds, table.id, t, apiErrorText]);
 
   const exportSelectedRows = useCallback(async () => {
     if (!selectedRowIds.length) return;
@@ -1461,7 +1463,7 @@ export default function GridClient({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? t("exportFailed"));
+        setError(apiErrorText(data, t("exportFailed")));
         return;
       }
 
@@ -1481,7 +1483,7 @@ export default function GridClient({
     } finally {
       setBusy(false);
     }
-  }, [allMatchingSelected, displayedColumns, rowData, selectedRowIds, table.id, t]);
+  }, [allMatchingSelected, displayedColumns, rowData, selectedRowIds, table.id, t, apiErrorText]);
 
   const appendRows = useCallback(async () => {
     setBusy(true);
@@ -1494,7 +1496,7 @@ export default function GridClient({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? t("addRowsFailed"));
+        setError(apiErrorText(data, t("addRowsFailed")));
         return;
       }
 
@@ -1513,7 +1515,7 @@ export default function GridClient({
     } finally {
       setBusy(false);
     }
-  }, [table.id, addRows, refetch, appliedSearch, activeFilterCount, sorts.length, unfiltered, t]);
+  }, [table.id, addRows, refetch, appliedSearch, activeFilterCount, sorts.length, unfiltered, t, apiErrorText]);
 
   const goToPage = useCallback(async (nextPage: number) => {
     const target = clampGridPage(nextPage, rowCount);
@@ -1582,7 +1584,7 @@ export default function GridClient({
       }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? t("updateCellsFailed"));
+        setError(apiErrorText(data, t("updateCellsFailed")));
         return false;
       }
       if (options.recordHistory !== false && Array.isArray(data.previousValues)) {
@@ -1619,7 +1621,7 @@ export default function GridClient({
         setCellSavingLabel(null);
       }
     }
-  }, [recordCellCommand, refetch, startWatching, table.id, t]);
+  }, [recordCellCommand, refetch, startWatching, table.id, t, apiErrorText]);
 
   const onCellValueChanged = useCallback(
     async (event: CellValueChangedEvent<RowData>) => {
@@ -1808,7 +1810,7 @@ export default function GridClient({
           const response = await fetch(`/api/grid/tables/${table.id}/selection?${qs}`);
           const data: { rowIds?: string[]; error?: string } = await response.json().catch(() => ({}));
           if (!response.ok || !Array.isArray(data.rowIds)) {
-            setError(data.error ?? t("pasteResolveRowsFailed"));
+            setError(apiErrorText(data, t("pasteResolveRowsFailed")));
             return;
           }
           const startOffset = page * GRID_PAGE_SIZE + normalizedCellRange.startRow;
@@ -1829,7 +1831,7 @@ export default function GridClient({
             });
             const data: { column?: GridColumn; error?: string } = await response.json().catch(() => ({}));
             if (!response.ok || !data.column) {
-              throw new Error(data.error ?? t("pasteAddColumnsFailed"));
+              throw new Error(apiErrorText(data, t("pasteAddColumnsFailed")));
             }
             targetColumns.push(data.column);
             addedColumns += 1;
@@ -1846,7 +1848,7 @@ export default function GridClient({
           });
           const addRowsData: { rows?: GridRow[]; error?: string } = await addRowsResponse.json().catch(() => ({}));
           if (!addRowsResponse.ok || !Array.isArray(addRowsData.rows)) {
-            throw new Error(addRowsData.error ?? t("pasteAddRowsFailed"));
+            throw new Error(apiErrorText(addRowsData, t("pasteAddRowsFailed")));
           }
           const createdRowIds = addRowsData.rows.map((row) => row.id);
           if (createdRowIds.length !== missingRowCount) {
@@ -1907,7 +1909,7 @@ export default function GridClient({
         setCellSavingLabel(null);
       }
     })();
-  }, [activeFilterCount, appliedSearch, busy, columns.length, displayedColumns, normalizedCellRange, page, persistCellUpdates, refetch, rowData, sorts.length, table.id, t]);
+  }, [activeFilterCount, appliedSearch, busy, columns.length, displayedColumns, normalizedCellRange, page, persistCellUpdates, refetch, rowData, sorts.length, table.id, t, apiErrorText]);
 
   const onGridKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (isEditingClipboardTarget(event.target)) return;
@@ -2159,14 +2161,14 @@ export default function GridClient({
       });
       if (!res.ok) {
         const b = await res.json().catch(() => ({}));
-        throw new Error(b.error ?? t("autoRunFailed"));
+        throw new Error(apiErrorText(b, t("autoRunFailed")));
       }
       onTableChanged?.();
     } catch (cause) {
       setAutoRun(previous);
       setError(cause instanceof Error ? cause.message : t("autoRunFailed"));
     }
-  }, [autoRun, table.id, onTableChanged, t]);
+  }, [autoRun, table.id, onTableChanged, t, apiErrorText]);
 
   const runColumn = useCallback(async (column: GridColumn, rowIds?: string[], options: { onlyEmpty?: boolean } = {}) => {
     // An empty list means "no rows", never "every row".
@@ -2184,7 +2186,7 @@ export default function GridClient({
         body: JSON.stringify({ columnKey: column.key, rowIds, ...(options.onlyEmpty ? { onlyEmpty: true } : {}) }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? t("startColumnFailed"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("startColumnFailed")));
       setActiveJobs(data.activeJobs ?? 0);
       startWatching();
       await refetch();
@@ -2194,14 +2196,14 @@ export default function GridClient({
       setRunMenu(null);
       setBusy(false);
     }
-  }, [refetch, startWatching, table.id, t]);
+  }, [refetch, startWatching, table.id, t, apiErrorText]);
 
   const stopRun = useCallback(async () => {
     setStopping(true);
     try {
       const response = await fetch(`/api/grid/tables/${table.id}/run`, { method: "DELETE" });
       const data: { cancelled?: number; reset?: number; activeJobs?: number; error?: string } = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? t("stopFailed"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("stopFailed")));
       graceUntilRef.current = 0;
       setActiveJobs(data.activeJobs ?? 0);
       const total = (data.cancelled ?? 0) + (data.reset ?? 0);
@@ -2212,7 +2214,7 @@ export default function GridClient({
     } finally {
       setStopping(false);
     }
-  }, [refetch, table.id, t]);
+  }, [refetch, table.id, t, apiErrorText]);
 
   /* ---- column defs ---- */
 
@@ -2269,7 +2271,7 @@ export default function GridClient({
       const res = await fetch(`/api/grid/tables/${table.id}/selection?${qs}`);
       const data: { rowIds?: string[]; error?: string } = await res.json().catch(() => ({}));
       if (!res.ok || !Array.isArray(data.rowIds)) {
-        setError(data.error ?? t("selectAllFailed"));
+        setError(apiErrorText(data, t("selectAllFailed")));
         return;
       }
       setSelectedRowIds(data.rowIds);
@@ -2277,7 +2279,7 @@ export default function GridClient({
     } finally {
       setBusy(false);
     }
-  }, [appliedSearch, table.id, t]);
+  }, [appliedSearch, table.id, t, apiErrorText]);
 
   const onDisplayedColumnsChanged = useCallback((event: DisplayedColumnsChangedEvent<RowData>) => {
     const known = new Set(visibleColumns.map((column) => column.key));
@@ -2336,14 +2338,14 @@ export default function GridClient({
         });
         if (!res.ok) {
           const b = await res.json().catch(() => ({}));
-          throw new Error(b.error ?? t("moveColumnFailed"));
+          throw new Error(apiErrorText(b, t("moveColumnFailed")));
         }
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : t("moveColumnFailed"));
         await refetch().catch(() => undefined);
       }
     })();
-  }, [columns, hidden, pinned, refetch, table.id, t]);
+  }, [columns, hidden, pinned, refetch, table.id, t, apiErrorText]);
 
   const selectColumn = useCallback((columnKey: string, extend: boolean) => {
     if (!rowData.length) return;

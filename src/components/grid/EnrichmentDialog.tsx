@@ -30,6 +30,7 @@ import {
 import type { Messages } from "@/i18n/catalog";
 import type { ActionCategory, ActionInputDefinition, IntegrationDefinition } from "@/lib/integrations/types";
 import { useColumnTypeLabel } from "./columnTypes";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Step = "setup" | "outputs";
 
@@ -170,6 +171,7 @@ export default function EnrichmentDialog({
   onSaved: (activeJobs?: number) => void | Promise<void>;
 }) {
   const t = useTranslations("gridEnrich.enrichment");
+  const apiErrorText = useApiErrorText();
   const registry = useRegistryTexts();
   const columnTypeLabel = useColumnTypeLabel();
   // A column created by this dialog: if the run that follows is refused, the
@@ -291,7 +293,7 @@ export default function EnrichmentDialog({
     void fetch(`/api/grid/integrations/${integrationKey}/connections`)
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error ?? t("errors.loadAccounts"));
+        if (!response.ok) throw new Error(apiErrorText(data, t("errors.loadAccounts")));
         if (!cancelled) {
           const next = (data.connections ?? []) as IntegrationConnection[];
           setConnections(next);
@@ -314,7 +316,7 @@ export default function EnrichmentDialog({
       .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : t("errors.loadAccounts")))
       .finally(() => !cancelled && setConnectionsLoading(false));
     return () => { cancelled = true; };
-  }, [integrationKey, open, t]);
+  }, [integrationKey, open, t, apiErrorText]);
 
   function selectIntegration(key: string) {
     setIntegrationKey(key);
@@ -396,7 +398,7 @@ export default function EnrichmentDialog({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? t("errors.addAccount"));
+        setError(apiErrorText(data, t("errors.addAccount")));
         return;
       }
       setConnections((current) => [...current, data.connection]);
@@ -511,7 +513,7 @@ export default function EnrichmentDialog({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) return setError(data.error ?? t("errors.addEnrichment"));
+      if (!response.ok) return setError(apiErrorText(data, t("errors.addEnrichment")));
       if (!column && Array.isArray(data.columns) && data.columns[0]) {
         // Already seeded from what is on screen; do not re-seed from the saved copy.
         seededColumnId.current = (data.columns[0] as GridColumn).id;
@@ -529,7 +531,7 @@ export default function EnrichmentDialog({
         if (!runResponse.ok) {
           // The columns exist now: refresh the grid and keep the dialog open on them.
           await onSaved();
-          return setError(runData.error ?? t("errors.savedRunFailed"));
+          return setError(apiErrorText(runData, t("errors.savedRunFailed")));
         }
         activeJobs = runData.activeJobs;
       }

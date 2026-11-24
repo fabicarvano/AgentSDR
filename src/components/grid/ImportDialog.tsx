@@ -13,6 +13,7 @@ import {
 import * as Select from "@/components/alignui/select";
 import type { StaticColumnType } from "@/lib/grid/types";
 import { useColumnTypeLabel } from "./columnTypes";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Mapping =
   | { headerIndex: number; action: "map"; columnKey: string }
@@ -68,6 +69,7 @@ export default function ImportDialog({
   onImported: (summary: { rowsInserted: number; columnsCreated: number }) => void;
 }) {
   const t = useTranslations("gridMain.import");
+  const apiErrorText = useApiErrorText();
   const labelOf = useColumnTypeLabel();
   const [file, setFile] = useState<File | null>(null);
   const [sheet, setSheet] = useState<string | undefined>();
@@ -109,7 +111,7 @@ export default function ImportDialog({
         });
         const d = await res.json();
         if (!res.ok) {
-          setError(d.error ?? t("readFailed"));
+          setError(apiErrorText(d, t("readFailed")));
           setPreview(null);
           return;
         }
@@ -122,7 +124,7 @@ export default function ImportDialog({
         setBusy(false);
       }
     },
-    [tableId, t],
+    [tableId, t, apiErrorText],
   );
 
   const startedWith = useRef<File | null>(null);
@@ -158,7 +160,7 @@ export default function ImportDialog({
       });
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error ?? t("importFailed"));
+        setError(apiErrorText(d, t("importFailed")));
         return;
       }
       onImported({ rowsInserted: d.rowsInserted, columnsCreated: d.columnsCreated });
@@ -167,7 +169,7 @@ export default function ImportDialog({
     } finally {
       setBusy(false);
     }
-  }, [file, preview, sheet, mapping, tableId, onImported, t]);
+  }, [file, preview, sheet, mapping, tableId, onImported, t, apiErrorText]);
 
   if (!open || !mounted) return null;
 

@@ -8,6 +8,7 @@ import * as Select from "@/components/alignui/select";
 import type { GridColumn } from "@/lib/grid/schema";
 import type { ColumnConfig, ColumnType, FormulaConfig, HttpConfig } from "@/lib/grid/types";
 import { columnTypeDefaultName } from "./columnTypes";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type HeaderPair = { key: string; value: string };
 type PreviewState =
@@ -44,6 +45,7 @@ export default function ColumnConfigDialog({
   onSaved: (activeJobs?: number) => void | Promise<void>;
 }) {
   const t = useTranslations("gridColumns.columnConfigDialog");
+  const apiErrorText = useApiErrorText();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   // A column created by this dialog: if the run that follows is refused, the
   // dialog stays open on it and the next save updates it instead of adding another.
@@ -94,7 +96,7 @@ export default function ColumnConfigDialog({
         });
         const data = await res.json();
         if (!res.ok || !data.ok) {
-          setPreview({ state: "error", error: data.error ?? t("previewFailed") });
+          setPreview({ state: "error", error: apiErrorText(data, t("previewFailed")) });
           return;
         }
         setPreview({ state: "success", value: data.value, rowNumber: data.rowNumber ?? 1 });
@@ -109,7 +111,7 @@ export default function ColumnConfigDialog({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [expression, open, previewRowId, tableId, type, t]);
+  }, [expression, open, previewRowId, tableId, type, t, apiErrorText]);
 
   useEffect(() => {
     if (!open) return;
@@ -157,7 +159,7 @@ export default function ColumnConfigDialog({
         body: JSON.stringify({ prompt: aiPrompt.trim(), currentExpression: expression.trim() || undefined }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? t("generateFailed"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("generateFailed")));
       setSuggestion({ formula: data.formula, explanation: data.explanation });
       setExpression(data.formula);
       setPreview({ state: "idle" });
@@ -231,7 +233,7 @@ export default function ColumnConfigDialog({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? t("errSaveFailed"));
+        setError(apiErrorText(data, t("errSaveFailed")));
         return;
       }
       if (!column && data.column) setCreated(data.column as GridColumn);
@@ -246,7 +248,7 @@ export default function ColumnConfigDialog({
         if (!runRes.ok) {
           // The column is saved: refresh the grid, but keep the dialog open to show why the run failed.
           await onSaved();
-          setError(runData.error ?? t("errRunNotStarted"));
+          setError(apiErrorText(runData, t("errRunNotStarted")));
           return;
         }
         activeJobs = runData.activeJobs;

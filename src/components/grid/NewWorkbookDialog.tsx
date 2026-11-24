@@ -6,6 +6,7 @@ import { RiFileExcel2Line, RiLoader4Line, RiTableLine } from "@remixicon/react";
 import * as Modal from "@/components/alignui/modal";
 import WorkbookIcon from "./WorkbookIcon";
 import ImportDialog from "./ImportDialog";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type CreatedWorkbook = { workbook: { id: string }; table: { id: string } };
 
@@ -22,6 +23,7 @@ export default function NewWorkbookDialog({
   onCreated: (workbookId: string) => void;
 }) {
   const t = useTranslations("gridMain.newWorkbook");
+  const apiErrorText = useApiErrorText();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ workbookId: string; tableId: string; file: File } | null>(null);
@@ -39,7 +41,7 @@ export default function NewWorkbookDialog({
       body: JSON.stringify({ name, folderId: folderId ?? null }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error ?? t("createFailed"));
+    if (!response.ok) throw new Error(apiErrorText(data, t("createFailed")));
     return data;
   }
 

@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -51,14 +52,14 @@ function workbookTarget(workbook: WorkbookSummary): Target {
   return { kind: "workbook", id: workbook.id, name: workbook.name, folderId: workbook.folderId };
 }
 
-async function request(url: string, method: string, fallbackError: string, body?: unknown) {
+async function request(url: string, method: string, errorText: (body: unknown) => string, body?: unknown) {
   const response = await fetch(url, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error ?? fallbackError);
+  if (!response.ok) throw new Error(errorText(data));
   return data;
 }
 
@@ -78,6 +79,7 @@ export default function WorkbookListClient({
   allFolders: GridFolder[];
 }) {
   const t = useTranslations("gridMain.list");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
@@ -91,8 +93,8 @@ export default function WorkbookListClient({
   const [dragError, setDragError] = useState<string | null>(null);
 
   const send = useCallback(
-    (url: string, method: string, body?: unknown) => request(url, method, t("somethingWrong"), body),
-    [t],
+    (url: string, method: string, body?: unknown) => request(url, method, (data) => apiErrorText(data, t("somethingWrong")), body),
+    [t, apiErrorText],
   );
 
   function formatDate(value: Date | string | null) {

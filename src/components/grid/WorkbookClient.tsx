@@ -29,6 +29,7 @@ import GridClient from "./GridClient";
 import MoveTableDialog from "./MoveTableDialog";
 import SheetIcon from "./SheetIcon";
 import WorkbookIcon from "./WorkbookIcon";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 function WorkbookActionsMenu({
   children,
@@ -148,6 +149,7 @@ export default function WorkbookClient({
   initialSheet: SheetPayload;
 }) {
   const t = useTranslations("gridMain.workbook");
+  const apiErrorText = useApiErrorText();
   const router = useRouter();
   const dialogs = useDialogs();
   const [currentWorkbook, setCurrentWorkbook] = useState(workbook);
@@ -287,7 +289,7 @@ export default function WorkbookClient({
       if (!res.ok) {
         void dialogs.alert({
           title: t("addFailed"),
-          description: data.error,
+          description: apiErrorText(data, "") || undefined,
           variant: "error",
         });
         return;
@@ -297,7 +299,7 @@ export default function WorkbookClient({
     } finally {
       setSaving(false);
     }
-  }, [workbook.id, dialogs, refreshTabs, loadSheet, t]);
+  }, [workbook.id, dialogs, refreshTabs, loadSheet, t, apiErrorText]);
 
   const renameWorkbook = useCallback(async () => {
     const name = (
@@ -318,12 +320,12 @@ export default function WorkbookClient({
     if (!res.ok) {
       return dialogs.alert({
         title: t("renameWorkbookFailed"),
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
     }
     setCurrentWorkbook(data.workbook);
-  }, [currentWorkbook, dialogs, t]);
+  }, [currentWorkbook, dialogs, t, apiErrorText]);
 
   const editWorkbookSettings = useCallback(async () => {
     const description = await dialogs.prompt({
@@ -343,12 +345,12 @@ export default function WorkbookClient({
     if (!res.ok) {
       return dialogs.alert({
         title: t("updateWorkbookFailed"),
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
     }
     setCurrentWorkbook(data.workbook);
-  }, [currentWorkbook, dialogs, t]);
+  }, [currentWorkbook, dialogs, t, apiErrorText]);
 
   const removeWorkbook = useCallback(async () => {
     const ok = await dialogs.confirm({
@@ -363,13 +365,13 @@ export default function WorkbookClient({
     if (!res.ok) {
       return dialogs.alert({
         title: t("deleteWorkbookFailed"),
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
     }
     router.push("/tables");
     router.refresh();
-  }, [currentWorkbook, dialogs, router, t]);
+  }, [currentWorkbook, dialogs, router, t, apiErrorText]);
 
   const updateTableFailed = t("updateTableFailed");
   const patchTable = useCallback(async (table: GridTable, patch: Record<string, unknown>) => {
@@ -382,7 +384,7 @@ export default function WorkbookClient({
     if (!res.ok) {
       void dialogs.alert({
         title: updateTableFailed,
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
       return null;
@@ -400,7 +402,7 @@ export default function WorkbookClient({
       setSheet((current) => ({ ...current, table: { ...current.table, ...changed } }));
     }
     return data.table as GridTable;
-  }, [activeId, dialogs, updateTableFailed]);
+  }, [activeId, dialogs, updateTableFailed, apiErrorText]);
 
   // Inline rename from double-clicking a tab. `finishedRef` keeps Enter (which
   // unmounts the input and so blurs it) from committing a second time.
@@ -461,7 +463,7 @@ export default function WorkbookClient({
     if (!res.ok) {
       return dialogs.alert({
         title: t("deleteTableFailed"),
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
     }
@@ -471,7 +473,7 @@ export default function WorkbookClient({
     if (table.id === activeId) {
       await loadSheet(remaining[0].id);
     }
-  }, [activeId, dialogs, loadSheet, tables, t]);
+  }, [activeId, dialogs, loadSheet, tables, t, apiErrorText]);
 
   const persistOrder = useCallback(async (ordered: GridTable[]) => {
     const res = await fetch(`/api/grid/workbooks/${workbook.id}/tables/reorder`, {
@@ -483,14 +485,14 @@ export default function WorkbookClient({
     if (!res.ok) {
       void dialogs.alert({
         title: t("reorderFailed"),
-        description: data.error,
+        description: apiErrorText(data, "") || undefined,
         variant: "error",
       });
       await refreshTabs();
       return;
     }
     setTables(data.tables);
-  }, [dialogs, refreshTabs, workbook.id, t]);
+  }, [dialogs, refreshTabs, workbook.id, t, apiErrorText]);
 
   /** Swaps a tab with its neighbour — the menu's Move left / Move right. */
   const nudgeTable = useCallback(async (table: GridTable, delta: -1 | 1) => {
@@ -551,7 +553,7 @@ export default function WorkbookClient({
       if (!res.ok) {
         return dialogs.alert({
           title: t("duplicateFailed"),
-          description: data.error,
+          description: apiErrorText(data, "") || undefined,
           variant: "error",
         });
       }
@@ -560,7 +562,7 @@ export default function WorkbookClient({
     } finally {
       setSaving(false);
     }
-  }, [dialogs, loadSheet, refreshTabs, t]);
+  }, [dialogs, loadSheet, refreshTabs, t, apiErrorText]);
 
   const moveTableToWorkbook = useCallback(async (destinationWorkbookId: string) => {
     const table = movingTable;
@@ -573,7 +575,7 @@ export default function WorkbookClient({
     });
     const data = await res.json().catch(() => ({}));
     // Thrown so MoveTableDialog can show the reason inline and stay open.
-    if (!res.ok) throw new Error(data.error ?? t("moveFailed"));
+    if (!res.ok) throw new Error(apiErrorText(data, t("moveFailed")));
 
     setMovingTable(null);
     const remaining = tablesRef.current.filter((t) => t.id !== table.id);
@@ -582,7 +584,7 @@ export default function WorkbookClient({
     // is still here rather than rendering a table that moved away.
     if (table.id === activeId && remaining.length) await loadSheet(remaining[0].id);
     router.refresh();
-  }, [activeId, loadSheet, movingTable, router, t]);
+  }, [activeId, loadSheet, movingTable, router, t, apiErrorText]);
 
   // Keep the URL pointing at the open sheet, so a refresh or a shared link
   // reopens the same tab instead of snapping back to the first one.
