@@ -73,7 +73,7 @@ wording in Brazilian B2B software, then add it here in the same change.
 ## LinkedIn
 | English | pt-BR |
 |---|---|
-| Search (batch) / Search URL | Busca / URL de busca |
+| Search (batch) / Search URL | Pesquisa / URL de pesquisa |
 | Run / Re-run | Executar / Executar de novo |
 | Network (1st, 2nd, 3rd) / Out of network | Rede (1º, 2º, 3º) / Fora da rede |
 | Headline / Followers | Título / Seguidores |
@@ -87,6 +87,8 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Sender | Remetente |
 | Raw payload / Processing log | Payload bruto / Log de processamento |
 | Merge fields | Campos de mesclagem |
+
+The LinkedIn search feature is "Pesquisa". The verb "Search" in a list's search box stays "Buscar" ("Limpar busca"), and "Buscar" in the search box's label is kept.
 
 ## Tables (grid)
 
@@ -135,3 +137,12 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Launch / Preview | Lançar / Prévia |
 | In sequence | Em sequência |
 | Archive campaign | Arquivar campanha |
+
+## Decisions on what stays in English
+
+| What | Decision |
+|---|---|
+| Errors thrown by integration code (Unipile, OpenRouter, Gmail and other providers) and passed through as `error.message` | Stay in English: they come from the provider and change with it. The screen shows the translated generic line when there is no code. |
+| `CallApiError` and `WhatsappApiError` (calling and WhatsApp routes, about 75 files) | Not coded: the English text shows. Code a route only when a screen shows its error often. |
+| Internal validation messages the interface never shows, and `String(err)` 500 responses | English on purpose. |
+| Names already stored (columns, sheets, workbooks, folders created before 24/11/2026) | Keep the name they were created with. New ones are named in the creator's language. |
