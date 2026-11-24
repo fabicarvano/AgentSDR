@@ -146,3 +146,5 @@ The LinkedIn search feature is "Pesquisa". The verb "Search" in a list's search 
 | `CallApiError` and `WhatsappApiError` (calling and WhatsApp routes, about 75 files) | Not coded: the English text shows. Code a route only when a screen shows its error often. |
 | Internal validation messages the interface never shows, and `String(err)` 500 responses | English on purpose. |
 | Names already stored (columns, sheets, workbooks, folders created before 24/11/2026) | Keep the name they were created with. New ones are named in the creator's language. |
+| `closed_reason` "Closed by operator" and "Closed via AI assistant" (CRM record close) | Stored in English, never shown in a screen; the history shows the state change. New text would only change future rows. |
+| Default AI instruction of a new sequence step ("Respond to the latest inbound message…") | An AI prompt, outside the translated interface. |
