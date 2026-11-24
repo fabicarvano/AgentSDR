@@ -6,6 +6,7 @@ import { listColumns } from "@/lib/grid/columns";
 import { isStaticColumnType } from "@/lib/grid/types";
 import { coerceCellInput } from "@/lib/grid/cell-input";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -71,7 +72,7 @@ export async function PATCH(
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return NextResponse.json({ error: "body must be an object" }, { status: 400 });
@@ -83,7 +84,7 @@ export async function PATCH(
       if (body.updates !== undefined) {
         if (!Array.isArray(body.updates) || body.updates.length === 0 || body.updates.length > 50_000) {
           return NextResponse.json(
-            { error: "updates must contain between 1 and 50,000 cells" },
+            apiErrorBody("cellUpdateCount", "updates must contain between 1 and 50,000 cells"),
             { status: 400 },
           );
         }
@@ -96,23 +97,23 @@ export async function PATCH(
           }
           rowIds.add(update.rowId);
           if (rowIds.size > 1_000) {
-            return NextResponse.json({ error: "updates cannot span more than 1,000 rows" }, { status: 400 });
+            return NextResponse.json(apiErrorBody("cellUpdateRows", "updates cannot span more than 1,000 rows"), { status: 400 });
           }
           if (!UUID.test(update.rowId)) {
             return NextResponse.json({ error: "every update needs a valid rowId" }, { status: 400 });
           }
           const cell = `${update.rowId}\u0000${update.columnKey}`;
           if (cells.has(cell)) {
-            return NextResponse.json({ error: "updates cannot contain the same cell twice" }, { status: 400 });
+            return NextResponse.json(apiErrorBody("cellUpdateDuplicate", "updates cannot contain the same cell twice"), { status: 400 });
           }
           cells.add(cell);
           const column = columnsByKey.get(update.columnKey);
           if (!column) {
-            return NextResponse.json({ error: `unknown column "${update.columnKey}"` }, { status: 400 });
+            return NextResponse.json(apiErrorBody("unknownColumn", `unknown column "${update.columnKey}"`, { column: String(update.columnKey) }), { status: 400 });
           }
           if (!isStaticColumnType(column.type)) {
             return NextResponse.json(
-              { error: `"${column.name}" is a ${column.type} column — its value is set by running it` },
+              apiErrorBody("computedColumn", `"${column.name}" is a ${column.type} column — its value is set by running it`, { column: column.name, type: String(column.type) }),
               { status: 400 },
             );
           }
@@ -150,7 +151,7 @@ export async function PATCH(
       if (!column) return NextResponse.json({ error: "unknown column" }, { status: 400 });
       if (!isStaticColumnType(column.type)) {
         return NextResponse.json(
-          { error: `"${column.name}" is a ${column.type} column — its value is set by running it` },
+          apiErrorBody("computedColumn", `"${column.name}" is a ${column.type} column — its value is set by running it`, { column: column.name, type: String(column.type) }),
           { status: 400 },
         );
       }
@@ -160,7 +161,7 @@ export async function PATCH(
 
       const [before] = await listRowsByIds(tableId, [body.rowId]);
       const row = await setCellValue(tableId, body.rowId, body.columnKey, input.value);
-      if (!row) return NextResponse.json({ error: "row not found" }, { status: 404 });
+      if (!row) return NextResponse.json(apiErrorBody("notFound", "row not found"), { status: 404 });
 
       const queued = await queueDependents(
         tableId,

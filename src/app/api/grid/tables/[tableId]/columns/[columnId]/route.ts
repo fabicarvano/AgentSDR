@@ -3,6 +3,7 @@ import { deleteColumn, updateColumn } from "@/lib/grid/columns";
 import { ALL_COLUMN_TYPES, type ColumnConfig, type ColumnType } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid, optionalName } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // PATCH /api/grid/tables/[tableId]/columns/[columnId]
 //   { name?, type?, config?, autoRun?, afterColumnId? }
@@ -19,7 +20,7 @@ export async function PATCH(
     return await withOrgContext(req, async () => {
       const { tableId, columnId } = await params;
       if (!isUuid(tableId) || !isUuid(columnId)) {
-        return NextResponse.json({ error: "not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
       }
 
       let body: Record<string, unknown>;
@@ -28,7 +29,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
 
       const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });
@@ -57,7 +58,7 @@ export async function PATCH(
           },
           tableId,
         );
-        if (!column) return NextResponse.json({ error: "not found" }, { status: 404 });
+        if (!column) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
         return NextResponse.json({ column });
       } catch (err) {
         return badRequest(clientMessage(err, "could not update column"));
@@ -85,13 +86,13 @@ export async function DELETE(
     return await withOrgContext(_req, async () => {
       const { tableId, columnId } = await params;
       if (!isUuid(tableId) || !isUuid(columnId)) {
-        return NextResponse.json({ error: "not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
       }
       const flag = _req.nextUrl.searchParams.get("withOutputs");
       const withOutputs = flag === "1" || flag === "true";
       try {
         const result = await deleteColumn(columnId, { withOutputs, tableId });
-        if (!result) return NextResponse.json({ error: "not found" }, { status: 404 });
+        if (!result) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
         return NextResponse.json({ ok: true, deletedColumnIds: result.deletedIds });
       } catch (err) {
         return NextResponse.json({ error: clientMessage(err, "could not delete column") }, { status: 400 });

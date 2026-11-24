@@ -7,6 +7,7 @@ import { gridCellRuns, gridColumns, gridRows } from "@/lib/grid/schema";
 import type { AiConfig, AiOutputConfig, IntegrationOutputConfig } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // Columns whose runs are audited in grid_cell_runs.
 const RUN_COLUMN_TYPES = new Set(["enrichment", "ai", "http", "formula"]);
@@ -61,9 +62,9 @@ export async function GET(
       const { tableId } = await params;
       const rowId = request.nextUrl.searchParams.get("rowId") ?? "";
       const columnKey = request.nextUrl.searchParams.get("columnKey") ?? "";
-      if (!isUuid(tableId) || !isUuid(rowId)) return NextResponse.json({ error: "Cell not found" }, { status: 404 });
+      if (!isUuid(tableId) || !isUuid(rowId)) return NextResponse.json(apiErrorBody("notFound", "Cell not found"), { status: 404 });
       const resolved = await resolveCell(tableId, rowId, columnKey);
-      if (!resolved) return NextResponse.json({ error: "Cell not found" }, { status: 404 });
+      if (!resolved) return NextResponse.json(apiErrorBody("notFound", "Cell not found"), { status: 404 });
 
       const [run] = await db.select({
         id: gridCellRuns.id,
@@ -118,14 +119,14 @@ export async function POST(
   try {
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ error: "Cell not found" }, { status: 404 });
+      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "Cell not found"), { status: 404 });
       let body: { rowId?: string; columnKey?: string; runId?: string; pointer?: string; name?: string };
       try {
         const parsed = await request.json();
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "Invalid JSON body"), { status: 400 });
       }
       if (
         typeof body.rowId !== "string" || typeof body.columnKey !== "string" || typeof body.runId !== "string" ||
@@ -135,12 +136,12 @@ export async function POST(
         return NextResponse.json({ error: "Row, cell run, response field, and column name are required" }, { status: 400 });
       }
       if (!isUuid(body.runId)) return NextResponse.json({ error: "runId is not a valid id" }, { status: 400 });
-      if (!isUuid(body.rowId)) return NextResponse.json({ error: "Cell not found" }, { status: 404 });
+      if (!isUuid(body.rowId)) return NextResponse.json(apiErrorBody("notFound", "Cell not found"), { status: 404 });
       if (body.pointer.length > 1000 || body.name.length > 120) {
         return NextResponse.json({ error: "Response field or column name is too long" }, { status: 400 });
       }
       const resolved = await resolveCell(tableId, body.rowId, body.columnKey);
-      if (!resolved) return NextResponse.json({ error: "Cell not found" }, { status: 404 });
+      if (!resolved) return NextResponse.json(apiErrorBody("notFound", "Cell not found"), { status: 404 });
       if (resolved.source.type !== "enrichment") {
         return NextResponse.json({ error: "Adding response fields is only available for enrichments" }, { status: 400 });
       }

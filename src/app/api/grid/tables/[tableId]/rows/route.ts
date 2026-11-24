@@ -4,6 +4,7 @@ import { getTable } from "@/lib/grid/tables";
 import { GRID_PAGE_SIZE } from "@/lib/grid/pagination";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { intParam, isRecord, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/grid/tables/[tableId]/rows?limit&offset
 export async function GET(
@@ -14,7 +15,7 @@ export async function GET(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
       const limit = intParam(req.nextUrl.searchParams.get("limit"), GRID_PAGE_SIZE, { min: 1, max: 1000 });
       const offset = intParam(req.nextUrl.searchParams.get("offset"), 0);
@@ -40,7 +41,7 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
 
       let body: { count?: number };
@@ -49,7 +50,7 @@ export async function POST(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
 
       const count = Number(body.count ?? 1);
@@ -75,7 +76,7 @@ export async function DELETE(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ error: "table not found" }, { status: 404 });
+      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
 
       let body: { rowIds?: unknown };
       try {
@@ -83,7 +84,7 @@ export async function DELETE(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
 
       if (!Array.isArray(body.rowIds) || !body.rowIds.length) {

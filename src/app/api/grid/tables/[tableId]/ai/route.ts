@@ -4,6 +4,7 @@ import { getTable } from "@/lib/grid/tables";
 import type { AiExample, AiOutputField, AiUseCase } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 type Body = Partial<AiColumnInput> & { columnId?: string };
 
@@ -56,7 +57,7 @@ export async function POST(
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
 
       let body: Body;
@@ -65,7 +66,7 @@ export async function POST(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
 
       const parsed = read(body);
@@ -97,7 +98,7 @@ export async function PATCH(
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
 
       let body: Body;
@@ -106,7 +107,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
       if (typeof body.columnId !== "string" || !body.columnId) return NextResponse.json({ error: "columnId is required" }, { status: 400 });
 

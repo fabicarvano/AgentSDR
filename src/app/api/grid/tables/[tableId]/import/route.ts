@@ -11,6 +11,7 @@ import {
 } from "@/lib/grid/import";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /** Refused before parsing — a 60MB spreadsheet is a mistake, not a workload. */
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -37,26 +38,26 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
 
       let form: FormData;
       try {
         form = await req.formData();
       } catch {
-        return NextResponse.json({ error: "expected multipart/form-data" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", "expected multipart/form-data"), { status: 400 });
       }
 
       const file = form.get("file");
       if (!(file instanceof File)) {
-        return NextResponse.json({ error: "file is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("fileRequired", "file is required"), { status: 400 });
       }
       if (file.size === 0) {
-        return NextResponse.json({ error: "that file is empty" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("fileEmpty", "that file is empty"), { status: 400 });
       }
       if (file.size > MAX_FILE_BYTES) {
         return NextResponse.json(
-          { error: `file is larger than ${MAX_FILE_BYTES / 1024 / 1024}MB` },
+          apiErrorBody("fileTooLarge", `file is larger than ${MAX_FILE_BYTES / 1024 / 1024}MB`, { max: MAX_FILE_BYTES / 1024 / 1024 }),
           { status: 413 },
         );
       }
@@ -103,7 +104,7 @@ export async function POST(
       const mapping: ColumnMapping[] = normalized.mapping;
 
       if (!mapping.some((m) => m.action !== "skip")) {
-        return NextResponse.json({ error: "every column is set to skip" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("allColumnsSkipped", "every column is set to skip"), { status: 400 });
       }
 
       const result = await importRows(tableId, sheet, mapping);

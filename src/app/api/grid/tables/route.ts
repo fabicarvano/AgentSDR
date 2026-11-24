@@ -3,6 +3,7 @@ import { createTable } from "@/lib/grid/tables";
 import { getWorkbook, listWorkbookTables } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, optionalName } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/grid/tables?workbookId=... — the sheet tabs for one workbook.
 export async function GET(req: NextRequest) {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
       }
 
       if (!body.workbookId) {
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "description must be text" }, { status: 400 });
       }
       if (!(await getWorkbook(body.workbookId))) {
-        return NextResponse.json({ error: "workbook not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("workbookNotFound", "workbook not found"), { status: 404 });
       }
 
       const table = await createTable({

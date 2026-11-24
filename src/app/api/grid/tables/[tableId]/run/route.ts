@@ -10,6 +10,7 @@ import { ownCell } from "@/lib/grid/runners/types";
 import { parseRunRequest } from "@/lib/grid/run-request";
 import type { AiOutputConfig, EnrichmentConfig, IntegrationOutputConfig } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 function hasRequiredInputs(
   column: Awaited<ReturnType<typeof listColumns>>[number],
@@ -93,7 +94,7 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
       }
 
       // A present-but-broken body is a 400, not "run everything".
@@ -106,7 +107,7 @@ export async function POST(
 
       if (!runnable.length) {
         return NextResponse.json(
-          { error: "This table has no columns that can be run yet" },
+          apiErrorBody("noRunnableColumns", "This table has no columns that can be run yet"),
           { status: 400 },
         );
       }

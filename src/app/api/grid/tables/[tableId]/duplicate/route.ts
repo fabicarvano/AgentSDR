@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { duplicateTable } from "@/lib/grid/tables";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // POST /api/grid/tables/[tableId]/duplicate — copies the sheet, its columns
 // and every row into the same workbook, directly after the original.
@@ -12,7 +13,7 @@ export async function POST(
   try {
     return await withOrgContext(_req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
       try {
         const table = await duplicateTable(tableId);
         return NextResponse.json({ table }, { status: 201 });
