@@ -43,7 +43,7 @@
       "jobs": {
         "runOutreach": "Executar abordagem",
         "resetDailyLimits": "Redefinir limites diários",
-        "runSearchQueue": "Executar fila de busca"
+        "runSearchQueue": "Executar fila de pesquisa"
       },
       "status": {
         "success": "Sucesso",
@@ -123,7 +123,7 @@
     "filterSelect": {
       "all": "Todos",
       "noOptions": "Nenhuma opção",
-      "searchesLeft": "{count, plural, one {# busca restante hoje} other {# buscas restantes hoje}}"
+      "searchesLeft": "{count, plural, one {# pesquisa restante hoje} other {# pesquisas restantes hoje}}"
     },
     "leadStatus": {
       "PENDING": "Pendente",
