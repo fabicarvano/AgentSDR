@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import {
   RiBarChartBoxLine,
   RiBookOpenLine,
@@ -21,14 +22,13 @@ import {
   RiGridLine,
   RiLinkedinBoxFill,
   RiMailFill,
-  RiRouteLine,
   RiSettings3Line,
   RiTimeLine,
   RiTodoLine,
   RiUserSearchLine,
   RiWhatsappFill,
-  type RemixiconComponentType,
 } from "@remixicon/react";
+import { Funnel } from "lucide-react";
 import { HUE } from "@/components/analytics/theme";
 import { APP_VERSION, bugReportUrl, SUPPORT_LINKS } from "@/lib/support";
 import type { Messages } from "@/i18n/catalog";
@@ -45,6 +45,9 @@ import { SETTINGS_HOME, SETTINGS_NAV, type SettingsGroupKey, type SettingsItemKe
  * Labels are message keys (shell.nav.*), not text: this file is data and
  * cannot call hooks. A component renders them with `useTranslations("shell.nav")`.
  */
+
+/** A nav icon: Remix or Lucide, both take a className. */
+export type NavIcon = ComponentType<{ className?: string }>;
 
 /** A key of shell.nav: the label of a link, group or section. */
 export type NavLabelKey = keyof Messages["shell"]["nav"];
@@ -63,7 +66,7 @@ export type NavLink = {
   kind: "link";
   href: string;
   labelKey: NavLabelKey;
-  icon: RemixiconComponentType;
+  icon: NavIcon;
   badge?: NavBadgeKey;
   /** "count" shows the number; "dot" only flags that something needs a look. */
   badgeStyle?: "count" | "dot";
@@ -74,7 +77,7 @@ export type NavGroup = {
   kind: "group";
   id: string;
   labelKey: NavLabelKey;
-  icon: RemixiconComponentType;
+  icon: NavIcon;
   /** Channel identity colour for the group's icon (the Analytics channel colours). */
   color?: string;
   children: NavLink[];
@@ -85,7 +88,7 @@ export type NavGroup = {
 export type NavEntry = NavLink | NavGroup;
 export type NavSection = { labelKey?: NavLabelKey; entries: NavEntry[] };
 
-const link = (href: string, labelKey: NavLabelKey, icon: RemixiconComponentType, extra: Partial<NavLink> = {}): NavLink => ({ kind: "link", href, labelKey, icon, ...extra });
+const link = (href: string, labelKey: NavLabelKey, icon: NavIcon, extra: Partial<NavLink> = {}): NavLink => ({ kind: "link", href, labelKey, icon, ...extra });
 
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -138,7 +141,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     labelKey: "crm",
     entries: [
-      link("/crm/pipeline", "pipeline", RiRouteLine),
+      link("/crm/pipeline", "pipeline", Funnel),
       link("/crm/sequences", "sequences", RiTimeLine),
     ],
   },
@@ -194,7 +197,7 @@ export function activeHref(pathname: string): string | undefined {
 
 /** The Help menu: external links, in the sidebar and the ⌘K palette. Labels are keys of shell.help. */
 export type HelpLinkKey = keyof Messages["shell"]["help"];
-export const HELP_LINKS: { labelKey: HelpLinkKey; href: string; icon: RemixiconComponentType }[] = [
+export const HELP_LINKS: { labelKey: HelpLinkKey; href: string; icon: NavIcon }[] = [
   { labelKey: "documentation", href: SUPPORT_LINKS.docs, icon: RiBookOpenLine },
   { labelKey: "reportBug", href: bugReportUrl(APP_VERSION), icon: RiBugLine },
   { labelKey: "requestFeature", href: SUPPORT_LINKS.featureRequest, icon: RiLightbulbLine },
@@ -218,7 +221,7 @@ export type PaletteKey =
 export type PaletteTranslator = (key: PaletteKey) => string;
 
 /** Every destination for the ⌘K palette: nav pages, settings screens, and "create" shortcuts. */
-export type PaletteItem = { href: string; label: string; group: string; icon: RemixiconComponentType; keywords?: string; /** Opens in a new tab instead of navigating in the app. */ external?: boolean };
+export type PaletteItem = { href: string; label: string; group: string; icon: NavIcon; keywords?: string; /** Opens in a new tab instead of navigating in the app. */ external?: boolean };
 
 export function paletteItems(t: PaletteTranslator): PaletteItem[] {
   const items: PaletteItem[] = [];
