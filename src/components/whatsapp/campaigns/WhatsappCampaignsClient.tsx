@@ -35,10 +35,11 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Skeleton } from "@/components/page/Skeletons";
 import type { ListWhatsappCampaignsResponse, WhatsappCampaignSummary } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText } from "./api";
+import { apiJson } from "./api";
 import { EditWhatsappCampaignModal } from "./EditWhatsappCampaignModal";
 import { campaignFunnel } from "./metrics";
 import { useCampaignFormat } from "./useCampaignFormat";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 const WHATSAPP = CHANNEL_META.whatsapp.color;
 
@@ -90,6 +91,7 @@ function NewCampaignButton() {
 
 export function WhatsappCampaignsClient() {
   const t = useTranslations("whatsappCampaigns.list");
+  const apiErrorText = useApiErrorText();
   const te = useTranslations("whatsappCampaigns.errors");
   const fmt = useAnalyticsFormat();
   const cf = useCampaignFormat();
@@ -116,9 +118,9 @@ export function WhatsappCampaignsClient() {
       setCampaigns(data.campaigns);
       setLoadError(null);
     } catch (cause) {
-      setLoadError(errorText(cause, t("loadFailed")));
+      setLoadError(apiErrorText(cause, t("loadFailed")));
     }
-  }, [t]);
+  }, [t, apiErrorText]);
 
   useEffect(() => {
     // Fetch on mount and whenever the query changes; state is set after the response.
@@ -162,7 +164,7 @@ export function WhatsappCampaignsClient() {
       await apiJson(`/api/whatsapp/campaigns/${c.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
       setCampaigns((prev) => prev?.map((x) => (x.id === c.id ? { ...x, status: next } : x)) ?? prev);
     } catch (cause) {
-      await dialogs.alert({ title: next === "paused" ? t("pauseFailed") : t("launchFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: next === "paused" ? t("pauseFailed") : t("launchFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -181,7 +183,7 @@ export function WhatsappCampaignsClient() {
       await apiJson(`/api/whatsapp/campaigns/${c.id}`, { method: "DELETE" });
       setCampaigns((prev) => prev?.filter((x) => x.id !== c.id) ?? prev);
     } catch (cause) {
-      await dialogs.alert({ title: t("archiveFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: t("archiveFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }

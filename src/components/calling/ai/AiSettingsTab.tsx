@@ -24,7 +24,7 @@ import { listCallingStations } from "@/lib/calls/client";
 import { setAiCampaignStations, updateAiCampaign } from "@/lib/calls/aiCampaigns/client";
 import type { CallingStation } from "@/lib/calls/stationContract";
 import { cn } from "@/utils/cn";
-import { errorText, NumberPicker, useAiGoalText, useBeforeUnload } from "./aiShared";
+import { NumberPicker, useAiGoalText, useBeforeUnload, useErrorText } from "./aiShared";
 import { useAiProblemText } from "./useAiServerText";
 
 const DEFAULT_VOICE = "default";
@@ -66,6 +66,7 @@ export function AiSettingsTab({
   toggling: boolean;
 }) {
   const t = useTranslations("callingAiWork.settings");
+  const errorText = useErrorText();
   const problemText = useAiProblemText();
   const voiceLabel = useAgentVoiceLabel();
   const goalText = useAiGoalText();
@@ -88,7 +89,7 @@ export function AiSettingsTab({
       .then((response) => { if (!cancelled) setStations(response.stations); })
       .catch((cause) => { if (!cancelled) setStationsError(errorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, [t]);
+  }, [t, errorText]);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   const numbersDirty = [...numberIds].sort().join() !== [...savedNumberIds].sort().join();

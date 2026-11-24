@@ -388,15 +388,25 @@ export function aiStepPosition(steps: AiCampaignStep[], index: number, chase: bo
   return { kind: step.kind, index: kindIndex, total: kindTotal, chase };
 }
 
+/** "Call 2 of 4" for a step position (English, for the API). */
+export function aiStepPositionLabel(position: AiStepPosition): string {
+  return `${position.kind === "call" ? "Call" : "Message"} ${position.index} of ${position.total}${position.chase ? " (chasing the booking)" : ""}`;
+}
+
 /** "Call 2 of 4" for the step at `index` of `steps` (English, for the API). */
 export function aiStepLabel(steps: AiCampaignStep[], index: number, chase: boolean): string | null {
   const position = aiStepPosition(steps, index, chase);
-  if (!position) return null;
-  return `${position.kind === "call" ? "Call" : "Message"} ${position.index} of ${position.total}${position.chase ? " (chasing the booking)" : ""}`;
+  return position ? aiStepPositionLabel(position) : null;
 }
 
 /** Where a lead is in its sequence, as data: a step, or the nth call-back. */
 export type AiLeadStepRef = { type: "step"; position: AiStepPosition } | { type: "callback"; n: number };
+
+/** A lead's current step as the English line the API has always sent; the screens word the same ref themselves. */
+export function aiLeadStepLabel(ref: AiLeadStepRef | null): string | null {
+  if (!ref) return null;
+  return ref.type === "callback" ? `Call back ${ref.n}` : aiStepPositionLabel(ref.position);
+}
 
 /** A step the engine runs outside the configured sequences. */
 export type AiSystemStep =

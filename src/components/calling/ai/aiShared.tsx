@@ -101,12 +101,7 @@ export function AiAgentBadge() {
   );
 }
 
-/** An Error's message arrives from the server as is (English, batch I); `fallback` is shown for anything else. Pass a translated one: the default is English. */
-export function errorText(cause: unknown, fallback = "Something went wrong. Please try again."): string {
-  return cause instanceof Error ? cause.message : fallback;
-}
-
-/** `errorText` with a translated default fallback. */
+/** The words for a failed request: a coded server error in our language, else its English message, else a translated generic line. */
 export function useErrorText(): (cause: unknown, fallback?: string) => string {
   const t = useTranslations("callingAiSetup.shared");
   const apiErrorText = useApiErrorText();

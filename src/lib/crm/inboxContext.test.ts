@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { inboxCrmStepLabel, type InboxCrmStep, type InboxCrmSummary } from "./inboxContext";
+import { inboxCrmStep, inboxCrmStepLabel, type InboxCrmStep, type InboxCrmSummary } from "./inboxContext";
 
 const NOW = new Date("2026-09-19T12:00:00Z");
 
@@ -57,5 +57,42 @@ describe("inboxCrmStepLabel", () => {
     assert.equal(inboxCrmStepLabel(summary({ step: step({ dueAt: "2026-09-19T15:30:00Z" }) }), NOW), "Follow-up 1 due in 4h");
     assert.equal(inboxCrmStepLabel(summary({ step: step({ dueAt: "2026-09-19T11:00:00Z" }) }), NOW), "Follow-up 1 due now");
     assert.equal(inboxCrmStepLabel(summary({ step: step({ dueAt: null }) }), NOW), "Follow-up 1 scheduled");
+  });
+});
+
+describe("inboxCrmStep", () => {
+  test("workflow state wins over the step", () => {
+    assert.deepEqual(inboxCrmStep(summary({ workflowState: "closed", step: step() }), NOW), { kind: "closed" });
+    assert.deepEqual(inboxCrmStep(summary({ workflowState: "paused" }), NOW), { kind: "paused" });
+    assert.deepEqual(inboxCrmStep(summary({ workflowState: "error" }), NOW), { kind: "attention" });
+    assert.deepEqual(inboxCrmStep(summary({ workflowState: "classifying" }), NOW), { kind: "classifying" });
+    assert.deepEqual(inboxCrmStep(summary({ workflowState: "unclassified" }), NOW), { kind: "classifying" });
+  });
+
+  test("no step: draft flag decides", () => {
+    assert.deepEqual(inboxCrmStep(summary({ hasDraft: true }), NOW), { kind: "replyDrafted" });
+    assert.deepEqual(inboxCrmStep(summary(), NOW), { kind: "none" });
+  });
+
+  test("reply step phases", () => {
+    const reply = step({ position: 1, type: "reply", name: "Reply" });
+    assert.deepEqual(inboxCrmStep(summary({ step: { ...reply, status: "awaiting_review" } }), NOW), { kind: "reply", phase: "drafted" });
+    assert.deepEqual(inboxCrmStep(summary({ step: { ...reply, status: "drafting" } }), NOW), { kind: "reply", phase: "drafting" });
+    assert.deepEqual(inboxCrmStep(summary({ step: { ...reply, status: "failed" } }), NOW), { kind: "reply", phase: "failed" });
+  });
+
+  test("follow-up number is position minus one; due times carry a value", () => {
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ position: 3, status: "awaiting_review" }) }), NOW), { kind: "followUp", n: 2, phase: "drafted" });
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ dueAt: null }) }), NOW), { kind: "followUp", n: 1, phase: "scheduled" });
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ dueAt: "2026-09-19T11:00:00Z" }) }), NOW), { kind: "followUp", n: 1, phase: "dueNow" });
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ dueAt: "2026-09-19T15:30:00Z" }) }), NOW), { kind: "followUp", n: 1, phase: "dueHours", value: 4 });
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ dueAt: "2026-09-19T12:10:00Z" }) }), NOW), { kind: "followUp", n: 1, phase: "dueHours", value: 1 });
+    assert.deepEqual(inboxCrmStep(summary({ step: step({ dueAt: "2026-09-22T12:00:00Z" }) }), NOW), { kind: "followUp", n: 1, phase: "dueDays", value: 3 });
+  });
+
+  test("reply with a due time", () => {
+    const reply = step({ position: 1, type: "reply", dueAt: "2026-09-20T12:00:00Z" });
+    assert.deepEqual(inboxCrmStep(summary({ step: reply }), NOW), { kind: "reply", phase: "dueDays", value: 1 });
+    assert.equal(inboxCrmStepLabel(summary({ step: reply }), NOW), "Reply due in 1d");
   });
 });

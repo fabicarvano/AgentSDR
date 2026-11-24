@@ -31,7 +31,7 @@ import type { AgentOutcomeKind, CallDetail } from "@/lib/calls/contract";
 import type { Messages } from "@/i18n/catalog";
 import { useAnalyticsFormat } from "@/components/analytics/useAnalyticsFormat";
 import { cn } from "@/utils/cn";
-import { AiStatusBadge, errorText, useAiFormat } from "./aiShared";
+import { AiStatusBadge, useAiFormat, useErrorText } from "./aiShared";
 import { useAiStepText } from "./useAiServerText";
 
 /** While a call is queued or on, the sheet refreshes this often. */
@@ -100,6 +100,7 @@ export function AiLeadDrawer({
   onChanged: () => void;
 }) {
   const t = useTranslations("callingAiWork.drawer");
+  const errorText = useErrorText();
   const stepText = useAiStepText();
   const { formatWhen, actionRequiredText } = useAiFormat();
   const dialogs = useDialogs();
@@ -121,7 +122,7 @@ export function AiLeadDrawer({
     } catch (cause) {
       setError(errorText(cause, t("loadFailed")));
     }
-  }, [campaignId, contactId, t]);
+  }, [campaignId, contactId, t, errorText]);
 
   useEffect(() => {
     // Fetch on open; state is set after the response.
@@ -438,6 +439,7 @@ function ActivityEntry({ entry }: { entry: AiLeadActivity }) {
 /** The call's transcript, fetched when opened. */
 function Transcript({ callId }: { callId: string }) {
   const t = useTranslations("callingAiWork.drawer");
+  const errorText = useErrorText();
   const [open, setOpen] = useState(false);
   const [call, setCall] = useState<CallDetail | null>(null);
   const [error, setError] = useState<string | null>(null);

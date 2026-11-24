@@ -35,8 +35,9 @@ import {
   type WhatsappCampaignStep,
 } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText } from "./api";
+import { apiJson } from "./api";
 import { useCampaignFormat } from "./useCampaignFormat";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Unit = "hours" | "days";
 
@@ -67,6 +68,7 @@ export function WhatsappSequenceEditor({
   saveLabel?: string;
 }) {
   const t = useTranslations("whatsappCampaigns.sequence");
+  const apiErrorText = useApiErrorText();
   const cf = useCampaignFormat();
   const tProblem = useTranslations("serverWhatsapp.stepsProblem");
   const stepsError = (list: WhatsappCampaignStep[]): string | null => {
@@ -140,13 +142,13 @@ export function WhatsappSequenceEditor({
       } catch (cause) {
         if (cancelled) return;
         setPreview(null);
-        setPreviewError(errorText(cause, t("previewFailed")));
+        setPreviewError(apiErrorText(cause, t("previewFailed")));
       } finally {
         if (!cancelled) setPreviewing(false);
       }
     }, 450);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [campaignId, body, previewLeadId, t]);
+  }, [campaignId, body, previewLeadId, t, apiErrorText]);
 
   function change(next: WhatsappCampaignStep[]) {
     setSaved(false);
@@ -210,7 +212,7 @@ export function WhatsappSequenceEditor({
       setSaved(true);
       onSaved?.(normalized);
     } catch (cause) {
-      setError(errorText(cause, t("saveFailed")));
+      setError(apiErrorText(cause, t("saveFailed")));
     } finally {
       setSaving(false);
     }

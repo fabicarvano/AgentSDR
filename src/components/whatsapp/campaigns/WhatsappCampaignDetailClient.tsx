@@ -29,13 +29,14 @@ import { Skeleton } from "@/components/page/Skeletons";
 import { StatRow } from "@/components/page/StatRow";
 import type { UpdateWhatsappCampaignRequest, WhatsappCampaignDetail } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText } from "./api";
+import { apiJson } from "./api";
 import { EditWhatsappCampaignModal } from "./EditWhatsappCampaignModal";
 import { campaignFunnel, launchBlocker } from "./metrics";
 import { useCampaignFormat } from "./useCampaignFormat";
 import { WhatsappCampaignLeadsTab } from "./WhatsappCampaignLeadsTab";
 import { WhatsappCampaignOverview } from "./WhatsappCampaignOverview";
 import { WhatsappSequenceEditor } from "./WhatsappSequenceEditor";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type CampaignTab = "overview" | "leads" | "sequence";
 
@@ -46,6 +47,7 @@ export function WhatsappCampaignDetailClient({ campaignId, initialTab }: { campa
   const pathname = usePathname();
   const dialogs = useDialogs();
   const t = useTranslations("whatsappCampaigns.detail");
+  const apiErrorText = useApiErrorText();
   const te = useTranslations("whatsappCampaigns.errors");
   const cf = useCampaignFormat();
   const [tab, setTabState] = useState<CampaignTab>(initialTab);
@@ -65,9 +67,9 @@ export function WhatsappCampaignDetailClient({ campaignId, initialTab }: { campa
       setCampaign(await apiJson<WhatsappCampaignDetail>(`/api/whatsapp/campaigns/${campaignId}`));
       setLoadError(null);
     } catch (cause) {
-      setLoadError(errorText(cause, t("loadFailed")));
+      setLoadError(apiErrorText(cause, t("loadFailed")));
     }
-  }, [campaignId, t]);
+  }, [campaignId, t, apiErrorText]);
 
   useEffect(() => {
     // Fetch on mount and whenever the query changes; state is set after the response.
@@ -93,7 +95,7 @@ export function WhatsappCampaignDetailClient({ campaignId, initialTab }: { campa
       setCampaign((prev) => (prev ? { ...prev, status: next } : prev));
       void load();
     } catch (cause) {
-      await dialogs.alert({ title: next === "paused" ? t("pauseFailed") : t("launchFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: next === "paused" ? t("pauseFailed") : t("launchFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     } finally {
       setToggling(false);
     }
@@ -112,7 +114,7 @@ export function WhatsappCampaignDetailClient({ campaignId, initialTab }: { campa
       await apiJson(`/api/whatsapp/campaigns/${campaign.id}`, { method: "DELETE" });
       router.push("/whatsapp/campaigns");
     } catch (cause) {
-      await dialogs.alert({ title: t("archiveFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: t("archiveFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     }
   }
 

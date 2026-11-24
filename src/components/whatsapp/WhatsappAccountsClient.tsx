@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 import {
   RiChat1Line,
   RiDashboard3Line,
@@ -76,8 +77,9 @@ export function WhatsappAccountsClient({ rules }: { rules: WhatsappNumberRules }
   const [filter, setFilter] = useState<AccountFilter>("all");
   const [limitAccount, setLimitAccount] = useState<WhatsappAccountSummary | null>(null);
   const newChatsOf = (a: WhatsappAccountSummary) => a.newChatsPerDay ?? rules.newChatsPerDay;
-  // An Error carries the text it was thrown with (already written for the person); anything else gets the generic line.
-  const errorText = useCallback((cause: unknown) => (cause instanceof Error ? cause.message : t("errors.generic")), [t]);
+  // A coded server error is shown in the interface language, an uncoded one as the server wrote it; anything else gets the generic line.
+  const apiErrorText = useApiErrorText();
+  const errorText = useCallback((cause: unknown) => apiErrorText(cause, t("errors.generic")), [t, apiErrorText]);
   const formatWhen = (iso: string | null): string => {
     const date = iso ? new Date(iso) : null;
     return date && !Number.isNaN(date.getTime()) ? format.dateTime(date, { dateStyle: "medium", timeStyle: "short" }) : "—";
