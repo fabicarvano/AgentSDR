@@ -183,7 +183,7 @@
     },
     "linkedinConnection": {
       "title": "Conexão do LinkedIn",
-      "description": "O Unipile conecta suas contas do LinkedIn para convites, mensagens, busca e sincronização da caixa de entrada.",
+      "description": "O Unipile conecta suas contas do LinkedIn para convites, mensagens, pesquisa e sincronização da caixa de entrada.",
       "unipileNote": "A mesma conexão do Unipile também habilita o WhatsApp; alterá-la aqui a altera lá também."
     },
     "linkedinRules": {
@@ -273,8 +273,8 @@
           "warning": "Visitar muitos perfis rapidamente pode acionar os limites do LinkedIn."
         },
         "searchLeadsPerDay": {
-          "label": "Leads de busca por dia, por conta",
-          "help": "Quantos leads uma conta puxa das buscas do LinkedIn por dia.",
+          "label": "Leads de pesquisa por dia, por conta",
+          "help": "Quantos leads uma conta puxa das pesquisas do LinkedIn por dia.",
           "unit": "leads / dia",
           "warning": "Buscar em excesso é uma das formas mais rápidas de ter uma conta limitada."
         },
