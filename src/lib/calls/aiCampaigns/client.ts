@@ -22,14 +22,20 @@ import type {
   UpdateStationAiSettingsRequest,
 } from "./api";
 
+import { ApiError, readApiErrorBody } from "@/lib/http/apiErrors";
+
 const BASE = "/api/calling/ai-campaigns";
 
+// A failed response with no `error` text throws "Request failed (n)" in English: no translator is in reach here. Still open.
 export async function aiApi<T>(url: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && typeof init.body === "string" && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const response = await fetch(url, { ...init, headers });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(typeof data?.error === "string" ? data.error : `Request failed (${response.status})`);
+  if (!response.ok) {
+    const { code, params } = readApiErrorBody(data);
+    throw new ApiError(typeof data?.error === "string" ? data.error : `Request failed (${response.status})`, response.status, code, params);
+  }
   return data as T;
 }
 

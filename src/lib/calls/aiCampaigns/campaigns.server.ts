@@ -46,6 +46,7 @@ import {
   aiLaunchProblem,
   aiSequencesError,
   aiSettingsError,
+  aiLeadStepLabel,
   aiStepLabel,
   aiStepPosition,
   callsPerDayLimit,
@@ -573,20 +574,6 @@ function currentStepRef(row: ContactRow, campaign: Pick<CampaignRow, "aiSteps" |
   }
 }
 
-function currentStepLabel(row: ContactRow, campaign: Pick<CampaignRow, "aiSteps" | "aiChaseSteps">): string | null {
-  switch (row.aiStatus) {
-    case "queued":
-    case "reaching":
-      return aiStepLabel(campaign.aiSteps, row.aiStep, false);
-    case "chasing":
-      return aiStepLabel(campaign.aiChaseSteps, row.aiStep, true);
-    case "callback":
-      return `Call back ${row.aiCallbacks + 1}`;
-    default:
-      return null;
-  }
-}
-
 /** One lead as the list shows it. `latest` and `callCounts` are per contact id, loaded for the page. */
 function toLead(
   row: { contact: ContactRow; person: PersonRow; company: CompanyRow | null },
@@ -598,6 +585,7 @@ function toLead(
   const { contact, person, company } = row;
   const status = contact.aiStatus ?? "queued";
   const open = (AI_OPEN_STATUSES as readonly string[]).includes(status);
+  const stepRef = currentStepRef(contact, campaign);
   return {
     id: contact.id,
     personId: person.id,
@@ -607,8 +595,8 @@ function toLead(
     phone: person.phone ?? "",
     status,
     note: contact.aiNote,
-    currentStep: currentStepLabel(contact, campaign),
-    currentStepRef: currentStepRef(contact, campaign),
+    currentStep: aiLeadStepLabel(stepRef),
+    currentStepRef: stepRef,
     nextAt: open ? iso(contact.aiNextAt) : null,
     actionRequiredAt: contact.stage === "follow_up" ? iso(contact.followUpAt) : null,
     meetingAt: status === "booked" ? iso(contact.aiMeetingAt) : null,
