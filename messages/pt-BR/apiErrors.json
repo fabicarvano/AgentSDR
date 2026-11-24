@@ -55,6 +55,25 @@
     "noValidSearchRows": "Nenhuma linha válida com URL de busca foi encontrada.",
     "connectionIdRequired": "Escolha uma conexão primeiro.",
     "leadNoCampaign": "Este lead não está em uma campanha.",
-    "workTimeFormat": "Use o formato HH:mm para o horário."
+    "workTimeFormat": "Use o formato HH:mm para o horário.",
+    "alreadySetUp": "Esta instância já foi configurada. Entre com a sua conta.",
+    "apiKeyNotFound": "Não encontramos essa chave de API.",
+    "domainRequired": "Informe um domínio.",
+    "invalidSettings": "Essas configurações não são válidas.",
+    "mailboxNotFound": "Não encontramos essa caixa de e-mail.",
+    "noImportableRows": "Nenhuma linha com e-mail ou URL do LinkedIn foi encontrada.",
+    "tooManyRows": "Linhas demais. O limite é {max}.",
+    "unknownChannel": "Não reconhecemos esse canal.",
+    "unknownIntegration": "Não reconhecemos essa integração.",
+    "unsubscribeLinkInvalid": "Este link para cancelar a inscrição não é válido ou expirou.",
+    "openrouterConnectFirst": "Conecte o OpenRouter antes de escolher provedores.",
+    "openrouterByokConfirm": "Confirme o roteamento somente com BYOK antes de salvar.",
+    "openrouterSelectConnection": "Selecione uma conexão verificada do OpenRouter.",
+    "openrouterReconnect": "Reconecte o OpenRouter primeiro.",
+    "openrouterNoByok": "{provider} não tem uma credencial BYOK ativa.",
+    "openrouterModelsGone": "Um ou mais dos modelos de {provider} selecionados não estão mais disponíveis por BYOK.",
+    "openrouterDefaultFunctionCalling": "O modelo padrão precisa aceitar chamada de funções.",
+    "openrouterSelectModels": "Selecione pelo menos um modelo para cada provedor ativado.",
+    "openrouterChooseDefault": "Escolha um modelo padrão."
   }
 }

@@ -55,6 +55,25 @@
     "noValidSearchRows": "No valid rows with a search URL were found.",
     "connectionIdRequired": "Choose a connection first.",
     "leadNoCampaign": "This lead is not in a campaign.",
-    "workTimeFormat": "Use the HH:mm format for the time."
+    "workTimeFormat": "Use the HH:mm format for the time.",
+    "alreadySetUp": "This instance is already set up. Sign in instead.",
+    "apiKeyNotFound": "We couldn't find that API key.",
+    "domainRequired": "Enter a domain.",
+    "invalidSettings": "Those settings are not valid.",
+    "mailboxNotFound": "We couldn't find that mailbox.",
+    "noImportableRows": "No rows with an email or LinkedIn URL were found.",
+    "tooManyRows": "Too many rows. The limit is {max}.",
+    "unknownChannel": "We don't recognize that channel.",
+    "unknownIntegration": "We don't recognize that integration.",
+    "unsubscribeLinkInvalid": "This unsubscribe link is not valid or has expired.",
+    "openrouterConnectFirst": "Connect OpenRouter before selecting providers.",
+    "openrouterByokConfirm": "Confirm BYOK-only routing before saving.",
+    "openrouterSelectConnection": "Select a verified OpenRouter connection.",
+    "openrouterReconnect": "Reconnect OpenRouter first.",
+    "openrouterNoByok": "{provider} has no active BYOK credential.",
+    "openrouterModelsGone": "One or more of the selected {provider} models are no longer available through BYOK.",
+    "openrouterDefaultFunctionCalling": "The default model must support function calling.",
+    "openrouterSelectModels": "Select at least one model for every enabled provider.",
+    "openrouterChooseDefault": "Choose a default model."
   }
 }
