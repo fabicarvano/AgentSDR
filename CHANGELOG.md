@@ -9,6 +9,15 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+### Removed
+
+- **Email validation.** AgentSDR no longer sends a validation email to every
+  new person, and the `/api/webhooks/resend` endpoint, the Reach column's
+  validation status and the `EMAIL_VALIDATION_*` and `RESEND_WEBHOOK_SECRET`
+  settings are gone. Migration: `bun run scripts/drop-email-validations.ts`
+  (drops `email_validations`; export it first if you want the results).
+  You can delete the webhook you created in Resend.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

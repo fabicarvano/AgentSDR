@@ -1,7 +1,9 @@
 /**
+ * HISTORY ONLY: the email validation feature was removed; scripts/drop-email-validations.ts drops this table.
+ * Kept because scripts/ is the written record of how the schema was built.
+ *
  * Email validation via Resend: one row per Person, tracking what Resend's
- * webhook events say about a validation email. Matches
- * src/lib/emailValidation/schema.ts and src/lib/tenancy/registry.ts.
+ * webhook events say about a validation email.
  *
  * Run with:  bun run scripts/create-email-validations.ts
  *

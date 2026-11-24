@@ -12,9 +12,6 @@ export * from "./inbox/schema";
 // Outreach sending tables (mailboxes, campaigns, leads, emails, suppression list).
 export * from "./outreach/schema";
 
-// Email validation via Resend (email_validations).
-export * from "./emailValidation/schema";
-
 // Enrichment grid tables (grid_tables, grid_columns, grid_rows, grid_jobs, ...).
 export * from "./grid/schema";
 

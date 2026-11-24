@@ -173,16 +173,7 @@
         "noPhone": "Sem telefone",
         "copyEmail": "Copiar e-mail {value}",
         "copyPhone": "Copiar telefone {value}",
-        "openLinkedin": "Abrir perfil no LinkedIn",
-        "status": {
-          "unverified": "não verificado",
-          "verifying": "verificando…",
-          "validated": "validado",
-          "validatedPresumed": "validado (presumido)",
-          "validatedHot": "validado 🔥",
-          "invalid": "inválido",
-          "unconfirmed": "não confirmado"
-        }
+        "openLinkedin": "Abrir perfil no LinkedIn"
       },
       "links": {
         "open": {

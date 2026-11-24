@@ -191,49 +191,6 @@ when configured.
 | **Example** | `ACCESS_REQUEST_EMAIL=admin@example.com` |
 | **Read in** | `src/app/sign-in/page.tsx` |
 
-## Email validation
-
-### `EMAIL_VALIDATION_FROM`
-
-| | |
-|---|---|
-| **Required?** | No. |
-| **Default** | A built-in sender. |
-| **What it does** | The sender of the short note that email validation sends to each new contact, as `"Name <address>"`. Its domain must be verified in Resend. |
-| **Example** | `EMAIL_VALIDATION_FROM="Name <name@example.com>"` |
-| **Read in** | `src/lib/emailValidation/sender.ts` |
-
-### `EMAIL_VALIDATION_REPLY_TO`
-
-| | |
-|---|---|
-| **Required?** | No. |
-| **Default** | A built-in address. |
-| **What it does** | Where replies to the validation note go. |
-| **Example** | `EMAIL_VALIDATION_REPLY_TO=name@example.com` |
-| **Read in** | `src/lib/emailValidation/sender.ts` |
-
-### `RESEND_WEBHOOK_SECRET`
-
-| | |
-|---|---|
-| **Required?** | Yes, to use email validation. Without it the webhook answers 401 and no delivery, bounce or open event is recorded. |
-| **Default** | Empty. |
-| **What it does** | The signing secret of the Resend webhook that points at `/api/webhooks/resend`. Every event is checked against it. |
-| **How to get it** | In Resend, Webhooks, add an endpoint with `{APP_URL}/api/webhooks/resend`, select the delivered, bounced, opened and complained events, and copy its signing secret (it starts with `whsec_`). Creating the endpoint again gives a new secret. |
-| **Example** | `RESEND_WEBHOOK_SECRET=whsec_...` |
-| **Read in** | `src/lib/emailValidation/webhook.ts` |
-
-### `EMAIL_VALIDATION_DAILY_LIMIT`
-
-| | |
-|---|---|
-| **Required?** | No. |
-| **Default** | `100`. |
-| **What it does** | The most validation emails sent per UTC day, across all organizations. It warms up a new domain and stays under the Resend plan's quota. Queued contacts wait for the next day. |
-| **Example** | `EMAIL_VALIDATION_DAILY_LIMIT=100` |
-| **Read in** | `src/lib/emailValidation/queue.ts` |
-
 ## Secrets
 
 ### `INTEGRATION_CREDENTIALS_KEY`
