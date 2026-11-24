@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAiProvider } from "@/lib/ai/catalog";
 import { createAiConnection, listAiConnections } from "@/lib/ai/connections";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/ai/providers/[providerKey]/connections
 export async function GET(
@@ -12,7 +14,7 @@ export async function GET(
     return await withOrgContext(_req, async () => {
       const { providerKey } = await params;
       if (!getAiProvider(providerKey)) {
-        return NextResponse.json({ error: "unknown AI provider" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("unknownAiProvider", "unknown AI provider"), { status: 404 });
       }
       return NextResponse.json({ connections: await listAiConnections(providerKey) });
     });
@@ -33,16 +35,16 @@ export async function POST(
       requirePermission(ctx, { integrations: ["manage"] });
       const { providerKey } = await params;
       const provider = getAiProvider(providerKey);
-      if (!provider) return NextResponse.json({ error: "unknown AI provider" }, { status: 404 });
+      if (!provider) return NextResponse.json(apiErrorBody("unknownAiProvider", "unknown AI provider"), { status: 404 });
 
       let body: { name?: string; credentials?: Record<string, string> };
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.credentials || typeof body.credentials !== "object") {
-        return NextResponse.json({ error: "credentials are required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("credentialsRequired", "credentials are required"), { status: 400 });
       }
 
       try {

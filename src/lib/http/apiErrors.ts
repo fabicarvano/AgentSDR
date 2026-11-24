@@ -31,6 +31,27 @@ export const API_ERROR_CODES = [
   "leadNotFound",
   "missingIds",
   "unsupportedColumnType",
+  // Tables (grid).
+  "tableNotFound",
+  "workbookNotFound",
+  "allColumnsSkipped",
+  "cellUpdateCount",
+  "cellUpdateDuplicate",
+  "cellUpdateRows",
+  "computedColumn",
+  "credentialsRequired",
+  "fileEmpty",
+  "fileRequired",
+  "fileTooLarge",
+  "formulaDescribe",
+  "formulaRequired",
+  "formulaTooLong",
+  "formulaExpressionTooLong",
+  "noRunnableColumns",
+  "rowsNotInTable",
+  "rowsSelectionRange",
+  "unknownAiProvider",
+  "unknownColumn",
 ] as const;
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
 

@@ -34,6 +34,7 @@ import type { AiModelChoice } from "@/lib/ai/catalog";
 import { AiBrandIcon } from "@/components/ai/AiBrandIcon";
 import { DocsLink } from "@/components/page/DocsLink";
 import * as Select from "@/components/alignui/select";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type OpenRouterChoice = AiModelChoice & { upstreamProvider: string; upstreamProviderName: string };
 
@@ -158,6 +159,7 @@ export default function AiDialog({
   onSaved: (activeJobs?: number) => void | Promise<void>;
 }) {
   const t = useTranslations("gridEnrich.ai");
+  const apiErrorText = useApiErrorText();
   // A column created by this dialog: if the run that follows fails, the dialog
   // stays open and a second save must update this column, not create another.
   const [created, setCreated] = useState<GridColumn | null>(null);
@@ -304,7 +306,7 @@ export default function AiDialog({
     if (!open) return;
     void fetch("/api/ai/openrouter/models").then(async (response) => {
       const body = await response.json() as { error?: string; models?: Array<{ id: string; name: string; description?: string; provider: string; providerName: string; outputModalities?: string[] }>; settings?: { connectionId?: string | null; defaultModel?: { provider: string; modelId: string } | null } };
-      if (!response.ok) return setError(body.error ?? t("errors.loadModels"));
+      if (!response.ok) return setError(apiErrorText(body, t("errors.loadModels")));
       const provider = getAiProvider("openrouter");
       if (!provider) return;
       const next = (body.models ?? []).map((model) => {
@@ -331,7 +333,7 @@ export default function AiDialog({
       setConnectionIdRaw((current) => body.settings?.connectionId || current);
       setDefaultModel(body.settings?.defaultModel ?? null);
     }).finally(() => setModelsLoading(false));
-  }, [open, t]);
+  }, [open, t, apiErrorText]);
 
   // A new column starts on the AI Settings default when it suits the use
   // case — without replacing a model the person already picked.
@@ -449,7 +451,7 @@ export default function AiDialog({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) return setError(data.error ?? t("errors.save"));
+      if (!response.ok) return setError(apiErrorText(data, t("errors.save")));
       if (!column && Array.isArray(data.columns) && data.columns[0]) setCreated(data.columns[0] as GridColumn);
 
       let activeJobs: number | undefined;
@@ -463,7 +465,7 @@ export default function AiDialog({
         if (!run.ok) {
           // The column exists now: refresh the grid and keep the dialog open on it.
           await onSaved();
-          return setError(runData.error ?? t("errors.savedRunFailed"));
+          return setError(apiErrorText(runData, t("errors.savedRunFailed")));
         }
         activeJobs = runData.activeJobs;
       }

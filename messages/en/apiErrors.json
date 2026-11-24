@@ -13,6 +13,26 @@
     "campaignNotFound": "We couldn't find that campaign.",
     "leadNotFound": "We couldn't find that lead.",
     "missingIds": "No items were given.",
-    "unsupportedColumnType": "The column type \"{type}\" is not supported."
+    "unsupportedColumnType": "The column type \"{type}\" is not supported.",
+    "tableNotFound": "We couldn't find that table.",
+    "workbookNotFound": "We couldn't find that workbook.",
+    "rowsSelectionRange": "Select between 1 and 5,000 rows.",
+    "fileRequired": "Choose a file to upload.",
+    "fileEmpty": "That file is empty.",
+    "fileTooLarge": "That file is larger than {max} MB.",
+    "allColumnsSkipped": "Every column is set to be skipped. Choose at least one column to import.",
+    "rowsNotInTable": "Some of those rows are not in this table.",
+    "credentialsRequired": "Enter the credentials to connect.",
+    "cellUpdateCount": "Update between 1 and 50,000 cells at a time.",
+    "cellUpdateRows": "Update at most 1,000 rows at a time.",
+    "cellUpdateDuplicate": "The same cell appears twice in this update.",
+    "noRunnableColumns": "This table has no columns that can be run yet.",
+    "unknownAiProvider": "We don't recognize that AI provider.",
+    "formulaRequired": "Enter a formula.",
+    "formulaTooLong": "That formula request is too long.",
+    "formulaDescribe": "Describe the formula you want.",
+    "unknownColumn": "The column \"{column}\" doesn't exist.",
+    "computedColumn": "The column \"{column}\" is a {type} column: its value is set by running it.",
+    "formulaExpressionTooLong": "That formula is too long."
   }
 }

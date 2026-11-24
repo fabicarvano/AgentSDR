@@ -17,6 +17,7 @@ import type { Messages } from "@/i18n/catalog";
 import type { GridColumn } from "@/lib/grid/schema";
 import { inferResponseValueType } from "@/lib/grid/value-types";
 import { columnTypeMeta } from "./columnTypes";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type CellDetailsSelection = {
   rowId: string;
@@ -72,6 +73,7 @@ export default function CellDetailsPanel({
   onAdded: (columnName: string) => Promise<void>;
 }) {
   const t = useTranslations("gridColumns.cellDetails");
+  const apiErrorText = useApiErrorText();
   const tOutcome = useTranslations("gridColumns.cellDetails.outcomes");
   const format = useFormatter();
   const formatDate = (iso: string) => format.dateTime(new Date(iso), { dateStyle: "medium", timeStyle: "short" });
@@ -98,7 +100,7 @@ export default function CellDetailsPanel({
     fetch(`/api/grid/tables/${tableId}/cell-details?${query}`)
       .then(async (response) => {
         const body = await response.json().catch(() => ({})) as DetailsResponse;
-        if (!response.ok) throw new Error(body.error ?? t("loadFailed"));
+        if (!response.ok) throw new Error(apiErrorText(body, t("loadFailed")));
         if (active) setDetails(body);
       })
       .catch((cause) => {
@@ -107,7 +109,7 @@ export default function CellDetailsPanel({
         }
       });
     return () => { active = false; };
-  }, [selection.column.key, selection.rowId, tableId, t]);
+  }, [selection.column.key, selection.rowId, tableId, t, apiErrorText]);
 
   const searchResults = useMemo(() => {
     if (!details?.run || !search.trim()) return null;
@@ -141,7 +143,7 @@ export default function CellDetailsPanel({
         }),
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error ?? t("addFailed"));
+      if (!response.ok) throw new Error(apiErrorText(body, t("addFailed")));
       await onAdded(body.column?.name ?? suggestedColumnName(selected));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("addFailed"));

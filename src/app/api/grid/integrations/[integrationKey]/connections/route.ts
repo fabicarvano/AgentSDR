@@ -5,6 +5,8 @@ import {
   listIntegrationConnections,
 } from "@/lib/grid/providers";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 export async function GET(
   _request: NextRequest,
@@ -14,7 +16,7 @@ export async function GET(
     return await withOrgContext(_request, async () => {
       const { integrationKey } = await params;
       if (!getIntegration(integrationKey)) {
-        return NextResponse.json({ error: "integration not found" }, { status: 404 });
+        return NextResponse.json(apiErrorBody("notFound", "integration not found"), { status: 404 });
       }
       return NextResponse.json({ connections: await listIntegrationConnections(integrationKey) });
     });
@@ -37,11 +39,11 @@ export async function POST(
       try {
         body = await request.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!body.credentials || typeof body.credentials !== "object" || Array.isArray(body.credentials)) {
-        return NextResponse.json({ error: "Credentials are required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("credentialsRequired", "Credentials are required"), { status: 400 });
       }
 
       try {

@@ -8,6 +8,7 @@ import * as Select from "@/components/alignui/select";
 import type { Messages } from "@/i18n/catalog";
 import type { GridColumn } from "@/lib/grid/schema";
 import type { GridCampaignChannel, GridCampaignMapping } from "@/lib/leads/gridCampaigns";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 // labelKey is a typed key under gridEnrich.campaign.fields, rendered with t(`fields.${labelKey}`).
 // The Record fails tsc when a GridCampaignMapping field has no text.
@@ -76,6 +77,7 @@ export default function CreateCampaignFromGridDialog({
   onCreated: (result: { campaignId: string; channel: GridCampaignChannel; created: number; failed: number }) => void;
 }) {
   const t = useTranslations("gridEnrich.campaign");
+  const apiErrorText = useApiErrorText();
   const [channel, setChannel] = useState<GridCampaignChannel>("email");
   const [name, setName] = useState("");
   const [mapping, setMapping] = useState<GridCampaignMapping>(() => suggestedMapping(columns));
@@ -98,7 +100,7 @@ export default function CreateCampaignFromGridDialog({
         body: JSON.stringify({ channel, name, rowIds, mapping }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? t("errors.create"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("errors.create")));
       onCreated(data);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errors.create"));

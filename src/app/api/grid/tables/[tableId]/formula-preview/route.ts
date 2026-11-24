@@ -7,6 +7,7 @@ import { evaluateOnce } from "@/lib/grid/runners";
 import { buildFormulaLookupRegistry, resolveFormulaConfig, textColumnKeys } from "@/lib/grid/formula-lookups";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const MAX_EXPRESSION_LENGTH = 10_000;
 
@@ -17,14 +18,14 @@ export async function POST(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ ok: false, error: "table not found" }, { status: 404 });
+      if (!isUuid(tableId)) return NextResponse.json({ ok: false, ...apiErrorBody("tableNotFound", "table not found") }, { status: 404 });
       let body: { expression?: unknown; rowId?: unknown };
       try {
         const parsed = await req.json();
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidJson", "invalid JSON body") }, { status: 400 });
       }
 
       if (typeof body.expression !== "string") {
@@ -36,10 +37,10 @@ export async function POST(
       const rowId = typeof body.rowId === "string" ? body.rowId : undefined;
       const expression = body.expression.trim();
       if (!expression) {
-        return NextResponse.json({ ok: false, error: "expression is required" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("formulaRequired", "expression is required") }, { status: 400 });
       }
       if (expression.length > MAX_EXPRESSION_LENGTH) {
-        return NextResponse.json({ ok: false, error: "expression is too long" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("formulaExpressionTooLong", "expression is too long") }, { status: 400 });
       }
 
       const rows = await db
@@ -54,7 +55,7 @@ export async function POST(
         .limit(1);
       const row = rows[0];
       if (!row) {
-        return NextResponse.json({ ok: false, error: "preview row not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("notFound", "preview row not found") }, { status: 404 });
       }
 
       // The grid numbers rows 1, 2, 3… in display order; `position` is a sort

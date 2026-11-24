@@ -3,6 +3,7 @@ import { createEnrichmentColumns, updateEnrichmentColumns } from "@/lib/grid/enr
 import { getTable } from "@/lib/grid/tables";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
+import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function POST(
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return tableNotFoundResponse();
       }
 
       let body: {
@@ -33,7 +34,7 @@ export async function POST(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!body.integrationKey || !body.actionKey) {
@@ -94,7 +95,7 @@ export async function PATCH(
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return tableNotFoundResponse();
       }
 
       let body: {
@@ -114,7 +115,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.columnId || !body.integrationKey || !body.actionKey || !body.inputs || !body.selectedOutputs || !body.connectionId) {
         return NextResponse.json({ error: "column, action, inputs, outputs, and connection are required" }, { status: 400 });

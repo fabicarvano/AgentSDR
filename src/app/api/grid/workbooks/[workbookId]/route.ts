@@ -7,6 +7,7 @@ import {
 } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/workbooks/[workbookId] — workbook plus its sheet tabs.
 export async function GET(
@@ -16,9 +17,9 @@ export async function GET(
   try {
     return await withOrgContext(_req, async () => {
       const { workbookId } = await params;
-      if (!isUuid(workbookId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(workbookId)) return notFoundResponse();
       const workbook = await getWorkbook(workbookId);
-      if (!workbook) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!workbook) return notFoundResponse();
 
       const tables = await listWorkbookTables(workbookId);
       return NextResponse.json({ workbook, tables });
@@ -38,7 +39,7 @@ export async function PATCH(
   try {
     return await withOrgContext(req, async () => {
       const { workbookId } = await params;
-      if (!isUuid(workbookId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(workbookId)) return notFoundResponse();
 
       let body: Record<string, unknown>;
       try {
@@ -46,7 +47,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });
@@ -64,7 +65,7 @@ export async function PATCH(
           description: body.description as string | null | undefined,
           folderId: folder.value,
         });
-        if (!workbook) return NextResponse.json({ error: "not found" }, { status: 404 });
+        if (!workbook) return notFoundResponse();
         return NextResponse.json({ workbook });
       } catch (cause) {
         // A move to a folder that has since been deleted — the caller's stale
@@ -88,9 +89,9 @@ export async function DELETE(
   try {
     return await withOrgContext(_req, async () => {
       const { workbookId } = await params;
-      if (!isUuid(workbookId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(workbookId)) return notFoundResponse();
       const ok = await deleteWorkbook(workbookId);
-      if (!ok) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!ok) return notFoundResponse();
       return NextResponse.json({ ok: true });
     });
   } catch (error) {

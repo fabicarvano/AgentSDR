@@ -3,6 +3,7 @@ import { createFolder, listFolders, listAllFolders } from "@/lib/grid/folders";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
 import { FolderNotFoundError } from "@/lib/grid/folders";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/grid/folders?parent=<id>       — direct children of one folder
 // GET /api/grid/folders?parent=root       — folders at the root
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       } catch (cause) {
         // Another organization's folder reads exactly like a deleted one.
         if (cause instanceof FolderNotFoundError) {
-          return NextResponse.json({ error: "parent folder not found" }, { status: 404 });
+          return NextResponse.json(apiErrorBody("notFound", "parent folder not found"), { status: 404 });
         }
         throw cause;
       }

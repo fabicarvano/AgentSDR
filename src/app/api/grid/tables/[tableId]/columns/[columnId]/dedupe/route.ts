@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dedupeRowsByColumn } from "@/lib/grid/column-operations";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isUuid } from "@/lib/grid/validate";
+import { notFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(
   _req: Request,
@@ -10,7 +11,7 @@ export async function POST(
   try {
     return await withOrgContext(_req, async () => {
       const { tableId, columnId } = await params;
-      if (!isUuid(tableId) || !isUuid(columnId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(tableId) || !isUuid(columnId)) return notFoundResponse();
       try {
         const deleted = await dedupeRowsByColumn(tableId, columnId);
         return NextResponse.json({ deleted });

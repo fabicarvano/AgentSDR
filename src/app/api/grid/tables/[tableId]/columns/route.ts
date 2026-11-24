@@ -4,6 +4,7 @@ import { getTable } from "@/lib/grid/tables";
 import { ALL_COLUMN_TYPES, type ColumnConfig, type ColumnType } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid, requireString } from "@/lib/grid/validate";
+import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/tables/[tableId]/columns
 export async function GET(
@@ -14,7 +15,7 @@ export async function GET(
     return await withOrgContext(_req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return tableNotFoundResponse();
       }
       const columns = await listColumns(tableId);
       return NextResponse.json({ columns });
@@ -41,7 +42,7 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json({ error: "table not found" }, { status: 404 });
+        return tableNotFoundResponse();
       }
 
       let body: Record<string, unknown>;
@@ -50,7 +51,7 @@ export async function POST(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });

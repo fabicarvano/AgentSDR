@@ -5,6 +5,8 @@ import { listRowsByIds } from "@/lib/grid/rows";
 import { getTable } from "@/lib/grid/tables";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -53,13 +55,13 @@ export async function POST(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ error: "table not found" }, { status: 404 });
+      if (!isUuid(tableId)) return tableNotFoundResponse();
 
       let body: ExportRequest;
       try {
         body = await req.json() as ExportRequest;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return NextResponse.json({ error: "body must be an object" }, { status: 400 });
@@ -79,12 +81,12 @@ export async function POST(
       }
 
       const [table, allColumns] = await Promise.all([getTable(tableId), listColumns(tableId)]);
-      if (!table) return NextResponse.json({ error: "table not found" }, { status: 404 });
+      if (!table) return tableNotFoundResponse();
 
       const columnsByKey = new Map(allColumns.map((column) => [column.key, column]));
       const unknownColumn = requestedColumnKeys?.find((key) => !columnsByKey.has(key));
       if (unknownColumn) {
-        return NextResponse.json({ error: `Unknown column: ${unknownColumn}` }, { status: 400 });
+        return NextResponse.json(apiErrorBody("unknownColumn", `Unknown column: ${unknownColumn}`, { column: String(unknownColumn) }), { status: 400 });
       }
       const columns = requestedColumnKeys
         ? requestedColumnKeys.map((key) => columnsByKey.get(key)!)
@@ -92,7 +94,7 @@ export async function POST(
 
       const fetchedRows = await listRowsByIds(tableId, rowIds);
       if (fetchedRows.length !== rowIds.length) {
-        return NextResponse.json({ error: "One or more rows do not belong to this table" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("rowsNotInTable", "One or more rows do not belong to this table"), { status: 400 });
       }
 
       // listRowsByIds returns physical table order. Rebuild from the request so an

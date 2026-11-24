@@ -2,24 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { FormulaGeneratorUnavailableError, generateFormula } from "@/lib/grid/formula-generator";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid } from "@/lib/grid/validate";
+import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ tableId: string }> }) {
   try {
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json({ error: "table not found" }, { status: 404 });
+      if (!isUuid(tableId)) return tableNotFoundResponse();
       let body: { prompt?: unknown; currentExpression?: unknown };
       try {
         const parsed = await request.json();
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
-      } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
+      } catch { return NextResponse.json(apiErrorBody("invalidJson", "Invalid JSON body"), { status: 400 }); }
       if (typeof body.prompt !== "string" || (body.currentExpression !== undefined && typeof body.currentExpression !== "string")) {
         return NextResponse.json({ error: "prompt and currentExpression must be text" }, { status: 400 });
       }
       const prompt = body.prompt.trim();
-      if (!prompt) return NextResponse.json({ error: "Describe the formula you want" }, { status: 400 });
-      if (prompt.length > 2_000 || (body.currentExpression?.length ?? 0) > 10_000) return NextResponse.json({ error: "Formula request is too long" }, { status: 400 });
+      if (!prompt) return NextResponse.json(apiErrorBody("formulaDescribe", "Describe the formula you want"), { status: 400 });
+      if (prompt.length > 2_000 || (body.currentExpression?.length ?? 0) > 10_000) return NextResponse.json(apiErrorBody("formulaTooLong", "Formula request is too long"), { status: 400 });
       try {
         return NextResponse.json(await generateFormula(tableId, prompt, body.currentExpression));
       } catch (error) {

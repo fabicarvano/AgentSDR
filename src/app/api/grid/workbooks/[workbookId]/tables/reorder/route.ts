@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { reorderTables } from "@/lib/grid/tables";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/grid/http-errors";
 
 // POST /api/grid/workbooks/[workbookId]/tables/reorder — { tableIds: [...] }
 //
@@ -14,7 +15,7 @@ export async function POST(
   try {
     return await withOrgContext(req, async () => {
       const { workbookId } = await params;
-      if (!isUuid(workbookId)) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!isUuid(workbookId)) return notFoundResponse();
 
       let body: { tableIds?: unknown };
       try {
@@ -22,7 +23,7 @@ export async function POST(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!Array.isArray(body.tableIds)) {
