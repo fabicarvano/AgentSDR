@@ -14,10 +14,10 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Mailbox(es) | Caixa(s) de e-mail | |
 | Campaign(s) | Campanha(s) | |
 | Lead(s) | Lead(s) | Kept: the word every Brazilian sales team uses. |
-| Pipeline | Pipeline | Kept. |
+| Pipeline | Funil | pt-BR only: the English UI keeps "Pipeline". Analytics' conversion "Funnel" stays "Funil de conversão". |
 | Follow-up | Follow-up | Kept as a noun; "acompanhamento" only if the sentence needs it. |
 | Analytics | Analytics | Kept. |
-| Table(s) (enrichment grid) | Tabela(s) | |
+| Table(s) (enrichment grid) | Planilha(s) | |
 | Enrichment / enrich | Enriquecimento / enriquecer | |
 | Reply / replies | Resposta(s) | |
 | Draft(s) | Rascunho(s) | |
@@ -93,7 +93,8 @@ wording in Brazilian B2B software, then add it here in the same change.
 | English | pt-BR |
 |---|---|
 | Workbook | Pasta de trabalho |
-| Table / Column / Row / Cell | Tabela / Coluna / Linha / Célula |
+| Table / Column / Row / Cell | Planilha / Coluna / Linha / Célula |
+| Spreadsheet (the CSV/Excel file imported into the grid) | arquivo CSV/Excel (not "planilha", which is the grid's Table) |
 | Folder | Pasta |
 | Lead columns | Colunas de lead |
 | Sort / Filter | Ordenar (substantivo: Ordenação) / Filtro |

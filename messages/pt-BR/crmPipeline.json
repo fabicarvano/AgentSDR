@@ -14,7 +14,7 @@
       }
     },
     "client": {
-      "title": "Pipeline",
+      "title": "Funil",
       "description": "Todos os leads em aberto, por situação: aguardando você, aguardando o lead ou sem follow-ups.",
       "stage": {
         "needs_action": {
@@ -74,7 +74,7 @@
         "resetFilters": "Limpar filtros"
       },
       "stageAria": "Estágio",
-      "pipelineStageAria": "Estágio do pipeline",
+      "pipelineStageAria": "Estágio do funil",
       "all": "Todos",
       "list": {
         "title": "Leads em aberto",

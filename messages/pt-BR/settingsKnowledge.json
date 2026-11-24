@@ -86,8 +86,8 @@
         "retry": "Tentar novamente"
       },
       "noPipeline": {
-        "title": "Ainda não há pipeline de CRM",
-        "body": "As instruções pertencem ao pipeline de CRM padrão, e nenhum foi configurado ainda."
+        "title": "Ainda não há funil de CRM",
+        "body": "As instruções pertencem ao funil de CRM padrão, e nenhum foi configurado ainda."
       },
       "sections": {
         "draftInstructions": {
@@ -161,8 +161,8 @@
       "description": "As subcategorias em que a IA classifica as respostas e a sequência de resposta que cada uma inicia.",
       "tryAgain": "Tentar novamente",
       "noPipeline": {
-        "title": "Ainda não há pipeline de CRM",
-        "body": "As subcategorias pertencem ao pipeline de CRM padrão, e nenhum foi configurado ainda."
+        "title": "Ainda não há funil de CRM",
+        "body": "As subcategorias pertencem ao funil de CRM padrão, e nenhum foi configurado ainda."
       },
       "summary": "{active, plural, one {# subcategoria ativa} other {# subcategorias ativas}} em {categories, plural, one {# categoria} other {# categorias}}",
       "collapseAll": "Recolher tudo",
@@ -231,7 +231,7 @@
         "fallbackName": "Esta subcategoria"
       },
       "errors": {
-        "noPipeline": "Ainda não há um pipeline de CRM padrão configurado."
+        "noPipeline": "Ainda não há um funil de CRM padrão configurado."
       }
     }
   }
