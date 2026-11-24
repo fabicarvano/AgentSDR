@@ -576,13 +576,13 @@ type IconType = React.ComponentType<{ className?: string }>;
 /**
  * Pipeline stages. Each has the colour the Analytics workflow donut gives that
  * state and an icon that says what the stage means at a glance: something to
- * do now, a wait, and a sequence that has run out.
+ * do now, a wait, and a sequence that has run out. The words for each stage
+ * are in the catalog (crmPipeline `stage.<id>`): only the icon and colour live here.
  */
-// label, short and detail stay English here: CrmPipelineClient (its own batch) still reads them; nothing in this file renders them.
 export const STAGE_META = {
-  needs_action: { label: "Needs action", short: "Needs action", color: HUE.amber, badge: "orange", icon: RiFlashlightFill as IconType, detail: "A reply, draft or follow-up is due" },
-  waiting: { label: "Waiting on them", short: "Waiting", color: HUE.purple, badge: "purple", icon: RiHourglass2Fill as IconType, detail: "Replied to, or a follow-up is scheduled" },
-  exhausted: { label: "Follow-ups exhausted", short: "Exhausted", color: MUTED_STRONG, badge: "gray", icon: RiArchiveStackFill as IconType, detail: "Every follow-up sent, no reply yet" },
+  needs_action: { color: HUE.amber, icon: RiFlashlightFill as IconType },
+  waiting: { color: HUE.purple, icon: RiHourglass2Fill as IconType },
+  exhausted: { color: MUTED_STRONG, icon: RiArchiveStackFill as IconType },
 } as const;
 export type PipelineStage = keyof typeof STAGE_META;
 

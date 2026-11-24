@@ -4,13 +4,6 @@ import { CRM_CATEGORY_COLOR } from "@/components/analytics/theme";
 export type CrmCategory = "customer" | "interested" | "not_interested" | "other";
 export type CrmChannel = "email" | "linkedin" | "whatsapp";
 
-export const CATEGORY_LABELS: Record<CrmCategory, string> = {
-  customer: "Customer",
-  interested: "Interested",
-  not_interested: "Not interested",
-  other: "Other",
-};
-
 /**
  * One identity colour per CRM category, the same as the Analytics CRM cards
  * (`CRM_CATEGORY_COLOR` in the analytics theme), so a badge here and a slice

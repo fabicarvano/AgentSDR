@@ -48,7 +48,7 @@ const categories: readonly CategoryKey[] = [
 
 /**
  * The stored category keys never change; this maps each to its label key
- * (settingsKnowledge.leadCategories.category.*). The labels in crm-utils' CATEGORY_LABELS are English.
+ * (settingsKnowledge.leadCategories.category.*).
  */
 const CATEGORY_LABEL_KEYS: Record<CategoryKey, keyof Messages["settingsKnowledge"]["leadCategories"]["category"]> = {
   interested: "interested",
