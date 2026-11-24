@@ -6,7 +6,7 @@ import { sanitizeView, type GridQuery } from "@/lib/grid/query";
 import { effectiveColumnType } from "@/lib/grid/value-types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { notFoundResponse } from "@/lib/grid/http-errors";
 
 /**
  * GET /api/grid/tables/[tableId]/selection?search=
@@ -22,10 +22,10 @@ export async function GET(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(tableId)) return notFoundResponse();
       const search = req.nextUrl.searchParams.get("search") ?? undefined;
       const [table, columns] = await Promise.all([getTable(tableId), listColumns(tableId)]);
-      if (!table) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!table) return notFoundResponse();
 
       const view = sanitizeView(table.view, new Set(columns.map((c) => c.key)));
       const query: GridQuery = {

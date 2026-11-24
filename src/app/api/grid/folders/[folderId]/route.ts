@@ -3,7 +3,7 @@ import { deleteFolder, getFolder, listFolders, updateFolder } from "@/lib/grid/f
 import { listWorkbooks } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/folders/[folderId] — the folder plus its direct contents.
 export async function GET(
@@ -13,9 +13,9 @@ export async function GET(
   try {
     return await withOrgContext(_req, async () => {
       const { folderId } = await params;
-      if (!isUuid(folderId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(folderId)) return notFoundResponse();
       const folder = await getFolder(folderId);
-      if (!folder) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!folder) return notFoundResponse();
 
       const [folders, workbooks] = await Promise.all([
         listFolders(folderId),
@@ -38,7 +38,7 @@ export async function PATCH(
   try {
     return await withOrgContext(req, async () => {
       const { folderId } = await params;
-      if (!isUuid(folderId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(folderId)) return notFoundResponse();
 
       let body: Record<string, unknown>;
       try {
@@ -46,7 +46,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
 
       const name = optionalName(body.name);
@@ -56,7 +56,7 @@ export async function PATCH(
 
       try {
         const folder = await updateFolder(folderId, { name: name.value, parentId: parent.value });
-        if (!folder) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+        if (!folder) return notFoundResponse();
         return NextResponse.json({ folder });
       } catch (cause) {
         // updateFolder rejects cycles and dead destinations — both are the
@@ -81,9 +81,9 @@ export async function DELETE(
   try {
     return await withOrgContext(_req, async () => {
       const { folderId } = await params;
-      if (!isUuid(folderId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(folderId)) return notFoundResponse();
       const { deleted, released } = await deleteFolder(folderId);
-      if (!deleted) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!deleted) return notFoundResponse();
       return NextResponse.json({ ok: true, released });
     });
   } catch (error) {

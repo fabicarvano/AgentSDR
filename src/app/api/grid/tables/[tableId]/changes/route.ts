@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { changesSince } from "@/lib/grid/rows";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 /**
  * GET /api/grid/tables/[tableId]/changes?cursor=<version>
@@ -21,7 +21,7 @@ export async function GET(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+      if (!isUuid(tableId)) return tableNotFoundResponse();
 
       // next dev does not always re-run instrumentation after a hot reload. Start
       // the idempotent, SKIP-LOCKED worker here as a development safety net.

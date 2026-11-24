@@ -6,6 +6,7 @@ import { getTable } from "@/lib/grid/tables";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -54,13 +55,13 @@ export async function POST(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+      if (!isUuid(tableId)) return tableNotFoundResponse();
 
       let body: ExportRequest;
       try {
         body = await req.json() as ExportRequest;
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return NextResponse.json({ error: "body must be an object" }, { status: 400 });
@@ -80,7 +81,7 @@ export async function POST(
       }
 
       const [table, allColumns] = await Promise.all([getTable(tableId), listColumns(tableId)]);
-      if (!table) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+      if (!table) return tableNotFoundResponse();
 
       const columnsByKey = new Map(allColumns.map((column) => [column.key, column]));
       const unknownColumn = requestedColumnKeys?.find((key) => !columnsByKey.has(key));

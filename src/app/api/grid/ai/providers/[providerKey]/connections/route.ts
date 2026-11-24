@@ -3,6 +3,7 @@ import { getAiProvider } from "@/lib/ai/catalog";
 import { createAiConnection, listAiConnections } from "@/lib/ai/connections";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/ai/providers/[providerKey]/connections
 export async function GET(
@@ -40,7 +41,7 @@ export async function POST(
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.credentials || typeof body.credentials !== "object") {
         return NextResponse.json(apiErrorBody("credentialsRequired", "credentials are required"), { status: 400 });

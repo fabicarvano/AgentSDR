@@ -6,7 +6,7 @@ import {
 } from "@/lib/grid/column-operations";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(
   req: NextRequest,
@@ -15,14 +15,14 @@ export async function POST(
   try {
     return await withOrgContext(req, async () => {
       const { tableId, columnId } = await params;
-      if (!isUuid(tableId) || !isUuid(columnId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(tableId) || !isUuid(columnId)) return notFoundResponse();
       let body: { delimiter?: TextSplitDelimiter };
       try {
         const parsed = await req.json();
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.delimiter || !TEXT_SPLIT_DELIMITERS.includes(body.delimiter)) {
         return NextResponse.json({ error: "choose a valid separator" }, { status: 400 });

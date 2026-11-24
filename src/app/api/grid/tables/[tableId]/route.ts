@@ -9,7 +9,7 @@ import { effectiveColumnType } from "@/lib/grid/value-types";
 import { GRID_PAGE_SIZE } from "@/lib/grid/pagination";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, intParam, isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/grid/http-errors";
 
 /**
  * GET /api/grid/tables/[tableId]
@@ -29,7 +29,7 @@ export async function GET(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(tableId)) return notFoundResponse();
 
       const limit = intParam(req.nextUrl.searchParams.get("limit"), GRID_PAGE_SIZE, { min: 1, max: 1000 });
       const offset = intParam(req.nextUrl.searchParams.get("offset"), 0);
@@ -42,7 +42,7 @@ export async function GET(
       // for the table row first only bought an extra serial round trip on a path
       // the user sits and watches every time they switch tabs.
       const [table, columns] = await Promise.all([getTable(tableId), listColumns(tableId)]);
-      if (!table) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!table) return notFoundResponse();
 
       const refs = columns.map((c) => ({ key: c.key, type: effectiveColumnType(c) }));
 
@@ -103,7 +103,7 @@ export async function PATCH(
   try {
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(tableId)) return notFoundResponse();
 
       let body: Record<string, unknown>;
       try {
@@ -111,7 +111,7 @@ export async function PATCH(
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
 
       const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });
@@ -129,7 +129,7 @@ export async function PATCH(
       if (body.description !== undefined) fields.description = body.description as string | null;
       if (body.autoRun !== undefined) fields.autoRun = body.autoRun as boolean;
       if (body.view !== undefined) {
-        if (!(await getTable(tableId))) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+        if (!(await getTable(tableId))) return notFoundResponse();
         const columns = await listColumns(tableId);
         const problem = validateView(body.view, new Set(columns.map((c) => c.key)));
         if (problem) return badRequest(problem);
@@ -142,7 +142,7 @@ export async function PATCH(
         if (Object.keys(fields).length > 0) {
           table = await updateTable(tableId, fields);
         }
-        if (!table) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+        if (!table) return notFoundResponse();
         return NextResponse.json({ table });
       } catch (cause) {
         // moveTable rejects a dead destination and emptying a workbook.
@@ -165,7 +165,7 @@ export async function DELETE(
   try {
     return await withOrgContext(_req, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(tableId)) return notFoundResponse();
       let ok: boolean;
       try {
         ok = await deleteTable(tableId);
@@ -175,7 +175,7 @@ export async function DELETE(
         }
         throw error;
       }
-      if (!ok) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!ok) return notFoundResponse();
       return NextResponse.json({ ok: true });
     });
   } catch (error) {

@@ -11,6 +11,7 @@ import { parseRunRequest } from "@/lib/grid/run-request";
 import type { AiOutputConfig, EnrichmentConfig, IntegrationOutputConfig } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 function hasRequiredInputs(
   column: Awaited<ReturnType<typeof listColumns>>[number],
@@ -94,7 +95,7 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!(await getTable(tableId))) {
-        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+        return tableNotFoundResponse();
       }
 
       // A present-but-broken body is a 400, not "run everything".

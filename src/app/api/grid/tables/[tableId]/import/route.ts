@@ -12,6 +12,7 @@ import {
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 /** Refused before parsing — a 60MB spreadsheet is a mistake, not a workload. */
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -38,7 +39,7 @@ export async function POST(
     return await withOrgContext(req, async () => {
       const { tableId } = await params;
       if (!isUuid(tableId) || !(await getTable(tableId))) {
-        return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+        return tableNotFoundResponse();
       }
 
       let form: FormData;

@@ -3,12 +3,13 @@ import { FormulaGeneratorUnavailableError, generateFormula } from "@/lib/grid/fo
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid } from "@/lib/grid/validate";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ tableId: string }> }) {
   try {
     return await withOrgContext(request, async () => {
       const { tableId } = await params;
-      if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+      if (!isUuid(tableId)) return tableNotFoundResponse();
       let body: { prompt?: unknown; currentExpression?: unknown };
       try {
         const parsed = await request.json();

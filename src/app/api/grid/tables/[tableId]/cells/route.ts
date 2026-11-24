@@ -7,6 +7,7 @@ import { isStaticColumnType } from "@/lib/grid/types";
 import { coerceCellInput } from "@/lib/grid/cell-input";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -72,7 +73,7 @@ export async function PATCH(
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return NextResponse.json({ error: "body must be an object" }, { status: 400 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { deleteAiConnection } from "@/lib/ai/connections";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { isUuid } from "@/lib/grid/validate";
-import { apiErrorBody } from "@/lib/http/apiErrors";
+import { notFoundResponse } from "@/lib/grid/http-errors";
 
 // DELETE /api/grid/ai/connections/[connectionId]
 export async function DELETE(
@@ -13,9 +13,9 @@ export async function DELETE(
     return await withOrgContext(_req, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });
       const { connectionId } = await params;
-      if (!isUuid(connectionId)) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!isUuid(connectionId)) return notFoundResponse();
       const ok = await deleteAiConnection(connectionId);
-      if (!ok) return NextResponse.json(apiErrorBody("notFound", "not found"), { status: 404 });
+      if (!ok) return notFoundResponse();
       return NextResponse.json({ ok: true });
     });
   } catch (error) {

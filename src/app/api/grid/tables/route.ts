@@ -4,6 +4,7 @@ import { getWorkbook, listWorkbookTables } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, optionalName } from "@/lib/grid/validate";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 // GET /api/grid/tables?workbookId=... — the sheet tabs for one workbook.
 export async function GET(req: NextRequest) {
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
         if (!isRecord(parsed)) throw new Error("not an object");
         body = parsed;
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!body.workbookId) {

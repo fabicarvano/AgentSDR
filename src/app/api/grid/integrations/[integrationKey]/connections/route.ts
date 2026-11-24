@@ -6,6 +6,7 @@ import {
 } from "@/lib/grid/providers";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { invalidJsonResponse } from "@/lib/grid/http-errors";
 
 export async function GET(
   _request: NextRequest,
@@ -38,7 +39,7 @@ export async function POST(
       try {
         body = await request.json();
       } catch {
-        return NextResponse.json(apiErrorBody("invalidJson", "invalid JSON body"), { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!body.credentials || typeof body.credentials !== "object" || Array.isArray(body.credentials)) {

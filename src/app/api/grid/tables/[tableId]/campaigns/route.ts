@@ -3,13 +3,14 @@ import { createCampaignFromGrid, type CreateGridCampaignInput } from "@/lib/lead
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isUuid } from "@/lib/grid/validate";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ tableId: string }> }) {
   try {
     return await withOrgContext(req, async () => {
       try {
         const { tableId } = await params;
-        if (!isUuid(tableId)) return NextResponse.json(apiErrorBody("tableNotFound", "table not found"), { status: 404 });
+        if (!isUuid(tableId)) return tableNotFoundResponse();
         const body = await req.json() as Omit<CreateGridCampaignInput, "tableId">;
         if (body.channel !== "email" && body.channel !== "linkedin") {
           return NextResponse.json({ error: "channel must be email or linkedin" }, { status: 400 });
