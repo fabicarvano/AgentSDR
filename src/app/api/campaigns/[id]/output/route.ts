@@ -5,6 +5,7 @@ import { inOrg } from "@/lib/tenancy/scope";
 import { db } from "@/lib/db";
 import { campaigns } from "@/lib/schema";
 import { getCampaignDomains, assembleApolloLink } from "@/lib/qualification";
+import { campaignNotFoundResponse } from "@/lib/http/responses";
 
 // GET /api/campaigns/[id]/output — the campaign deliverable:
 //   the Apollo link of all qualified domains + the per-domain status table.
@@ -30,7 +31,7 @@ async function output(id: string) {
     .where(and(inOrg(campaigns), eq(campaigns.id, id)))
     .limit(1);
   if (!campaign) {
-    return NextResponse.json({ error: "campaign not found" }, { status: 404 });
+    return campaignNotFoundResponse();
   }
 
   const domainsTable = await getCampaignDomains(id);

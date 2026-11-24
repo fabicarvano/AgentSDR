@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { getCampaign, getCampaignDomains } from "@/lib/qualification";
+import { campaignNotFoundResponse } from "@/lib/http/responses";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ async function exportCampaign({ params }: { params: Promise<{ id: string }> }) {
 
   const campaign = await getCampaign(id);
   if (!campaign) {
-    return NextResponse.json({ error: "campaign not found" }, { status: 404 });
+    return campaignNotFoundResponse();
   }
 
   const rows = await getCampaignDomains(id);

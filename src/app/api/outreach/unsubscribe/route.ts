@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyUnsubscribeToken } from "@/lib/outreach/unsubscribeToken";
 import { suppressEmailOutreach, suppressEmailOutreachEverywhere } from "@/lib/outreach/suppression";
 import { runInOrganization } from "@/lib/tenancy/scope";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // POST /api/outreach/unsubscribe — { token } — public, no auth (see proxy.ts).
 // Token is a stateless signed email (see lib/outreach/unsubscribeToken.ts),
@@ -25,12 +26,12 @@ export async function POST(req: NextRequest) {
     }
   }
   if (!token) {
-    return NextResponse.json({ error: "token is required" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "token is required"), { status: 400 });
   }
 
   const result = verifyUnsubscribeToken(token);
   if (!result.ok) {
-    return NextResponse.json({ error: "invalid or expired unsubscribe link" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("unsubscribeLinkInvalid", "invalid or expired unsubscribe link"), { status: 400 });
   }
 
   if (result.organizationId) {

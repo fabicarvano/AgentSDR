@@ -10,6 +10,8 @@ import {
   addManualCandidates,
 } from "@/lib/qualification";
 import type { CampaignFilters, CampaignInputMode, CampaignTargetMode } from "@/lib/qualification";
+import { invalidJsonResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/campaigns — list campaigns (most recent first).
 export async function GET(req: NextRequest) {
@@ -57,11 +59,11 @@ async function create(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return invalidJsonResponse();
   }
 
   if (!body.inputMode) {
-    return NextResponse.json({ error: "inputMode is required" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "inputMode is required"), { status: 400 });
   }
   const jobTitles = body.jobTitles ?? [];
 

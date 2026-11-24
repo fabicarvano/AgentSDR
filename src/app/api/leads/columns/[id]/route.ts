@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         const column = body.archived ? await archiveColumn(id) : await unarchiveColumn(id);
         return NextResponse.json({ column });
       }
-      return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+      return NextResponse.json(apiErrorBody("nothingToUpdate", "Nothing to update"), { status: 400 });
     });
   } catch (err) {
     return columnErrorResponse(err);

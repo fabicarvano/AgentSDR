@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { deleteCampaign } from "@/lib/qualification";
+import { campaignNotFoundResponse } from "@/lib/http/responses";
 
 // DELETE /api/campaigns/[id]
 // Removes the campaign, its jobs, its targeted domains, and parent rows
@@ -15,7 +16,7 @@ export async function DELETE(
       const result = await deleteCampaign(id);
 
       if (!result.campaignDeleted) {
-        return NextResponse.json({ error: "campaign not found" }, { status: 404 });
+        return campaignNotFoundResponse();
       }
 
       return NextResponse.json(result);

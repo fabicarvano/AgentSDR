@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { qualifyDomain } from "@/lib/qualification";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // Single-domain debug endpoint. Runs the pipeline and returns the result row.
 // e.g. GET /api/qualify?domain=apollo.io&force=1
@@ -18,7 +19,7 @@ async function qualify(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const domain = searchParams.get("domain");
   if (!domain) {
-    return NextResponse.json({ error: "domain is required" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("domainRequired", "domain is required"), { status: 400 });
   }
   const force = searchParams.get("force") === "1";
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importLeadsForCampaign, spreadsheetPreview, suggestedEmailMapping, type EmailCsvMapping } from "@/lib/outreach/leadImport";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // POST /api/outreach/campaigns/[id]/leads/import — multipart form upload, field name "file".
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const form = await req.formData().catch(() => null);
       const file = form?.get("file");
       if (!file || !(file instanceof File)) {
-        return NextResponse.json({ error: "file is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("fileRequired", "file is required"), { status: 400 });
       }
 
       const buffer = await file.arrayBuffer();
@@ -22,9 +23,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const rawMapping = form?.get("mapping");
       if (typeof rawMapping === "string") {
         try { mapping = JSON.parse(rawMapping) as EmailCsvMapping; }
-        catch { return NextResponse.json({ error: "mapping must be valid JSON" }, { status: 400 }); }
+        catch { return NextResponse.json(apiErrorBody("invalidBody", "mapping must be valid JSON"), { status: 400 }); }
       }
-      if (!mapping) return NextResponse.json({ error: "Confirm the CSV column mapping before importing" }, { status: 400 });
+      if (!mapping) return NextResponse.json(apiErrorBody("mapConfirm", "Confirm the CSV column mapping before importing"), { status: 400 });
       const result = await importLeadsForCampaign(id, buffer, { filename: file.name, mapping });
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: result.error === "Campaign not found" ? 404 : 400 });

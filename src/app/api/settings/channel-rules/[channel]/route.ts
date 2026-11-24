@@ -18,7 +18,7 @@ function failure(error: unknown, fallback: string): Response {
 // GET /api/settings/channel-rules/:channel — { values, customized }
 export async function GET(req: NextRequest, { params }: Ctx) {
   const { channel } = await params;
-  if (!isChannel(channel)) return NextResponse.json({ error: "Unknown channel" }, { status: 404 });
+  if (!isChannel(channel)) return NextResponse.json(apiErrorBody("unknownChannel", "Unknown channel"), { status: 404 });
   try {
     return await withOrgContext(req, async () => NextResponse.json(await channelRulesForSettings(channel)));
   } catch (error) {
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 // PUT /api/settings/channel-rules/:channel — body: { [ruleKey]: value }; returns { values, customized }
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const { channel } = await params;
-  if (!isChannel(channel)) return NextResponse.json({ error: "Unknown channel" }, { status: 404 });
+  if (!isChannel(channel)) return NextResponse.json(apiErrorBody("unknownChannel", "Unknown channel"), { status: 404 });
   const body: unknown = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json(apiErrorBody("invalidBody", "Invalid request body"), { status: 400 });

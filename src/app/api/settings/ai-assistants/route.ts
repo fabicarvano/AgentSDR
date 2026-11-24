@@ -1,5 +1,6 @@
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
 import { listMcpConnections, revokeMcpConnection } from "@/lib/mcp/connections";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * The signed-in person's own AI-assistant connections to the active
@@ -25,7 +26,7 @@ export async function DELETE(request: Request) {
     return await withOrgContext(request, async (ctx) => {
       const body = (await request.json().catch(() => null)) as { clientId?: unknown } | null;
       const clientId = typeof body?.clientId === "string" ? body.clientId.trim() : "";
-      if (!clientId || clientId.length > 2048) return Response.json({ error: "clientId is required" }, { status: 400 });
+      if (!clientId || clientId.length > 2048) return Response.json(apiErrorBody("invalidBody", "clientId is required"), { status: 400 });
       return Response.json({ revoked: await revokeMcpConnection(ctx.userId, ctx.organizationId, clientId) });
     });
   } catch (error) {

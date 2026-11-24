@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaign, getLead, getLeadEmails } from "@/lib/outreach/campaigns";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { notFoundResponse } from "@/lib/http/responses";
 
 // GET /api/outreach/campaigns/[id]/leads/[leadId] — lead + its sequence email
 // history, for the activity side panel. The campaign's sequence ships too: the
@@ -11,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return await withOrgContext(_req, async () => {
       const { id, leadId } = await params;
       const lead = await getLead(leadId);
-      if (!lead || lead.campaignId !== id) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!lead || lead.campaignId !== id) return notFoundResponse();
 
       const [emails, campaign] = await Promise.all([getLeadEmails(leadId), getCampaign(id)]);
       return NextResponse.json({ lead, emails, sequence: campaign?.sequence ?? [] });

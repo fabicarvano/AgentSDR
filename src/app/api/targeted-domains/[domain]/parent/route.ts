@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { setParentDomain } from "@/lib/qualification";
+import { invalidJsonResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // POST /api/targeted-domains/[domain]/parent
 //   body: { parentDomain: string }
@@ -26,10 +28,10 @@ async function setParent(req: NextRequest, domain: string) {
     const body = await req.json();
     parentDomain = body?.parentDomain;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return invalidJsonResponse();
   }
   if (!parentDomain) {
-    return NextResponse.json({ error: "parentDomain is required" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "parentDomain is required"), { status: 400 });
   }
 
   try {
