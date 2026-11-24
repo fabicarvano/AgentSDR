@@ -9,6 +9,38 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-24
+
+Upgrading from 0.4.0 needs no database migration. The only script added
+since 0.4.0 is optional (see 0.4.1, Removed). This release also includes everything
+listed under 0.4.1, which was never tagged.
+
+### Added
+
+- **Brazilian Portuguese interface, complete.** Sheets (Tables), LinkedIn,
+  WhatsApp, AI calling and the server messages are translated, so every
+  screen now reads in the language chosen in Settings, Appearance. Error
+  messages from the API carry a code and appear in the interface language,
+  including import errors and a failed request with no message.
+- **Names created for you follow the creator's language.** A new column,
+  table, workbook or folder is named "Nova coluna", "Planilha N", "Pasta de
+  trabalho sem título" or "Pasta sem título" for someone using Portuguese, and
+  "New Column", "Table N", "Untitled workbook" or "Untitled folder" for
+  someone using English. Names already stored are not changed.
+
+### Changed
+
+- **Portuguese vocabulary.** Pipeline is now "Funil" (with a funnel icon),
+  Tables is "Planilhas", and the LinkedIn Search feature is "Pesquisa". The
+  English interface is unchanged.
+- Errors raised by integrations (Unipile, OpenRouter, Gmail) and by the AI
+  calling and WhatsApp servers stay in English on purpose.
+
+### Removed
+
+- The unused English CRM stage and category labels in the code. No screen
+  changes.
+
 ## [0.4.1] - 2026-11-24
 
 ### Removed
