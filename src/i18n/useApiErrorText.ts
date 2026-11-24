@@ -4,7 +4,8 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { API_ERROR_CODES } from "@/lib/http/apiErrors";
 
-type Coded = { code?: unknown; params?: unknown; message?: unknown };
+// An Error carries the English sentence in `message`; a parsed response body, in `error`.
+type Coded = { code?: unknown; params?: unknown; message?: unknown; error?: unknown };
 
 /**
  * The words for a failed request, in the interface language. A route's error carries a stable `code` (and the values
@@ -27,7 +28,8 @@ export function useApiErrorText(): (cause: unknown, fallback: string) => string 
           // A route that left out a value the sentence needs: the server's own message is still right.
         }
       }
-      return typeof error.message === "string" && error.message ? error.message : fallback;
+      const english = typeof error.message === "string" && error.message ? error.message : error.error;
+      return typeof english === "string" && english ? english : fallback;
     },
     [t],
   );

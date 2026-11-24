@@ -13,6 +13,26 @@
     "campaignNotFound": "Não encontramos essa campanha.",
     "leadNotFound": "Não encontramos esse lead.",
     "missingIds": "Nenhum item foi informado.",
-    "unsupportedColumnType": "O tipo de coluna \"{type}\" não é compatível."
+    "unsupportedColumnType": "O tipo de coluna \"{type}\" não é compatível.",
+    "tableNotFound": "Não encontramos essa tabela.",
+    "workbookNotFound": "Não encontramos essa pasta de trabalho.",
+    "rowsSelectionRange": "Selecione de 1 a 5.000 linhas.",
+    "fileRequired": "Escolha um arquivo para enviar.",
+    "fileEmpty": "Esse arquivo está vazio.",
+    "fileTooLarge": "Esse arquivo é maior que {max} MB.",
+    "allColumnsSkipped": "Todas as colunas estão marcadas para serem ignoradas. Escolha ao menos uma coluna para importar.",
+    "rowsNotInTable": "Algumas dessas linhas não estão nesta tabela.",
+    "credentialsRequired": "Informe as credenciais para conectar.",
+    "cellUpdateCount": "Atualize de 1 a 50.000 células por vez.",
+    "cellUpdateRows": "Atualize no máximo 1.000 linhas por vez.",
+    "cellUpdateDuplicate": "A mesma célula aparece duas vezes nesta atualização.",
+    "noRunnableColumns": "Esta tabela ainda não tem colunas que possam ser executadas.",
+    "unknownAiProvider": "Não reconhecemos esse provedor de IA.",
+    "formulaRequired": "Digite uma fórmula.",
+    "formulaTooLong": "Esse pedido de fórmula é longo demais.",
+    "formulaDescribe": "Descreva a fórmula que você quer.",
+    "unknownColumn": "A coluna \"{column}\" não existe.",
+    "computedColumn": "A coluna \"{column}\" é do tipo {type}: o valor dela é definido ao executá-la.",
+    "formulaExpressionTooLong": "Essa fórmula é longa demais."
   }
 }
