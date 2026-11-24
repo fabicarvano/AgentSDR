@@ -26,6 +26,7 @@ import {
   type UnipileWebhookRegistration,
 } from "@/lib/platform/catalog";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /**
  * One platform integration as its channel's Connection section shows it
@@ -288,6 +289,7 @@ type WebhookSetup = { endpoints: { key: string; label: string; url: string }[] |
  */
 function UnipileWebhooks({ registration }: { registration: UnipileWebhookRegistration | null }) {
   const t = useTranslations("settingsChannels.platformConnection");
+  const apiErrorText = useApiErrorText();
   const formatVerified = useFormatVerified();
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -304,7 +306,7 @@ function UnipileWebhooks({ registration }: { registration: UnipileWebhookRegistr
     try {
       const res = await fetch("/api/settings/integrations/unipile/webhooks", { method: "POST" });
       const body = (await res.json().catch(() => null)) as (UnipileWebhookRegistration & { error?: string }) | null;
-      if (!res.ok || !body) throw new Error(body?.error || t("unipile.registerError"));
+      if (!res.ok || !body) throw new Error(apiErrorText(body, t("unipile.registerError")));
       setCurrent(body);
       startTransition(() => router.refresh());
     } catch (err) {
@@ -325,7 +327,7 @@ function UnipileWebhooks({ registration }: { registration: UnipileWebhookRegistr
     try {
       const res = await fetch("/api/settings/integrations/unipile/webhooks", { cache: "no-store" });
       const body = (await res.json().catch(() => null)) as (WebhookSetup & { error?: string }) | null;
-      if (!res.ok || !body) throw new Error(body?.error || t("unipile.loadError"));
+      if (!res.ok || !body) throw new Error(apiErrorText(body, t("unipile.loadError")));
       setSetup(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("unipile.loadError"));
@@ -536,6 +538,7 @@ function IntegrationDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("settingsChannels.platformConnection");
+  const apiErrorText = useApiErrorText();
   const texts = useIntegrationTexts(integration);
   const router = useRouter();
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -560,7 +563,7 @@ function IntegrationDialog({
       });
       const data: { error?: string } = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? t("dialog.saveError"));
+        setError(apiErrorText(data, t("dialog.saveError")));
         return;
       }
       router.refresh();

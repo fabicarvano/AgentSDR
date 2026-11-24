@@ -25,6 +25,7 @@ import { Callout, Field } from "@/components/settings/SettingsKit";
 import { OPENROUTER_ICON_URL } from "@/lib/platform/catalog";
 import { FormSkeleton } from "@/components/settings/SettingsSkeletons";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Connection = {
   id: string;
@@ -115,10 +116,10 @@ function normalizeSettings(value: unknown): Settings {
   };
 }
 
-/** `fallback` (translated by the caller) is used when the API sends no `error` of its own; that one is shown as it arrives. */
-async function readJson<T>(response: Response, fallback: string): Promise<T> {
+/** `errorText` (built by the caller with its translator) turns a failed response body into the words shown. */
+async function readJson<T>(response: Response, errorText: (body: unknown) => string): Promise<T> {
   const body = await response.json().catch(() => null) as { error?: string } | null;
-  if (!response.ok) throw new Error(body?.error ?? fallback);
+  if (!response.ok) throw new Error(errorText(body));
   return body as T;
 }
 
@@ -336,6 +337,8 @@ const linkClass = "inline-flex items-center gap-1 rounded text-label-xs text-tex
 /** `children`: more of the AI provider page (Langfuse), shown after the steps and above the save bar. */
 export default function ByokSettingsClient({ children }: { children?: React.ReactNode }) {
   const t = useTranslations("settingsAi.byok");
+  const apiErrorText = useApiErrorText();
+  const errorOf = (body: unknown) => apiErrorText(body, t("errors.generic"));
   const [settings, setSettings] = useState<Settings>(EMPTY_SETTINGS);
   const [catalog, setCatalog] = useState<Provider[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -356,15 +359,15 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
   async function loadCatalog(connectionId = settings.connectionId) {
     const params = connectionId ? `?all=1&connectionId=${encodeURIComponent(connectionId)}` : "?all=1";
     const response = await fetch(`/api/ai/openrouter/models${params}`);
-    const data = await readJson<CatalogResponse>(response, t("errors.generic"));
+    const data = await readJson<CatalogResponse>(response, errorOf);
     setCatalog(data.providers ?? []);
   }
 
   useEffect(() => {
     let cancelled = false;
     void Promise.all([
-      fetch("/api/ai/openrouter/settings").then((response) => readJson<Settings>(response, t("errors.generic"))),
-      fetch("/api/grid/ai/providers/openrouter/connections").then((response) => readJson<{ connections?: Connection[] }>(response, t("errors.generic"))),
+      fetch("/api/ai/openrouter/settings").then((response) => readJson<Settings>(response, errorOf)),
+      fetch("/api/grid/ai/providers/openrouter/connections").then((response) => readJson<{ connections?: Connection[] }>(response, errorOf)),
     ]).then(async ([saved, accountData]) => {
       if (cancelled) return;
       const normalized = normalizeSettings(saved);
@@ -372,7 +375,7 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
       setConnections(accountData.connections ?? []);
       if (normalized.connectionId) {
         const response = await fetch(`/api/ai/openrouter/models?all=1&connectionId=${encodeURIComponent(normalized.connectionId)}`);
-        const models = await readJson<CatalogResponse>(response, t("errors.generic"));
+        const models = await readJson<CatalogResponse>(response, errorOf);
         if (!cancelled) setCatalog(models.providers ?? []);
       }
     }).catch((cause) => {
@@ -524,7 +527,7 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
           credentials: { apiKey: apiKey.trim(), managementKey: managementKey.trim() },
         }),
       });
-      const data = await readJson<{ connection?: Connection }>(response, t("errors.generic"));
+      const data = await readJson<{ connection?: Connection }>(response, errorOf);
       if (!data.connection) throw new Error(t("errors.noConnectionRecord"));
       setConnections((current) => [data.connection!, ...current.filter((item) => item.id !== data.connection!.id)]);
       updateSettings({ connectionId: data.connection.id });
@@ -556,7 +559,7 @@ export default function ByokSettingsClient({ children }: { children?: React.Reac
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      const saved = await readJson<Settings>(response, t("errors.generic"));
+      const saved = await readJson<Settings>(response, errorOf);
       setSettings(normalizeSettings(saved));
       setSuccess(t("success.saved"));
     } catch (cause) {

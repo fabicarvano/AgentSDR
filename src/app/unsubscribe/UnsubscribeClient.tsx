@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /**
  * The page a lead reaches from the unsubscribe link in outreach email. The language follows the
@@ -10,6 +11,7 @@ import { useTranslations } from "next-intl";
  */
 export default function UnsubscribeClient({ token }: { token: string | null }) {
   const t = useTranslations("auth.unsubscribe");
+  const apiErrorText = useApiErrorText();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +27,7 @@ export default function UnsubscribeClient({ token }: { token: string | null }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        // data.error is an English message written by the API route: translated in a later batch.
-        setError(data.error ?? t("genericError"));
+        setError(apiErrorText(data, t("genericError")));
         setState("error");
         return;
       }

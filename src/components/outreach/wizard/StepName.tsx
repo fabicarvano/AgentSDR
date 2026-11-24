@@ -7,6 +7,7 @@ import { RiArrowRightLine, RiInformationLine, RiMailLine } from "@remixicon/reac
 
 import * as Button from "@/components/alignui/button";
 import * as Input from "@/components/alignui/input";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export default function StepName({
   campaignId,
@@ -20,6 +21,7 @@ export default function StepName({
   onContinue: (campaignId: string) => void;
 }) {
   const t = useTranslations("emailWizard.stepName");
+  const apiErrorText = useApiErrorText();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export default function StepName({
       );
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? t("createFailed"));
+        setError(apiErrorText(data, t("createFailed")));
         return;
       }
       onContinue(campaignId ?? data.campaign.id);

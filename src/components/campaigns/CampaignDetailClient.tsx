@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { Messages } from "@/i18n/catalog";
 import type { QualificationDebugTrace } from "@/lib/qualification";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 interface CampaignInfo {
   id: string;
@@ -240,6 +241,7 @@ export default function CampaignDetailClient({
   domains: DomainRow[];
 }) {
   const t = useTranslations("emailCampaigns.legacyDetail");
+  const apiErrorText = useApiErrorText();
   const tStatus = useTranslations("emailCampaigns.legacyStatus");
   const format = useFormatter();
   const [running, setRunning] = useState(Boolean(activeJob));
@@ -388,7 +390,7 @@ export default function CampaignDetailClient({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      setError(data?.error ?? t("startFailed"));
+      setError(apiErrorText(data, t("startFailed")));
       setRunning(false);
       return;
     }

@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, SubmitButton } from "@/components/auth/fields";
 import { MIN_PASSWORD_LENGTH, validateSetupInput } from "@/lib/auth/setupInput";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export function SetupForm() {
   const t = useTranslations("auth.setup");
+  const apiErrorText = useApiErrorText();
   const tc = useTranslations("auth.common");
   const [name, setName] = useState("");
   const [organizationName, setOrganizationName] = useState("");
@@ -22,7 +24,6 @@ export function SetupForm() {
     // The organization's time zone starts as the browser's (Settings → Organization changes it).
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const parsed = validateSetupInput({ name, organizationName, email, password, timeZone });
-    // parsed.error and data.error are English messages written in lib/ and the API route: translated in a later batch.
     if (!parsed.ok) return setError(parsed.error);
     setLoading(true);
     try {
@@ -34,7 +35,8 @@ export function SetupForm() {
       const data = (await res.json().catch(() => ({}))) as { error?: string; signedIn?: boolean };
       if (res.status === 409) return void window.location.assign("/sign-in");
       if (!res.ok) {
-        setError(data.error || tc("genericError"));
+        // parsed.error (client-side validation) and the route's 400 are English messages from lib/ and the API route: translated in a later batch.
+        setError(apiErrorText(data, tc("genericError")));
         return setLoading(false);
       }
       // If the account was made but the automatic sign-in failed, sign in by hand.

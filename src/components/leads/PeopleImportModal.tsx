@@ -1,4 +1,5 @@
 "use client";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 /* eslint-disable @next/next/no-html-link-for-pages -- the template is a file download from an API route, not a page */
 
 import { useRef, useState } from "react";
@@ -16,6 +17,7 @@ type ImportResult = {
 
 export function PeopleImportModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
   const t = useTranslations("leads.importModal");
+  const apiErrorText = useApiErrorText();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +32,7 @@ export function PeopleImportModal({ onClose, onImported }: { onClose: () => void
       const form = new FormData(); form.append("file", file);
       const response = await fetch("/api/leads/people/import", { method: "POST", body: form });
       const data = await response.json() as ImportResult & { error?: string };
-      if (!response.ok) throw new Error(data.error ?? t("failed"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("failed")));
       setResult(data); onImported();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("failed"));

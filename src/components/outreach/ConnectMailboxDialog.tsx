@@ -11,6 +11,7 @@ import * as Modal from "@/components/alignui/modal";
 import * as Textarea from "@/components/alignui/textarea";
 import { DocsLink } from "@/components/page/DocsLink";
 import { Callout, Field } from "@/components/settings/SettingsKit";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Stage = "form" | "testing" | "success" | "failed";
 
@@ -21,6 +22,7 @@ type Stage = "form" | "testing" | "success" | "failed";
  */
 export default function ConnectMailboxDialog({ onClose }: { onClose: () => void }) {
   const t = useTranslations("emailMailboxes.connect");
+  const apiErrorText = useApiErrorText();
   const router = useRouter();
   const [emailAddress, setEmailAddress] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -44,7 +46,7 @@ export default function ConnectMailboxDialog({ onClose }: { onClose: () => void 
       });
       const data = await res.json();
       if (!res.ok || data.ok === false) {
-        setError(data.error ?? t("failedFallback"));
+        setError(apiErrorText(data, t("failedFallback")));
         setStage("failed");
         return;
       }
