@@ -129,6 +129,8 @@ async function descendantIds(id: string): Promise<string[]> {
 export async function createFolder(input: {
   name: string;
   parentId?: string | null;
+  /** The name for a blank one, in the person's language (`getGridDefaultNames`). */
+  untitledName?: string;
 }): Promise<GridFolder> {
   // The parent must be one of THIS organization's folders: the FK alone would
   // accept another organization's id (and its delete would then cascade here),
@@ -140,7 +142,7 @@ export async function createFolder(input: {
     .insert(gridFolders)
     .values({
       organizationId: currentOrganizationId(),
-      name: input.name.trim() || "Untitled folder",
+      name: input.name.trim() || input.untitledName || "Untitled folder",
       parentId: input.parentId ?? null,
     })
     .returning();
@@ -154,10 +156,10 @@ export async function createFolder(input: {
  */
 export async function updateFolder(
   id: string,
-  patch: { name?: string; parentId?: string | null },
+  patch: { name?: string; parentId?: string | null; untitledName?: string },
 ): Promise<GridFolder | null> {
   const values: Record<string, unknown> = { updatedAt: new Date() };
-  if (patch.name !== undefined) values.name = patch.name.trim() || "Untitled folder";
+  if (patch.name !== undefined) values.name = patch.name.trim() || patch.untitledName || "Untitled folder";
 
   if (patch.parentId !== undefined) {
     if (patch.parentId !== null) {

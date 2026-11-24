@@ -66,7 +66,7 @@ export async function POST(
       const sheetName = (form.get("sheet") as string | null) ?? undefined;
       const parsed = parseSpreadsheet(await file.arrayBuffer(), sheetName);
       if (!parsed.ok) {
-        return NextResponse.json({ error: parsed.error }, { status: 400 });
+        return NextResponse.json(apiErrorBody(parsed.code, parsed.error, parsed.params), { status: 400 });
       }
 
       const { sheet, sheetNames } = parsed;
@@ -95,13 +95,13 @@ export async function POST(
       try {
         rawParsed = JSON.parse(rawMapping);
       } catch {
-        return NextResponse.json({ error: "mapping is not valid JSON" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("importMappingJson", "mapping is not valid JSON"), { status: 400 });
       }
 
       // Checks every entry (header index, action, a creatable type, a usable
       // name) and defaults a new column's name to its header.
       const normalized = normalizeMapping(rawParsed, sheet.headers, new Set(existing.map((c) => c.key)));
-      if (!normalized.ok) return NextResponse.json({ error: normalized.error }, { status: 400 });
+      if (!normalized.ok) return NextResponse.json(apiErrorBody(normalized.code, normalized.error, normalized.params), { status: 400 });
       const mapping: ColumnMapping[] = normalized.mapping;
 
       if (!mapping.some((m) => m.action !== "skip")) {

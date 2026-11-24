@@ -1,5 +1,12 @@
 {
   "gridMain": {
+    "defaults": {
+      "newColumn": "New Column",
+      "tableName": "Table {number}",
+      "firstTableName": "Custom Table",
+      "untitledWorkbook": "Untitled workbook",
+      "untitledFolder": "Untitled folder"
+    },
     "newWorkbook": {
       "createFailed": "Could not create workbook",
       "title": "Create a workbook",

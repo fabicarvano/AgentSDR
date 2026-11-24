@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getGridDefaultNames } from "@/lib/grid/defaultNames";
 import { createFolder, listFolders, listAllFolders } from "@/lib/grid/folders";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
@@ -45,8 +46,10 @@ export async function POST(req: NextRequest) {
       if (!parent.ok) return NextResponse.json({ error: parent.error }, { status: 400 });
 
       try {
+        const { untitledFolder } = await getGridDefaultNames();
         const folder = await createFolder({
-          name: name.value ?? "Untitled folder",
+          name: name.value ?? untitledFolder,
+          untitledName: untitledFolder,
           parentId: parent.value ?? null,
         });
         return NextResponse.json({ folder }, { status: 201 });

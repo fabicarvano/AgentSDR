@@ -1,5 +1,4 @@
-// A failed response with no `error` text throws "Request failed (n)" in English: no translator is in reach here. Still open.
-import { ApiError, readApiErrorBody } from "@/lib/http/apiErrors";
+import { apiErrorFromResponse } from "@/lib/http/apiErrors";
 import type { ListWhatsappAccountsResponse, WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 
 /** Fetch JSON from the campaigns API; throws the route's `{ error }` message. */
@@ -10,8 +9,7 @@ export async function apiJson<T>(url: string, init?: RequestInit): Promise<T> {
   if (response.status === 204) return undefined as T;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const { code, params } = readApiErrorBody(data);
-    throw new ApiError(typeof data?.error === "string" ? data.error : `Request failed (${response.status})`, response.status, code, params);
+    throw apiErrorFromResponse(data, response.status);
   }
   return data as T;
 }

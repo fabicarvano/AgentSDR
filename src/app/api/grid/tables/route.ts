@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTable } from "@/lib/grid/tables";
+import { getGridDefaultNames } from "@/lib/grid/defaultNames";
 import { getWorkbook, listWorkbookTables } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, optionalName } from "@/lib/grid/validate";
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
         workbookId: body.workbookId,
         name: name.value,
         description: body.description ?? undefined,
+        defaults: await getGridDefaultNames(),
       });
       return NextResponse.json({ table }, { status: 201 });
     });

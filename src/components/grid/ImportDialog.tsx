@@ -109,7 +109,8 @@ export default function ImportDialog({
           method: "POST",
           body: fd,
         });
-        const d = await res.json();
+        // A failure that is not JSON (a proxy's 413 or 502) still has to say it failed, not throw.
+        const d = await res.json().catch(() => ({}));
         if (!res.ok) {
           setError(apiErrorText(d, t("readFailed")));
           setPreview(null);
@@ -158,7 +159,7 @@ export default function ImportDialog({
         method: "POST",
         body: fd,
       });
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(apiErrorText(d, t("importFailed")));
         return;

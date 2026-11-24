@@ -1,5 +1,12 @@
 {
   "gridMain": {
+    "defaults": {
+      "newColumn": "Nova coluna",
+      "tableName": "Planilha {number}",
+      "firstTableName": "Planilha personalizada",
+      "untitledWorkbook": "Pasta de trabalho sem título",
+      "untitledFolder": "Pasta sem título"
+    },
     "newWorkbook": {
       "createFailed": "Não foi possível criar a pasta de trabalho",
       "title": "Criar pasta de trabalho",

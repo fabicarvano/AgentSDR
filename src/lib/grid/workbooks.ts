@@ -10,6 +10,7 @@ import {
   type GridWorkbook,
 } from "./schema";
 import { currentOrganizationId, inOrg } from "@/lib/tenancy/scope";
+import { ENGLISH_DEFAULT_NAMES, type GridDefaultNames } from "./defaultNames";
 
 export type WorkbookSummary = GridWorkbook & { tableCount: number; rowCount: number };
 
@@ -111,7 +112,10 @@ export async function createWorkbook(input: {
   firstTableName?: string;
   /** NULL/omitted files the workbook at the root of All Files. */
   folderId?: string | null;
+  /** Names for what the person did not name, in their language (`getGridDefaultNames`). */
+  defaults?: GridDefaultNames;
 }): Promise<{ workbook: GridWorkbook; table: GridTable }> {
+  const defaults = input.defaults ?? ENGLISH_DEFAULT_NAMES;
   return db.transaction(async (tx) => {
     // A stale folder id from a tab left open on a deleted folder would fail
     // the FK and lose the whole workbook; drop it to the root instead.
@@ -127,7 +131,7 @@ export async function createWorkbook(input: {
 
     const [workbook] = await tx
       .insert(gridWorkbooks)
-      .values({ organizationId: currentOrganizationId(), name: input.name.trim() || "Untitled workbook", folderId })
+      .values({ organizationId: currentOrganizationId(), name: input.name.trim() || defaults.untitledWorkbook, folderId })
       .returning();
 
     const [table] = await tx
@@ -135,7 +139,7 @@ export async function createWorkbook(input: {
       .values({
         organizationId: currentOrganizationId(),
         workbookId: workbook.id,
-        name: input.firstTableName?.trim() || "Custom Table",
+        name: input.firstTableName?.trim() || defaults.firstTableName,
         position: 1,
       })
       .returning();
@@ -143,7 +147,7 @@ export async function createWorkbook(input: {
     await tx.insert(gridColumns).values({
       tableId: table.id,
       key: "name",
-      name: "New Column",
+      name: defaults.newColumn,
       type: "text",
       config: {},
       dependsOn: [],

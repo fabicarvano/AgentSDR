@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createWorkbook, listWorkbooks } from "@/lib/grid/workbooks";
+import { getGridDefaultNames } from "@/lib/grid/defaultNames";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { isRecord, isUuid, nullableUuid, optionalName } from "@/lib/grid/validate";
 
@@ -45,8 +46,10 @@ export async function POST(req: NextRequest) {
       const folder = nullableUuid(body.folderId, "folderId");
       if (!folder.ok) return badRequest(folder.error);
 
+      const defaults = await getGridDefaultNames();
       const created = await createWorkbook({
-        name: name.value ?? "Untitled workbook",
+        name: name.value ?? defaults.untitledWorkbook,
+        defaults,
         firstTableName: firstTableName.value,
         folderId: folder.value ?? null,
       });
