@@ -18,6 +18,7 @@ import {
 } from "@/lib/linkedin/campaignSequence";
 import { MAX_INVITATION_MESSAGE_LENGTH } from "@/lib/linkedin/invitationMessage";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type MergeField = { token: string; label: string };
 type PreviewLead = { id: string; name: string | null; linkedinUrl: string };
@@ -59,6 +60,7 @@ export function LinkedInSequenceEditor({
   saveLabel?: string;
 }) {
   const t = useTranslations("linkedinCampaigns.sequenceEditor");
+  const apiErrorText = useApiErrorText();
   const [sequence, setSequence] = useState<LinkedinCampaignSequence>(() =>
     sequenceFromNullable(initialSequence ?? EMPTY_LINKEDIN_SEQUENCE),
   );
@@ -129,7 +131,7 @@ export function LinkedInSequenceEditor({
         body: JSON.stringify(sequence),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("saveFailed"));
+      if (!response.ok || data.ok === false) throw new Error(apiErrorText(data, t("saveFailed")));
       const normalized = normalizeLinkedinSequence(sequence);
       setSequence(normalized);
       setSaved(true);
@@ -151,7 +153,7 @@ export function LinkedInSequenceEditor({
         body: JSON.stringify({ field: step.field, template: sequence[step.field], leadId: leadId || undefined }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error ?? t("previewFailed"));
+      if (!response.ok) throw new Error(apiErrorText(data, t("previewFailed")));
       setPreview(data as PreviewResult);
     } catch (cause) {
       setPreview(null);

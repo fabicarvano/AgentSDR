@@ -8,6 +8,7 @@ import {
 } from "@/lib/linkedin/searchBatches";
 import type { SearchBatchKind } from "@/lib/linkedin/schema";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { accountIdsInvalidResponse } from "@/lib/linkedin/http-errors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === "string");
 
@@ -45,16 +46,16 @@ export async function POST(req: Request) {
       const { name, kind, urls, accountIds, run } = body as Record<string, unknown>;
 
       if (typeof name !== "string" || !name.trim()) {
-        return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("nameRequired", "name is required") }, { status: 400 });
       }
       if (kind !== "SINGLE" && kind !== "BULK") {
         return NextResponse.json({ ok: false, error: 'kind must be "SINGLE" or "BULK"' }, { status: 400 });
       }
       if (!isUrlRows(urls)) {
-        return NextResponse.json({ ok: false, error: "urls must be a non-empty array of { url, companyName? }" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "urls must be a non-empty array of { url, companyName? }") }, { status: 400 });
       }
       if (accountIds !== undefined && !isStringArray(accountIds)) {
-        return NextResponse.json({ ok: false, error: "accountIds must be an array of strings" }, { status: 400 });
+        return accountIdsInvalidResponse();
       }
 
       const rows: SearchUrlInput[] = urls.map((u) => ({ url: u.url, companyName: u.companyName ?? null }));

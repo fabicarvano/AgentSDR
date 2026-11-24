@@ -29,6 +29,7 @@ import {
   sentAtForField,
   type LeadMessageField,
 } from "@/lib/linkedin/leadMessages";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export const LEAD_STATUS_VARIANTS: Record<
   string,
@@ -211,6 +212,7 @@ function OutreachTemplatesEditor({
   onSaved: (updated: LeadDetail) => void;
 }) {
   const t = useTranslations("linkedinMain.leadDetail");
+  const apiErrorText = useApiErrorText();
   const locale = useLocale();
   const fmt = useLeadDate();
   const typeLabel = useMessageTypeLabel();
@@ -268,7 +270,7 @@ function OutreachTemplatesEditor({
       });
       const data = await res.json();
       if (!data.ok) {
-        setSaveError(data.error ?? t("saveFailed"));
+        setSaveError(apiErrorText(data, t("saveFailed")));
         return;
       }
       let updated: LeadDetail = {
@@ -393,6 +395,7 @@ export function LeadDetailPanel({
   onMessagesSaved?: (leadId: string, updates: Pick<LeadDetail, LeadMessageField>) => void;
 }) {
   const t = useTranslations("linkedinMain.leadDetail");
+  const apiErrorText = useApiErrorText();
   const fmt = useLeadDate();
   const statusLabel = useLeadStatusLabel();
   const [lead, setLead] = useState<LeadDetail | null>(null);
@@ -416,7 +419,7 @@ export function LeadDetailPanel({
       .then((data) => {
         if (cancelled) return;
         if (!data.ok) {
-          setError(data.error ?? t("loadFailed"));
+          setError(apiErrorText(data, t("loadFailed")));
           setLead(null);
           return;
         }

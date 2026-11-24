@@ -8,6 +8,7 @@ import { createLinkedInHostedAuthLink } from "@/services/unipile.service";
 import { hostedAuthCallbackUrls } from "@/lib/linkedin/hostedAuthUrls";
 import { isPlatformNotConnectedError, requirePlatformCredentials } from "@/lib/platform/credentials";
 import { serializeError } from "@/lib/linkedin/serializeError";
+import { accountNotFoundResponse } from "@/lib/linkedin/http-errors";
 
 // POST /api/linkedin/accounts/hosted-auth
 //   {}                     → link that connects a new LinkedIn account
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
           .where(and(inOrg(linkedInAccounts), eq(linkedInAccounts.id, accountId)))
           .limit(1);
         if (!account) {
-          return NextResponse.json({ ok: false, error: "Account not found" }, { status: 404 });
+          return accountNotFoundResponse();
         }
         // linkedinId is the Unipile account id — what `reconnect_account` expects.
         reconnectAccountId = account.linkedinId;

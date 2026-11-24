@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { addPeopleToLinkedinCampaign } from "@/lib/leads/campaignAssignments";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withLinkedinOrg(req, async () => {
     const { id } = await params;
     const body = await req.json().catch(() => null);
     if (!body || !Array.isArray(body.personIds) || body.personIds.some((personId: unknown) => typeof personId !== "string")) {
-      return NextResponse.json({ error: "personIds must be an array of IDs" }, { status: 400 });
+      return NextResponse.json(apiErrorBody("invalidBody", "personIds must be an array of IDs"), { status: 400 });
     }
     try {
       const result = await addPeopleToLinkedinCampaign(id, body.personIds, {

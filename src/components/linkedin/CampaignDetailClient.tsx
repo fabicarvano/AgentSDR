@@ -29,6 +29,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { PageTabs } from "@/components/page/PageTabs";
 import { StatRow } from "@/components/page/StatRow";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type { CampaignLead } from "@/components/linkedin/campaigns/CampaignLeadsTab";
 
@@ -73,6 +74,7 @@ export function CampaignDetailClient({
   accounts: LinkedInAccount[];
 }) {
   const t = useTranslations("linkedinCampaigns.detail");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const router = useRouter();
   const dialogs = useDialogs();
@@ -123,7 +125,7 @@ export function CampaignDetailClient({
         body: JSON.stringify({ status: next }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.ok === false) throw new Error(data.error ?? t("genericError"));
+      if (!res.ok || data.ok === false) throw new Error(apiErrorText(data, t("genericError")));
       setCampaign((prev) => ({ ...prev, status: next }));
       router.refresh();
     } catch (cause) {

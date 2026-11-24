@@ -9,6 +9,7 @@ import { LINKEDIN_SEQUENCE_FIELDS, type LinkedinSequenceField } from "@/lib/link
 import { MAX_INVITATION_MESSAGE_LENGTH } from "@/lib/linkedin/invitationMessage";
 import { leads } from "@/lib/linkedin/schema";
 import { fillTemplate } from "@/lib/outreach/render";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const TOKEN_PATTERN = /\{\{\s*([^{}\r\n]+?)\s*\}\}/g;
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const template = body?.template;
     const field = body?.field as LinkedinSequenceField | undefined;
     if (typeof template !== "string" || !field || !LINKEDIN_SEQUENCE_FIELDS.includes(field)) {
-      return NextResponse.json({ error: "A valid sequence field and template are required" }, { status: 400 });
+      return NextResponse.json(apiErrorBody("invalidBody", "A valid sequence field and template are required"), { status: 400 });
     }
 
     const where = body?.leadId
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .limit(1);
 
     if (!row) {
-      return NextResponse.json({ error: "Add at least one lead to preview this sequence" }, { status: 404 });
+      return NextResponse.json(apiErrorBody("previewNoLeads", "Add at least one lead to preview this sequence"), { status: 404 });
     }
 
     const variables = personVariables(row.person, row.company);

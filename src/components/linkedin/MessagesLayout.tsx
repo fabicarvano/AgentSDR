@@ -72,6 +72,7 @@ import {
 import type { InboxCrmContext } from "@/lib/linkedin/messages/crmContext";
 import { inboxCrmStep } from "@/lib/linkedin/messages/crmContext";
 import { useInboxCrmStepLabel } from "@/components/crm/useInboxCrmStepLabel";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type { ConnectionItem };
 
@@ -178,6 +179,7 @@ export function MessagesLayout({
   initialList: InitialList;
 }) {
   const t = useTranslations("linkedinMain.messages");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const dialogs = useDialogs();
   const { errorMessage, categoryLabel: crmKeyLabel } = useCrmText();
@@ -541,7 +543,7 @@ export function MessagesLayout({
         );
       } else {
         setText(body);
-        void dialogs.alert({ title: t("sendMessageFailed"), description: data.error, variant: "error" });
+        void dialogs.alert({ title: t("sendMessageFailed"), description: apiErrorText(data, "") || undefined, variant: "error" });
       }
     } catch {
       setText(body);

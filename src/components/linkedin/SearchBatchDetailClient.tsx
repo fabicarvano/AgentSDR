@@ -48,6 +48,7 @@ import type { Messages } from "@/i18n/catalog";
 import type { SearchBatchDetail } from "@/lib/linkedin/searchBatches";
 import type { SearchQueryStatus } from "@/lib/linkedin/schema";
 import { STATUS_META, type BadgeColor, type StatusLabelKey } from "./searchStatus";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type SearchAccount = SearchPickerAccount & { profilePictureUrl: string | null };
 
@@ -251,6 +252,7 @@ export function SearchBatchDetailClient({
   const dialogs = useDialogs();
   const router = useRouter();
   const t = useTranslations("linkedinSearch.detail");
+  const apiErrorText = useApiErrorText();
   const tStatus = useTranslations("linkedinSearch.status");
   const tNetwork = useTranslations("linkedinSearch.network");
   const tSel = useTranslations("linkedinSearch.detail.selection");
@@ -358,7 +360,7 @@ export function SearchBatchDetailClient({
       });
       const data = await res.json();
       if (!data.ok) {
-        setRunNotice(typeof data.error === "string" ? data.error : t("notice.runFailed"));
+        setRunNotice(apiErrorText(data, t("notice.runFailed")));
         return;
       }
       if (data.started === false) {
@@ -398,7 +400,7 @@ export function SearchBatchDetailClient({
       });
       const data = await res.json();
       if (!data.ok) {
-        setAddError(typeof data.error === "string" ? data.error : t("addDialog.errorFailed"));
+        setAddError(apiErrorText(data, t("addDialog.errorFailed")));
         return;
       }
       setAddOpen(false);
@@ -428,7 +430,7 @@ export function SearchBatchDetailClient({
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
           title: tBatches("delete.errorTitle"),
-          description: typeof data.error === "string" ? data.error : tBatches("delete.errorFallback"),
+          description: apiErrorText(data, tBatches("delete.errorFallback")),
           variant: "error",
         });
         return;
@@ -599,7 +601,7 @@ export function SearchBatchDetailClient({
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
           title: t("deleteUrls.errorTitle"),
-          description: typeof data.error === "string" ? data.error : tBatches("delete.errorFallback"),
+          description: apiErrorText(data, tBatches("delete.errorFallback")),
           variant: "error",
         });
         return;
@@ -645,7 +647,7 @@ export function SearchBatchDetailClient({
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
           title: t("rerun.errorTitle"),
-          description: typeof data.error === "string" ? data.error : tBatches("delete.errorFallback"),
+          description: apiErrorText(data, tBatches("delete.errorFallback")),
           variant: "error",
         });
         return;
@@ -764,7 +766,7 @@ export function SearchBatchDetailClient({
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
           title: t("deleteLeads.errorTitle"),
-          description: typeof data.error === "string" ? data.error : tBatches("delete.errorFallback"),
+          description: apiErrorText(data, tBatches("delete.errorFallback")),
           variant: "error",
         });
         return;

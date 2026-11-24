@@ -12,6 +12,7 @@ import {
 } from "@/lib/linkedin/schema";
 import { linkedinSequenceError, normalizeLinkedinSequence } from "@/lib/linkedin/campaignSequence";
 import { currentOrganizationId, inOrg } from "@/lib/tenancy/scope";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const ACCOUNT_SELECT = {
   id: linkedInAccounts.id,
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     try {
       const { name, description, linkedinAccountIds, type, status, invitationMessage, acceptanceMessage, followUp1Message, followUp2Message, followUp3Message } = await req.json();
       if (!name?.trim()) {
-        return NextResponse.json({ ok: false, error: "Name is required" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("nameRequired", "Name is required") }, { status: 400 });
       }
       const ids: string[] = Array.isArray(linkedinAccountIds)
         ? [...new Set(linkedinAccountIds.filter((id: unknown): id is string => typeof id === "string" && Boolean(id.trim())))]
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
       const campaignType: CampaignType = type === "PERSONAL" ? "PERSONAL" : "REGULAR";
       if (status === "ACTIVE") {
         return NextResponse.json(
-          { ok: false, error: "Create the campaign paused, then add leads and launch it" },
+          { ok: false, ...apiErrorBody("campaignCreatePaused", "Create the campaign paused, then add leads and launch it") },
           { status: 400 },
         );
       }
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
           .from(linkedInAccounts)
           .where(and(inOrg(linkedInAccounts), inArray(linkedInAccounts.id, ids)));
         if (connected.length !== ids.length) {
-          return NextResponse.json({ ok: false, error: "One or more LinkedIn senders no longer exist" }, { status: 400 });
+          return NextResponse.json({ ok: false, ...apiErrorBody("sendersMissing", "One or more LinkedIn senders no longer exist") }, { status: 400 });
         }
       }
 

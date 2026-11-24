@@ -48,6 +48,7 @@ import {
 } from "@/lib/linkedin/workingHours";
 import { isAccountRunnable } from "@/lib/linkedin/nextAllowedRun";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type AccountRow = {
   id: string;
@@ -198,6 +199,7 @@ function WorkingHoursDialog({
   onSaved: (updated: AccountRow) => void;
 }) {
   const t = useTranslations("settingsAccounts.linkedin");
+  const apiErrorText = useApiErrorText();
   const weekday = useWeekdayLabel();
   const [enabled, setEnabled] = useState(hasWorkingHoursConfigured(account));
   const [timezone, setTimezone] = useState(account.workTimezone ?? DEFAULT_WORK_TIMEZONE);
@@ -241,7 +243,7 @@ function WorkingHoursDialog({
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error ?? t("errors.saveFailed"));
+        setError(apiErrorText(data, t("errors.saveFailed")));
         return;
       }
       const a = data.account;
@@ -531,6 +533,7 @@ export function AccountsClient({
   inviteLimits: InviteLimits;
 }) {
   const t = useTranslations("settingsAccounts.linkedin");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const locale = useLocale();
   const [accounts, setAccounts] = useState(initialAccounts);
@@ -652,7 +655,7 @@ export function AccountsClient({
               body: JSON.stringify({ dailyInviteLimit }),
             });
             const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
-            if (!data?.ok) throw new Error(data?.error ?? t("errors.saveFailed"));
+            if (!data?.ok) throw new Error(apiErrorText(data, t("errors.saveFailed")));
             setAccounts((prev) => prev.map((a) => (a.id === limitAccount.id ? { ...a, dailyInviteLimit } : a)));
           }}
         />

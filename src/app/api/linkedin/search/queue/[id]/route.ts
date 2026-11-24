@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { searchBatches, searchQueries } from "@/lib/linkedin/schema";
 import { inOrg } from "@/lib/tenancy/scope";
+import { searchNotFoundResponse } from "@/lib/linkedin/http-errors";
 
 // SearchQuery belongs to the organization of its SearchBatch.
 const ownQuery = (id: string) =>
@@ -23,7 +24,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
         .where(ownQuery(id))
         .limit(1);
       if (!query) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       if (query.status === "RUNNING") {

@@ -37,6 +37,7 @@ import CampaignProgressRing from "@/components/outreach/CampaignProgressRing";
 import { EmptyState } from "@/components/page/EmptyState";
 import { PageHeader } from "@/components/page/PageHeader";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type LinkedInAccount = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
 
@@ -123,6 +124,7 @@ export function CampaignsClient({
   accounts: LinkedInAccount[];
 }) {
   const t = useTranslations("linkedinCampaigns.list");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const fmt = useAnalyticsFormat();
   const dialogs = useDialogs();
@@ -203,7 +205,7 @@ export function CampaignsClient({
     try {
       const response = await fetch(`/api/linkedin/campaigns/${id}`, { method: "DELETE" });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("deleteFailed"));
+      if (!response.ok || data.ok === false) throw new Error(apiErrorText(data, t("deleteFailed")));
       setCampaigns((prev) => prev.filter((c) => c.id !== id));
       router.refresh();
     } catch (cause) {

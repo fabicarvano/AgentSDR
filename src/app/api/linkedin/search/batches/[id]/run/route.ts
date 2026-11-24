@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { startSearchBatchRun } from "@/lib/linkedin/searchBatches";
+import { accountIdsInvalidResponse } from "@/lib/linkedin/http-errors";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === "string");
 
@@ -14,12 +16,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const obj = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
       const accountIds = "accountIds" in obj ? obj.accountIds : undefined;
       if (accountIds !== undefined && !isStringArray(accountIds)) {
-        return NextResponse.json({ ok: false, error: "accountIds must be an array of strings" }, { status: 400 });
+        return accountIdsInvalidResponse();
       }
       // Absent means every runnable URL in the batch; a list runs only those.
       const queryIds = "queryIds" in obj ? obj.queryIds : undefined;
       if (queryIds !== undefined && !isStringArray(queryIds)) {
-        return NextResponse.json({ ok: false, error: "queryIds must be an array of strings" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "queryIds must be an array of strings") }, { status: 400 });
       }
 
       const result = await startSearchBatchRun(id, accountIds, queryIds);

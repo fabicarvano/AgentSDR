@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { deleteSearchBatch, searchBatchExists, getSearchBatchDetail, isSearchJobRunning } from "@/lib/linkedin/searchBatches";
+import { searchNotFoundResponse } from "@/lib/linkedin/http-errors";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withLinkedinOrg(_req, async () => {
@@ -9,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     try {
       const detail = await getSearchBatchDetail(id);
       if (!detail) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
       const jobRunning = await isSearchJobRunning();
       return NextResponse.json({ ok: true, detail, jobRunning });
@@ -25,7 +26,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     try {
       if (!(await searchBatchExists(id))) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       const result = await deleteSearchBatch(id);

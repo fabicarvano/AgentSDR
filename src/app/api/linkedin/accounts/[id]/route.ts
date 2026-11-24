@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { inOrg } from "@/lib/tenancy/scope";
 import { linkedInAccounts } from "@/lib/linkedin/schema";
 import { numberRule, ruleError } from "@/lib/channels/rules";
+import { accountNotFoundResponse } from "@/lib/linkedin/http-errors";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 import {
   DEFAULT_WORK_DAYS,
   DEFAULT_WORK_END,
@@ -61,10 +63,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
 
       if (data.workStartTime && !HHMM_RE.test(data.workStartTime)) {
-        return NextResponse.json({ ok: false, error: "workStartTime must be HH:mm" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("workTimeFormat", "workStartTime must be HH:mm") }, { status: 400 });
       }
       if (data.workEndTime && !HHMM_RE.test(data.workEndTime)) {
-        return NextResponse.json({ ok: false, error: "workEndTime must be HH:mm" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("workTimeFormat", "workEndTime must be HH:mm") }, { status: 400 });
       }
 
       // The account's own invitations a day (null = the organization's rule),
@@ -78,7 +80,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             .from(linkedInAccounts)
             .where(and(inOrg(linkedInAccounts), eq(linkedInAccounts.id, id)))
             .limit(1);
-          if (!current) return NextResponse.json({ ok: false, error: "Account not found" }, { status: 404 });
+          if (!current) return accountNotFoundResponse();
           const error = ruleError(numberRule("linkedin", current.isPremium ? "invitesPerDayPremium" : "invitesPerDayFree"), body.dailyInviteLimit);
           if (error) return NextResponse.json({ ok: false, error }, { status: 400 });
           data.dailyInviteLimit = body.dailyInviteLimit as number;
@@ -86,7 +88,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
 
       if (Object.keys(data).length === 0) {
-        return NextResponse.json({ ok: false, error: "Nothing to update" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("nothingToUpdate", "Nothing to update") }, { status: 400 });
       }
 
       const [account] = await db
@@ -98,7 +100,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // Prisma's update threw (→ 500) when the id did not exist; Drizzle just
       // returns no rows, so keep the same outward behaviour.
       if (!account) {
-        return NextResponse.json({ ok: false, error: "Account not found" }, { status: 404 });
+        return accountNotFoundResponse();
       }
 
       return NextResponse.json({ ok: true, account });
