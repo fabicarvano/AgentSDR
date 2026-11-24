@@ -97,8 +97,8 @@
     "enrichment": {
       "title": "Adicionar enriquecimento",
       "mapping": {
-        "selectAria": "Coluna da tabela",
-        "selectPlaceholder": "Selecione uma coluna da tabela",
+        "selectAria": "Coluna da planilha",
+        "selectPlaceholder": "Selecione uma coluna da planilha",
         "noCompatible": "Não existe uma coluna compatível do tipo {types}."
       },
       "errors": {
@@ -137,7 +137,7 @@
         "title": "Mapeamento de colunas",
         "setupInputs": "Entradas de configuração",
         "searchFilters": "Filtros de busca",
-        "filtersIntro": "Adicione um filtro do Cleanlist e escolha a coluna da tabela cujos valores devem ser enviados para ele.",
+        "filtersIntro": "Adicione um filtro do Cleanlist e escolha a coluna da planilha cujos valores devem ser enviados para ele.",
         "legacyTitle": "Filtros JSON legados",
         "legacyBody": "Este mapeamento salvo continua funcionando. Adicione filtros nomeados abaixo se quiser uma configuração guiada.",
         "legacyRemoveAria": "Remover mapeamento de filtro JSON legado",
@@ -168,7 +168,7 @@
         "continue": "Continuar para adicionar campos"
       },
       "outputs": {
-        "title": "Adicione dados como colunas na sua tabela",
+        "title": "Adicione dados como colunas na sua planilha",
         "intro": "Selecione os dados que você quer adicionar como colunas. A integração é executada uma vez por linha.",
         "selected": "{count, plural, one {# selecionado} other {# selecionados}}",
         "searchPlaceholder": "Buscar colunas de dados",
@@ -225,7 +225,7 @@
       "configuration": "Configuração",
       "prompt": "Prompt",
       "promptPlaceholder": "Para a pessoa com a URL do LinkedIn {token}, encontre o cargo atual.",
-      "unknownTokens": "{count, plural, one {{tokens} não é uma coluna desta tabela e seria enviado em branco.} other {{tokens} não são colunas desta tabela e seriam enviados em branco.}} Substitua por uma coluna abaixo.",
+      "unknownTokens": "{count, plural, one {{tokens} não é uma coluna desta planilha e seria enviado em branco.} other {{tokens} não são colunas desta planilha e seriam enviados em branco.}} Substitua por uma coluna abaixo.",
       "insertHint": "Digite <kbd>/</kbd> ou <kbd>{braces}</kbd> para inserir uma coluna.",
       "defineOutputs": "Definir saídas",
       "imageNote": "Modelos de imagem retornam uma única imagem, que vai para uma coluna de imagem.",
@@ -284,7 +284,7 @@
       "name": "Nome da campanha",
       "namePlaceholder": "Abordagem do 3º trimestre",
       "campaignField": "Campo da campanha",
-      "gridColumn": "Coluna da tabela",
+      "gridColumn": "Coluna da planilha",
       "doNotMap": "Não mapear",
       "columnAria": "Coluna de {field}",
       "note": "Toda coluna não mapeada é preservada nos dados brutos de Pessoas e exposta como variável de modelo. Esta ação cria uma campanha e inscreve apenas {count, plural, one {a # linha selecionada} other {as # linhas selecionadas}}.",

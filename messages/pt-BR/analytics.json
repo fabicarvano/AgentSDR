@@ -195,7 +195,7 @@
         "description": "Respostas recebidas por {bucket, select, week {semana} other {dia}}, pela categoria em que foram classificadas."
       },
       "pipeline": {
-        "title": "Pipeline agora",
+        "title": "Funil do CRM agora",
         "description": "Registros abertos por categoria, neste momento, e até onde avançaram no funil.",
         "centerLabel": "registros abertos",
         "emptyLabel": "Nenhum registro aberto",
