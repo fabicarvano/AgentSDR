@@ -29,19 +29,6 @@ export const FILTER_OPERATORS = [
 
 export type FilterOperator = (typeof FILTER_OPERATORS)[number];
 
-export const OPERATOR_LABELS: Record<FilterOperator, string> = {
-  eq: "equal to",
-  neq: "not equal to",
-  gt: "greater than",
-  gte: "greater or equal to",
-  lt: "less than",
-  lte: "less or equal to",
-  empty: "is empty",
-  notEmpty: "is not empty",
-  contains: "contains",
-  notContains: "does not contain",
-};
-
 /** Operators that ignore the value box — the UI hides it for these. */
 export const VALUELESS_OPERATORS: ReadonlySet<FilterOperator> = new Set(["empty", "notEmpty"]);
 

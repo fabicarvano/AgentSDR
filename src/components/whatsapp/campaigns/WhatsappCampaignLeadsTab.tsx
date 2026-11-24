@@ -41,8 +41,9 @@ import {
   type WhatsappCampaignStats,
 } from "@/lib/whatsapp/campaigns/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText } from "./api";
+import { apiJson } from "./api";
 import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 const PAGE_SIZE = 25;
 
@@ -68,6 +69,7 @@ export function WhatsappCampaignLeadsTab({
   const dialogs = useDialogs();
   const router = useRouter();
   const t = useTranslations("whatsappCampaigns.leads");
+  const apiErrorText = useApiErrorText();
   const te = useTranslations("whatsappCampaigns.errors");
   const cf = useCampaignFormat();
   const importSummary = useImportSummary();
@@ -111,11 +113,11 @@ export function WhatsappCampaignLeadsTab({
       setData(result);
       setLoadError(null);
     } catch (cause) {
-      setLoadError(errorText(cause, t("loadFailed")));
+      setLoadError(apiErrorText(cause, t("loadFailed")));
     } finally {
       setLoading(false);
     }
-  }, [campaignId, page, status, debounced, t]);
+  }, [campaignId, page, status, debounced, t, apiErrorText]);
 
   useEffect(() => {
     // Fetch on mount and whenever the query changes; state is set after the response.
@@ -143,7 +145,7 @@ export function WhatsappCampaignLeadsTab({
       await apiJson(`/api/whatsapp/campaigns/${campaignId}/leads/${lead.id}`, { method: "PATCH", body: JSON.stringify({ action } satisfies UpdateWhatsappCampaignLeadRequest) });
       refreshAll();
     } catch (cause) {
-      await dialogs.alert({ title: action === "stop" ? t("stopFailed") : t("resumeFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: action === "stop" ? t("stopFailed") : t("resumeFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -162,7 +164,7 @@ export function WhatsappCampaignLeadsTab({
       await apiJson(`/api/whatsapp/campaigns/${campaignId}/leads/${lead.id}`, { method: "DELETE" });
       refreshAll();
     } catch (cause) {
-      await dialogs.alert({ title: t("removeFailed"), description: errorText(cause, te("generic")), variant: "error" });
+      await dialogs.alert({ title: t("removeFailed"), description: apiErrorText(cause, te("generic")), variant: "error" });
     } finally {
       setBusyId(null);
     }

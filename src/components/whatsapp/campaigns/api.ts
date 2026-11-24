@@ -1,7 +1,7 @@
+// A failed response with no `error` text throws "Request failed (n)" in English: no translator is in reach here. Still open.
 import { ApiError, readApiErrorBody } from "@/lib/http/apiErrors";
 import type { ListWhatsappAccountsResponse, WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 
-// The "Request failed (n)" fallback below is a thrown error message with no translator in reach: batch I.
 /** Fetch JSON from the campaigns API; throws the route's `{ error }` message. */
 export async function apiJson<T>(url: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
@@ -20,6 +20,3 @@ export function fetchWhatsappAccounts(): Promise<WhatsappAccountSummary[]> {
   return apiJson<ListWhatsappAccountsResponse>("/api/whatsapp/accounts").then((r) => r.accounts);
 }
 
-export function errorText(cause: unknown, fallback: string): string {
-  return cause instanceof Error ? cause.message : fallback;
-}

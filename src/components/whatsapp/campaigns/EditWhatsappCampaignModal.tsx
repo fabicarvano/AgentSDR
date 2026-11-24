@@ -10,8 +10,9 @@ import * as Textarea from "@/components/alignui/textarea";
 import type { UpdateWhatsappCampaignRequest, WhatsappCampaignSummary } from "@/lib/whatsapp/campaigns/contract";
 import type { WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText, fetchWhatsappAccounts } from "./api";
+import { apiJson, fetchWhatsappAccounts } from "./api";
 import { SenderPicker } from "./SenderPicker";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type EditableWhatsappCampaign = Pick<WhatsappCampaignSummary, "id" | "name" | "description" | "senders">;
 
@@ -39,6 +40,7 @@ export function EditWhatsappCampaignModal({
 
 function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappCampaign; onCancel: () => void; onSaved: () => void }) {
   const t = useTranslations("whatsappCampaigns.edit");
+  const apiErrorText = useApiErrorText();
   const te = useTranslations("whatsappCampaigns.errors");
   const [name, setName] = useState(campaign.name);
   const [description, setDescription] = useState(campaign.description ?? "");
@@ -52,9 +54,9 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
     let cancelled = false;
     fetchWhatsappAccounts()
       .then((list) => { if (!cancelled) setAccounts(list); })
-      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, t("loadNumbersFailed"))); });
+      .catch((cause) => { if (!cancelled) setAccountsError(apiErrorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, [t]);
+  }, [t, apiErrorText]);
 
   async function save() {
     const trimmed = name.trim();
@@ -66,7 +68,7 @@ function EditForm({ campaign, onCancel, onSaved }: { campaign: EditableWhatsappC
       await apiJson(`/api/whatsapp/campaigns/${campaign.id}`, { method: "PATCH", body: JSON.stringify(body) });
       onSaved();
     } catch (cause) {
-      setError(errorText(cause, te("generic")));
+      setError(apiErrorText(cause, te("generic")));
     } finally {
       setSaving(false);
     }

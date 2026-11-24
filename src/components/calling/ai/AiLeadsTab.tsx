@@ -31,7 +31,7 @@ import { aiLeadsEndpoint, aiLeadsUploadEndpoint, listAiLeads, updateAiLead } fro
 import { AI_CONTACT_STATUSES, AI_OPEN_STATUSES, type AiContactStatus } from "@/lib/calls/aiCampaigns/contract";
 import { cn } from "@/utils/cn";
 import { AiLeadDrawer, useAiOutcomeLabel } from "./AiLeadDrawer";
-import { AiStatusBadge, errorText, useAiFormat, useAiStatusLabel, useErrorText } from "./aiShared";
+import { AiStatusBadge, useAiFormat, useAiStatusLabel, useErrorText } from "./aiShared";
 import { useAiStepText } from "./useAiServerText";
 
 const PAGE_SIZE = 25;
@@ -96,11 +96,11 @@ export function AiLeadsTab({
       setData(await listAiLeads(campaignId, { page, pageSize: PAGE_SIZE, status: status === ALL ? undefined : (status as AiContactStatus), q: debounced || undefined }));
       setLoadError(null);
     } catch (cause) {
-      setLoadError(errorText(cause, t("loadFailed")));
+      setLoadError(friendlyError(cause, t("loadFailed")));
     } finally {
       setLoading(false);
     }
-  }, [campaignId, page, status, debounced, t]);
+  }, [campaignId, page, status, debounced, t, friendlyError]);
 
   useEffect(() => {
     // Fetch on mount and whenever the query changes; state is set after the response.

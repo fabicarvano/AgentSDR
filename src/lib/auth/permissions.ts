@@ -39,8 +39,3 @@ export const roles = { owner, admin, member };
 
 export type OrgRole = keyof typeof roles;
 
-export const ROLE_LABELS: Record<OrgRole, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  member: "Member",
-};

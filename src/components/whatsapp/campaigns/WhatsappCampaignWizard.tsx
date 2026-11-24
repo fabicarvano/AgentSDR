@@ -21,12 +21,13 @@ import type {
 } from "@/lib/whatsapp/campaigns/contract";
 import type { WhatsappAccountSummary } from "@/lib/whatsapp/contract";
 import { cn } from "@/utils/cn";
-import { apiJson, errorText, fetchWhatsappAccounts } from "./api";
+import { apiJson, fetchWhatsappAccounts } from "./api";
 import { launchBlocker } from "./metrics";
 import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
 import { SenderPicker } from "./SenderPicker";
 import { WhatsappSequenceEditor } from "./WhatsappSequenceEditor";
 import { LeadSourceCards, StepDot, StepHeading, SummaryRow, WizardStepList } from "@/components/campaigns/wizardParts";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 const STEPS = [
   { id: "setup", labelKey: "stepSetupLabel", hintKey: "stepSetupHint", icon: RiDraftLine },
@@ -37,6 +38,7 @@ const STEPS = [
 
 export function WhatsappCampaignWizard() {
   const t = useTranslations("whatsappCampaigns.wizard");
+  const apiErrorText = useApiErrorText();
   const cf = useCampaignFormat();
   const importSummary = useImportSummary();
   const router = useRouter();
@@ -60,9 +62,9 @@ export function WhatsappCampaignWizard() {
     let cancelled = false;
     fetchWhatsappAccounts()
       .then((list) => { if (!cancelled) setAccounts(list); })
-      .catch((cause) => { if (!cancelled) setAccountsError(errorText(cause, t("loadNumbersFailed"))); });
+      .catch((cause) => { if (!cancelled) setAccountsError(apiErrorText(cause, t("loadNumbersFailed"))); });
     return () => { cancelled = true; };
-  }, [t]);
+  }, [t, apiErrorText]);
 
   // Review shows what the server holds, not what this page remembers.
   useEffect(() => {
@@ -100,7 +102,7 @@ export function WhatsappCampaignWizard() {
       }
       setStep(1);
     } catch (cause) {
-      setError(errorText(cause, t("saveFailed")));
+      setError(apiErrorText(cause, t("saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -117,7 +119,7 @@ export function WhatsappCampaignWizard() {
       }
       router.push(`/whatsapp/campaigns/${campaignId}`);
     } catch (cause) {
-      setError(errorText(cause, t("launchFailed")));
+      setError(apiErrorText(cause, t("launchFailed")));
       setBusy(false);
     }
   }
