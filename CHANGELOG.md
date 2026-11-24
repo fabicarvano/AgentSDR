@@ -9,6 +9,8 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-24
+
 ### Removed
 
 - **Email validation.** AgentSDR no longer sends a validation email to every
