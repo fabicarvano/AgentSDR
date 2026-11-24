@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { deleteSearchLeads, searchBatchExists } from "@/lib/linkedin/searchBatches";
+import { searchNotFoundResponse } from "@/lib/linkedin/http-errors";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * Bulk-remove leads from this batch. Keyed by `linkedinUrl` (the identifier the Leads
@@ -19,13 +21,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
           : undefined;
       if (!Array.isArray(urls) || urls.length === 0 || !urls.every((v) => typeof v === "string" && v)) {
         return NextResponse.json(
-          { ok: false, error: "linkedinUrls must be a non-empty array of identifiers" },
+          { ok: false, ...apiErrorBody("invalidBody", "linkedinUrls must be a non-empty array of identifiers") },
           { status: 400 }
         );
       }
 
       if (!(await searchBatchExists(id))) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       const deleted = await deleteSearchLeads(id, urls);

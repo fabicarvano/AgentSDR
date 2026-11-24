@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { inOrg } from "@/lib/tenancy/scope";
 import { messages } from "@/lib/linkedin/schema";
 import { isDemoMode } from "@/lib/demo/mode";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
   return withLinkedinOrg(req, async () => {
     const connectionId = req.nextUrl.searchParams.get("connectionId");
     if (!connectionId) {
-      return NextResponse.json({ error: "connectionId required" }, { status: 400 });
+      return NextResponse.json(apiErrorBody("connectionIdRequired", "connectionId required"), { status: 400 });
     }
 
     const thread = await db

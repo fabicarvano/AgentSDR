@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { createSearchBatch, parseSearchSheet, startSearchBatchRun } from "@/lib/linkedin/searchBatches";
+import { accountIdsInvalidResponse } from "@/lib/linkedin/http-errors";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === "string");
 
@@ -10,11 +12,11 @@ export async function POST(req: NextRequest) {
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
       if (!file) {
-        return NextResponse.json({ ok: false, error: "No file provided" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("noFileProvided", "No file provided") }, { status: 400 });
       }
       const name = formData.get("name");
       if (typeof name !== "string" || !name.trim()) {
-        return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("nameRequired", "name is required") }, { status: 400 });
       }
 
       const rawAccountIds = formData.get("accountIds");
@@ -24,10 +26,10 @@ export async function POST(req: NextRequest) {
         try {
           parsed = JSON.parse(rawAccountIds);
         } catch {
-          return NextResponse.json({ ok: false, error: "accountIds must be valid JSON" }, { status: 400 });
+          return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "accountIds must be valid JSON") }, { status: 400 });
         }
         if (!isStringArray(parsed)) {
-          return NextResponse.json({ ok: false, error: "accountIds must be an array of strings" }, { status: 400 });
+          return accountIdsInvalidResponse();
         }
         accountIds = parsed;
       }
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const { rows, skipped } = parseSearchSheet(buffer);
       if (rows.length === 0) {
-        return NextResponse.json({ ok: false, error: "No valid rows with a Search URL found" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("noValidSearchRows", "No valid rows with a Search URL found") }, { status: 400 });
       }
 
       let created: { id: string; queryCount: number };

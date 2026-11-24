@@ -9,6 +9,7 @@ import { withJobTracking } from "@/lib/linkedin/jobTracker";
 import { db } from "@/lib/db";
 import { jobRuns } from "@/lib/linkedin/schema";
 import { runPlatformJobForCron } from "@/lib/scheduler/endpoint";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((id) => typeof id === "string" && id);
 
@@ -32,12 +33,12 @@ async function handle(req: NextRequest, scoped: boolean) {
   const accountIds =
     typeof body === "object" && body !== null && "accountIds" in body ? (body as { accountIds: unknown }).accountIds : undefined;
   if (accountIds !== undefined && !isStringArray(accountIds)) {
-    return NextResponse.json({ ok: false, error: "accountIds must be an array of account ids" }, { status: 400 });
+    return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "accountIds must be an array of account ids") }, { status: 400 });
   }
   // Account ids are only meaningful inside one organization: refuse any that are not the
   // caller's (and any at all from the cron, which has no organization).
   if (accountIds?.length && (!scoped || (await unknownAccountIds(accountIds)).length > 0)) {
-    return NextResponse.json({ ok: false, error: "Unknown account" }, { status: 400 });
+    return NextResponse.json({ ok: false, ...apiErrorBody("accountNotFound", "Unknown account") }, { status: 400 });
   }
 
   // The cron: the same run the in-process scheduler would start (deduped

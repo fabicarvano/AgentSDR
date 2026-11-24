@@ -225,7 +225,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ ok: false, ...apiErrorBody("leadNotFound", "Lead not found") }, { status: 404 });
       }
       if (!nativeLead.campaignId) {
-        return NextResponse.json({ ok: false, error: "Lead has no campaign" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("leadNoCampaign", "Lead has no campaign") }, { status: 400 });
       }
       if (Object.keys(data).length) {
         await db.update(campaigns).set({ ...data, updatedAt: new Date() }).where(and(inOrg(campaigns), eq(campaigns.id, nativeLead.campaignId)));

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { inOrg } from "@/lib/tenancy/scope";
 import { leads } from "@/lib/linkedin/schema";
 import { buildLeadWhere, type LeadListFilters } from "@/lib/linkedin/leadListFilters";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const parseFilters = (raw: unknown): LeadListFilters => {
   if (!raw || typeof raw !== "object") return {};
@@ -36,14 +37,14 @@ export async function POST(req: NextRequest) {
       const ids = body?.ids;
       if (!Array.isArray(ids) || ids.length === 0) {
         return NextResponse.json(
-          { ok: false, error: "ids array or matchFilters required" },
+          { ok: false, ...apiErrorBody("invalidBody", "ids array or matchFilters required") },
           { status: 400 }
         );
       }
 
       const validIds = ids.filter((id: unknown): id is string => typeof id === "string" && id.length > 0);
       if (validIds.length === 0) {
-        return NextResponse.json({ ok: false, error: "No valid ids" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("missingIds", "No valid ids") }, { status: 400 });
       }
 
       const deletedRows = await db.transaction(async (tx) => {

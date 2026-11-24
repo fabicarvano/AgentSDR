@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { resetSearchQueries, searchBatchExists, startSearchBatchRun } from "@/lib/linkedin/searchBatches";
+import { accountIdsInvalidResponse, searchNotFoundResponse } from "@/lib/linkedin/http-errors";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === "string" && s);
 
@@ -18,15 +20,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const obj = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
       const ids = obj.ids;
       if (!isStringArray(ids) || ids.length === 0) {
-        return NextResponse.json({ ok: false, error: "ids must be a non-empty array of query ids" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "ids must be a non-empty array of query ids") }, { status: 400 });
       }
       const accountIds = obj.accountIds;
       if (accountIds !== undefined && !isStringArray(accountIds)) {
-        return NextResponse.json({ ok: false, error: "accountIds must be an array of strings" }, { status: 400 });
+        return accountIdsInvalidResponse();
       }
 
       if (!(await searchBatchExists(id))) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       const reset = await resetSearchQueries(id, ids);

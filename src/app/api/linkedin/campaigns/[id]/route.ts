@@ -164,10 +164,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ ok: false, ...apiErrorBody("campaignNotFound", "Campaign not found") }, { status: 404 });
       }
       if (name !== undefined && (typeof name !== "string" || !name.trim())) {
-        return NextResponse.json({ ok: false, error: "Name is required" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("nameRequired", "Name is required") }, { status: 400 });
       }
       if (status !== undefined && status !== "ACTIVE" && status !== "PAUSED") {
-        return NextResponse.json({ ok: false, error: "Invalid campaign status" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidCampaignStatus", "Invalid campaign status") }, { status: 400 });
       }
 
       const sequenceInput = { invitationMessage, acceptanceMessage, followUp1Message, followUp2Message, followUp3Message };
@@ -207,7 +207,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (ids?.length) {
         const found = await db.select({ id: linkedInAccounts.id }).from(linkedInAccounts).where(and(inOrg(linkedInAccounts), inArray(linkedInAccounts.id, ids)));
         if (found.length !== ids.length) {
-          return NextResponse.json({ ok: false, error: "One or more LinkedIn senders no longer exist" }, { status: 400 });
+          return NextResponse.json({ ok: false, ...apiErrorBody("sendersMissing", "One or more LinkedIn senders no longer exist") }, { status: 400 });
         }
       }
 
@@ -224,7 +224,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         if (effectiveAccountIds.length === 0) {
           return NextResponse.json(
-            { ok: false, error: "Assign at least one connected LinkedIn sender before launching" },
+            { ok: false, ...apiErrorBody("launchNoSender", "Assign at least one connected LinkedIn sender before launching") },
             { status: 400 },
           );
         }
@@ -245,13 +245,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         if (connectedSenders.length !== effectiveAccountIds.length) {
           return NextResponse.json(
-            { ok: false, error: "Every assigned LinkedIn sender must be connected before launching" },
+            { ok: false, ...apiErrorBody("launchSenderDisconnected", "Every assigned LinkedIn sender must be connected before launching") },
             { status: 400 },
           );
         }
         if (Number(campaignLeads[0]?.value ?? 0) === 0) {
           return NextResponse.json(
-            { ok: false, error: "Add at least one lead before launching" },
+            { ok: false, ...apiErrorBody("launchNoLeads", "Add at least one lead before launching") },
             { status: 400 },
           );
         }

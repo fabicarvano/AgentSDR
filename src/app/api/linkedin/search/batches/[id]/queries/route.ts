@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withLinkedinOrg } from "@/lib/linkedin/organizations.server";
 import { addSearchUrls, deleteSearchQueries, searchBatchExists, type SearchUrlInput } from "@/lib/linkedin/searchBatches";
 import { apiErrorBody } from "@/lib/http/apiErrors";
+import { searchNotFoundResponse } from "@/lib/linkedin/http-errors";
 
 const isUrlRows = (v: unknown): v is { url: string; companyName?: string | null }[] =>
   Array.isArray(v) &&
@@ -27,11 +28,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
       const { urls } = body as Record<string, unknown>;
       if (!isUrlRows(urls)) {
-        return NextResponse.json({ ok: false, error: "urls must be a non-empty array of { url, companyName? }" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "urls must be a non-empty array of { url, companyName? }") }, { status: 400 });
       }
 
       if (!(await searchBatchExists(id))) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       const rows: SearchUrlInput[] = urls.map((u) => ({ url: u.url, companyName: u.companyName ?? null }));
@@ -54,11 +55,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const ids =
         typeof body === "object" && body !== null && "ids" in body ? (body as { ids: unknown }).ids : undefined;
       if (!Array.isArray(ids) || ids.length === 0 || !ids.every((v) => typeof v === "string" && v)) {
-        return NextResponse.json({ ok: false, error: "ids must be a non-empty array of query ids" }, { status: 400 });
+        return NextResponse.json({ ok: false, ...apiErrorBody("invalidBody", "ids must be a non-empty array of query ids") }, { status: 400 });
       }
 
       if (!(await searchBatchExists(id))) {
-        return NextResponse.json({ ok: false, error: "Search not found" }, { status: 404 });
+        return searchNotFoundResponse();
       }
 
       const result = await deleteSearchQueries(id, ids);
