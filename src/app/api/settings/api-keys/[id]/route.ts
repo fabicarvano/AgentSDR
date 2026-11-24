@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, requirePermission, withOrgContext } from "@/lib/auth/context";
 import { revokeApiKey } from "@/lib/publicApi/keys";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -8,11 +9,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // so Settings can still show when it was last used.
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!UUID.test(id)) return NextResponse.json({ error: "API key not found" }, { status: 404 });
+  if (!UUID.test(id)) return NextResponse.json(apiErrorBody("apiKeyNotFound", "API key not found"), { status: 404 });
   try {
     return await withOrgContext(req, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });
-      if (!(await revokeApiKey(id))) return NextResponse.json({ error: "API key not found" }, { status: 404 });
+      if (!(await revokeApiKey(id))) return NextResponse.json(apiErrorBody("apiKeyNotFound", "API key not found"), { status: 404 });
       return NextResponse.json({ ok: true });
     });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMailsBySection, getScheduledEmails } from "@/lib/inbox/queries";
 import type { InboxSection } from "@/lib/inbox/queries";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 const VALID_SECTIONS: InboxSection[] = ["inbox", "sent", "replied", "important", "outOfOffice", "pendingApproval"];
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (!VALID_SECTIONS.includes(sectionParam as InboxSection)) {
-        return NextResponse.json({ error: `invalid section: ${sectionParam}` }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", `invalid section: ${sectionParam}`), { status: 400 });
       }
 
       const result = await getMailsBySection({

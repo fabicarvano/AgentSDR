@@ -9,6 +9,8 @@ import {
 } from "@/lib/outreach/campaigns";
 import type { SequenceStep, CampaignStatus } from "@/lib/outreach/schema";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { invalidJsonResponse, notFoundResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/outreach/campaigns/[id]
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return await withOrgContext(_req, async () => {
       const { id } = await params;
       const campaign = await getCampaign(id);
-      if (!campaign) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!campaign) return notFoundResponse();
       const stats = await getCampaignStats(id);
       return NextResponse.json({ campaign, stats });
     });
@@ -33,17 +35,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return await withOrgContext(req, async () => {
       const { id } = await params;
       const campaign = await getCampaign(id);
-      if (!campaign) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!campaign) return notFoundResponse();
 
       let body: { name?: string; sequence?: SequenceStep[]; status?: CampaignStatus };
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (body.name !== undefined) {
-        if (!body.name.trim()) return NextResponse.json({ error: "name is required" }, { status: 400 });
+        if (!body.name.trim()) return NextResponse.json(apiErrorBody("nameRequired", "name is required"), { status: 400 });
         await updateCampaignName(id, body.name);
       }
       if (body.sequence) await updateCampaignSequence(id, body.sequence);

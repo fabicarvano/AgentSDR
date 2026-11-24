@@ -27,6 +27,7 @@ import { columnTypeMeta } from "@/components/grid/columnTypes";
 import type { Messages } from "@/i18n/catalog";
 import { CORE_COLUMN_DEFS, PG_TYPE_FOR_COLUMN_TYPE, type LeadColumn, type LeadColumnType, type LeadEntity } from "@/lib/leads/types";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /**
  * Postgres allows 1600 columns per table, and DROPPED COLUMNS KEEP CONSUMING
@@ -111,6 +112,7 @@ function useTypeLabel() {
 
 export default function ColumnSettings({ columns }: Props) {
   const t = useTranslations("leads.columnSettings");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const columnLabel = useColumnLabel();
   const typeLabel = useTypeLabel();
@@ -146,7 +148,7 @@ export default function ColumnSettings({ columns }: Props) {
       const res = await run();
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error ?? t("errors.generic"));
+        setError(apiErrorText(body, t("errors.generic")));
         return false;
       }
       startTransition(() => router.refresh());
@@ -202,7 +204,7 @@ export default function ColumnSettings({ columns }: Props) {
       const body = await res.json();
       if (!res.ok) {
         // The conversion is not offered at all — say so and stop.
-        setError(body.error ?? t("errors.conversionUnsupported"));
+        setError(apiErrorText(body, t("errors.conversionUnsupported")));
         return;
       }
       preview = body;

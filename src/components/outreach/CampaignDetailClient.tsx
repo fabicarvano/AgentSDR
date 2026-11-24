@@ -26,6 +26,7 @@ import SequenceTab from "./SequenceTab";
 import type { outreachCampaigns, mailboxes } from "@/lib/outreach/schema";
 import type { LeadPage, DailySends, CampaignPulse } from "@/lib/outreach/campaigns";
 import type { Messages } from "@/i18n/catalog";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Campaign = typeof outreachCampaigns.$inferSelect;
 type Mailbox = typeof mailboxes.$inferSelect;
@@ -101,6 +102,7 @@ export default function CampaignDetailClient({
   pulse: CampaignPulse;
 }) {
   const t = useTranslations("emailCampaigns.detail");
+  const apiErrorText = useApiErrorText();
   const tStatus = useTranslations("emailCampaigns.status");
   const format = useFormatter();
   const router = useRouter();
@@ -132,7 +134,7 @@ export default function CampaignDetailClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        setLaunchError(data.error ?? t("launchFailed"));
+        setLaunchError(apiErrorText(data, t("launchFailed")));
         return;
       }
       router.refresh();

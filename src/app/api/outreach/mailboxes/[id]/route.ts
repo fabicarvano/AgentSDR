@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMailbox, retestMailbox, deleteMailbox } from "@/lib/outreach/mailboxes";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { notFoundResponse } from "@/lib/http/responses";
 
 // GET /api/outreach/mailboxes/[id]
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return await withOrgContext(_req, async () => {
       const { id } = await params;
       const mailbox = await getMailbox(id);
-      if (!mailbox) return NextResponse.json({ error: "not found" }, { status: 404 });
+      if (!mailbox) return notFoundResponse();
       return NextResponse.json({ mailbox });
     });
   } catch (error) {

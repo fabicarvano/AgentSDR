@@ -8,6 +8,7 @@ import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame
 import { useDialogs } from "@/components/DialogProvider";
 import { Callout } from "@/components/settings/SettingsKit";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Connection = {
   clientId: string;
@@ -94,6 +95,7 @@ const PROMPTS = ["queue", "pricing", "priya", "notNow"] as const;
 
 export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
   const t = useTranslations("settingsAi.assistants");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const relative = useRelative();
   const dialogs = useDialogs();
@@ -106,14 +108,14 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
     try {
       const res = await fetch("/api/settings/ai-assistants", { credentials: "same-origin" });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || t("errors.load"));
+      if (!res.ok) throw new Error(apiErrorText(data, t("errors.load")));
       setConnections((data?.connections ?? []) as Connection[]);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : t("errors.load"));
       setConnections((current) => current ?? []);
     }
-  }, [t]);
+  }, [t, apiErrorText]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -138,7 +140,7 @@ export function AiAssistantsSettings({ serverUrl }: { serverUrl: string }) {
         body: JSON.stringify({ clientId: c.clientId }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) setError(data?.error || t("errors.disconnect"));
+      if (!res.ok) setError(apiErrorText(data, t("errors.disconnect")));
       else await load();
     } catch {
       setError(t("errors.network"));

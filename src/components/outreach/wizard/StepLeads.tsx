@@ -16,6 +16,7 @@ import * as Badge from "@/components/alignui/badge";
 import * as Button from "@/components/alignui/button";
 import AddPeopleToCampaignModal from "@/components/leads/AddPeopleToCampaignModal";
 import CampaignCsvMappingDialog from "@/components/leads/CampaignCsvMappingDialog";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type ImportResult = {
   total: number;
@@ -35,6 +36,7 @@ export default function StepLeads({
   onContinue: (leadCount: number) => void;
 }) {
   const t = useTranslations("emailWizard.stepLeads");
+  const apiErrorText = useApiErrorText();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -48,9 +50,9 @@ export default function StepLeads({
   const fetchLeadCount = useCallback(async () => {
     const response = await fetch(`/api/outreach/campaigns/${campaignId}/leads?page=1&pageSize=1`);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error ?? t("refreshFailed"));
+    if (!response.ok) throw new Error(apiErrorText(data, t("refreshFailed")));
     return Number(data.total ?? 0);
-  }, [campaignId, t]);
+  }, [campaignId, t, apiErrorText]);
 
   const refreshLeadCount = useCallback(async () => {
     setLoadingCount(true);

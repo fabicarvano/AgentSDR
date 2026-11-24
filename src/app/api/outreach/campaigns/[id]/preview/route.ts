@@ -8,6 +8,7 @@ import { renderEmail } from "@/lib/outreach/render";
 import { inOrg } from "@/lib/tenancy/scope";
 import { leadsInOrg } from "@/lib/outreach/orgScope";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * POST /api/outreach/campaigns/[id]/preview
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const body = await req.json().catch(() => null);
       const step = body?.step;
       if (!step || typeof step.subject !== "string" || typeof step.body !== "string") {
-        return NextResponse.json({ error: "step {subject, body} is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", "step {subject, body} is required"), { status: 400 });
       }
 
       const row = body?.leadId
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             .limit(1))[0];
 
       if (!row?.person.email) {
-        return NextResponse.json({ error: "This campaign has no leads to preview with. Import leads first." }, { status: 404 });
+        return NextResponse.json(apiErrorBody("previewNoLeads", "This campaign has no leads to preview with. Import leads first."), { status: 404 });
       }
 
       const mailbox = body?.mailboxId

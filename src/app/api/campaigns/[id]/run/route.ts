@@ -5,6 +5,7 @@ import { inOrg } from "@/lib/tenancy/scope";
 import { db } from "@/lib/db";
 import { campaigns } from "@/lib/schema";
 import { recoverStaleJobs, startCampaignJob } from "@/lib/qualification/jobRunner";
+import { campaignNotFoundResponse } from "@/lib/http/responses";
 
 // POST /api/campaigns/[id]/run — run a qualification job for the campaign.
 //   body: { limit? }  (max candidates to pull this run, "leads" mode only; default 500)
@@ -37,7 +38,7 @@ async function run(req: NextRequest, id: string) {
     .where(and(inOrg(campaigns), eq(campaigns.id, id)))
     .limit(1);
   if (!campaign) {
-    return NextResponse.json({ error: "campaign not found" }, { status: 404 });
+    return campaignNotFoundResponse();
   }
 
   // "domains" mode's batch size is fixed at campaign creation (targetDomainCount)

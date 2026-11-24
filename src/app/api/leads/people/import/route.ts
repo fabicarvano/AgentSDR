@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { upsertManualPerson, type ManualPersonInput } from "@/lib/leads/manualImport";
 import { parseImportRows } from "@/lib/leads/importRows";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export const dynamic = "force-dynamic";
 const MAX_ROWS = 5000;
@@ -26,15 +27,15 @@ export async function POST(req: NextRequest) {
 async function importPeople(req: NextRequest) {
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
-  if (!(file instanceof File)) return NextResponse.json({ error: "file is required" }, { status: 400 });
+  if (!(file instanceof File)) return NextResponse.json(apiErrorBody("fileRequired", "file is required"), { status: 400 });
   let rows: ManualPersonInput[];
   try {
     rows = parseRows(await file.arrayBuffer());
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to parse file" }, { status: 400 });
   }
-  if (!rows.length) return NextResponse.json({ error: "No rows with an Email or LinkedIn URL were found" }, { status: 400 });
-  if (rows.length > MAX_ROWS) return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 400 });
+  if (!rows.length) return NextResponse.json(apiErrorBody("noImportableRows", "No rows with an Email or LinkedIn URL were found"), { status: 400 });
+  if (rows.length > MAX_ROWS) return NextResponse.json(apiErrorBody("tooManyRows", `Too many rows (max ${MAX_ROWS})`, { max: MAX_ROWS }), { status: 400 });
 
   let created = 0;
   let updated = 0;

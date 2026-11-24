@@ -14,6 +14,7 @@ import { timeInputClass } from "@/components/outreach/WorkingHoursModal";
 import type { Messages } from "@/i18n/catalog";
 import { ruleProblem, rulesOf, ruleWarning, type CHANNEL_RULES, type Channel, type Rule, type WeeklyHours } from "@/lib/channels/rules";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /**
  * The Sending rules form for one channel, generated from the registry in
@@ -239,6 +240,7 @@ export function ChannelRulesForm({
   canEdit: boolean;
 }) {
   const t = useTranslations("settingsChannels.channelRulesForm");
+  const apiErrorText = useApiErrorText();
   const describeDefault = useDescribeDefault();
   const ruleText = useRuleText();
   const problemText = useRuleProblemText();
@@ -268,7 +270,7 @@ export function ChannelRulesForm({
         body: JSON.stringify(values),
       });
       const body = (await res.json().catch(() => null)) as { values?: Values; error?: string } | null;
-      if (!res.ok || !body?.values) throw new Error(body?.error || t("saveError"));
+      if (!res.ok || !body?.values) throw new Error(apiErrorText(body, t("saveError")));
       setSaved(body.values);
       setValues(body.values);
       setStatus({ tone: "success", text: t("saved") });

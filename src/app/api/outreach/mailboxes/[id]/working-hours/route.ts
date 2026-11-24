@@ -5,6 +5,8 @@ import { mailboxes } from "@/lib/outreach/schema";
 import type { WorkingHours } from "@/lib/outreach/schema";
 import { inOrg } from "@/lib/tenancy/scope";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { invalidJsonResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // PATCH /api/outreach/mailboxes/[id]/working-hours — { workingHours: WorkingHours }
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,10 +17,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.workingHours) {
-        return NextResponse.json({ error: "workingHours is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", "workingHours is required"), { status: 400 });
       }
       await db.update(mailboxes).set({ workingHours: body.workingHours, updatedAt: new Date() }).where(and(inOrg(mailboxes), eq(mailboxes.id, id)));
       return NextResponse.json({ ok: true });

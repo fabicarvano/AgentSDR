@@ -18,6 +18,7 @@ import { cn } from "@/utils/cn";
 import type { SequenceStep } from "@/lib/outreach/schema";
 import MergeFieldChips from "./MergeFieldChips";
 import PreviewModal from "./PreviewModal";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 function emptyStep(stepNumber: number): SequenceStep {
   return {
@@ -54,6 +55,7 @@ export default function SequenceComposer({
   savingLabel?: string;
 }) {
   const t = useTranslations("emailSequence.composer");
+  const apiErrorText = useApiErrorText();
   const [steps, setSteps] = useState<SequenceStep[]>(() =>
     initialSequence.length > 0 ? initialSequence : [emptyStep(1)],
   );
@@ -118,7 +120,7 @@ export default function SequenceComposer({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? t("saveFailed"));
+        setError(apiErrorText(data, t("saveFailed")));
         return;
       }
       setSavedAt(Date.now());

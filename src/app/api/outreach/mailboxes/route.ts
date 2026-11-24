@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listMailboxes, connectMailbox } from "@/lib/outreach/mailboxes";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { invalidJsonResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // GET /api/outreach/mailboxes — list connected mailboxes.
 export async function GET(request: NextRequest) {
@@ -26,11 +28,11 @@ export async function POST(req: NextRequest) {
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
 
       if (!body.emailAddress) {
-        return NextResponse.json({ error: "emailAddress is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", "emailAddress is required"), { status: 400 });
       }
 
       const result = await connectMailbox({

@@ -10,6 +10,7 @@ import { useDialogs } from "@/components/DialogProvider";
 import { Callout } from "@/components/settings/SettingsKit";
 import type { ApiKeySummary } from "@/lib/publicApi/keys";
 import { ALL_API_SCOPES, type ApiScope } from "@/lib/publicApi/scopes";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 /** The message-key name of each scope (the catalog's keys are camelCase). A new scope in scopes.ts fails the type check here. */
 const SCOPE_KEYS = {
@@ -27,6 +28,7 @@ const SCOPE_KEYS = {
  */
 export function ApiKeysSettings({ initialKeys }: { initialKeys: ApiKeySummary[] }) {
   const t = useTranslations("settingsOrg.apiKeys");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const dialogs = useDialogs();
   const [keys, setKeys] = useState(initialKeys);
@@ -52,7 +54,7 @@ export function ApiKeysSettings({ initialKeys }: { initialKeys: ApiKeySummary[] 
         body: JSON.stringify({ name: name.trim(), scopes: ALL_API_SCOPES.filter((scope) => scopes.has(scope)) }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) return setError(data?.error || t("createFailed"));
+      if (!res.ok) return setError(apiErrorText(data, t("createFailed")));
       setKeys((current) => [data.apiKey as ApiKeySummary, ...current]);
       setCreated({ key: data.key as string, name: (data.apiKey as ApiKeySummary).name });
       setCopied(false);
@@ -77,7 +79,7 @@ export function ApiKeysSettings({ initialKeys }: { initialKeys: ApiKeySummary[] 
     try {
       const res = await fetch(`/api/settings/api-keys/${key.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
-      if (!res.ok) return setError(data?.error || t("revokeFailed"));
+      if (!res.ok) return setError(apiErrorText(data, t("revokeFailed")));
       const now = new Date().toISOString();
       setKeys((current) => current.map((k) => (k.id === key.id ? { ...k, revokedAt: k.revokedAt ?? now } : k)));
     } catch {

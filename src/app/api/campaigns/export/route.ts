@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { getCampaign, getCampaignDomains } from "@/lib/qualification";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ async function exportCampaigns(req: NextRequest) {
   const ids = [...new Set(idsParam.split(",").map((id) => id.trim()).filter(Boolean))];
 
   if (ids.length === 0) {
-    return NextResponse.json({ error: "no campaign ids provided" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("missingIds", "no campaign ids provided"), { status: 400 });
   }
 
   const headers = [

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RiAddLine,
@@ -89,6 +90,7 @@ void _emptyCovered;
 
 export default function InboxClient() {
   const t = useTranslations("inboxMain.client");
+  const apiErrorText = useApiErrorText();
   const tSections = useTranslations("inboxMain.sections");
   const workflowLabel = useWorkflowLabel();
   const crmStepLabel = useInboxCrmStepLabel();
@@ -314,7 +316,7 @@ export default function InboxClient() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      const message = typeof data?.error === "string" && data.error ? data.error : t("sendFailed", { status: res.status });
+      const message = apiErrorText(data, t("sendFailed", { status: res.status }));
       setSendError(message);
       void loadCrmContext(leadId);
       throw new Error(message);

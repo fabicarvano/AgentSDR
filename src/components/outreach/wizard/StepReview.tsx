@@ -16,6 +16,7 @@ import Link from "next/link";
 import * as Button from "@/components/alignui/button";
 import { DocsLink } from "@/components/page/DocsLink";
 import type { SequenceStep } from "@/lib/outreach/schema";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type MailboxSummary = { status: string };
 
@@ -35,6 +36,7 @@ export default function StepReview({
   onDone: (campaignId: string) => void;
 }) {
   const t = useTranslations("emailWizard.stepReview");
+  const apiErrorText = useApiErrorText();
   const [connectedMailboxes, setConnectedMailboxes] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState<"draft" | "launch" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function StepReview({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? t("saveFailed"));
+        setError(apiErrorText(data, t("saveFailed")));
         return;
       }
       onDone(campaignId);

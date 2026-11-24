@@ -12,7 +12,7 @@ type Ctx = { params: Promise<{ key: string }> };
 // PUT /api/settings/integrations/:key — body: { [fieldKey]: string }. Verifies against the live service, then saves.
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const { key } = await params;
-  if (!isPlatformKey(key)) return NextResponse.json({ error: "Unknown integration" }, { status: 404 });
+  if (!isPlatformKey(key)) return NextResponse.json(apiErrorBody("unknownIntegration", "Unknown integration"), { status: 404 });
 
   const body: unknown = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 // DELETE /api/settings/integrations/:key — disconnect.
 export async function DELETE(req: NextRequest, { params }: Ctx) {
   const { key } = await params;
-  if (!isPlatformKey(key)) return NextResponse.json({ error: "Unknown integration" }, { status: 404 });
+  if (!isPlatformKey(key)) return NextResponse.json(apiErrorBody("unknownIntegration", "Unknown integration"), { status: 404 });
   try {
     return await withOrgContext(req, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });

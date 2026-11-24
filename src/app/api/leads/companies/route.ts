@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listCompanies, upsertCompany, withLeadTransaction } from "@/lib/leads/records";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
 async function create(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  if (!body || typeof body.domain !== "string") return NextResponse.json({ error: "domain is required" }, { status: 400 });
+  if (!body || typeof body.domain !== "string") return NextResponse.json(apiErrorBody("domainRequired", "domain is required"), { status: 400 });
   try {
     const company = await withLeadTransaction((tx) =>
       upsertCompany(tx, {
@@ -47,7 +48,7 @@ async function create(req: NextRequest) {
         source: "manual",
       }),
     );
-    if (!company) return NextResponse.json({ error: "domain is required" }, { status: 400 });
+    if (!company) return NextResponse.json(apiErrorBody("domainRequired", "domain is required"), { status: 400 });
     return NextResponse.json({ company }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not save company" }, { status: 400 });

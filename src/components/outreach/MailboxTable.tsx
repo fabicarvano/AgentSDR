@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 import {
   RiCheckboxCircleLine,
   RiClockwiseLine,
@@ -71,6 +72,7 @@ function hoursSummary(mailbox: Mailbox, t: T) {
 
 function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
   const t = useTranslations("emailMailboxes.table");
+  const apiErrorText = useApiErrorText();
   const dialogs = useDialogs();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -108,7 +110,7 @@ function MailboxTableRow({ mailbox }: { mailbox: Mailbox }) {
         body: JSON.stringify({ to }),
       });
       const data = await res.json();
-      setTestSendResult(data.ok ? { ok: true, text: t("sendTest.sent", { to }) } : { ok: false, text: t("sendTest.failed", { error: data.error }) });
+      setTestSendResult(data.ok ? { ok: true, text: t("sendTest.sent", { to }) } : { ok: false, text: t("sendTest.failed", { error: apiErrorText(data, "") }) });
     } catch {
       setTestSendResult({ ok: false, text: t("sendTest.networkError") });
     } finally {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { SequenceStep } from "@/lib/outreach/schema";
 import * as Select from "@/components/alignui/select";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type PreviewLead = { id: string; email: string; firstName: string | null; company: string | null };
 type PreviewMailbox = { id: string; emailAddress: string; displayName: string | null; hasSignature: boolean };
@@ -35,6 +36,7 @@ export default function PreviewModal({
   onClose: () => void;
 }) {
   const t = useTranslations("emailSequence.preview");
+  const apiErrorText = useApiErrorText();
   const [leads, setLeads] = useState<PreviewLead[]>([]);
   const [mailboxes, setMailboxes] = useState<PreviewMailbox[]>([]);
   const [leadId, setLeadId] = useState<string | undefined>();
@@ -56,7 +58,7 @@ export default function PreviewModal({
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setError(data.error ?? t("renderFailed"));
+          setError(apiErrorText(data, t("renderFailed")));
           setPreview(null);
           return;
         }
@@ -67,7 +69,7 @@ export default function PreviewModal({
         setLoading(false);
       }
     },
-    [campaignId, step, leadId, mailboxId, t],
+    [campaignId, step, leadId, mailboxId, t, apiErrorText],
   );
 
   // One bootstrap on open: fill the pickers, then render with their defaults.

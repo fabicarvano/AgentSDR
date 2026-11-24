@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMailbox } from "@/lib/outreach/mailboxes";
 import { sendEmail } from "@/lib/outreach/gmail";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { invalidJsonResponse } from "@/lib/http/responses";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 // POST /api/outreach/mailboxes/[id]/send-test — { to } — sends a one-off
 // test email from this mailbox so a user can confirm sending actually works
@@ -14,14 +16,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       if (!body.to) {
-        return NextResponse.json({ error: "to is required" }, { status: 400 });
+        return NextResponse.json(apiErrorBody("invalidBody", "to is required"), { status: 400 });
       }
 
       const mailbox = await getMailbox(id);
-      if (!mailbox) return NextResponse.json({ error: "mailbox not found" }, { status: 404 });
+      if (!mailbox) return NextResponse.json(apiErrorBody("mailboxNotFound", "mailbox not found"), { status: 404 });
 
       try {
         const result = await sendEmail({

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { mailboxes } from "@/lib/outreach/schema";
 import { inOrg } from "@/lib/tenancy/scope";
 import { withOrgContext, authContextErrorResponse } from "@/lib/auth/context";
+import { invalidJsonResponse } from "@/lib/http/responses";
 
 // PATCH /api/outreach/mailboxes/[id]/signature — { signatureHtml: string | null }
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       try {
         body = await req.json();
       } catch {
-        return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+        return invalidJsonResponse();
       }
       await db
         .update(mailboxes)

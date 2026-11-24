@@ -8,6 +8,7 @@ import * as Checkbox from "@/components/alignui/checkbox";
 import * as Input from "@/components/alignui/input";
 import * as Modal from "@/components/alignui/modal";
 import { FormError } from "@/components/calls/fields";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type PersonRow = {
   person: { id: string; email: string | null; linkedinUrl: string | null; phone?: string | null; fullName: string | null; title: string | null };
@@ -35,6 +36,7 @@ export default function AddPeopleToCampaignModal({
   onAdded: (result: { requested: number; added: number; skippedMissingIdentity: number; skippedDuplicate: number; skippedSuppressed: number }) => void;
 }) {
   const t = useTranslations("leads.addToCampaign");
+  const apiErrorText = useApiErrorText();
   const [rows, setRows] = useState<PersonRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
@@ -54,7 +56,7 @@ export default function AddPeopleToCampaignModal({
         params.set(channel === "email" ? "hasEmail" : channel === "whatsapp" ? "hasPhone" : "hasLinkedin", "true");
         const response = await fetch(`/api/leads/people?${params}`, { signal: controller.signal });
         const body = await response.json();
-        if (!response.ok) throw new Error(body.error);
+        if (!response.ok) throw new Error(apiErrorText(body, "") || undefined);
         setRows(body.people ?? []);
       } catch (cause) {
         if (!controller.signal.aborted) setError(failure(cause, "loadFailed"));
@@ -66,7 +68,7 @@ export default function AddPeopleToCampaignModal({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [query, channel]);
+  }, [query, channel, apiErrorText]);
 
   async function submit() {
     setSaving(true);
@@ -81,7 +83,7 @@ export default function AddPeopleToCampaignModal({
         body: JSON.stringify({ personIds: [...selected] }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
+      if (!response.ok) throw new Error(apiErrorText(body, "") || undefined);
       onAdded(
         channel === "whatsapp"
           ? {

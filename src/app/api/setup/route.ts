@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { SetupAlreadyDoneError, createInitialAdmin, needsSetup } from "@/lib/auth/setup";
 import { validateSetupInput } from "@/lib/auth/setupInput";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 /**
  * First-run setup: creates the first admin and organization, then signs them
  * in. Public in the proxy, so it refuses on its own the moment any user exists.
  */
 export async function POST(request: Request) {
-  const done = () => NextResponse.json({ error: "This instance is already set up. Sign in instead." }, { status: 409 });
+  const done = () => NextResponse.json(apiErrorBody("alreadySetUp", "This instance is already set up. Sign in instead."), { status: 409 });
   if (!(await needsSetup())) return done();
 
   const parsed = validateSetupInput(await request.json().catch(() => null));

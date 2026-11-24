@@ -7,6 +7,7 @@ import type { Messages } from "@/i18n/catalog";
 import Select from "../ui/Select";
 import CategoryFilter from "../CategoryFilter";
 import AppFilter from "../AppFilter";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type CreateKey = keyof Messages["emailCampaigns"]["legacyCreate"];
 
@@ -51,6 +52,7 @@ const inputCls =
 
 export default function CreateCampaignForm() {
   const t = useTranslations("emailCampaigns.legacyCreate");
+  const apiErrorText = useApiErrorText();
   const modeOptions = MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const targetModeOptions = TARGET_MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
   const countryOptions = COUNTRY_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
@@ -119,7 +121,7 @@ export default function CreateCampaignForm() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t("createFailed"));
+      if (!res.ok) throw new Error(apiErrorText(data, t("createFailed")));
       router.push(`/campaigns/${data.campaign.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("createFailed"));

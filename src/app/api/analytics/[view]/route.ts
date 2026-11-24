@@ -6,6 +6,7 @@ import { getLinkedinAnalytics } from "@/lib/analytics/linkedin.server";
 import { getOverviewAnalytics } from "@/lib/analytics/overview.server";
 import { AnalyticsRangeError, parseAnalyticsRange } from "@/lib/analytics/server";
 import { getWhatsappAnalytics } from "@/lib/analytics/whatsapp.server";
+import { apiErrorBody } from "@/lib/http/apiErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ const LOADERS: Record<AnalyticsView, (range: AnalyticsRange) => Promise<Analytic
 export async function GET(request: NextRequest, context: { params: Promise<{ view: string }> }) {
   const { view } = await context.params;
   if (!(ANALYTICS_VIEWS as readonly string[]).includes(view)) {
-    return Response.json({ error: `Unknown analytics view: ${view}` }, { status: 404 });
+    return Response.json(apiErrorBody("notFound", `Unknown analytics view: ${view}`), { status: 404 });
   }
   try {
     const range = parseAnalyticsRange(request.nextUrl.searchParams);

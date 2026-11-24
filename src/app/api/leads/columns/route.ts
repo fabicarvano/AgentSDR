@@ -38,7 +38,7 @@ async function list(req: NextRequest) {
   let entity: LeadEntity | undefined;
   if (raw !== null) {
     if (!isLeadEntity(raw)) {
-      return NextResponse.json({ error: "entity must be 'person' or 'company'" }, { status: 400 });
+      return NextResponse.json(apiErrorBody("invalidBody", "entity must be 'person' or 'company'"), { status: 400 });
     }
     entity = raw;
   }
@@ -67,10 +67,10 @@ async function create(req: NextRequest) {
   }
 
   if (!body.entity || !isLeadEntity(body.entity)) {
-    return NextResponse.json({ error: "entity must be 'person' or 'company'" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("invalidBody", "entity must be 'person' or 'company'"), { status: 400 });
   }
   if (!body.name?.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 });
+    return NextResponse.json(apiErrorBody("nameRequired", "name is required"), { status: 400 });
   }
   // Validate against the type map rather than a separate list, so adding a
   // type in one place cannot leave the other behind.
