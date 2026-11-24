@@ -5,6 +5,7 @@ import { listWorkbookTables } from "./workbooks";
 import type { TableView } from "./types";
 import { currentOrganizationId, inOrg } from "@/lib/tenancy/scope";
 import { inOrgTables } from "./scope";
+import { ENGLISH_DEFAULT_NAMES, type GridDefaultNames } from "./defaultNames";
 
 export async function getTable(id: string): Promise<GridTable | null> {
   const [row] = await db.select().from(gridTables).where(and(inOrg(gridTables), eq(gridTables.id, id))).limit(1);
@@ -28,7 +29,10 @@ export async function createTable(input: {
   workbookId: string;
   name?: string;
   description?: string;
+  /** Names for what the person did not name, in their language (`getGridDefaultNames`). */
+  defaults?: GridDefaultNames;
 }): Promise<GridTable> {
+  const defaults = input.defaults ?? ENGLISH_DEFAULT_NAMES;
   const [workbook] = await db
     .select({ id: gridWorkbooks.id })
     .from(gridWorkbooks)
@@ -44,7 +48,7 @@ export async function createTable(input: {
       .values({
         organizationId: currentOrganizationId(),
         workbookId: input.workbookId,
-        name: input.name?.trim() || `Table ${Math.round(position)}`,
+        name: input.name?.trim() || defaults.tableName(Math.round(position)),
         description: input.description?.trim() || null,
         position,
       })
@@ -53,7 +57,7 @@ export async function createTable(input: {
     await tx.insert(gridColumns).values({
       tableId: table.id,
       key: "name",
-      name: "New Column",
+      name: defaults.newColumn,
       type: "text",
       config: {},
       dependsOn: [],

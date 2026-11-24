@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getGridDefaultNames } from "@/lib/grid/defaultNames";
 import { deleteFolder, getFolder, listFolders, updateFolder } from "@/lib/grid/folders";
 import { listWorkbooks } from "@/lib/grid/workbooks";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
@@ -55,7 +56,7 @@ export async function PATCH(
       if (!parent.ok) return NextResponse.json({ error: parent.error }, { status: 400 });
 
       try {
-        const folder = await updateFolder(folderId, { name: name.value, parentId: parent.value });
+        const folder = await updateFolder(folderId, { name: name.value, parentId: parent.value, untitledName: (await getGridDefaultNames()).untitledFolder });
         if (!folder) return notFoundResponse();
         return NextResponse.json({ folder });
       } catch (cause) {

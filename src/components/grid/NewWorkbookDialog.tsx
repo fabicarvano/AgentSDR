@@ -23,6 +23,7 @@ export default function NewWorkbookDialog({
   onCreated: (workbookId: string) => void;
 }) {
   const t = useTranslations("gridMain.newWorkbook");
+  const defaults = useTranslations("gridMain.defaults");
   const apiErrorText = useApiErrorText();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +50,8 @@ export default function NewWorkbookDialog({
     setBusy(true);
     setError(null);
     try {
-      // The default name is stored as the workbook name (user data), so it is not translated.
-      const created = await createWorkbook("Untitled workbook");
+      // Stored as the workbook name (the person's data), so it is written once, in their language.
+      const created = await createWorkbook(defaults("untitledWorkbook"));
       onCreated(created.workbook.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("createFailed"));
@@ -68,7 +69,7 @@ export default function NewWorkbookDialog({
     setBusy(true);
     setError(null);
     try {
-      const name = file.name.replace(/\.(csv|tsv|txt|xlsx|xls)$/i, "").trim() || "Untitled workbook";
+      const name = file.name.replace(/\.(csv|tsv|txt|xlsx|xls)$/i, "").trim() || defaults("untitledWorkbook");
       const created = await createWorkbook(name);
       setPending({ workbookId: created.workbook.id, tableId: created.table.id, file });
     } catch (cause) {
