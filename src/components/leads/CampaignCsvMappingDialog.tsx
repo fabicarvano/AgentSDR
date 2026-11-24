@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 import { AlertCircle, ArrowRight, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 
 import * as Badge from "@/components/alignui/badge";
@@ -79,6 +80,7 @@ export default function CampaignCsvMappingDialog({ file, endpoint, channel, onCl
   onImported: (result: Record<string, unknown>) => void;
 }) {
   const t = useTranslations("leads.csvMapping");
+  const apiErrorText = useApiErrorText();
   const fieldIdPrefix = useId();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
@@ -96,7 +98,7 @@ export default function CampaignCsvMappingDialog({ file, endpoint, channel, onCl
       .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
       .then(({ response, data }) => {
         if (cancelled) return;
-        if (!response.ok) throw new Error(data.error);
+        if (!response.ok) throw new Error(apiErrorText(data, "") || undefined);
         setPreview(data);
         setMapping(data.suggestedMapping ?? {});
       })
@@ -112,7 +114,7 @@ export default function CampaignCsvMappingDialog({ file, endpoint, channel, onCl
     return () => {
       cancelled = true;
     };
-  }, [endpoint, file]);
+  }, [endpoint, file, apiErrorText]);
 
   useEffect(() => {
     if (operation !== "import") return;
@@ -185,7 +187,7 @@ export default function CampaignCsvMappingDialog({ file, endpoint, channel, onCl
       form.append("mapping", JSON.stringify(mapping));
       const response = await fetch(endpoint, { method: "POST", body: form });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error);
+      if (!response.ok || data.ok === false) throw new Error(apiErrorText(data, "") || undefined);
       onImported(data);
     } catch (cause) {
       setError(failure(cause, "importFailed"));

@@ -42,6 +42,7 @@ import { cn } from "@/utils/cn";
 import type { SearchBatchSummary } from "@/lib/linkedin/searchBatches";
 import type { SearchQueryStatus } from "@/lib/linkedin/schema";
 import { STATUS_META, type BadgeColor, type StatusLabelKey } from "./searchStatus";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type SearchAccount = SearchPickerAccount & { profilePictureUrl: string | null };
 
@@ -185,6 +186,7 @@ export function SearchBatchesClient({
   const dialogs = useDialogs();
   const router = useRouter();
   const t = useTranslations("linkedinSearch.batches");
+  const apiErrorText = useApiErrorText();
   const tStatus = useTranslations("linkedinSearch.status");
   const format = useFormatter();
   const formatDate = (iso: string) => format.dateTime(new Date(iso), { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -266,7 +268,7 @@ export function SearchBatchesClient({
       if (!res.ok || data.ok === false) {
         await dialogs.alert({
           title: t("delete.errorTitle"),
-          description: typeof data.error === "string" ? data.error : t("delete.errorFallback"),
+          description: apiErrorText(data, t("delete.errorFallback")),
           variant: "error",
         });
         return;
@@ -350,7 +352,7 @@ export function SearchBatchesClient({
       });
       const data = await res.json();
       if (!data.ok) {
-        setCreateError(typeof data.error === "string" ? data.error : t("dialog.errorCreateFailed"));
+        setCreateError(apiErrorText(data, t("dialog.errorCreateFailed")));
         return;
       }
       setNewOpen(false);
@@ -385,7 +387,7 @@ export function SearchBatchesClient({
       const res = await fetch("/api/linkedin/search/batches/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!data.ok) {
-        setCreateError(typeof data.error === "string" ? data.error : t("dialog.errorCreateFailed"));
+        setCreateError(apiErrorText(data, t("dialog.errorCreateFailed")));
         return;
       }
       setNewOpen(false);

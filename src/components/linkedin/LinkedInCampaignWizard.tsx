@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { EMPTY_LINKEDIN_SEQUENCE, type LinkedinCampaignSequence } from "@/lib/linkedin/campaignSequence";
 import { cn } from "@/utils/cn";
 import { StepDot, StepHeading, WizardStepList } from "@/components/campaigns/wizardParts";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Account = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
 
@@ -32,6 +33,7 @@ const STEPS = [
 
 export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
   const t = useTranslations("linkedinCampaigns.wizard");
+  const apiErrorText = useApiErrorText();
   const format = useFormatter();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -60,7 +62,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
         body: JSON.stringify({ name: name.trim(), description: description.trim() || null, type, linkedinAccountIds: accountIds, ...(!campaignId ? { status: "PAUSED" } : {}) }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("saveFailed"));
+      if (!response.ok || data.ok === false) throw new Error(apiErrorText(data, t("saveFailed")));
       if (!campaignId) setCampaignId(data.campaign.id);
       setStep(1);
     } catch (cause) {
@@ -81,7 +83,7 @@ export function LinkedInCampaignWizard({ accounts }: { accounts: Account[] }) {
         body: JSON.stringify({ status }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error ?? t("finishFailed"));
+      if (!response.ok || data.ok === false) throw new Error(apiErrorText(data, t("finishFailed")));
       router.push(`/linkedin/campaigns/${campaignId}`);
       router.refresh();
     } catch (cause) {

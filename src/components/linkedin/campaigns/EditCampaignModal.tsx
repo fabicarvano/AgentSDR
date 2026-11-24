@@ -10,6 +10,7 @@ import * as Modal from "@/components/alignui/modal";
 import * as Textarea from "@/components/alignui/textarea";
 import { LinkedInAccountTag } from "@/components/linkedin/LinkedInAccountTag";
 import { cn } from "@/utils/cn";
+import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 export type SenderAccount = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
 
@@ -63,6 +64,7 @@ function EditForm({
   onSaved: (updated: { name: string; description: string | null; accounts: SenderAccount[] }) => void;
 }) {
   const t = useTranslations("linkedinCampaigns.editModal");
+  const apiErrorText = useApiErrorText();
   const [name, setName] = useState(campaign.name);
   const [description, setDescription] = useState(campaign.description ?? "");
   const [selectedIds, setSelectedIds] = useState<string[]>(campaign.accounts.map((a) => a.id));
@@ -81,7 +83,7 @@ function EditForm({
         body: JSON.stringify({ name: trimmed, description: description.trim() || null, linkedinAccountIds: selectedIds }),
       });
       const data = await res.json();
-      if (!data.ok) { setError(data.error ?? t("saveFailed")); return; }
+      if (!data.ok) { setError(apiErrorText(data, t("saveFailed"))); return; }
       onSaved({
         name: trimmed,
         description: description.trim() || null,
