@@ -1,4 +1,4 @@
-import { normalizeDomainForTargeting } from "@/lib/qualification/domain";
+import { normalizeDomainForTargeting } from "@/lib/leads/domain";
 
 const PUBLIC_EMAIL_DOMAINS = new Set([
   "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com",

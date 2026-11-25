@@ -26,7 +26,7 @@ import { launchBlocker } from "./metrics";
 import { useCampaignFormat, useImportSummary } from "./useCampaignFormat";
 import { SenderPicker } from "./SenderPicker";
 import { WhatsappSequenceEditor } from "./WhatsappSequenceEditor";
-import { LeadSourceCards, StepDot, StepHeading, SummaryRow, WizardStepList } from "@/components/campaigns/wizardParts";
+import { LeadSourceCards, StepDot, StepHeading, SummaryRow, WizardStepList } from "@/components/wizard/wizardParts";
 import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 const STEPS = [

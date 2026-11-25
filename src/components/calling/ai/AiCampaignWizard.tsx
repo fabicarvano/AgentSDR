@@ -52,7 +52,7 @@ import { NumberPicker, useAiGoalText, useErrorText, useFormatDelay } from "./aiS
 import { useAiProblemText } from "./useAiServerText";
 import { useImportSummary } from "./AiLeadsTab";
 import { AiStepsEditor } from "./AiStepsEditor";
-import { LeadSourceCards, SummaryRow } from "@/components/campaigns/wizardParts";
+import { LeadSourceCards, SummaryRow } from "@/components/wizard/wizardParts";
 
 // Labels and hints live in the catalog under wizard.steps.<id>.
 const STEPS = [

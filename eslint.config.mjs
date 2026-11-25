@@ -12,6 +12,7 @@ import i18next from "eslint-plugin-i18next";
 const TRANSLATED = [
   "src/app/sign-in/**/*.tsx",
   "src/components/outreach/**/*.tsx",
+  "src/components/wizard/**/*.tsx",
   "src/components/campaigns/**/*.tsx",
   "src/app/campaigns/**/*.tsx",
   "src/app/outreach/campaigns/**/*.tsx",
