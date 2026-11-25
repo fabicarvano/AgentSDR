@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createEnrichmentColumns, updateEnrichmentColumns } from "@/lib/grid/enrichments";
 import { getTable } from "@/lib/grid/tables";
+import { getTranslations } from "next-intl/server";
+import { getIntegrationAction } from "@/lib/integrations/catalog";
+import { enrichmentNamesFrom, type EnrichmentNames, type NameLookup } from "@/lib/grid/enrichmentNames";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
 import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
+
+/** The column names in the language of the current request; English when the catalog cannot be read. */
+async function namesFor(integrationKey: string, actionKey: string): Promise<EnrichmentNames> {
+  const action = getIntegrationAction(integrationKey, actionKey);
+  if (!action) return {};
+  try {
+    const t = (await getTranslations("integrationsRegistry")) as unknown as NameLookup;
+    return enrichmentNamesFrom(t, integrationKey, action);
+  } catch (error) {
+    // A name is never worth failing the creation.
+    console.error("enrichment names: could not load the catalog", error);
+    return {};
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -71,6 +88,7 @@ export async function POST(
           runInBatches: body.runInBatches,
           afterColumnId: body.afterColumnId,
           beforeColumnId: body.beforeColumnId,
+          names: await namesFor(body.integrationKey, body.actionKey),
         });
         return NextResponse.json({ columns, primaryColumnKey: columns[0]?.key }, { status: 201 });
       } catch (error) {
@@ -147,6 +165,7 @@ export async function PATCH(
           runCondition: body.runCondition,
           delaySeconds: body.delaySeconds,
           runInBatches: body.runInBatches,
+          names: await namesFor(body.integrationKey, body.actionKey),
         });
         const primary = columns.find((column) => column.id === body.columnId);
         return NextResponse.json({ columns, primaryColumnKey: primary?.key });

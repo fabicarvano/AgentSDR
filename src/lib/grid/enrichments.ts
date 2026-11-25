@@ -8,6 +8,7 @@ import { getIntegrationConnection } from "./providers";
 import { responseOutputKey, valueAtJsonPointer } from "./json-pointer";
 import type { EnrichmentConfig, IntegrationOutputConfig } from "./types";
 import { inferResponseValueType } from "./value-types";
+import type { EnrichmentNames } from "./enrichmentNames";
 
 export async function createEnrichmentColumns(input: {
   tableId: string;
@@ -22,6 +23,8 @@ export async function createEnrichmentColumns(input: {
   runInBatches?: boolean;
   afterColumnId?: string;
   beforeColumnId?: string;
+  /** Names in the creator's language; the English definition names are the fallback. */
+  names?: EnrichmentNames;
 }): Promise<GridColumn[]> {
   const action = getIntegrationAction(input.integrationKey, input.actionKey);
   if (!action) throw new Error("Unknown integration action");
@@ -46,15 +49,18 @@ export async function createEnrichmentColumns(input: {
   // Three "Find work email" runs must not leave three indistinguishable
   // "Work Email" headers: the source column and every output get a free name.
   const takenNames = existing.map((column) => column.name);
-  const actionColumnName = uniqueColumnName(action.name, takenNames);
+  const actionLabel = input.names?.action ?? action.name;
+  const actionColumnName = uniqueColumnName(actionLabel, takenNames);
   takenNames.push(actionColumnName);
   const outputKeys = new Map<string, string>();
   const outputNames = new Map<string, string>();
   for (const output of selected) {
+    const outputName = input.names?.outputs?.[output.key] ?? output.name;
+    // The key stays the English one: ASCII, stable, and the {{token}} people may already use.
     const key = uniqueColumnKey(output.name, taken);
     taken.add(key);
     outputKeys.set(output.key, key);
-    const name = uniqueColumnName(output.name, takenNames);
+    const name = uniqueColumnName(outputName, takenNames);
     takenNames.push(name);
     outputNames.set(output.key, name);
   }
@@ -130,6 +136,7 @@ export async function updateEnrichmentColumns(input: {
   runCondition?: string;
   delaySeconds?: number;
   runInBatches?: boolean;
+  names?: EnrichmentNames;
 }): Promise<GridColumn[]> {
   const action = getIntegrationAction(input.integrationKey, input.actionKey);
   if (!action) throw new Error("Unknown integration action");
@@ -159,10 +166,12 @@ export async function updateEnrichmentColumns(input: {
   const additionNames = new Map<string, string>();
   const additions = selected.filter((output) => !outputKeys.has(output.key));
   for (const output of additions) {
+    const outputName = input.names?.outputs?.[output.key] ?? output.name;
+    // The key stays the English one: ASCII, stable, and the {{token}} people may already use.
     const key = uniqueColumnKey(output.name, taken);
     taken.add(key);
     outputKeys.set(output.key, key);
-    const name = uniqueColumnName(output.name, takenNames);
+    const name = uniqueColumnName(outputName, takenNames);
     takenNames.push(name);
     additionNames.set(output.key, name);
   }
