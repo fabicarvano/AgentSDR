@@ -31,8 +31,9 @@ export const AGENTSERVICE: IntegrationDefinition = {
   name: "AgentService",
   description: "Clean and standardize values inside AgentSDR. No account or credits needed.",
   websiteUrl: "https://github.com/fabicarvano/AgentSDR",
+  iconUrl: "/Integrations - Icon/agentsdr.svg",
   iconText: "AS",
-  iconBackground: "#0f766e",
+  iconBackground: "#1f3bad",
   auth: { type: "api_key", fields: [] },
   actions: [
     action({
