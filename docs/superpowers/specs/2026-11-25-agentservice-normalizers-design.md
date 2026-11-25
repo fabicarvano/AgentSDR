@@ -33,5 +33,6 @@ coluna ou runner.
 - Nome com prefixo ("Dr.") ou partícula ("da", "de") fica no sobrenome; sem tratamento especial além de aparar espaços.
 - Cargo composto ("Diretor de Vendas e Gerente de Projetos") fica com o nível mais alto encontrado.
 - Os valores de `level` são códigos estáveis em inglês (`c_level`, `vp`, `director`, `manager`, `coordinator`, `analyst`,
-  `assistant`, `unknown`), com rótulo traduzido.
+  `assistant`, `unknown`). O valor gravado na célula é o código estável; só o nome da saída ("Nível hierárquico") é traduzido.
+- "Assistente de Diretoria" é `assistant`, mas "Diretor Assistente" e "Assistant Manager" valem pelo cargo (`director`, `manager`).
 - Documentar os três itens em `docs/tables/agentservice.mdx`.
