@@ -18,6 +18,22 @@ function action(
   };
 }
 
+type ActionInput = IntegrationActionDefinition["inputs"][number];
+
+/** A required cell input that accepts an empty cell (the action then returns empty). */
+function cellInput(
+  input: Pick<ActionInput, "key" | "name" | "description" | "example"> &
+    Partial<Pick<ActionInput, "valueType" | "acceptedColumnTypes">>,
+): ActionInput {
+  return {
+    valueType: "text",
+    acceptedColumnTypes: ["text"],
+    ...input,
+    required: true,
+    allowEmpty: true,
+  };
+}
+
 /**
  * AgentService: the actions that run inside AgentSDR and call nobody.
  *
@@ -155,16 +171,12 @@ export const AGENTSERVICE: IntegrationDefinition = {
       tags: ["name", "first name", "last name", "split"],
       handler: "normalizeName",
       inputs: [
-        {
+        cellInput({
           key: "name",
           name: "Full Name",
           description: "The full name of the person.",
-          valueType: "text",
-          acceptedColumnTypes: ["text"],
-          required: true,
-          allowEmpty: true,
           example: "Maria da Silva",
-        },
+        }),
       ],
       outputs: [
         { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
@@ -178,16 +190,14 @@ export const AGENTSERVICE: IntegrationDefinition = {
       tags: ["cnpj", "company", "brazil", "headquarters", "branch"],
       handler: "normalizeCnpj",
       inputs: [
-        {
+        cellInput({
           key: "cnpj",
           name: "CNPJ",
           description: "The company CNPJ, with or without dots, slash and dash.",
           valueType: "textOrNumber",
           acceptedColumnTypes: ["text", "number"],
-          required: true,
-          allowEmpty: true,
           example: "11.222.333/0001-81",
-        },
+        }),
       ],
       outputs: [
         { key: "cnpj", name: "Normalized CNPJ", columnType: "text", example: "11222333000181" },
@@ -202,16 +212,12 @@ export const AGENTSERVICE: IntegrationDefinition = {
       tags: ["job title", "seniority", "level", "role", "cargo"],
       handler: "normalizeJobTitle",
       inputs: [
-        {
+        cellInput({
           key: "title",
           name: "Job Title",
           description: "The job title, in Portuguese or English.",
-          valueType: "text",
-          acceptedColumnTypes: ["text"],
-          required: true,
-          allowEmpty: true,
           example: "Gerente de Vendas",
-        },
+        }),
       ],
       outputs: [{ key: "level", name: "Seniority Level", columnType: "text", example: "manager" }],
     }),
