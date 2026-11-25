@@ -17,6 +17,7 @@ A value that cannot be cleaned is not an error. The row finishes with an empty r
 | **Domain from website** | Website (text or URL) | Domain |
 | **Company domain from email** | Email (text) | Company Domain |
 | **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
+| **Normalize name** | Full name (text) | First Name, Last Name |
 
 ### Normalize phone
 
@@ -42,3 +43,7 @@ Gets the company domain behind a work email. A personal mailbox such as Gmail re
 ### Normalize LinkedIn profile
 
 Gets the public profile name and the clean `https://www.linkedin.com/in/...` link from a profile URL, with or without tracking parameters. Company pages, Sales Navigator links and opaque member ids have no public name and come back empty.
+
+### Normalize name
+
+Splits a full name into **First Name** and **Last Name**. The first word is the first name and everything after it is the last name, so `Maria da Silva` gives `Maria` and `da Silva`. Extra spaces are removed. A single word has no last name. Titles such as `Dr.` are not removed.

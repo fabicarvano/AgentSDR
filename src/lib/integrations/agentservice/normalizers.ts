@@ -105,3 +105,11 @@ export function normalizeLinkedinCell(raw: string): LinkedinCellResult {
     profileUrl: slug ? `https://www.linkedin.com/in/${encodeURIComponent(slug)}` : null,
   };
 }
+
+export type NameCellResult = { firstName: string | null; lastName: string | null };
+
+/** The first word is the first name; everything after it is the last name ("Maria da Silva" -> "da Silva"). */
+export function normalizeNameCell(raw: string): NameCellResult {
+  const [first, ...rest] = raw.trim().split(/\s+/);
+  return { firstName: first || null, lastName: rest.join(" ") || null };
+}

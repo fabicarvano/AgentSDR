@@ -3,6 +3,7 @@ import {
   companyDomainFromEmail,
   normalizeEmailCell,
   normalizeLinkedinCell,
+  normalizeNameCell,
   normalizePhoneCell,
   siteDomain,
 } from "./normalizers";
@@ -157,5 +158,28 @@ describe("blank cells", () => {
     expect(siteDomain("")).toBeNull();
     expect(companyDomainFromEmail("")).toBeNull();
     expect(normalizeLinkedinCell("").slug).toBeNull();
+  });
+});
+
+describe("normalizeNameCell", () => {
+  test("splits a first and a last name", () => {
+    expect(normalizeNameCell("Ada Lovelace")).toEqual({ firstName: "Ada", lastName: "Lovelace" });
+  });
+
+  test("collapses extra spaces and keeps particles in the last name", () => {
+    expect(normalizeNameCell("  Maria   da  Silva ")).toEqual({ firstName: "Maria", lastName: "da Silva" });
+  });
+
+  test("a single word has no last name", () => {
+    expect(normalizeNameCell("Madonna")).toEqual({ firstName: "Madonna", lastName: null });
+  });
+
+  test("blank gives nothing", () => {
+    expect(normalizeNameCell("   ")).toEqual({ firstName: null, lastName: null });
+    expect(normalizeNameCell("")).toEqual({ firstName: null, lastName: null });
+  });
+
+  test("a prefix is not treated specially", () => {
+    expect(normalizeNameCell("Dr. João de Souza")).toEqual({ firstName: "Dr.", lastName: "João de Souza" });
   });
 });

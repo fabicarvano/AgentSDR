@@ -8,6 +8,7 @@ import {
   companyDomainFromEmail,
   normalizeEmailCell,
   normalizeLinkedinCell,
+  normalizeNameCell,
   normalizePhoneCell,
   siteDomain,
 } from "./normalizers";
@@ -66,5 +67,10 @@ export const AGENTSERVICE_HANDLERS = {
     const started = Date.now();
     const result = normalizeLinkedinCell(String(context.inputs.profile ?? ""));
     return finish(context, result.slug, result, started);
+  },
+  "agentservice.normalizeName": async (context) => {
+    const started = Date.now();
+    const result = normalizeNameCell(String(context.inputs.name ?? ""));
+    return finish(context, result.firstName, result, started);
   },
 } satisfies IntegrationActionHandlers;

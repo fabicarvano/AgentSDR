@@ -2636,6 +2636,24 @@
               "name": "Profile URL"
             }
           }
+        },
+        "normalize-name": {
+          "name": "Normalize name",
+          "description": "Split a full name into first name and last name.",
+          "inputs": {
+            "name": {
+              "name": "Full Name",
+              "description": "The full name of the person."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            }
+          }
         }
       }
     }

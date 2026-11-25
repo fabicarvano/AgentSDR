@@ -148,5 +148,28 @@ export const AGENTSERVICE: IntegrationDefinition = {
         { key: "profileUrl", name: "Profile URL", columnType: "url", example: "https://www.linkedin.com/in/ada-lovelace" },
       ],
     }),
+    action({
+      key: "normalize-name",
+      name: "Normalize name",
+      description: "Split a full name into first name and last name.",
+      tags: ["name", "first name", "last name", "split"],
+      handler: "normalizeName",
+      inputs: [
+        {
+          key: "name",
+          name: "Full Name",
+          description: "The full name of the person.",
+          valueType: "text",
+          acceptedColumnTypes: ["text"],
+          required: true,
+          allowEmpty: true,
+          example: "Maria da Silva",
+        },
+      ],
+      outputs: [
+        { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
+        { key: "lastName", name: "Last Name", columnType: "text", example: "da Silva" },
+      ],
+    }),
   ],
 };
