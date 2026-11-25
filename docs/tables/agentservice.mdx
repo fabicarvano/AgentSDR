@@ -75,7 +75,7 @@ Reads a job title in Portuguese or English and returns one seniority level, igno
 | `unknown` | any other title |
 
 - A title with several roles gets the highest one: `Sócio-diretor` is `c_level`.
-- A title with an assistant word is always `assistant`, so `Assistente de Diretoria` is not a director.
+- An assistant who works for someone is `assistant`: `Assistente de Diretoria` and `Assistant to the CEO` are not directors. When the assistant word is part of the role itself, the role wins: `Diretor Assistente` is `director` and `Assistant Manager` is `manager`.
 - Whole words only: `Gerenciamento de Projetos` and `Diretoria` alone are `unknown`.
 - An empty title gives an empty result.
 - `Owner`, `Partner` and `Lead` are not read as levels, because of titles like `Product Owner` and `Lead Developer`.
