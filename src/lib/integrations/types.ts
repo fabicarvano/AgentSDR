@@ -33,6 +33,12 @@ export type ActionInputDefinition = {
   /** Grid column types accepted by the mapping UI and server validator. */
   acceptedColumnTypes: StaticColumnType[];
   required: boolean;
+  /**
+   * A blank cell still runs the action, with "" as the value, instead of failing the
+   * row with "A value is required". For local actions whose answer to "nothing"
+   * is a normal result (Valid Phone = false); paid providers leave it off.
+   */
+  allowEmpty?: boolean;
   example?: string;
   /** Optional presentation group for actions that expose an addable filter builder. */
   group?: "filter" | "advanced";

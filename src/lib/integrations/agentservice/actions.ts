@@ -12,6 +12,8 @@ import {
   siteDomain,
 } from "./normalizers";
 
+const DEFAULT_PHONE_COUNTRY = "BR";
+
 /**
  * Every handler is local and free: it reads the mapped cell, cleans it and
  * returns. A value that cannot be cleaned is a clean miss with its flag
@@ -40,27 +42,29 @@ function finish(
 export const AGENTSERVICE_HANDLERS = {
   "agentservice.normalizePhone": async (context) => {
     const started = Date.now();
-    const result = normalizePhoneCell(context.inputs.phone as string | number, await organizationPhoneCountry());
+    // Brazil unless the organization picked another country: a number typed without + is Brazilian.
+    const country = (await organizationPhoneCountry()) ?? DEFAULT_PHONE_COUNTRY;
+    const result = normalizePhoneCell((context.inputs.phone as string | number | undefined) ?? "", country);
     return finish(context, result.phone, result, started);
   },
   "agentservice.normalizeEmail": async (context) => {
     const started = Date.now();
-    const result = normalizeEmailCell(String(context.inputs.email));
+    const result = normalizeEmailCell(String(context.inputs.email ?? ""));
     return finish(context, result.email, result, started);
   },
   "agentservice.siteDomain": async (context) => {
     const started = Date.now();
-    const domain = siteDomain(String(context.inputs.website));
+    const domain = siteDomain(String(context.inputs.website ?? ""));
     return finish(context, domain, { domain }, started);
   },
   "agentservice.companyDomainFromEmail": async (context) => {
     const started = Date.now();
-    const domain = companyDomainFromEmail(String(context.inputs.email));
+    const domain = companyDomainFromEmail(String(context.inputs.email ?? ""));
     return finish(context, domain, { domain }, started);
   },
   "agentservice.normalizeLinkedin": async (context) => {
     const started = Date.now();
-    const result = normalizeLinkedinCell(String(context.inputs.profile));
+    const result = normalizeLinkedinCell(String(context.inputs.profile ?? ""));
     return finish(context, result.slug, result, started);
   },
 } satisfies IntegrationActionHandlers;

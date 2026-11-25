@@ -51,6 +51,10 @@ export const enrichmentRunner: ColumnRunner<EnrichmentConfig> = {
       const binding = config.inputs[input.key];
       const value = binding ? ownCell(row, binding.columnKey) : undefined;
       if (value === undefined || value === null || value === "") {
+        if (input.allowEmpty) {
+          inputValues[input.key] = "";
+          continue;
+        }
         if (input.required) throw new PermanentRunError(`${input.name}: A value is required`);
         continue;
       }
