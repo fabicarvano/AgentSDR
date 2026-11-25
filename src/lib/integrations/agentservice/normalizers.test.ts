@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   companyDomainFromEmail,
+  type JobLevel,
   normalizeCnpjCell,
   normalizeEmailCell,
   normalizeJobTitleCell,
@@ -227,7 +228,7 @@ describe("normalizeCnpjCell", () => {
 });
 
 describe("normalizeJobTitleCell", () => {
-  const cases: Array<[string, string]> = [
+  const cases: Array<[string, JobLevel]> = [
     ["CEO", "c_level"],
     ["Diretor Presidente", "c_level"],
     ["Sócio", "c_level"],
