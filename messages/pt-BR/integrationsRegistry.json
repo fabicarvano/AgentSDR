@@ -2541,6 +2541,103 @@
           }
         }
       }
+    },
+    "agentservice": {
+      "actions": {
+        "normalize-phone": {
+          "name": "Normalizar telefone",
+          "description": "Converte um telefone para o formato internacional (+5521986545481) que o WhatsApp e as ligações esperam.",
+          "inputs": {
+            "phone": {
+              "name": "Telefone",
+              "description": "O número de telefone. Uma célula com vários números mantém os dois primeiros válidos."
+            }
+          },
+          "outputs": {
+            "phone": {
+              "name": "Telefone normalizado"
+            },
+            "isValid": {
+              "name": "Telefone válido"
+            },
+            "isMobile": {
+              "name": "Telefone celular"
+            },
+            "secondPhone": {
+              "name": "Segundo telefone"
+            }
+          }
+        },
+        "normalize-email": {
+          "name": "Normalizar e-mail",
+          "description": "Limpa um endereço de e-mail: minúsculas, sem espaços nem texto extra, e indica caixas pessoais.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O endereço de e-mail, mesmo com nome ou mailto: em volta."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "E-mail normalizado"
+            },
+            "isValid": {
+              "name": "E-mail válido"
+            },
+            "isPersonal": {
+              "name": "E-mail pessoal"
+            }
+          }
+        },
+        "site-domain": {
+          "name": "Domínio do site",
+          "description": "Extrai o domínio puro de um endereço de site, sem https, www nem o caminho da página.",
+          "inputs": {
+            "website": {
+              "name": "Site",
+              "description": "O site ou domínio da empresa."
+            }
+          },
+          "outputs": {
+            "domain": {
+              "name": "Domínio"
+            }
+          }
+        },
+        "company-domain-from-email": {
+          "name": "Domínio da empresa pelo e-mail",
+          "description": "Obtém o domínio da empresa a partir de um e-mail corporativo. Caixas pessoais, como Gmail, não retornam nada.",
+          "inputs": {
+            "email": {
+              "name": "E-mail",
+              "description": "O e-mail corporativo."
+            }
+          },
+          "outputs": {
+            "domain": {
+              "name": "Domínio da empresa"
+            }
+          }
+        },
+        "normalize-linkedin": {
+          "name": "Normalizar perfil do LinkedIn",
+          "description": "Obtém o nome público do perfil e o link limpo a partir de uma URL do LinkedIn.",
+          "inputs": {
+            "profile": {
+              "name": "Perfil do LinkedIn",
+              "description": "A URL de um perfil do LinkedIn, com ou sem parâmetros de rastreio."
+            }
+          },
+          "outputs": {
+            "slug": {
+              "name": "Nome do perfil"
+            },
+            "profileUrl": {
+              "name": "URL do perfil"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -91,6 +91,9 @@
         },
         "icypeas": {
           "description": "Descubra e verifique e-mails, encontre perfis profissionais e enriqueça pessoas e empresas."
+        },
+        "agentservice": {
+          "description": "Limpe e padronize valores dentro do AgentSDR. Não precisa de conta nem de créditos."
         }
       }
     },

@@ -91,6 +91,9 @@
         },
         "icypeas": {
           "description": "Discover and verify emails, find professional profiles, and enrich people and companies."
+        },
+        "agentservice": {
+          "description": "Clean and standardize values inside AgentSDR. No account or credits needed."
         }
       }
     },
