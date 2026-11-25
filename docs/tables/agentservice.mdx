@@ -19,6 +19,7 @@ A value that cannot be cleaned is not an error. The row finishes with an empty r
 | **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
 | **Normalize name** | Full name (text) | First Name, Last Name |
 | **Normalize CNPJ** | CNPJ (text or number) | Normalized CNPJ, Valid CNPJ, Headquarters |
+| **Normalize job title** | Job title (text) | Seniority Level |
 
 ### Normalize phone
 
@@ -57,3 +58,24 @@ Removes dots, slash and dash so only the 14 digits are left, and checks the two 
 - An invalid CNPJ leaves **Normalized CNPJ** empty and **Valid CNPJ** false.
 - A CNPJ column that a file import read as a number works too: the leading zeros the import dropped are put back. A text cell is never padded.
 - CNPJs with letters (the alphanumeric format) are not supported yet and come back invalid.
+
+### Normalize job title
+
+Reads a job title in Portuguese or English and returns one seniority level, ignoring accents and case. The cell holds a fixed code, the same in every language:
+
+| Code | Examples |
+|---|---|
+| `c_level` | CEO, Presidente, Sócio, Founder, Chief Revenue Officer |
+| `vp` | Vice-presidente, VP of Sales |
+| `director` | Diretor, Sales Director, Head of Growth |
+| `manager` | Gerente, Product Manager |
+| `coordinator` | Coordenador, Supervisor, Líder |
+| `analyst` | Analista, Especialista, Business Analyst |
+| `assistant` | Assistente, Estagiário, Auxiliar |
+| `unknown` | any other title |
+
+- A title with several roles gets the highest one: `Sócio-diretor` is `c_level`.
+- A title with an assistant word is always `assistant`, so `Assistente de Diretoria` is not a director.
+- Whole words only: `Gerenciamento de Projetos` and `Diretoria` alone are `unknown`.
+- An empty title gives an empty result.
+- `Owner`, `Partner` and `Lead` are not read as levels, because of titles like `Product Owner` and `Lead Developer`.

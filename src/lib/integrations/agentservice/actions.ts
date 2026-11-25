@@ -8,6 +8,7 @@ import {
   companyDomainFromEmail,
   normalizeCnpjCell,
   normalizeEmailCell,
+  normalizeJobTitleCell,
   normalizeLinkedinCell,
   normalizeNameCell,
   normalizePhoneCell,
@@ -78,5 +79,10 @@ export const AGENTSERVICE_HANDLERS = {
     const started = Date.now();
     const result = normalizeCnpjCell((context.inputs.cnpj as string | number | undefined) ?? "");
     return finish(context, result.cnpj, result, started);
+  },
+  "agentservice.normalizeJobTitle": async (context) => {
+    const started = Date.now();
+    const result = normalizeJobTitleCell(String(context.inputs.title ?? ""));
+    return finish(context, result.level, result, started);
   },
 } satisfies IntegrationActionHandlers;

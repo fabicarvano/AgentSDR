@@ -141,3 +141,55 @@ export function normalizeCnpjCell(raw: string | number): CnpjCellResult {
   if (digits.slice(12) !== `${first}${second}`) return invalid;
   return { cnpj: digits, isValid: true, isHeadquarters: digits.slice(8, 12) === "0001" };
 }
+
+export type JobLevel = "c_level" | "vp" | "director" | "manager" | "coordinator" | "analyst" | "assistant" | "unknown";
+export type JobTitleCellResult = { level: JobLevel | null };
+
+const ASSISTANT_WORDS = new Set(["assistente", "assistant", "estagiario", "estagiaria", "intern", "trainee", "auxiliar"]);
+const VP_WORDS = new Set(["vp", "svp", "evp"]);
+
+// Highest first. "owner", "partner" and "lead" are left out on purpose: "Product Owner",
+// "Channel Partner Manager" and "Lead Developer" are not what those words suggest.
+const LEVEL_WORDS: Array<[JobLevel, Set<string>]> = [
+  [
+    "c_level",
+    new Set([
+      "ceo", "cfo", "cto", "coo", "cmo", "cio", "chief", "presidente", "president", "socio", "socia",
+      "fundador", "fundadora", "founder", "cofundador", "cofundadora", "dono", "dona", "proprietario", "proprietaria",
+    ]),
+  ],
+  ["director", new Set(["diretor", "diretora", "director", "head"])],
+  ["manager", new Set(["gerente", "manager"])],
+  ["coordinator", new Set(["coordenador", "coordenadora", "coordinator", "supervisor", "supervisora", "lider"])],
+  ["analyst", new Set(["analista", "analyst", "especialista", "specialist"])],
+];
+
+/** Reads a job title in Portuguese or English; accents, case and punctuation are ignored. */
+export function normalizeJobTitleCell(raw: string): JobTitleCellResult {
+  const words = raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  if (words.length === 0) return { level: null };
+  // An assistant to a director is an assistant: "Assistente de Diretoria".
+  if (words.some((word) => ASSISTANT_WORDS.has(word))) return { level: "assistant" };
+
+  // "Vice-presidente" is a VP, so take it out before "presidente" can read as C-level.
+  const rest: string[] = [];
+  let vp = false;
+  for (let i = 0; i < words.length; i++) {
+    if (VP_WORDS.has(words[i])) vp = true;
+    else if (words[i] === "vice" && (words[i + 1] === "presidente" || words[i + 1] === "president")) {
+      vp = true;
+      i++;
+    } else rest.push(words[i]);
+  }
+
+  // The highest level found wins ("Sócio-diretor" is C-level), but a VP outranks all but C-level.
+  const found = LEVEL_WORDS.find(([, set]) => rest.some((word) => set.has(word)))?.[0];
+  if (found === "c_level") return { level: "c_level" };
+  if (vp) return { level: "vp" };
+  return { level: found ?? "unknown" };
+}

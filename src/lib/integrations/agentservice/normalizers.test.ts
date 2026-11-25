@@ -3,6 +3,7 @@ import {
   companyDomainFromEmail,
   normalizeCnpjCell,
   normalizeEmailCell,
+  normalizeJobTitleCell,
   normalizeLinkedinCell,
   normalizeNameCell,
   normalizePhoneCell,
@@ -222,5 +223,62 @@ describe("normalizeCnpjCell", () => {
   test("empty and non-numeric text are invalid", () => {
     expect(normalizeCnpjCell("")).toEqual(INVALID);
     expect(normalizeCnpjCell("abc")).toEqual(INVALID);
+  });
+});
+
+describe("normalizeJobTitleCell", () => {
+  const cases: Array<[string, string]> = [
+    ["CEO", "c_level"],
+    ["Diretor Presidente", "c_level"],
+    ["Sócio", "c_level"],
+    ["Founder", "c_level"],
+    ["Chief Revenue Officer", "c_level"],
+    ["Fundadora", "c_level"],
+    ["Presidente", "c_level"],
+    ["Sócio-diretor", "c_level"],
+    ["Vice-presidente de Vendas", "vp"],
+    ["VP of Sales", "vp"],
+    ["Vice President", "vp"],
+    ["SVP Marketing", "vp"],
+    ["Diretor Comercial", "director"],
+    ["DIRETORA DE MARKETING", "director"],
+    ["Sales Director", "director"],
+    ["Head of Growth", "director"],
+    ["Gerente de Contas", "manager"],
+    ["Product Manager", "manager"],
+    ["gerente", "manager"],
+    ["Gerente e Analista", "manager"],
+    ["Coordenador de TI", "coordinator"],
+    ["Supervisor de Vendas", "coordinator"],
+    ["Líder de Equipe", "coordinator"],
+    ["Analista de Marketing", "analyst"],
+    ["Business Analyst", "analyst"],
+    ["Especialista em CRM", "analyst"],
+    ["Assistente de Diretoria", "assistant"],
+    ["Executive Assistant", "assistant"],
+    ["Estagiário de Vendas", "assistant"],
+    ["Auxiliar Administrativo", "assistant"],
+    ["Assistente de Gerente", "assistant"],
+    ["Consultor de Vendas", "unknown"],
+    ["Product Owner", "unknown"],
+    ["Lead Developer", "unknown"],
+    ["Gerenciamento de Projetos", "unknown"],
+    ["Diretoria", "unknown"],
+  ];
+
+  for (const [title, level] of cases) {
+    test(`${title} is ${level}`, () => {
+      expect(normalizeJobTitleCell(title)).toEqual({ level });
+    });
+  }
+
+  test("accents and case are ignored", () => {
+    expect(normalizeJobTitleCell("SÓCIO").level).toBe("c_level");
+    expect(normalizeJobTitleCell("socio").level).toBe("c_level");
+  });
+
+  test("a blank title has no level", () => {
+    expect(normalizeJobTitleCell("")).toEqual({ level: null });
+    expect(normalizeJobTitleCell("   ")).toEqual({ level: null });
   });
 });

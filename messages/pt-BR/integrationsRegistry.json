@@ -2675,6 +2675,21 @@
               "name": "Matriz"
             }
           }
+        },
+        "normalize-job-title": {
+          "name": "Normalizar cargo",
+          "description": "Transforma um cargo em nível hierárquico: C-level, VP, diretor, gerente, coordenador, analista ou assistente.",
+          "inputs": {
+            "title": {
+              "name": "Cargo",
+              "description": "O cargo da pessoa, em português ou inglês."
+            }
+          },
+          "outputs": {
+            "level": {
+              "name": "Nível hierárquico"
+            }
+          }
         }
       }
     }

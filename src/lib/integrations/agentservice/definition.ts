@@ -195,5 +195,25 @@ export const AGENTSERVICE: IntegrationDefinition = {
         { key: "isHeadquarters", name: "Headquarters", columnType: "boolean" },
       ],
     }),
+    action({
+      key: "normalize-job-title",
+      name: "Normalize job title",
+      description: "Turn a job title into a seniority level: C-level, VP, director, manager, coordinator, analyst or assistant.",
+      tags: ["job title", "seniority", "level", "role", "cargo"],
+      handler: "normalizeJobTitle",
+      inputs: [
+        {
+          key: "title",
+          name: "Job Title",
+          description: "The job title, in Portuguese or English.",
+          valueType: "text",
+          acceptedColumnTypes: ["text"],
+          required: true,
+          allowEmpty: true,
+          example: "Gerente de Vendas",
+        },
+      ],
+      outputs: [{ key: "level", name: "Seniority Level", columnType: "text", example: "manager" }],
+    }),
   ],
 };

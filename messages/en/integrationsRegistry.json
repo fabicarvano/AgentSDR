@@ -2675,6 +2675,21 @@
               "name": "Headquarters"
             }
           }
+        },
+        "normalize-job-title": {
+          "name": "Normalize job title",
+          "description": "Turn a job title into a seniority level: C-level, VP, director, manager, coordinator, analyst or assistant.",
+          "inputs": {
+            "title": {
+              "name": "Job Title",
+              "description": "The job title, in Portuguese or English."
+            }
+          },
+          "outputs": {
+            "level": {
+              "name": "Seniority Level"
+            }
+          }
         }
       }
     }
