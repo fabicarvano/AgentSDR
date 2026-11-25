@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
   companyDomainFromEmail,
+  type JobLevel,
+  normalizeCnpjCell,
   normalizeEmailCell,
+  normalizeJobTitleCell,
   normalizeLinkedinCell,
+  normalizeNameCell,
   normalizePhoneCell,
   siteDomain,
 } from "./normalizers";
@@ -157,5 +161,140 @@ describe("blank cells", () => {
     expect(siteDomain("")).toBeNull();
     expect(companyDomainFromEmail("")).toBeNull();
     expect(normalizeLinkedinCell("").slug).toBeNull();
+  });
+});
+
+describe("normalizeNameCell", () => {
+  test("splits a first and a last name", () => {
+    expect(normalizeNameCell("Ada Lovelace")).toEqual({ firstName: "Ada", lastName: "Lovelace" });
+  });
+
+  test("collapses extra spaces and keeps particles in the last name", () => {
+    expect(normalizeNameCell("  Maria   da  Silva ")).toEqual({ firstName: "Maria", lastName: "da Silva" });
+  });
+
+  test("a single word has no last name", () => {
+    expect(normalizeNameCell("Madonna")).toEqual({ firstName: "Madonna", lastName: null });
+  });
+
+  test("blank gives nothing", () => {
+    expect(normalizeNameCell("   ")).toEqual({ firstName: null, lastName: null });
+    expect(normalizeNameCell("")).toEqual({ firstName: null, lastName: null });
+  });
+
+  test("a prefix is not treated specially", () => {
+    expect(normalizeNameCell("Dr. João de Souza")).toEqual({ firstName: "Dr.", lastName: "João de Souza" });
+  });
+});
+
+describe("normalizeCnpjCell", () => {
+  const INVALID = { cnpj: null, isValid: false, isHeadquarters: null };
+
+  test("a masked headquarters CNPJ becomes digits and is a headquarters", () => {
+    expect(normalizeCnpjCell("11.222.333/0001-81")).toEqual({ cnpj: "11222333000181", isValid: true, isHeadquarters: true });
+  });
+
+  test("a masked branch CNPJ is valid and not a headquarters", () => {
+    expect(normalizeCnpjCell("11.222.333/0002-62")).toEqual({ cnpj: "11222333000262", isValid: true, isHeadquarters: false });
+    expect(normalizeCnpjCell("00.000.000/0002-72")).toEqual({ cnpj: "00000000000272", isValid: true, isHeadquarters: false });
+  });
+
+  test("digits only reads the same as the masked number", () => {
+    expect(normalizeCnpjCell("11222333000181")).toEqual(normalizeCnpjCell("11.222.333/0001-81"));
+  });
+
+  test("a wrong check digit is invalid", () => {
+    expect(normalizeCnpjCell("11.222.333/0001-80")).toEqual(INVALID);
+  });
+
+  test("repeated digits are invalid although the checksum holds", () => {
+    expect(normalizeCnpjCell("11111111111111")).toEqual(INVALID);
+    expect(normalizeCnpjCell("00000000000000")).toEqual(INVALID);
+  });
+
+  test("a text with the wrong length is invalid and is not padded", () => {
+    expect(normalizeCnpjCell("1122233300018")).toEqual(INVALID);
+    expect(normalizeCnpjCell("191")).toEqual(INVALID);
+  });
+
+  test("a number a spreadsheet import read gets its lost leading zeros back", () => {
+    expect(normalizeCnpjCell(191)).toEqual({ cnpj: "00000000000191", isValid: true, isHeadquarters: true });
+  });
+
+  test("empty and non-numeric text are invalid", () => {
+    expect(normalizeCnpjCell("")).toEqual(INVALID);
+    expect(normalizeCnpjCell("abc")).toEqual(INVALID);
+  });
+});
+
+describe("normalizeJobTitleCell", () => {
+  const cases: Array<[string, JobLevel]> = [
+    ["CEO", "c_level"],
+    ["Diretor Presidente", "c_level"],
+    ["Sócio", "c_level"],
+    ["Founder", "c_level"],
+    ["Chief Revenue Officer", "c_level"],
+    ["Fundadora", "c_level"],
+    ["Presidente", "c_level"],
+    ["Sócio-diretor", "c_level"],
+    ["Vice-presidente de Vendas", "vp"],
+    ["VP of Sales", "vp"],
+    ["Vice President", "vp"],
+    ["SVP Marketing", "vp"],
+    ["Diretor Comercial", "director"],
+    ["DIRETORA DE MARKETING", "director"],
+    ["Sales Director", "director"],
+    ["Head of Growth", "director"],
+    ["Gerente de Contas", "manager"],
+    ["Product Manager", "manager"],
+    ["gerente", "manager"],
+    ["Gerente e Analista", "manager"],
+    ["Coordenador de TI", "coordinator"],
+    ["Supervisor de Vendas", "coordinator"],
+    ["Líder de Equipe", "coordinator"],
+    ["Analista de Marketing", "analyst"],
+    ["Business Analyst", "analyst"],
+    ["Especialista em CRM", "analyst"],
+    ["Assistente de Diretoria", "assistant"],
+    ["Executive Assistant", "assistant"],
+    ["Estagiário de Vendas", "assistant"],
+    ["Auxiliar Administrativo", "assistant"],
+    ["Assistente de Gerente", "assistant"],
+    ["Assistant to the CEO", "assistant"],
+    ["Assistente Administrativo", "assistant"],
+    ["Assistant Vice President", "vp"],
+    ["Assistant Manager", "manager"],
+    ["Assistant Director", "director"],
+    ["Diretor Assistente", "director"],
+    ["Gerente de Contas Assistente", "manager"],
+    ["Trainee Program Manager", "manager"],
+    ["Gestor Comercial", "manager"],
+    ["Gestora de Contas", "manager"],
+    ["Superintendente", "director"],
+    ["CRO", "c_level"],
+    ["CHRO", "c_level"],
+    ["Chairman", "c_level"],
+    ["Team Leader", "coordinator"],
+    ["Consultor de Vendas", "unknown"],
+    ["Product Owner", "unknown"],
+    ["Lead Developer", "unknown"],
+    ["Gerenciamento de Projetos", "unknown"],
+    ["Diretoria", "unknown"],
+  ];
+
+  for (const [title, level] of cases) {
+    test(`${title} is ${level}`, () => {
+      expect(normalizeJobTitleCell(title)).toEqual({ level });
+    });
+  }
+
+  test("accents and case are ignored", () => {
+    expect(normalizeJobTitleCell("SÓCIO").level).toBe("c_level");
+    expect(normalizeJobTitleCell("socio").level).toBe("c_level");
+  });
+
+  test("a blank title has no level", () => {
+    expect(normalizeJobTitleCell("")).toEqual({ level: null });
+    expect(normalizeJobTitleCell("   ")).toEqual({ level: null });
   });
 });

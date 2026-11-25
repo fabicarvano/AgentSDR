@@ -18,6 +18,22 @@ function action(
   };
 }
 
+type ActionInput = IntegrationActionDefinition["inputs"][number];
+
+/** A required cell input that accepts an empty cell (the action then returns empty). */
+function cellInput(
+  input: Pick<ActionInput, "key" | "name" | "description" | "example"> &
+    Partial<Pick<ActionInput, "valueType" | "acceptedColumnTypes">>,
+): ActionInput {
+  return {
+    valueType: "text",
+    acceptedColumnTypes: ["text"],
+    ...input,
+    required: true,
+    allowEmpty: true,
+  };
+}
+
 /**
  * AgentService: the actions that run inside AgentSDR and call nobody.
  *
@@ -147,6 +163,63 @@ export const AGENTSERVICE: IntegrationDefinition = {
         { key: "slug", name: "Profile Slug", columnType: "text", example: "ada-lovelace" },
         { key: "profileUrl", name: "Profile URL", columnType: "url", example: "https://www.linkedin.com/in/ada-lovelace" },
       ],
+    }),
+    action({
+      key: "normalize-name",
+      name: "Normalize name",
+      description: "Split a full name into first name and last name.",
+      tags: ["name", "first name", "last name", "split"],
+      handler: "normalizeName",
+      inputs: [
+        cellInput({
+          key: "name",
+          name: "Full Name",
+          description: "The full name of the person.",
+          example: "Maria da Silva",
+        }),
+      ],
+      outputs: [
+        { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
+        { key: "lastName", name: "Last Name", columnType: "text", example: "da Silva" },
+      ],
+    }),
+    action({
+      key: "normalize-cnpj",
+      name: "Normalize CNPJ",
+      description: "Keep only the digits of a CNPJ, check it, and tell a headquarters from a branch.",
+      tags: ["cnpj", "company", "brazil", "headquarters", "branch"],
+      handler: "normalizeCnpj",
+      inputs: [
+        cellInput({
+          key: "cnpj",
+          name: "CNPJ",
+          description: "The company CNPJ, with or without dots, slash and dash.",
+          valueType: "textOrNumber",
+          acceptedColumnTypes: ["text", "number"],
+          example: "11.222.333/0001-81",
+        }),
+      ],
+      outputs: [
+        { key: "cnpj", name: "Normalized CNPJ", columnType: "text", example: "11222333000181" },
+        { key: "isValid", name: "Valid CNPJ", columnType: "boolean" },
+        { key: "isHeadquarters", name: "Headquarters", columnType: "boolean" },
+      ],
+    }),
+    action({
+      key: "normalize-job-title",
+      name: "Normalize job title",
+      description: "Turn a job title into a seniority level: C-level, VP, director, manager, coordinator, analyst or assistant.",
+      tags: ["job title", "seniority", "level", "role", "cargo"],
+      handler: "normalizeJobTitle",
+      inputs: [
+        cellInput({
+          key: "title",
+          name: "Job Title",
+          description: "The job title, in Portuguese or English.",
+          example: "Gerente de Vendas",
+        }),
+      ],
+      outputs: [{ key: "level", name: "Seniority Level", columnType: "text", example: "manager" }],
     }),
   ],
 };

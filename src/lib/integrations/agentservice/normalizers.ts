@@ -105,3 +105,95 @@ export function normalizeLinkedinCell(raw: string): LinkedinCellResult {
     profileUrl: slug ? `https://www.linkedin.com/in/${encodeURIComponent(slug)}` : null,
   };
 }
+
+export type NameCellResult = { firstName: string | null; lastName: string | null };
+
+/** The first word is the first name; everything after it is the last name ("Maria da Silva" -> "da Silva"). */
+export function normalizeNameCell(raw: string): NameCellResult {
+  const [first, ...rest] = raw.trim().split(/\s+/);
+  return { firstName: first || null, lastName: rest.join(" ") || null };
+}
+
+export type CnpjCellResult = { cnpj: string | null; isValid: boolean; isHeadquarters: boolean | null };
+
+function cnpjCheckDigit(digits: string): number {
+  // Weights run 2..9 from the right, wrapping; the 13th digit uses 12 digits, the 14th uses 13.
+  let sum = 0;
+  let weight = 2;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    sum += Number(digits[i]) * weight;
+    weight = weight === 9 ? 2 : weight + 1;
+  }
+  const rest = sum % 11;
+  return rest < 2 ? 0 : 11 - rest;
+}
+
+/**
+ * Digits only, check digits verified, and headquarters (order block `0001`) told from a branch.
+ * A number cell lost its leading zeros on import, so it is padded back to 14; a text cell is not.
+ */
+export function normalizeCnpjCell(raw: string | number): CnpjCellResult {
+  const invalid: CnpjCellResult = { cnpj: null, isValid: false, isHeadquarters: null };
+  const digits = typeof raw === "number" ? String(raw).padStart(14, "0") : raw.replace(/\D/g, "");
+  if (!/^\d{14}$/.test(digits) || /^(\d)\1{13}$/.test(digits)) return invalid;
+  const first = cnpjCheckDigit(digits.slice(0, 12));
+  const second = cnpjCheckDigit(digits.slice(0, 12) + first);
+  if (digits.slice(12) !== `${first}${second}`) return invalid;
+  return { cnpj: digits, isValid: true, isHeadquarters: digits.slice(8, 12) === "0001" };
+}
+
+export type JobLevel = "c_level" | "vp" | "director" | "manager" | "coordinator" | "analyst" | "assistant" | "unknown";
+export type JobTitleCellResult = { level: JobLevel | null };
+
+const ASSISTANT_WORDS = new Set(["assistente", "assistant", "estagiario", "estagiaria", "intern", "trainee", "auxiliar"]);
+const ASSISTANT_CONNECTORS = new Set(["de", "da", "do", "das", "dos", "to", "of", "for", "para", "a", "ao"]);
+const VP_WORDS = new Set(["vp", "svp", "evp"]);
+
+// Highest first. "owner", "partner" and "lead" are left out on purpose: "Product Owner",
+// "Channel Partner Manager" and "Lead Developer" are not what those words suggest.
+const LEVEL_WORDS: Array<[JobLevel, Set<string>]> = [
+  [
+    "c_level",
+    new Set([
+      "ceo", "cfo", "cto", "coo", "cmo", "cio", "cro", "cpo", "cso", "cco", "chro", "ciso", "cdo", "chief", "chairman", "presidente", "president", "socio", "socia",
+      "fundador", "fundadora", "founder", "cofounder", "cofundador", "cofundadora", "dono", "dona", "proprietario", "proprietaria",
+    ]),
+  ],
+  ["director", new Set(["diretor", "diretora", "director", "superintendente", "superintendent", "head"])],
+  ["manager", new Set(["gerente", "gestor", "gestora", "manager"])],
+  ["coordinator", new Set(["coordenador", "coordenadora", "coordinator", "supervisor", "supervisora", "lider", "leader"])],
+  ["analyst", new Set(["analista", "analyst", "especialista", "specialist"])],
+];
+
+/** Reads a job title in Portuguese or English; accents, case and punctuation are ignored. */
+export function normalizeJobTitleCell(raw: string): JobTitleCellResult {
+  const words = raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  if (words.length === 0) return { level: null };
+  // "Assistente de Diretoria" and "Assistant to the CEO" work for someone: assistant. With no
+  // connector after it ("Diretor Assistente", "Assistant Manager"), another level in the title wins.
+  const assistantAt = words.findIndex((word) => ASSISTANT_WORDS.has(word));
+  if (assistantAt >= 0 && ASSISTANT_CONNECTORS.has(words[assistantAt + 1] ?? "")) return { level: "assistant" };
+
+  // "Vice-presidente" is a VP, so take it out before "presidente" can read as C-level.
+  const rest: string[] = [];
+  let vp = false;
+  for (let i = 0; i < words.length; i++) {
+    if (VP_WORDS.has(words[i])) vp = true;
+    else if (words[i] === "vice" && (words[i + 1] === "presidente" || words[i + 1] === "president")) {
+      vp = true;
+      i++;
+    } else rest.push(words[i]);
+  }
+
+  // The highest level found wins ("Sócio-diretor" is C-level), but a VP outranks all but C-level.
+  const found = LEVEL_WORDS.find(([, set]) => rest.some((word) => set.has(word)))?.[0];
+  if (found === "c_level") return { level: "c_level" };
+  if (vp) return { level: "vp" };
+  if (found) return { level: found };
+  return { level: assistantAt >= 0 ? "assistant" : "unknown" };
+}

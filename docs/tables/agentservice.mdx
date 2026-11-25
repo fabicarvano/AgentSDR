@@ -17,6 +17,9 @@ A value that cannot be cleaned is not an error. The row finishes with an empty r
 | **Domain from website** | Website (text or URL) | Domain |
 | **Company domain from email** | Email (text) | Company Domain |
 | **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
+| **Normalize name** | Full name (text) | First Name, Last Name |
+| **Normalize CNPJ** | CNPJ (text or number) | Normalized CNPJ, Valid CNPJ, Headquarters |
+| **Normalize job title** | Job title (text) | Seniority Level |
 
 ### Normalize phone
 
@@ -42,3 +45,37 @@ Gets the company domain behind a work email. A personal mailbox such as Gmail re
 ### Normalize LinkedIn profile
 
 Gets the public profile name and the clean `https://www.linkedin.com/in/...` link from a profile URL, with or without tracking parameters. Company pages, Sales Navigator links and opaque member ids have no public name and come back empty.
+
+### Normalize name
+
+Splits a full name into **First Name** and **Last Name**. The first word is the first name and everything after it is the last name, so `Maria da Silva` gives `Maria` and `da Silva`. Extra spaces are removed. A single word has no last name. Titles such as `Dr.` are not removed.
+
+### Normalize CNPJ
+
+Removes dots, slash and dash so only the 14 digits are left, and checks the two verification digits. A CNPJ made of one repeated digit (such as `11111111111111`) is invalid.
+
+- **Headquarters** is true for a headquarters (order block `0001`, digits 9 to 12) and false for a branch. It is empty when the CNPJ is invalid.
+- An invalid CNPJ leaves **Normalized CNPJ** empty and **Valid CNPJ** false.
+- A CNPJ column that a file import read as a number works too: the leading zeros the import dropped are put back. A text cell is never padded.
+- CNPJs with letters (the alphanumeric format) are not supported yet and come back invalid.
+
+### Normalize job title
+
+Reads a job title in Portuguese or English and returns one seniority level, ignoring accents and case. The cell holds a fixed code, the same in every language:
+
+| Code | Examples |
+|---|---|
+| `c_level` | CEO, Presidente, Sócio, Founder, Chief Revenue Officer |
+| `vp` | Vice-presidente, VP of Sales |
+| `director` | Diretor, Sales Director, Head of Growth |
+| `manager` | Gerente, Product Manager |
+| `coordinator` | Coordenador, Supervisor, Líder |
+| `analyst` | Analista, Especialista, Business Analyst |
+| `assistant` | Assistente, Estagiário, Auxiliar |
+| `unknown` | any other title |
+
+- A title with several roles gets the highest one: `Sócio-diretor` is `c_level`.
+- An assistant who works for someone is `assistant`: `Assistente de Diretoria` and `Assistant to the CEO` are not directors. When the assistant word is part of the role itself, the role wins: `Diretor Assistente` is `director` and `Assistant Manager` is `manager`.
+- Whole words only: `Gerenciamento de Projetos` and `Diretoria` alone are `unknown`.
+- An empty title gives an empty result.
+- `Owner`, `Partner` and `Lead` are not read as levels, because of titles like `Product Owner` and `Lead Developer`.

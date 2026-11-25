@@ -2636,6 +2636,60 @@
               "name": "Profile URL"
             }
           }
+        },
+        "normalize-name": {
+          "name": "Normalize name",
+          "description": "Split a full name into first name and last name.",
+          "inputs": {
+            "name": {
+              "name": "Full Name",
+              "description": "The full name of the person."
+            }
+          },
+          "outputs": {
+            "firstName": {
+              "name": "First Name"
+            },
+            "lastName": {
+              "name": "Last Name"
+            }
+          }
+        },
+        "normalize-cnpj": {
+          "name": "Normalize CNPJ",
+          "description": "Keep only the digits of a CNPJ, check it, and tell a headquarters from a branch.",
+          "inputs": {
+            "cnpj": {
+              "name": "CNPJ",
+              "description": "The company CNPJ, with or without dots, slash and dash."
+            }
+          },
+          "outputs": {
+            "cnpj": {
+              "name": "Normalized CNPJ"
+            },
+            "isValid": {
+              "name": "Valid CNPJ"
+            },
+            "isHeadquarters": {
+              "name": "Headquarters"
+            }
+          }
+        },
+        "normalize-job-title": {
+          "name": "Normalize job title",
+          "description": "Turn a job title into a seniority level: C-level, VP, director, manager, coordinator, analyst or assistant.",
+          "inputs": {
+            "title": {
+              "name": "Job Title",
+              "description": "The job title, in Portuguese or English."
+            }
+          },
+          "outputs": {
+            "level": {
+              "name": "Seniority Level"
+            }
+          }
         }
       }
     }
