@@ -142,3 +142,20 @@ describe("personal mailboxes", () => {
     expect(companyDomainFromEmail("Ada <ada@acme.com.br>")).toBe("acme.com.br");
   });
 });
+
+describe("blank cells", () => {
+  test("a blank phone is not valid", () => {
+    expect(normalizePhoneCell("", "BR")).toEqual({ phone: null, isValid: false, isMobile: null, secondPhone: null });
+    expect(normalizePhoneCell("   ", "BR").isValid).toBe(false);
+  });
+
+  test("a blank e-mail is not valid", () => {
+    expect(normalizeEmailCell("")).toEqual({ email: null, isValid: false, isPersonal: null });
+  });
+
+  test("blank site, e-mail and profile give empty results", () => {
+    expect(siteDomain("")).toBeNull();
+    expect(companyDomainFromEmail("")).toBeNull();
+    expect(normalizeLinkedinCell("").slug).toBeNull();
+  });
+});

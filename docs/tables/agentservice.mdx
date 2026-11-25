@@ -6,7 +6,7 @@ icon: "wand-sparkles"
 
 AgentService is the one integration that needs no account. Its actions run inside AgentSDR and call no outside provider, so they are always available, cost nothing and never spend credits. Add one from **Add enrichment**, pick **AgentService**, map the input to a column and choose the results you want. Each result becomes its own column, like any other enrichment.
 
-A value that cannot be cleaned is not an error. The row finishes with an empty result and, where there is one, a **Valid** column set to false, so one bad row never stops the run.
+A value that cannot be cleaned is not an error. The row finishes with an empty result and, where there is one, a **Valid** column set to false, so one bad row never stops the run. An empty cell counts as a value that cannot be cleaned: the result is empty and **Valid** is false.
 
 ## Actions
 
@@ -22,7 +22,7 @@ A value that cannot be cleaned is not an error. The row finishes with an empty r
 
 Turns a phone number into the international format (for example `+5521986545481`), the shape WhatsApp and calls expect.
 
-- A number typed without a `+` is read in your organization's default phone country (**Settings, General, Default phone country**). If none is set, a number without a country code comes back empty rather than guessed.
+- A number typed without a `+` is read in your organization's default phone country (**Settings, General, Default phone country**). If none is set, Brazil (+55) is assumed.
 - A cell with several numbers, separated by `/`, `;`, `,`, `|`, a line break or the words "ou", "e" and "or", keeps the first two valid ones: **Normalized Phone** and **Second Phone**. Repeated numbers count once. Numbers separated only by a space are read as one number.
 - **Mobile Phone** is true for a mobile line and false for a landline. In the United States and Canada fixed and mobile lines share the same ranges, so it is always true there.
 - A phone column that a file import read as a number works too.
