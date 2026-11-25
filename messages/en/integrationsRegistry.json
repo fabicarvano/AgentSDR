@@ -2654,6 +2654,27 @@
               "name": "Last Name"
             }
           }
+        },
+        "normalize-cnpj": {
+          "name": "Normalize CNPJ",
+          "description": "Keep only the digits of a CNPJ, check it, and tell a headquarters from a branch.",
+          "inputs": {
+            "cnpj": {
+              "name": "CNPJ",
+              "description": "The company CNPJ, with or without dots, slash and dash."
+            }
+          },
+          "outputs": {
+            "cnpj": {
+              "name": "Normalized CNPJ"
+            },
+            "isValid": {
+              "name": "Valid CNPJ"
+            },
+            "isHeadquarters": {
+              "name": "Headquarters"
+            }
+          }
         }
       }
     }

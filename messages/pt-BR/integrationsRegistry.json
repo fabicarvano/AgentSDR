@@ -2654,6 +2654,27 @@
               "name": "Sobrenome"
             }
           }
+        },
+        "normalize-cnpj": {
+          "name": "Normalizar CNPJ",
+          "description": "Deixa só os números do CNPJ, confere se é válido e diz se é matriz ou filial.",
+          "inputs": {
+            "cnpj": {
+              "name": "CNPJ",
+              "description": "O CNPJ da empresa, com ou sem pontos, barra e traço."
+            }
+          },
+          "outputs": {
+            "cnpj": {
+              "name": "CNPJ normalizado"
+            },
+            "isValid": {
+              "name": "CNPJ válido"
+            },
+            "isHeadquarters": {
+              "name": "Matriz"
+            }
+          }
         }
       }
     }

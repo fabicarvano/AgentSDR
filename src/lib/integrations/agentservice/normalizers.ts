@@ -113,3 +113,31 @@ export function normalizeNameCell(raw: string): NameCellResult {
   const [first, ...rest] = raw.trim().split(/\s+/);
   return { firstName: first || null, lastName: rest.join(" ") || null };
 }
+
+export type CnpjCellResult = { cnpj: string | null; isValid: boolean; isHeadquarters: boolean | null };
+
+function cnpjCheckDigit(digits: string): number {
+  // Weights run 2..9 from the right, wrapping; the 13th digit uses 12 digits, the 14th uses 13.
+  let sum = 0;
+  let weight = 2;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    sum += Number(digits[i]) * weight;
+    weight = weight === 9 ? 2 : weight + 1;
+  }
+  const rest = sum % 11;
+  return rest < 2 ? 0 : 11 - rest;
+}
+
+/**
+ * Digits only, check digits verified, and headquarters (order block `0001`) told from a branch.
+ * A number cell lost its leading zeros on import, so it is padded back to 14; a text cell is not.
+ */
+export function normalizeCnpjCell(raw: string | number): CnpjCellResult {
+  const invalid: CnpjCellResult = { cnpj: null, isValid: false, isHeadquarters: null };
+  const digits = typeof raw === "number" ? String(raw).padStart(14, "0") : raw.replace(/\D/g, "");
+  if (!/^\d{14}$/.test(digits) || /^(\d)\1{13}$/.test(digits)) return invalid;
+  const first = cnpjCheckDigit(digits.slice(0, 12));
+  const second = cnpjCheckDigit(digits.slice(0, 12) + first);
+  if (digits.slice(12) !== `${first}${second}`) return invalid;
+  return { cnpj: digits, isValid: true, isHeadquarters: digits.slice(8, 12) === "0001" };
+}

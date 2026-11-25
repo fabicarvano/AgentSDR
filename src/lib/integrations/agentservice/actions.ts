@@ -6,6 +6,7 @@ import type { IntegrationActionHandler, IntegrationActionHandlers } from "../ser
 import { mapConfiguredOutputs } from "../server/helpers";
 import {
   companyDomainFromEmail,
+  normalizeCnpjCell,
   normalizeEmailCell,
   normalizeLinkedinCell,
   normalizeNameCell,
@@ -72,5 +73,10 @@ export const AGENTSERVICE_HANDLERS = {
     const started = Date.now();
     const result = normalizeNameCell(String(context.inputs.name ?? ""));
     return finish(context, result.firstName, result, started);
+  },
+  "agentservice.normalizeCnpj": async (context) => {
+    const started = Date.now();
+    const result = normalizeCnpjCell((context.inputs.cnpj as string | number | undefined) ?? "");
+    return finish(context, result.cnpj, result, started);
   },
 } satisfies IntegrationActionHandlers;

@@ -171,5 +171,29 @@ export const AGENTSERVICE: IntegrationDefinition = {
         { key: "lastName", name: "Last Name", columnType: "text", example: "da Silva" },
       ],
     }),
+    action({
+      key: "normalize-cnpj",
+      name: "Normalize CNPJ",
+      description: "Keep only the digits of a CNPJ, check it, and tell a headquarters from a branch.",
+      tags: ["cnpj", "company", "brazil", "headquarters", "branch"],
+      handler: "normalizeCnpj",
+      inputs: [
+        {
+          key: "cnpj",
+          name: "CNPJ",
+          description: "The company CNPJ, with or without dots, slash and dash.",
+          valueType: "textOrNumber",
+          acceptedColumnTypes: ["text", "number"],
+          required: true,
+          allowEmpty: true,
+          example: "11.222.333/0001-81",
+        },
+      ],
+      outputs: [
+        { key: "cnpj", name: "Normalized CNPJ", columnType: "text", example: "11222333000181" },
+        { key: "isValid", name: "Valid CNPJ", columnType: "boolean" },
+        { key: "isHeadquarters", name: "Headquarters", columnType: "boolean" },
+      ],
+    }),
   ],
 };

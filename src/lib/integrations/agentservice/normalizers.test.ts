@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   companyDomainFromEmail,
+  normalizeCnpjCell,
   normalizeEmailCell,
   normalizeLinkedinCell,
   normalizeNameCell,
@@ -181,5 +182,45 @@ describe("normalizeNameCell", () => {
 
   test("a prefix is not treated specially", () => {
     expect(normalizeNameCell("Dr. João de Souza")).toEqual({ firstName: "Dr.", lastName: "João de Souza" });
+  });
+});
+
+describe("normalizeCnpjCell", () => {
+  const INVALID = { cnpj: null, isValid: false, isHeadquarters: null };
+
+  test("a masked headquarters CNPJ becomes digits and is a headquarters", () => {
+    expect(normalizeCnpjCell("11.222.333/0001-81")).toEqual({ cnpj: "11222333000181", isValid: true, isHeadquarters: true });
+  });
+
+  test("a masked branch CNPJ is valid and not a headquarters", () => {
+    expect(normalizeCnpjCell("11.222.333/0002-62")).toEqual({ cnpj: "11222333000262", isValid: true, isHeadquarters: false });
+    expect(normalizeCnpjCell("00.000.000/0002-72")).toEqual({ cnpj: "00000000000272", isValid: true, isHeadquarters: false });
+  });
+
+  test("digits only reads the same as the masked number", () => {
+    expect(normalizeCnpjCell("11222333000181")).toEqual(normalizeCnpjCell("11.222.333/0001-81"));
+  });
+
+  test("a wrong check digit is invalid", () => {
+    expect(normalizeCnpjCell("11.222.333/0001-80")).toEqual(INVALID);
+  });
+
+  test("repeated digits are invalid although the checksum holds", () => {
+    expect(normalizeCnpjCell("11111111111111")).toEqual(INVALID);
+    expect(normalizeCnpjCell("00000000000000")).toEqual(INVALID);
+  });
+
+  test("a text with the wrong length is invalid and is not padded", () => {
+    expect(normalizeCnpjCell("1122233300018")).toEqual(INVALID);
+    expect(normalizeCnpjCell("191")).toEqual(INVALID);
+  });
+
+  test("a number a spreadsheet import read gets its lost leading zeros back", () => {
+    expect(normalizeCnpjCell(191)).toEqual({ cnpj: "00000000000191", isValid: true, isHeadquarters: true });
+  });
+
+  test("empty and non-numeric text are invalid", () => {
+    expect(normalizeCnpjCell("")).toEqual(INVALID);
+    expect(normalizeCnpjCell("abc")).toEqual(INVALID);
   });
 });
