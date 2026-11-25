@@ -1,0 +1,44 @@
+---
+title: "AgentService"
+description: "Clean phones, emails, domains and LinkedIn links in a table with actions that run inside AgentSDR. No account or credits needed."
+icon: "wand-sparkles"
+---
+
+AgentService is the one integration that needs no account. Its actions run inside AgentSDR and call no outside provider, so they are always available, cost nothing and never spend credits. Add one from **Add enrichment**, pick **AgentService**, map the input to a column and choose the results you want. Each result becomes its own column, like any other enrichment.
+
+A value that cannot be cleaned is not an error. The row finishes with an empty result and, where there is one, a **Valid** column set to false, so one bad row never stops the run.
+
+## Actions
+
+| Action | Input | Results |
+|---|---|---|
+| **Normalize phone** | Phone (text or number) | Normalized Phone, Valid Phone, Mobile Phone, Second Phone |
+| **Normalize email** | Email (text) | Normalized Email, Valid Email, Personal Email |
+| **Domain from website** | Website (text or URL) | Domain |
+| **Company domain from email** | Email (text) | Company Domain |
+| **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
+
+### Normalize phone
+
+Turns a phone number into the international format (for example `+5521986545481`), the shape WhatsApp and calls expect.
+
+- A number typed without a `+` is read in your organization's default phone country (**Settings, General, Default phone country**). If none is set, a number without a country code comes back empty rather than guessed.
+- A cell with several numbers, separated by `/`, `;`, `,`, `|`, a line break or the words "ou", "e" and "or", keeps the first two valid ones: **Normalized Phone** and **Second Phone**. Repeated numbers count once. Numbers separated only by a space are read as one number.
+- **Mobile Phone** is true for a mobile line and false for a landline. In the United States and Canada fixed and mobile lines share the same ranges, so it is always true there.
+- A phone column that a file import read as a number works too.
+
+### Normalize email
+
+Lowercases the address, removes spaces and extra text such as `Ada <ada@acme.com>` or `mailto:`, and sets **Personal Email** to true for mailboxes like Gmail and Outlook.
+
+### Domain from website
+
+Gets the plain domain from a website address, without `https://`, `www.`, the port or the page path. It uses the same rule that identifies a company across the app.
+
+### Company domain from email
+
+Gets the company domain behind a work email. A personal mailbox such as Gmail returns nothing.
+
+### Normalize LinkedIn profile
+
+Gets the public profile name and the clean `https://www.linkedin.com/in/...` link from a profile URL, with or without tracking parameters. Company pages, Sales Navigator links and opaque member ids have no public name and come back empty.

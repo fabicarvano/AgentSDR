@@ -60,6 +60,7 @@
             "pages": [
               "tables/overview",
               "tables/enrichment",
+              "tables/agentservice",
               "tables/ai-columns"
             ]
           },

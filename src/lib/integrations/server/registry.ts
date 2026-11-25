@@ -1,6 +1,7 @@
 import "server-only";
 
 import { INTEGRATIONS } from "../catalog";
+import { AGENTSERVICE_HANDLERS } from "../agentservice/actions";
 import { APOLLO_HANDLERS } from "../apollo/actions";
 import { CLEANLIST_HANDLERS } from "../cleanlist/actions";
 import { COMPANYENRICH_HANDLERS } from "../companyenrich/actions";
@@ -36,6 +37,7 @@ const HANDLERS: IntegrationActionHandlers = {
   ...SEMRUSH_HANDLERS,
   ...ROCKETREACH_HANDLERS,
   ...ICYPEAS_HANDLERS,
+  ...AGENTSERVICE_HANDLERS,
 };
 
 for (const integration of INTEGRATIONS) {

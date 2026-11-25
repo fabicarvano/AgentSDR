@@ -15,6 +15,8 @@ export type ActionExecutionType = "enrichment" | "waterfall" | "ai" | "function"
 
 export type InputValueType =
   | "text"
+  /** Free text, or a number a spreadsheet import read as one (a phone with no punctuation). */
+  | "textOrNumber"
   | "email"
   | "url"
   | "domain"

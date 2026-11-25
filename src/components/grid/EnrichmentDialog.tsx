@@ -44,7 +44,7 @@ type Step = "setup" | "outputs";
  */
 const INTEGRATION_KEYS = [
   "apollo", "cleanlist", "companyenrich", "snov", "millionverifier", "contactout", "findymail", "fullenrich",
-  "hunter", "leadmagic", "lusha", "zerobounce", "similarweb", "semrush", "rocketreach", "icypeas",
+  "hunter", "leadmagic", "lusha", "zerobounce", "similarweb", "semrush", "rocketreach", "icypeas", "agentservice",
 ] as const;
 const _enrichmentsCovered: Record<(typeof INTEGRATION_KEYS)[number], { description: string }> =
   {} as Messages["gridEnrich"]["registry"]["integrations"];
@@ -634,7 +634,7 @@ export default function EnrichmentDialog({
                       </Select.Content>
                     </Select.Root>
                   )}
-                  {!addingAccount ? (
+                  {integration && integration.auth.fields.length === 0 ? null : !addingAccount ? (
                     <button type="button" onClick={() => setAddingAccount(true)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-medium text-white hover:bg-blue-700"><RiAddLine className="size-4" />{t("account.add")}</button>
                   ) : (
                     <div className="mt-2 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 p-3">

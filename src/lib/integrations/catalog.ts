@@ -1,5 +1,6 @@
 import type { GridColumn } from "@/lib/grid/schema";
 import type { IntegrationOutputConfig } from "@/lib/grid/types";
+import { AGENTSERVICE } from "./agentservice/definition";
 import { APOLLO } from "./apollo/definition";
 import { CLEANLIST } from "./cleanlist/definition";
 import { COMPANYENRICH } from "./companyenrich/definition";
@@ -52,6 +53,8 @@ export const INTEGRATIONS: readonly IntegrationDefinition[] = [
   SEMRUSH,
   ROCKETREACH,
   ICYPEAS,
+  // Last on purpose: the dialog opens on the first integration, and this one needs no account.
+  AGENTSERVICE,
 ];
 
 export function getIntegration(key: string): IntegrationDefinition | null {
@@ -105,6 +108,11 @@ export function validateInputValue(
     }
   }
   if (type === "text") return typeof value === "string" ? null : "Expected text";
+  if (type === "textOrNumber") {
+    return typeof value === "string" || (typeof value === "number" && Number.isFinite(value))
+      ? null
+      : "Expected text or a number";
+  }
   if (type === "email") {
     return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
       ? null

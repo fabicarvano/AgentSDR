@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { AGENTSERVICE_KEY, agentServiceConnectionIdFor } from "@/lib/integrations/agentservice/connection";
 import { getIntegration } from "@/lib/integrations/catalog";
 import {
   decryptIntegrationCredential,
@@ -49,7 +50,31 @@ function toConnection(provider: GridProvider, hasCredentialRecord = false): Inte
   };
 }
 
+/**
+ * AgentService is the integration for actions that run inside AgentSDR, so it
+ * has no account to add. Every organization gets one connection that is always
+ * enabled and verified, with no row in grid_providers and no credentials.
+ *
+ * Its id is derived from the organization (see connection.ts), so an id copied
+ * from another organization does not match.
+ */
+function agentServiceConnectionId(): string {
+  return agentServiceConnectionIdFor(currentOrganizationId());
+}
+
+function agentServiceConnection(): IntegrationConnection {
+  return {
+    id: agentServiceConnectionId(),
+    integrationKey: AGENTSERVICE_KEY,
+    name: "AgentService",
+    enabled: true,
+    configured: true,
+    verified: true,
+  };
+}
+
 export async function listIntegrationConnections(integrationKey: string) {
+  if (integrationKey === AGENTSERVICE_KEY) return [agentServiceConnection()];
   const rows = await db
     .select({ provider: gridProviders, credentialId: gridProviderCredentials.id })
     .from(gridProviders)
@@ -60,6 +85,7 @@ export async function listIntegrationConnections(integrationKey: string) {
 }
 
 export async function getIntegrationConnection(id: string) {
+  if (id === agentServiceConnectionId()) return agentServiceConnection();
   const [row] = await db
     .select({ provider: gridProviders, credentialId: gridProviderCredentials.id })
     .from(gridProviders)
@@ -74,6 +100,8 @@ export async function createIntegrationConnection(input: {
   name: string;
   credentials: Record<string, string>;
 }) {
+  // Nothing to create: the organization already has its one connection.
+  if (input.integrationKey === AGENTSERVICE_KEY) return agentServiceConnection();
   const integration = getIntegration(input.integrationKey);
   if (!integration) throw new Error("Unknown integration");
   const allowedFields = new Set(integration.auth.fields.map((field) => field.key));
@@ -123,6 +151,7 @@ export async function createIntegrationConnection(input: {
 
 /** Server-only credential resolution. Never include this value in an API response. */
 export async function getIntegrationCredentials(id: string): Promise<Record<string, string> | null> {
+  if (id === agentServiceConnectionId()) return {};
   const [row] = await db
     .select({ provider: gridProviders, encryptedPayload: gridProviderCredentials.encryptedPayload })
     .from(gridProviders)

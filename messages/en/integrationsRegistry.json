@@ -2541,6 +2541,103 @@
           }
         }
       }
+    },
+    "agentservice": {
+      "actions": {
+        "normalize-phone": {
+          "name": "Normalize phone",
+          "description": "Turn a phone number into the international format (+5521986545481) that WhatsApp and calls expect.",
+          "inputs": {
+            "phone": {
+              "name": "Phone",
+              "description": "The phone number. A cell with several numbers keeps the first two valid ones."
+            }
+          },
+          "outputs": {
+            "phone": {
+              "name": "Normalized Phone"
+            },
+            "isValid": {
+              "name": "Valid Phone"
+            },
+            "isMobile": {
+              "name": "Mobile Phone"
+            },
+            "secondPhone": {
+              "name": "Second Phone"
+            }
+          }
+        },
+        "normalize-email": {
+          "name": "Normalize email",
+          "description": "Clean an email address: lowercase, no spaces or extra text, and flag personal mailboxes.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The email address, even with a name or mailto: around it."
+            }
+          },
+          "outputs": {
+            "email": {
+              "name": "Normalized Email"
+            },
+            "isValid": {
+              "name": "Valid Email"
+            },
+            "isPersonal": {
+              "name": "Personal Email"
+            }
+          }
+        },
+        "site-domain": {
+          "name": "Domain from website",
+          "description": "Get the plain domain from a website address, without https, www or the page path.",
+          "inputs": {
+            "website": {
+              "name": "Website",
+              "description": "The company website or domain."
+            }
+          },
+          "outputs": {
+            "domain": {
+              "name": "Domain"
+            }
+          }
+        },
+        "company-domain-from-email": {
+          "name": "Company domain from email",
+          "description": "Get the company domain behind a work email. Personal mailboxes such as Gmail return nothing.",
+          "inputs": {
+            "email": {
+              "name": "Email",
+              "description": "The work email address."
+            }
+          },
+          "outputs": {
+            "domain": {
+              "name": "Company Domain"
+            }
+          }
+        },
+        "normalize-linkedin": {
+          "name": "Normalize LinkedIn profile",
+          "description": "Get the public profile name and the clean profile link from a LinkedIn URL.",
+          "inputs": {
+            "profile": {
+              "name": "LinkedIn Profile",
+              "description": "A LinkedIn profile URL, with or without tracking parameters."
+            }
+          },
+          "outputs": {
+            "slug": {
+              "name": "Profile Slug"
+            },
+            "profileUrl": {
+              "name": "Profile URL"
+            }
+          }
+        }
+      }
     }
   }
 }
