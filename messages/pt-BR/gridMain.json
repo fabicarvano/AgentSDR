@@ -260,6 +260,7 @@
       "pasteFailed": "Não foi possível colar as células",
       "autoRunFailed": "Não foi possível alterar a execução automática",
       "noRowsToRun": "Não há linhas para executar.",
+      "nothingToQueue": "Nada foi para a fila: as linhas estão em branco, já preenchidas ou sem o que esta coluna precisa.",
       "startColumnFailed": "Não foi possível iniciar a coluna",
       "stopFailed": "Não foi possível interromper a execução",
       "stopped": "Interrompido. {count, plural, one {# célula na fila limpa} other {# células na fila limpas}}.",

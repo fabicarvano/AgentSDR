@@ -260,6 +260,7 @@
       "pasteFailed": "Could not paste cells",
       "autoRunFailed": "Could not change Auto-run",
       "noRowsToRun": "There are no rows to run.",
+      "nothingToQueue": "Nothing was queued: the rows are blank, already filled or missing what this column needs.",
       "startColumnFailed": "Could not start column",
       "stopFailed": "Could not stop the run",
       "stopped": "Stopped. {count, plural, one {# queued cell} other {# queued cells}} cleared.",
