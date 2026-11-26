@@ -17,6 +17,58 @@ export function mapConfiguredOutputs(
   );
 }
 
+const DEFAULT_PRIMARY_KEYS: readonly string[] = ["name", "title", "position", "email", "domain", "url", "link"];
+
+function scalarText(value: unknown): string | null {
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return null;
+}
+
+function primaryOfObject(value: unknown, keys: readonly string[]): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const text = scalarText(record[key]);
+    if (text) return text;
+  }
+  return null;
+}
+
+/**
+ * The one value a grid cell shows for a structured provider output (a list of
+ * jobs, a list of links...). The full object stays in the run's response, which
+ * the cell details panel shows. Never returns JSON: an unknown shape gives null.
+ * Scalars stay as they are, a list of scalars is joined, a list of objects gives
+ * the first item that has one of `keys`, an object gives its own.
+ */
+export function toPrimaryText(value: unknown, keys: readonly string[] = DEFAULT_PRIMARY_KEYS): string | null {
+  const scalar = scalarText(value);
+  if (scalar) return scalar;
+  if (Array.isArray(value)) {
+    const scalars = value.map(scalarText).filter((item): item is string => item !== null);
+    if (scalars.length) return scalars.join("; ");
+    for (const item of value) {
+      const text = primaryOfObject(item, keys);
+      if (text) return text;
+    }
+    return null;
+  }
+  return primaryOfObject(value, keys);
+}
+
+/** Applies `toPrimaryText` to the listed outputs and leaves every other output as it is. */
+export function toPrimaryOutputs(
+  outputs: Record<string, unknown>,
+  primaryKeys: Record<string, readonly string[]>,
+): Record<string, unknown> {
+  const result = { ...outputs };
+  for (const [outputKey, keys] of Object.entries(primaryKeys)) {
+    if (outputKey in result) result[outputKey] = toPrimaryText(result[outputKey], keys);
+  }
+  return result;
+}
+
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>

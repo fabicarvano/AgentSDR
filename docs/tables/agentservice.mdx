@@ -61,18 +61,18 @@ Removes dots, slash and dash so only the 14 digits are left, and checks the two 
 
 ### Normalize job title
 
-Reads a job title in Portuguese or English and returns one seniority level, ignoring accents and case. The cell holds a fixed code, the same in every language:
+Reads a job title in Portuguese or English and returns one seniority level, ignoring accents and case. The `Seniority Level` column holds the level in Portuguese, and `Level Code` beside it holds a fixed code, the same in every language, for filters and integrations:
 
-| Code | Examples |
-|---|---|
-| `c_level` | CEO, Presidente, Sócio, Founder, Chief Revenue Officer |
-| `vp` | Vice-presidente, VP of Sales |
-| `director` | Diretor, Sales Director, Head of Growth |
-| `manager` | Gerente, Product Manager |
-| `coordinator` | Coordenador, Supervisor, Líder |
-| `analyst` | Analista, Especialista, Business Analyst |
-| `assistant` | Assistente, Estagiário, Auxiliar |
-| `unknown` | any other title |
+| Level | Code | Examples |
+|---|---|---|
+| C-level | `c_level` | CEO, Presidente, Sócio, Founder, Chief Revenue Officer |
+| VP | `vp` | Vice-presidente, VP of Sales |
+| Diretor | `director` | Diretor, Sales Director, Head of Growth |
+| Gerente | `manager` | Gerente, Product Manager |
+| Coordenador/Supervisor | `coordinator` | Coordenador, Supervisor, Líder |
+| Analista/Especialista | `analyst` | Analista, Especialista, Business Analyst |
+| Assistente/Estagiário | `assistant` | Assistente, Estagiário, Auxiliar |
+| Não identificado | `unknown` | any other title |
 
 - A title with several roles gets the highest one: `Sócio-diretor` is `c_level`.
 - An assistant who works for someone is `assistant`: `Assistente de Diretoria` and `Assistant to the CEO` are not directors. When the assistant word is part of the role itself, the role wins: `Diretor Assistente` is `director` and `Assistant Manager` is `manager`.

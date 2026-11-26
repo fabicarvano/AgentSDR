@@ -2688,6 +2688,9 @@
           "outputs": {
             "level": {
               "name": "Nível hierárquico"
+            },
+            "levelCode": {
+              "name": "Código do nível"
             }
           }
         }
