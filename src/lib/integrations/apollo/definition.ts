@@ -131,7 +131,7 @@ export const APOLLO: IntegrationDefinition = {
       outputs: [
         { key: "emailAccountId", name: "Default Email Account ID", columnType: "text" },
         { key: "email", name: "Default Email", columnType: "email" },
-        { key: "emailAccounts", name: "Email Accounts", columnType: "json" },
+        { key: "emailAccounts", name: "Email Accounts", columnType: "text" },
       ],
       handlerKey: "apollo.findEmailAccountsForUser",
       implemented: true,
@@ -191,7 +191,7 @@ export const APOLLO: IntegrationDefinition = {
         { key: "jobTitle", name: "Job Title", description: "Job title to search for.", valueType: "text", acceptedColumnTypes: ["text"], required: true, example: "VP Sales" },
       ],
       outputs: [
-        { key: "people", name: "People", columnType: "json" },
+        { key: "people", name: "People", columnType: "text" },
         { key: "resultCount", name: "Result Count", columnType: "number" },
       ],
       handlerKey: "apollo.findPeopleAtCompanyByJobTitle",
@@ -207,7 +207,7 @@ export const APOLLO: IntegrationDefinition = {
       tags: ["contacts", "workspace", "search"],
       inputs: [{ key: "query", name: "Search Query", description: "Name, email, or keyword to search.", valueType: "text", acceptedColumnTypes: ["text", "email"], required: true }],
       outputs: [
-        { key: "contacts", name: "Contacts", columnType: "json" },
+        { key: "contacts", name: "Contacts", columnType: "text" },
         { key: "resultCount", name: "Result Count", columnType: "number" },
       ],
       handlerKey: "apollo.findSavedContacts",
@@ -242,7 +242,7 @@ export const APOLLO: IntegrationDefinition = {
       tags: ["company", "jobs", "hiring"],
       inputs: [{ key: "organizationId", name: "Organization ID", description: "Apollo organization ID (not an account ID).", valueType: "text", acceptedColumnTypes: ["text"], required: true }],
       outputs: [
-        { key: "jobs", name: "Open Jobs", columnType: "json" },
+        { key: "jobs", name: "Open Jobs", columnType: "text" },
         { key: "jobCount", name: "Job Count", columnType: "number" },
       ],
       handlerKey: "apollo.findOpenJobs",
