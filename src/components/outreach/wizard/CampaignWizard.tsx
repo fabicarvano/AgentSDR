@@ -17,7 +17,7 @@ import StepName from "./StepName";
 import StepLeads from "./StepLeads";
 import StepSequence from "./StepSequence";
 import StepReview from "./StepReview";
-import { WizardStepList } from "@/components/campaigns/wizardParts";
+import { WizardStepList } from "@/components/wizard/wizardParts";
 
 const STEPS = [
   { id: "name", labelKey: "steps.nameLabel", hintKey: "steps.nameHint", icon: RiDraftLine },

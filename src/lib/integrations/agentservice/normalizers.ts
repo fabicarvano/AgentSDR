@@ -4,7 +4,7 @@ import {
   normalizeEmail,
   publicSlugFromSourceIdentifier,
 } from "@/lib/leads/identity";
-import { normalizeDomainForTargeting } from "@/lib/qualification/domain";
+import { normalizeDomainForTargeting } from "@/lib/leads/domain";
 
 /**
  * The pure rules behind the AgentService actions. No I/O: the handlers in

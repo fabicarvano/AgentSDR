@@ -19,7 +19,7 @@ import { DocsLink } from "@/components/page/DocsLink";
 import { PageHeader } from "@/components/page/PageHeader";
 import { EMPTY_LINKEDIN_SEQUENCE, type LinkedinCampaignSequence } from "@/lib/linkedin/campaignSequence";
 import { cn } from "@/utils/cn";
-import { StepDot, StepHeading, WizardStepList } from "@/components/campaigns/wizardParts";
+import { StepDot, StepHeading, WizardStepList } from "@/components/wizard/wizardParts";
 import { useApiErrorText } from "@/i18n/useApiErrorText";
 
 type Account = { id: string; username: string; name: string | null; profilePictureUrl: string | null };
