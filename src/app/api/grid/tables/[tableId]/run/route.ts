@@ -4,44 +4,13 @@ import { listRows, listRowsByIds } from "@/lib/grid/rows";
 import { getTable } from "@/lib/grid/tables";
 import { activeJobCount, cancelTableJobs, enqueue, type EnqueueTarget } from "@/lib/grid/queue";
 import { getIntegrationConnection, getIntegrationCredentials } from "@/lib/grid/providers";
-import { getIntegrationAction } from "@/lib/integrations/catalog";
-import { allReferencedInputsEmpty, columnDelaySeconds, hasCellValue, isRunnable } from "@/lib/grid/runners";
-import { ownCell } from "@/lib/grid/runners/types";
+import { columnDelaySeconds, isRunnable } from "@/lib/grid/runners";
+import { hasRequiredInputs } from "@/lib/grid/run-inputs";
 import { parseRunRequest } from "@/lib/grid/run-request";
 import type { AiOutputConfig, EnrichmentConfig, IntegrationOutputConfig } from "@/lib/grid/types";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { apiErrorBody } from "@/lib/http/apiErrors";
 import { tableNotFoundResponse } from "@/lib/grid/http-errors";
-
-function hasRequiredInputs(
-  column: Awaited<ReturnType<typeof listColumns>>[number],
-  cells: Record<string, unknown>,
-): boolean {
-  // AI, HTTP and formula columns have no declared required inputs, so they are
-  // skipped only when every {{token}} they reference is empty.
-  if (column.type !== "enrichment") return !allReferencedInputsEmpty(column, cells);
-  const config = column.config as EnrichmentConfig;
-  const action = getIntegrationAction(config.integrationKey, config.actionKey);
-  if (!action) return true;
-
-  const requiredPresent = action.inputs.every((input) => {
-    if (!input.required) return true;
-    const binding = config.inputs[input.key];
-    if (!binding) return false;
-    const value = ownCell(cells, binding.columnKey);
-    return value !== undefined && value !== null && (typeof value !== "string" || value.trim() !== "");
-  });
-  if (!requiredPresent) return false;
-  if (!action.filterBuilder) return true;
-
-  const populatedFilters = action.inputs.filter((input) => {
-    if (input.group !== "filter") return false;
-    const binding = config.inputs[input.key];
-    if (!binding) return false;
-    return hasCellValue(ownCell(cells, binding.columnKey));
-  });
-  return populatedFilters.length >= action.filterBuilder.minFilters;
-}
 
 async function validateEnrichmentAccounts(
   columns: Awaited<ReturnType<typeof listColumns>>,
