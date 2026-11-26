@@ -2188,6 +2188,9 @@ export default function GridClient({
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiErrorText(data, t("startColumnFailed")));
       setActiveJobs(data.activeJobs ?? 0);
+      // Rows are skipped when they are already filled or lack what the column needs; say so
+      // instead of looking like the click did nothing.
+      if (data.queued === 0) setNotice(t("nothingToQueue"));
       startWatching();
       await refetch();
     } catch (cause) {
