@@ -14,7 +14,8 @@ const TRANSLATED = [
   "src/components/outreach/**/*.tsx",
   "src/components/wizard/**/*.tsx",
   "src/components/campaigns/**/*.tsx",
-  "src/app/campaigns/**/*.tsx",
+  "src/app/prospecting/**/*.tsx",
+  "src/legacy/prospecting/**/*.tsx",
   "src/app/outreach/campaigns/**/*.tsx",
   "src/app/settings/appearance/**/*.tsx",
   "src/components/auth/AuthShell.tsx",
@@ -63,7 +64,6 @@ const TRANSLATED = [
   "src/components/settings/SettingsShell.tsx",
   "src/components/leads/**/*.tsx",
   "src/app/leads/**/*.tsx",
-  "src/app/domains/**/*.tsx",
   "src/app/analytics/**/*.tsx",
   "src/components/analytics/**/*.tsx",
   // Batch C: the Settings screens. HostedAuth.tsx (LinkedIn, being changed by the Unipile v2 work) and the

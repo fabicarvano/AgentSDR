@@ -382,6 +382,10 @@
         }
       }
     },
+    "prospecting": {
+      "title": "Prospecting",
+      "description": "This area is under construction. Check back soon."
+    },
     "domains": {
       "title": "All Domains",
       "subtitle": "2.5M+ active stores"
