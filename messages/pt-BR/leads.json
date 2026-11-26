@@ -382,6 +382,10 @@
         }
       }
     },
+    "prospecting": {
+      "title": "Prospecção",
+      "description": "Esta área está em construção. Volte em breve."
+    },
     "domains": {
       "title": "Todos os domínios",
       "subtitle": "Mais de 2,5 milhões de lojas ativas"

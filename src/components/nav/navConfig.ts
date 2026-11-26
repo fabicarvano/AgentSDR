@@ -6,8 +6,6 @@ import {
   RiLightbulbLine,
   RiShieldCheckLine,
   RiChat3Line,
-  RiFilter3Line,
-  RiGlobalLine,
   RiHistoryLine,
   RiInboxLine,
   RiLinkM,
@@ -148,17 +146,8 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     labelKey: "data",
     entries: [
+      link("/prospecting", "prospecting", RiDatabase2Line),
       link("/tables", "tables", RiGridLine),
-      {
-        kind: "group",
-        id: "prospecting",
-        labelKey: "prospecting",
-        icon: RiDatabase2Line,
-        children: [
-          link("/domains", "allDomains", RiGlobalLine),
-          link("/campaigns", "qualificationCampaigns", RiFilter3Line),
-        ],
-      },
     ],
   },
 ];
