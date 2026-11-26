@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getIntegrationAction } from "@/lib/integrations/catalog";
+import { cellValueForOutput } from "@/lib/integrations/server/primaryKeys";
 import { gridCellRuns, gridColumns, gridRows, type GridColumn } from "./schema";
 import { inOrgTables, tableInOrganization } from "./scope";
 import { assertNoCycle, listColumns, uniqueColumnKey, uniqueColumnName, validateColumnConfig } from "./columns";
 import { getIntegrationConnection } from "./providers";
 import { responseOutputKey, valueAtJsonPointer } from "./json-pointer";
-import type { EnrichmentConfig, IntegrationOutputConfig } from "./types";
+import type { ColumnType, EnrichmentConfig, IntegrationOutputConfig } from "./types";
 import { inferResponseValueType } from "./value-types";
 import type { EnrichmentNames } from "./enrichmentNames";
 
@@ -236,6 +237,8 @@ export async function updateEnrichmentColumns(input: {
       await backfillAdditions(tx, input.tableId, current.key, additions.map((output) => ({
         columnKey: outputKeys.get(output.key)!,
         outputKey: output.key,
+        columnType: output.columnType,
+        integrationKey: input.integrationKey,
       })));
     }
   });
@@ -285,7 +288,7 @@ async function backfillAdditions(
   tx: Tx,
   tableId: string,
   sourceKey: string,
-  additions: { columnKey: string; outputKey: string }[],
+  additions: { columnKey: string; outputKey: string; columnType: ColumnType; integrationKey: string }[],
 ): Promise<void> {
   // DISTINCT ON keeps one run per row: the newest that actually has a response.
   const runs = await tx
@@ -313,7 +316,7 @@ async function backfillAdditions(
     for (const addition of additions) {
       const value = findOutputInResponse(run.response, addition.outputKey);
       if (value === undefined) continue;
-      cells[addition.columnKey] = value;
+      cells[addition.columnKey] = cellValueForOutput(addition.integrationKey, addition.outputKey, addition.columnType, value);
       meta[addition.columnKey] = {
         status: "success",
         outcome: "hit",
