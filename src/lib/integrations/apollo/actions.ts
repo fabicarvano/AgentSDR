@@ -4,9 +4,7 @@ import type { CellResult, EnrichmentConfig } from "@/lib/grid/types";
 import { PermanentRunError } from "@/lib/grid/runners/types";
 import type { IntegrationActionDefinition } from "../types";
 import type { IntegrationActionHandlers } from "../server/types";
-import { asRecord, errorMessage, mapConfiguredOutputs, normalizeDomain, parseJson, toPrimaryOutputs, truncate } from "../server/helpers";
-import { APOLLO_PRIMARY_KEYS } from "../server/primaryKeys";
-
+import { asRecord, errorMessage, mapConfiguredOutputs, normalizeDomain, parseJson, truncate } from "../server/helpers";
 
 const APOLLO_API_BASE = "https://api.apollo.io/api/v1";
 
@@ -139,7 +137,7 @@ async function runApollo(
       throw new Error(message);
     }
     const logicalOutputs = extractApolloOutputs(action.handlerKey, body, inputs);
-    const outputs = mapConfiguredOutputs(config, toPrimaryOutputs(logicalOutputs, APOLLO_PRIMARY_KEYS), body);
+    const outputs = mapConfiguredOutputs(config, logicalOutputs, body);
     const found = hasApolloResult(action.handlerKey, logicalOutputs);
     return {
       value: found ? "Found" : "Not found",

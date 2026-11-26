@@ -607,8 +607,7 @@ function IntegrationOutputCell(props: ICellRendererParams<RowData> & { sourceCol
       const checked = props.value === true || props.value === 1 || String(props.value).toLowerCase() === "true";
       return <span className="flex items-center gap-1.5"><RiCheckboxCircleLine className={`size-4 ${checked ? "text-emerald-600 dark:text-emerald-400" : "text-text-disabled-300"}`} />{checked ? t("true") : t("false")}</span>;
     }
-    // A text in a column still typed json (saved before a provider wrote its primary value) is shown as text.
-    if (typeof props.value === "object" || (type === "json" && typeof props.value !== "string")) {
+    if (type === "json" || typeof props.value === "object") {
       const json = JSON.stringify(props.value);
       return <span title={json} className="block truncate font-mono text-[11px] text-text-sub-600">{json}</span>;
     }
