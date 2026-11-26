@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (!body.ok) return Response.json({ error: "Invalid body: expected { version: string }" }, { status: 400 });
 
   const release = getCurrentRelease();
-  if (!release || body.version !== release.version) {
+  if (body.version !== release?.version) {
     return Response.json({ error: "Not the current release", currentVersion: release?.version ?? null }, { status: 409 });
   }
 

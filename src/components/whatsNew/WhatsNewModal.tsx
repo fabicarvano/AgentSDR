@@ -59,7 +59,7 @@ export function WhatsNewModal() {
   useEffect(() => {
     if (chromeless || !sessionId) return;
     const controller = new AbortController();
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/releases/current", { signal: controller.signal });
         if (!res.ok) return; // 401 (no session) and 404 (no notes): stay silent
@@ -112,11 +112,11 @@ export function WhatsNewModal() {
         <Modal.Body>
           <h3 className="mb-4 text-label-md text-text-strong-950">{release.title}</h3>
           <ul className="space-y-3">
-            {release.items.map((item, index) => {
+            {release.items.map((item) => {
               const style = TYPE_STYLE[item.type];
               const Icon = style.icon;
               return (
-                <li key={index} className="flex items-start gap-3">
+                <li key={`${item.type}:${item.text}`} className="flex items-start gap-3">
                   <span className={cn("mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-label-xs", style.badge)}>
                     <Icon className="size-3.5" aria-hidden="true" />
                     {t(`types.${item.type}`)}

@@ -11,40 +11,34 @@
  * Until it exists only the pop-up fails (the API answers 500 and the
  * component ignores it); sign-in and everything else keep working.
  *
- * Additive and re-runnable: every statement is guarded.
+ * Additive and re-runnable: the statement is guarded with IF NOT EXISTS.
  */
 import { SQL } from "bun";
 
-const STATEMENTS = [
-  `CREATE TABLE IF NOT EXISTS user_release_dismissals (
-     user_id uuid NOT NULL,
-     version text NOT NULL,
-     updated_at timestamptz NOT NULL DEFAULT now(),
-     CONSTRAINT user_release_dismissals_pkey PRIMARY KEY (user_id),
-     CONSTRAINT user_release_dismissals_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-   )`,
-];
-
-async function main() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set — check .env.local");
-  const sql = new SQL(url, {
-    max: 1,
-    tls: process.env.DATABASE_SSL === "disable" ? false : { rejectUnauthorized: false },
-  });
-  try {
-    await sql.unsafe("SET lock_timeout = '5s'");
-    await sql.unsafe("SET statement_timeout = '2min'");
-    for (const statement of STATEMENTS) await sql.unsafe(statement);
-    const [{ present }] = await sql`select to_regclass('public.user_release_dismissals') is not null as present`;
-    console.log(`user_release_dismissals ${present ? "present" : "MISSING"}`);
-    if (!present) process.exitCode = 1;
-  } finally {
-    await sql.close();
-  }
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("DATABASE_URL is not set — check .env.local");
+  process.exit(1);
 }
 
-main().catch((error) => {
+const db = new SQL(databaseUrl, { max: 1, tls: process.env.DATABASE_SSL === "disable" ? false : { rejectUnauthorized: false } });
+
+try {
+  await db.unsafe(`SET lock_timeout = '5s'`);
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS user_release_dismissals (
+      user_id uuid NOT NULL,
+      version text NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT user_release_dismissals_pkey PRIMARY KEY (user_id),
+      CONSTRAINT user_release_dismissals_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+  const [row] = await db`select to_regclass('public.user_release_dismissals') is not null as present`;
+  console.log(`user_release_dismissals ${row.present ? "present" : "MISSING"}`);
+  if (!row.present) process.exitCode = 1;
+} catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+  process.exitCode = 1;
+} finally {
+  await db.close();
+}
