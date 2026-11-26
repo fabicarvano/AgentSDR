@@ -166,25 +166,67 @@ describe("blank cells", () => {
 });
 
 describe("normalizeNameCell", () => {
+  const EMPTY = { firstName: null, name2: null, name3: null, name4: null, name5: null, name6: null, lastName: null };
+
   test("splits a first and a last name", () => {
-    expect(normalizeNameCell("Ada Lovelace")).toEqual({ firstName: "Ada", lastName: "Lovelace" });
+    expect(normalizeNameCell("Ada Lovelace")).toEqual({ ...EMPTY, firstName: "Ada", name2: "Lovelace", lastName: "Lovelace" });
   });
 
-  test("collapses extra spaces and keeps particles in the last name", () => {
-    expect(normalizeNameCell("  Maria   da  Silva ")).toEqual({ firstName: "Maria", lastName: "da Silva" });
+  test("drops particles and gives each name its own position", () => {
+    expect(normalizeNameCell("Maria da Silva dos Santos")).toEqual({
+      ...EMPTY,
+      firstName: "Maria",
+      name2: "Silva",
+      name3: "Santos",
+      lastName: "Santos",
+    });
+  });
+
+  test("keeps a suffix such as Junior as a name of its own", () => {
+    expect(normalizeNameCell("João Luiz da Silva Carneiro Junior")).toEqual({
+      ...EMPTY,
+      firstName: "João",
+      name2: "Luiz",
+      name3: "Silva",
+      name4: "Carneiro",
+      name5: "Junior",
+      lastName: "Junior",
+    });
+  });
+
+  test("the sixth position takes whatever is left", () => {
+    expect(normalizeNameCell("Ana Bia Caio Davi Eva Fabio Gil Hugo")).toEqual({
+      firstName: "Ana",
+      name2: "Bia",
+      name3: "Caio",
+      name4: "Davi",
+      name5: "Eva",
+      name6: "Fabio Gil Hugo",
+      lastName: "Hugo",
+    });
+  });
+
+  test("collapses extra spaces and ignores the case of a particle", () => {
+    expect(normalizeNameCell("  Maria   DA  Silva ")).toEqual({ ...EMPTY, firstName: "Maria", name2: "Silva", lastName: "Silva" });
   });
 
   test("a single word has no last name", () => {
-    expect(normalizeNameCell("Madonna")).toEqual({ firstName: "Madonna", lastName: null });
+    expect(normalizeNameCell("Madonna")).toEqual({ ...EMPTY, firstName: "Madonna" });
   });
 
-  test("blank gives nothing", () => {
-    expect(normalizeNameCell("   ")).toEqual({ firstName: null, lastName: null });
-    expect(normalizeNameCell("")).toEqual({ firstName: null, lastName: null });
+  test("a leading title is dropped", () => {
+    expect(normalizeNameCell("Dr. João de Souza")).toEqual({ ...EMPTY, firstName: "João", name2: "Souza", lastName: "Souza" });
+    expect(normalizeNameCell("Sra Ana Lima")).toEqual({ ...EMPTY, firstName: "Ana", name2: "Lima", lastName: "Lima" });
   });
 
-  test("a prefix is not treated specially", () => {
-    expect(normalizeNameCell("Dr. João de Souza")).toEqual({ firstName: "Dr.", lastName: "João de Souza" });
+  test("a particle in first place is kept, so the first name is never blank", () => {
+    expect(normalizeNameCell("Di Caprio")).toEqual({ ...EMPTY, firstName: "Di", name2: "Caprio", lastName: "Caprio" });
+  });
+
+  test("blank, or only a title, gives nothing", () => {
+    expect(normalizeNameCell("   ")).toEqual(EMPTY);
+    expect(normalizeNameCell("")).toEqual(EMPTY);
+    expect(normalizeNameCell("Dr.")).toEqual(EMPTY);
   });
 });
 

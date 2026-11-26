@@ -106,12 +106,42 @@ export function normalizeLinkedinCell(raw: string): LinkedinCellResult {
   };
 }
 
-export type NameCellResult = { firstName: string | null; lastName: string | null };
+export type NameCellResult = {
+  firstName: string | null;
+  name2: string | null;
+  name3: string | null;
+  name4: string | null;
+  name5: string | null;
+  name6: string | null;
+  /** The last name: the last word, whatever position it falls in. */
+  lastName: string | null;
+};
 
-/** The first word is the first name; everything after it is the last name ("Maria da Silva" -> "da Silva"). */
+// Words that join names but are not names ("Maria da Silva dos Santos"), and titles in front of one.
+const NAME_PARTICLES = new Set(["da", "de", "do", "das", "dos", "du", "di", "del", "della", "van", "von", "der", "den", "e", "y"]);
+const NAME_TITLES = new Set(["dr", "dra", "sr", "sra", "srta", "prof", "profa", "eng", "eng.a"]);
+const NAME_POSITIONS = 6;
+
+/**
+ * Each name goes to its own position, up to six; the sixth keeps whatever is left. Particles are dropped
+ * (except in first place, so the first name is never blank) and so are titles at the start.
+ * "Maria da Silva dos Santos" -> Maria / Silva / Santos.
+ */
 export function normalizeNameCell(raw: string): NameCellResult {
-  const [first, ...rest] = raw.trim().split(/\s+/);
-  return { firstName: first || null, lastName: rest.join(" ") || null };
+  const words = raw.trim().split(/\s+/).filter(Boolean);
+  while (words.length > 0 && NAME_TITLES.has(words[0].replace(/\.$/, "").toLowerCase())) words.shift();
+  const names = words.filter((word, index) => index === 0 || !NAME_PARTICLES.has(word.toLowerCase()));
+  const slot = (index: number): string | null =>
+    (index === NAME_POSITIONS - 1 ? names.slice(index).join(" ") : names[index]) || null;
+  return {
+    firstName: slot(0),
+    name2: slot(1),
+    name3: slot(2),
+    name4: slot(3),
+    name5: slot(4),
+    name6: slot(5),
+    lastName: names.length > 1 ? names[names.length - 1] : null,
+  };
 }
 
 export type CnpjCellResult = { cnpj: string | null; isValid: boolean; isHeadquarters: boolean | null };

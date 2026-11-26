@@ -20,6 +20,9 @@ function action(
 
 type ActionInput = IntegrationActionDefinition["inputs"][number];
 
+/** Examples for Name 2 to Name 6 of the split name action. */
+const NAME_POSITION_EXAMPLES = ["Silva", "Santos", "Carneiro", "Junior", "Neto"];
+
 /** A required cell input that accepts an empty cell (the action then returns empty). */
 function cellInput(
   input: Pick<ActionInput, "key" | "name" | "description" | "example"> &
@@ -167,20 +170,26 @@ export const AGENTSERVICE: IntegrationDefinition = {
     action({
       key: "normalize-name",
       name: "Normalize name",
-      description: "Split a full name into first name and last name.",
-      tags: ["name", "first name", "last name", "split"],
+      description: "Split a full name into one column per name, dropping particles such as da and dos and titles such as Dr.",
+      tags: ["name", "first name", "last name", "middle name", "split"],
       handler: "normalizeName",
       inputs: [
         cellInput({
           key: "name",
           name: "Full Name",
           description: "The full name of the person.",
-          example: "Maria da Silva",
+          example: "Maria da Silva dos Santos",
         }),
       ],
       outputs: [
         { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
-        { key: "lastName", name: "Last Name", columnType: "text", example: "da Silva" },
+        ...NAME_POSITION_EXAMPLES.map((example, index) => ({
+          key: `name${index + 2}`,
+          name: `Name ${index + 2}`,
+          columnType: "text" as const,
+          example,
+        })),
+        { key: "lastName", name: "Last Name", columnType: "text", example: "Santos" },
       ],
     }),
     action({

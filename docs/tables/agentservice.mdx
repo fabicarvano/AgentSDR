@@ -17,7 +17,7 @@ A value that cannot be cleaned is not an error. The row finishes with an empty r
 | **Domain from website** | Website (text or URL) | Domain |
 | **Company domain from email** | Email (text) | Company Domain |
 | **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
-| **Normalize name** | Full name (text) | First Name, Last Name |
+| **Normalize name** | Full name (text) | First Name, Name 2 to Name 6, Last Name |
 | **Normalize CNPJ** | CNPJ (text or number) | Normalized CNPJ, Valid CNPJ, Headquarters |
 | **Normalize job title** | Job title (text) | Seniority Level |
 
@@ -48,7 +48,13 @@ Gets the public profile name and the clean `https://www.linkedin.com/in/...` lin
 
 ### Normalize name
 
-Splits a full name into **First Name** and **Last Name**. The first word is the first name and everything after it is the last name, so `Maria da Silva` gives `Maria` and `da Silva`. Extra spaces are removed. A single word has no last name. Titles such as `Dr.` are not removed.
+Splits a full name into one column per name: **First Name**, **Name 2**, **Name 3**, up to **Name 6**, plus **Last Name**. Particles (`da`, `de`, `do`, `das`, `dos`, `du`, `di`, `del`, `van`, `von`, `e`) and titles at the start (`Dr.`, `Sra.`, `Prof.`) are dropped, so `Maria da Silva dos Santos` gives `Maria`, `Silva` and `Santos`. A suffix such as `Junior` is kept as a name of its own.
+
+- **Last Name** is always the last word, so it is `Santos` above, whatever position that is.
+- Pick the columns you want when you add the enrichment. Positions a name does not have stay empty.
+- A name with more than six words puts the rest in **Name 6**.
+- A particle in first place is kept, so the first name is never blank. A single word has no last name.
+- Columns created before this change hold the old result until you run the enrichment again.
 
 ### Normalize CNPJ
 

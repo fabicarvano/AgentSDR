@@ -2639,7 +2639,7 @@
         },
         "normalize-name": {
           "name": "Normalizar nome",
-          "description": "Separa um nome completo em nome e sobrenome.",
+          "description": "Separa um nome completo em uma coluna por nome, sem partículas como da e dos nem títulos como Dr.",
           "inputs": {
             "name": {
               "name": "Nome completo",
@@ -2649,6 +2649,21 @@
           "outputs": {
             "firstName": {
               "name": "Nome"
+            },
+            "name2": {
+              "name": "2º nome"
+            },
+            "name3": {
+              "name": "3º nome"
+            },
+            "name4": {
+              "name": "4º nome"
+            },
+            "name5": {
+              "name": "5º nome"
+            },
+            "name6": {
+              "name": "6º nome"
             },
             "lastName": {
               "name": "Sobrenome"
