@@ -219,7 +219,10 @@ export const AGENTSERVICE: IntegrationDefinition = {
           example: "Gerente de Vendas",
         }),
       ],
-      outputs: [{ key: "level", name: "Seniority Level", columnType: "text", example: "manager" }],
+      outputs: [
+        { key: "level", name: "Seniority Level", columnType: "text", example: "Gerente" },
+        { key: "levelCode", name: "Level Code", columnType: "text", example: "manager" },
+      ],
     }),
   ],
 };
