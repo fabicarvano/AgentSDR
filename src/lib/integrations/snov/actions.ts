@@ -4,15 +4,7 @@ import type { CellResult, EnrichmentConfig, PendingCellResult } from "@/lib/grid
 import type { IntegrationActionDefinition } from "../types";
 import { PermanentRunError } from "@/lib/grid/runners/types";
 import type { IntegrationActionHandlers } from "../server/types";
-import { asRecord, errorMessage, mapConfiguredOutputs, normalizeDomain, parseJson, toPrimaryOutputs, truncate } from "../server/helpers";
-import { SNOV_PRIMARY_KEYS } from "../server/primaryKeys";
-
-function snovCellOutputs(logicalOutputs: Record<string, unknown>): Record<string, unknown> {
-  const outputs = toPrimaryOutputs(logicalOutputs, SNOV_PRIMARY_KEYS);
-  // A database search is a table of results: the cell holds how many came back.
-  if (Array.isArray(logicalOutputs.results)) outputs.results = logicalOutputs.results.length;
-  return outputs;
-}
+import { asRecord, errorMessage, mapConfiguredOutputs, normalizeDomain, parseJson, truncate } from "../server/helpers";
 
 const SNOV_REQUEST_SPACING_MS = 1050;
 let nextSnovRequestAt = 0;
@@ -227,7 +219,7 @@ function makeSnovResult(
   latencyMs: number,
 ): CellResult {
   const logicalOutputs = extractSnovOutputs(action.handlerKey, body);
-  const outputs = mapConfiguredOutputs(config, snovCellOutputs(logicalOutputs), body);
+  const outputs = mapConfiguredOutputs(config, logicalOutputs, body);
   const found = Object.values(logicalOutputs).some((value) => value !== null && value !== undefined && value !== "" && (!Array.isArray(value) || value.length));
   return {
     value: found ? "Found" : "Not found",
