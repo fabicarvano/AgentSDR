@@ -2751,6 +2751,16 @@ CREATE TABLE public.teams (
 );
 
 --
+-- Name: user_release_dismissals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_release_dismissals (
+    user_id uuid NOT NULL,
+    version text NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3860,6 +3870,13 @@ ALTER TABLE ONLY public.team_members
 
 ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_pkey PRIMARY KEY (id);
+
+--
+-- Name: user_release_dismissals user_release_dismissals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_release_dismissals
+    ADD CONSTRAINT user_release_dismissals_pkey PRIMARY KEY (user_id);
 
 --
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -6505,6 +6522,13 @@ ALTER TABLE ONLY public.team_members
 
 ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+--
+-- Name: user_release_dismissals user_release_dismissals_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_release_dismissals
+    ADD CONSTRAINT user_release_dismissals_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
 -- Name: whatsapp_accounts whatsapp_accounts_organization_fk; Type: FK CONSTRAINT; Schema: public; Owner: -

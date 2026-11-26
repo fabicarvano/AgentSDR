@@ -462,6 +462,33 @@ to push, then send them all at once. Committing itself needs no confirmation.
 Keep `npx tsc --noEmit` passing before each commit, since nothing else gates
 what lands.
 
+## Release notes pop-up: update it on every production release
+
+Signed-in people see a "What's new" pop-up when the newest entry of
+`content/releases.json` differs from the version they last dismissed
+(`user_release_dismissals`, one row per user; a version change shows it to
+everyone again). The notes are the single source: no UI code changes.
+
+**Before anything goes to production** (a release tag, a production image, a
+deploy), add the release's entry at the **top** of `content/releases.json`:
+`version` (semver of the release being shipped), `date`, `title` and `items`
+(`new` / `improvement` / `fix`), every text in **both** `en` and `pt-BR`. Do it
+in the release PR, with the `CHANGELOG.md` entry, and keep that version equal
+to the `package.json` version you are shipping.
+
+- Forget it and nobody sees anything new: the pop-up compares the first entry
+  only, so the previous version's notes stay "dismissed" or "shown".
+- Never leave an entry marked `"placeholder": true` in a production release:
+  replace it with real notes (or remove it) first.
+- Editing the text of the current entry does not reopen the pop-up for people
+  who dismissed it; a new `version` does.
+- `src/lib/releases/releases.test.ts` checks unique versions, newest first, and
+  both languages filled. Details: `docs/maintainers/releasing.md`.
+- The first release that carries the pop-up needs
+  `scripts/add-user-release-dismissals.ts` run once on each existing database
+  (back it up first). Without the table only the pop-up fails; sign-in keeps
+  working.
+
 ## Tests run under bun, both halves of them
 
 `bun run test` is `bun test --conditions=react-server` — about 140 test files.

@@ -10,6 +10,7 @@ import i18next from "eslint-plugin-i18next";
  * add it here; a whole folder once every file in it is done.
  */
 const TRANSLATED = [
+  "src/components/whatsNew/**/*.tsx",
   "src/app/sign-in/**/*.tsx",
   "src/components/outreach/**/*.tsx",
   "src/components/wizard/**/*.tsx",

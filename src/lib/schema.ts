@@ -34,6 +34,9 @@ export * from "./publicApi/schema";
 // members, invitations, teams, team_members.
 export * from "./auth/schema";
 
+// The "What's new" release notes a person dismissed (user_release_dismissals).
+export * from "./releases/schema";
+
 // The lead database (people, companies, entity_columns, import_runs).
 //
 // These tables are deliberately NOT in OWNED_TABLES: people/companies gain

@@ -56,6 +56,8 @@ const OWNED_TABLES = [
   "oauth_access_tokens",
   "oauth_consents",
   "oauth_client_assertions",
+  // "What's new" dismissals (src/lib/releases/schema.ts)
+  "user_release_dismissals",
   "call_campaign_contacts",
   "call_campaigns",
   "call_campaign_stations",

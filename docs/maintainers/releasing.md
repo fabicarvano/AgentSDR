@@ -54,6 +54,28 @@ produces the matching image tag.
 9. **GitHub release.** Create a release from the tag, paste the changelog
    section, and add the migration list and upgrade notes at the top.
 
+## "What's new" pop-up
+
+The pop-up shown at sign-in reads `content/releases.json`, an array with the
+newest release first. To announce a release, add an entry at the top with
+`version` (semver), `date` (`YYYY-MM-DD`), `title` and `items` (each item has a
+`type` of `new`, `improvement` or `fix`, and a `text`); `title` and every
+`text` need both `en` and `pt-BR`. Versions must be unique and dates must not
+increase down the file; `src/lib/releases/releases.test.ts` checks this and
+that both languages are filled.
+
+The version the pop-up compares is the first entry's `version`, not
+`package.json`. A change of that version shows the pop-up again to everyone;
+editing the text of the current entry does not. Skip the entry for releases
+not worth announcing.
+
+The first release that ships the pop-up needs the migration
+`scripts/add-user-release-dismissals.ts` (creates the table
+`user_release_dismissals`). Run it before starting the new app version, after a
+backup; see the Migrations list in `CHANGELOG.md`. Without the table only the
+pop-up fails (sign-in keeps working), but run it anyway. Later releases only
+need the new entry.
+
 ## Security fixes
 
 Fix in a private advisory branch, release a patch version, then publish the

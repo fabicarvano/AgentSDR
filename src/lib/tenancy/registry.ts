@@ -193,4 +193,7 @@ export const AUTH_TABLES: readonly string[] = [
   "oauth_access_tokens",
   "oauth_consents",
   "oauth_client_assertions",
+  // The release notes a person dismissed (src/lib/releases/schema.ts, scripts/add-user-release-dismissals.ts):
+  // that person's own row, keyed by user id, no organization.
+  "user_release_dismissals",
 ];

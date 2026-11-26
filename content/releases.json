@@ -1,0 +1,34 @@
+[
+  {
+    "version": "0.5.1",
+    "date": "2026-11-26",
+    "placeholder": true,
+    "title": {
+      "en": "Example release notes (placeholder)",
+      "pt-BR": "Exemplo de notas da versão (provisório)"
+    },
+    "items": [
+      {
+        "type": "new",
+        "text": {
+          "en": "Example of a new feature (placeholder, replace before releasing).",
+          "pt-BR": "Exemplo de um recurso novo (provisório, substitua antes de lançar)."
+        }
+      },
+      {
+        "type": "improvement",
+        "text": {
+          "en": "Example of an improvement (placeholder, replace before releasing).",
+          "pt-BR": "Exemplo de uma melhoria (provisório, substitua antes de lançar)."
+        }
+      },
+      {
+        "type": "fix",
+        "text": {
+          "en": "Example of a fix (placeholder, replace before releasing).",
+          "pt-BR": "Exemplo de uma correção (provisório, substitua antes de lançar)."
+        }
+      }
+    ]
+  }
+]
