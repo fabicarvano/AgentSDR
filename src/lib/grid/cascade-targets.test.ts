@@ -16,6 +16,32 @@ const ai = (key: string, dependsOn: string[], prompt: string, delaySeconds?: num
   autoRun: true,
 });
 
+const enrichment = (key: string, integrationKey: string, actionKey: string, inputs: Record<string, string>): CascadeColumn => ({
+  key,
+  type: "enrichment",
+  config: {
+    integrationKey,
+    actionKey,
+    handlerKey: "x",
+    inputs: Object.fromEntries(Object.entries(inputs).map(([input, columnKey]) => [input, { source: "column", columnKey }])),
+    outputs: {},
+    connectionId: "c",
+  } as unknown as CascadeColumn["config"],
+  dependsOn: Object.values(inputs),
+  autoRun: true,
+});
+
+test("a free AgentService action runs on a blank input, so clearing it clears the result", () => {
+  const columns = [enrichment("level", "agentservice", "normalize-job-title", { title: "title" })];
+  expect(readyDependents(columns, "title", { title: "" }).map((c) => c.key)).toEqual(["level"]);
+  expect(readyDependents(columns, "title", {})).toHaveLength(1);
+});
+
+test("an enrichment with a required input and no blank allowed still waits for it", () => {
+  const columns = [enrichment("work", "apollo", "find-person-by-email", { email: "email" })];
+  expect(readyDependents(columns, "email", { email: "" })).toEqual([]);
+});
+
 test("an edit queues every auto-run dependent of the changed column", () => {
   const columns = [formula("upper", ["name"], "UPPER({{name}})"), formula("manual", ["name"], "{{name}}", false)];
   expect(readyDependents(columns, "name", { name: "ada" }).map((c) => c.key)).toEqual(["upper"]);

@@ -21,6 +21,9 @@ export type RowChange = { rowId: string; cells: CellValues; changedKeys: string[
  * ready as soon as their minimum number of mapped filters has a value. This
  * is the one readiness rule: the worker's cascade after a job and the cascade
  * after a user edit both go through it.
+ *
+ * A paid enrichment waits for every input, like a model call. An action whose inputs allow a
+ * blank (`allowEmpty`) runs on a blank too, like a formula.
  */
 export function readyDependents(columns: CascadeColumn[], changedKey: string, cells: CellValues): CascadeColumn[] {
   return columns
@@ -43,6 +46,16 @@ export function readyDependents(columns: CascadeColumn[], changedKey: string, ce
             return binding ? hasCellValue(ownCell(cells, binding.columnKey)) : false;
           }).length;
           return populatedFilters >= action.filterBuilder.minFilters;
+        }
+        // A free local action (AgentService) answers "nothing" with a normal result, and
+        // it must run when its input is cleared so the old result does not stay standing.
+        // Only the inputs that do not allow a blank still have to hold a value.
+        if (action?.inputs.some((input) => input.allowEmpty)) {
+          return action.inputs.every((input) => {
+            if (input.allowEmpty || !input.required) return true;
+            const binding = config.inputs[input.key];
+            return binding ? hasCellValue(ownCell(cells, binding.columnKey)) : false;
+          });
         }
       }
       return column.dependsOn.every((dep) => hasCellValue(ownCell(cells, dep)))
