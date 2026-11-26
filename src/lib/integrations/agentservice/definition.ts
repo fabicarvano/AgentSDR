@@ -20,6 +20,9 @@ function action(
 
 type ActionInput = IntegrationActionDefinition["inputs"][number];
 
+/** Examples for Name 2 to Name 6 of the split name action. */
+const NAME_POSITION_EXAMPLES = ["Silva", "Santos", "Carneiro", "Junior", "Neto"];
+
 /** A required cell input that accepts an empty cell (the action then returns empty). */
 function cellInput(
   input: Pick<ActionInput, "key" | "name" | "description" | "example"> &
@@ -180,11 +183,12 @@ export const AGENTSERVICE: IntegrationDefinition = {
       ],
       outputs: [
         { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
-        { key: "name2", name: "Name 2", columnType: "text", example: "Silva" },
-        { key: "name3", name: "Name 3", columnType: "text", example: "Santos" },
-        { key: "name4", name: "Name 4", columnType: "text", example: "Carneiro" },
-        { key: "name5", name: "Name 5", columnType: "text", example: "Junior" },
-        { key: "name6", name: "Name 6", columnType: "text", example: "Neto" },
+        ...NAME_POSITION_EXAMPLES.map((example, index) => ({
+          key: `name${index + 2}`,
+          name: `Name ${index + 2}`,
+          columnType: "text" as const,
+          example,
+        })),
         { key: "lastName", name: "Last Name", columnType: "text", example: "Santos" },
       ],
     }),
