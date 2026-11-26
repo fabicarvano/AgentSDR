@@ -2688,6 +2688,9 @@
           "outputs": {
             "level": {
               "name": "Seniority Level"
+            },
+            "levelCode": {
+              "name": "Level Code"
             }
           }
         }

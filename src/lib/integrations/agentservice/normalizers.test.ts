@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   companyDomainFromEmail,
   type JobLevel,
+  jobTitleOutputs,
   normalizeCnpjCell,
   normalizeEmailCell,
   normalizeJobTitleCell,
@@ -296,5 +297,22 @@ describe("normalizeJobTitleCell", () => {
   test("a blank title has no level", () => {
     expect(normalizeJobTitleCell("")).toEqual({ level: null });
     expect(normalizeJobTitleCell("   ")).toEqual({ level: null });
+  });
+});
+
+describe("jobTitleOutputs", () => {
+  test("gives the level in Portuguese and keeps the stable code beside it", () => {
+    expect(jobTitleOutputs("Gerente de Vendas")).toEqual({ level: "Gerente", levelCode: "manager" });
+    expect(jobTitleOutputs("CEO")).toEqual({ level: "C-level", levelCode: "c_level" });
+    expect(jobTitleOutputs("Vice President")).toEqual({ level: "VP", levelCode: "vp" });
+    expect(jobTitleOutputs("Head of Sales")).toEqual({ level: "Diretor", levelCode: "director" });
+    expect(jobTitleOutputs("Coordenadora")).toEqual({ level: "Coordenador/Supervisor", levelCode: "coordinator" });
+    expect(jobTitleOutputs("Data Analyst")).toEqual({ level: "Analista/Especialista", levelCode: "analyst" });
+    expect(jobTitleOutputs("Estagiário")).toEqual({ level: "Assistente/Estagiário", levelCode: "assistant" });
+    expect(jobTitleOutputs("Astronauta")).toEqual({ level: "Não identificado", levelCode: "unknown" });
+  });
+
+  test("an empty title gives two empty outputs", () => {
+    expect(jobTitleOutputs("  ")).toEqual({ level: null, levelCode: null });
   });
 });

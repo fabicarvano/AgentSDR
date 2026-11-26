@@ -197,3 +197,26 @@ export function normalizeJobTitleCell(raw: string): JobTitleCellResult {
   if (found) return { level: found };
   return { level: assistantAt >= 0 ? "assistant" : "unknown" };
 }
+
+/**
+ * What the sheet shows for each level. The cell is plain text and the grid cannot
+ * translate a value on screen, so the label is stored in Portuguese (the language
+ * of the base this serves); `levelCode` keeps the stable English code for filters.
+ */
+const JOB_LEVEL_LABELS: Record<JobLevel, string> = {
+  c_level: "C-level",
+  vp: "VP",
+  director: "Diretor",
+  manager: "Gerente",
+  coordinator: "Coordenador/Supervisor",
+  analyst: "Analista/Especialista",
+  assistant: "Assistente/Estagiário",
+  unknown: "Não identificado",
+};
+
+export type JobTitleOutputs = { level: string | null; levelCode: JobLevel | null };
+
+export function jobTitleOutputs(raw: string): JobTitleOutputs {
+  const { level } = normalizeJobTitleCell(raw);
+  return { level: level ? JOB_LEVEL_LABELS[level] : null, levelCode: level };
+}
