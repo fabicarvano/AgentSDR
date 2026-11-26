@@ -167,20 +167,25 @@ export const AGENTSERVICE: IntegrationDefinition = {
     action({
       key: "normalize-name",
       name: "Normalize name",
-      description: "Split a full name into first name and last name.",
-      tags: ["name", "first name", "last name", "split"],
+      description: "Split a full name into one column per name, dropping particles such as da and dos and titles such as Dr.",
+      tags: ["name", "first name", "last name", "middle name", "split"],
       handler: "normalizeName",
       inputs: [
         cellInput({
           key: "name",
           name: "Full Name",
           description: "The full name of the person.",
-          example: "Maria da Silva",
+          example: "Maria da Silva dos Santos",
         }),
       ],
       outputs: [
         { key: "firstName", name: "First Name", columnType: "text", example: "Maria" },
-        { key: "lastName", name: "Last Name", columnType: "text", example: "da Silva" },
+        { key: "name2", name: "Name 2", columnType: "text", example: "Silva" },
+        { key: "name3", name: "Name 3", columnType: "text", example: "Santos" },
+        { key: "name4", name: "Name 4", columnType: "text", example: "Carneiro" },
+        { key: "name5", name: "Name 5", columnType: "text", example: "Junior" },
+        { key: "name6", name: "Name 6", columnType: "text", example: "Neto" },
+        { key: "lastName", name: "Last Name", columnType: "text", example: "Santos" },
       ],
     }),
     action({

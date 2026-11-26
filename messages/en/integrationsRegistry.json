@@ -2639,7 +2639,7 @@
         },
         "normalize-name": {
           "name": "Normalize name",
-          "description": "Split a full name into first name and last name.",
+          "description": "Split a full name into one column per name, dropping particles such as da and dos and titles such as Dr.",
           "inputs": {
             "name": {
               "name": "Full Name",
@@ -2649,6 +2649,21 @@
           "outputs": {
             "firstName": {
               "name": "First Name"
+            },
+            "name2": {
+              "name": "Name 2"
+            },
+            "name3": {
+              "name": "Name 3"
+            },
+            "name4": {
+              "name": "Name 4"
+            },
+            "name5": {
+              "name": "Name 5"
+            },
+            "name6": {
+              "name": "Name 6"
             },
             "lastName": {
               "name": "Last Name"
