@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import DialogProvider from "@/components/DialogProvider";
 import { RemoteRepCallBar } from "@/components/calls/RemoteRepCallBar";
 import { DemoProvider } from "@/components/demo/DemoProvider";
+import { WhatsNewModal } from "@/components/whatsNew/WhatsNewModal";
 import { brandDisplay } from "@/components/brand/font";
 import { THEME_INIT_SCRIPT, ThemeProvider } from "@/components/theme/ThemeProvider";
 import { isDemoMode } from "@/lib/demo/mode";
@@ -82,6 +83,7 @@ export default async function RootLayout({
                 {modal}
                 {/* A call the rep talks on through a calling number: survives navigation. */}
                 <RemoteRepCallBar />
+                <WhatsNewModal />
               </DemoProvider>
             </DialogProvider>
           </ThemeProvider>

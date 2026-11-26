@@ -1,0 +1,15 @@
+{
+  "whatsNew": {
+    "modal": {
+      "title": "What's new in version {version}",
+      "description": "Released on {date}",
+      "dontShowAgain": "Don't show this again",
+      "gotIt": "Got it"
+    },
+    "types": {
+      "new": "New",
+      "improvement": "Improved",
+      "fix": "Fixed"
+    }
+  }
+}

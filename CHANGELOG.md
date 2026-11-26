@@ -9,6 +9,31 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+### Added
+
+- **"What's new" pop-up at sign-in.** When the newest entry in
+  `content/releases.json` differs from the version a person last dismissed,
+  a pop-up lists the release notes in the interface language (English or
+  Brazilian Portuguese). Closing it without ticking "Don't show this again" stores
+  nothing, so it returns at the next sign-in; ticking it and closing stores
+  the version for that person only (table `user_release_dismissals`). A new
+  entry in the file shows the pop-up again to everyone. The pop-up version is
+  the first entry of the file, independent of `package.json`. API:
+  `GET /api/releases/current` and `POST /api/releases/dismiss` (answers 409
+  if the version is not the current one).
+
+### Migrations
+
+- `bun scripts/add-user-release-dismissals.ts` creates the table
+  `user_release_dismissals` (one row per user, with the dismissed version).
+  With Docker Compose:
+  `docker compose exec app agentsdr-entrypoint bun scripts/add-user-release-dismissals.ts`.
+  It is additive and safe to run again. A fresh install gets the table
+  automatically. Back up the database and run it before starting the new
+  version. Without the table only the pop-up fails (sign-in and the rest of
+  the app keep working), but the pop-up cannot work until it exists, so run
+  it anyway.
+
 ## [0.5.0] - 2026-11-24
 
 Upgrading from 0.4.0 needs no database migration. The only script added
