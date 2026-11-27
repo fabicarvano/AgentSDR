@@ -9,8 +9,31 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-27
+
+Upgrading from 0.5.0 needs one database migration, for the "What's new"
+pop-up (see Migrations).
+
 ### Added
 
+- **AgentService: free actions in Tables.** An internal integration whose
+  actions run inside AgentSDR, with no account and no credits: normalize
+  phone (E.164, valid, mobile, and a second number when the cell holds two),
+  normalize email (cleaned address, valid, personal mailbox), domain from a
+  website, company domain from an email, and normalize LinkedIn profile. A
+  value that cannot be cleaned answers Valid = no instead of failing the row.
+  A phone number typed without `+` is read as Brazilian when the organization
+  has no default phone country.
+- **AgentService: name, CNPJ and job title.** Normalize name gives each name
+  its own column (First Name, Name 2 to Name 6, Last Name), dropping
+  particles (da, de, dos, van, ...) and leading titles (Dr., Sra., ...).
+  Normalize CNPJ keeps the digits, validates the check digits and says whether
+  it is the head office. Normalize job title gives the level in Portuguese
+  (C-level, VP, Diretor, Gerente, ...) and a stable code (`c_level`, `vp`,
+  `director`, ...) in a column of its own.
+- **Prospecting page.** A Prospecting item in the Data section of the menu
+  opens `/prospecting`, still under construction.
+- **AgentService has its own icon** in the table: the AgentSDR tile.
 - **"What's new" pop-up at sign-in.** When the newest entry in
   `content/releases.json` differs from the version a person last dismissed,
   a pop-up lists the release notes in the interface language (English or
@@ -18,9 +41,38 @@ Each release lists the database migrations it needs; see
   nothing, so it returns at the next sign-in; ticking it and closing stores
   the version for that person only (table `user_release_dismissals`). A new
   entry in the file shows the pop-up again to everyone. The pop-up version is
-  the first entry of the file, independent of `package.json`. API:
-  `GET /api/releases/current` and `POST /api/releases/dismiss` (answers 409
-  if the version is not the current one).
+  the first entry of the file. API: `GET /api/releases/current` and
+  `POST /api/releases/dismiss` (answers 409 if the version is not the current
+  one).
+- **Release notes are written as changes merge, and a release cannot ship
+  without them.** The first entry of `content/releases.json` is the open
+  entry of the next version (`"placeholder": true`) and pull requests add to
+  it; the release removes the mark. The tests keep that entry in step with
+  `package.json`, and a version tag whose entry is still open, or is for
+  another version, fails before the image is published
+  (`bun scripts/check-release-notes.ts --release vX.Y.Z`).
+
+### Changed
+
+- **The old Prospecting module is switched off.** `/domains`, the prospecting
+  `/campaigns` pages and the module's API routes answer 404. The code moved to
+  `src/legacy/prospecting` unchanged and no table was touched. Email,
+  LinkedIn, WhatsApp and calling campaigns are not affected.
+- **Enrichment columns are named in the creator's language.** The action
+  column and each output take their names from the interface language of the
+  person creating them. Column keys and existing columns do not change.
+- **A manual run that queues nothing says so.** The table shows a notice that
+  the rows were blank, already filled or missing what the column needs.
+
+### Fixed
+
+- **Free actions run on blank cells.** An AgentService action now runs when
+  its input is blank, both automatically and when run by hand, so clearing a
+  value also clears its old result. Paid integrations still wait for every
+  required input, so no credits are spent on blank rows.
+- **The pop-up's migration is in the Docker image.**
+  `scripts/add-user-release-dismissals.ts` was missing from the image, so the
+  Docker Compose command below failed.
 
 ### Changed
 
@@ -368,7 +420,9 @@ The first public release.
   before deploying). The `WHATSAPP_*` sending variables are no longer read —
   set those limits in Settings → WhatsApp → Sending rules.
 
-[Unreleased]: https://github.com/fabicarvano/AgentSDR/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fabicarvano/AgentSDR/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/fabicarvano/AgentSDR/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fabicarvano/AgentSDR/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fabicarvano/AgentSDR/compare/v0.2.0...v0.3.0

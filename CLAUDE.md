@@ -471,24 +471,33 @@ to push, then send them all at once. Committing itself needs no confirmation.
 Keep `npx tsc --noEmit` passing before each commit, since nothing else gates
 what lands.
 
-## Release notes pop-up: update it on every production release
+## Release notes pop-up: keep it current with every change
 
 Signed-in people see a "What's new" pop-up when the newest entry of
 `content/releases.json` differs from the version they last dismissed
 (`user_release_dismissals`, one row per user; a version change shows it to
 everyone again). The notes are the single source: no UI code changes.
 
-**Before anything goes to production** (a release tag, a production image, a
-deploy), add the release's entry at the **top** of `content/releases.json`:
-`version` (semver of the release being shipped), `date`, `title` and `items`
-(`new` / `improvement` / `fix`), every text in **both** `en` and `pt-BR`. Do it
-in the release PR, with the `CHANGELOG.md` entry, and keep that version equal
-to the `package.json` version you are shipping.
+**The notes are written as changes merge, not at release time.** Between
+releases the first entry is the *open entry*: the next version, marked
+`"placeholder": true`.
 
-- Forget it and nobody sees anything new: the pop-up compares the first entry
-  only, so the previous version's notes stay "dismissed" or "shown".
-- Never leave an entry marked `"placeholder": true` in a production release:
-  replace it with real notes (or remove it) first.
+- **Every change people will notice** (a feature, a visible improvement, a
+  fix they could have hit) adds an item to the open entry in the same PR:
+  `type` (`new` / `improvement` / `fix`) and `text` in **both** `en` and
+  `pt-BR`, plus its line under `Unreleased` in `CHANGELOG.md`. Internal work
+  (refactors, CI, tests, docs) adds nothing.
+- **No open entry yet?** The first such PR after a release adds one at the
+  **top**: the next patch version, today's `date`, a `title` and
+  `"placeholder": true`.
+- **The release PR** reviews the wording, sets the `date`, removes
+  `"placeholder": true` and sets `package.json` (and the image tag default in
+  `docker-compose.yml`) to that version.
+- The rule lives in `src/lib/releases/readiness.ts`: the tests fail when the
+  first entry is neither the notes of the `package.json` version nor an open
+  entry for a later one, and `docker.yml` refuses a version tag whose entry is
+  still open or is for another version
+  (`bun scripts/check-release-notes.ts --release vX.Y.Z`).
 - Editing the text of the current entry does not reopen the pop-up for people
   who dismissed it; a new `version` does.
 - `src/lib/releases/releases.test.ts` checks unique versions, newest first, and

@@ -1,32 +1,59 @@
 [
   {
     "version": "0.5.1",
-    "date": "2026-11-26",
-    "placeholder": true,
+    "date": "2026-11-27",
     "title": {
-      "en": "Example release notes (placeholder)",
-      "pt-BR": "Exemplo de notas da versão (provisório)"
+      "en": "AgentService actions in Tables and a \"What's new\" window",
+      "pt-BR": "Ações do AgentService nas Planilhas e uma janela de novidades"
     },
     "items": [
       {
         "type": "new",
         "text": {
-          "en": "Example of a new feature (placeholder, replace before releasing).",
-          "pt-BR": "Exemplo de um recurso novo (provisório, substitua antes de lançar)."
+          "en": "AgentService: free actions in Tables that clean phone numbers, emails, websites and LinkedIn profiles, with no account and no credits.",
+          "pt-BR": "AgentService: ações gratuitas nas Planilhas que limpam telefones, e-mails, sites e perfis do LinkedIn, sem conta e sem créditos."
+        }
+      },
+      {
+        "type": "new",
+        "text": {
+          "en": "AgentService also normalizes names (one column per name), CNPJ numbers and job titles.",
+          "pt-BR": "O AgentService também normaliza nomes (uma coluna para cada nome), CNPJ e cargos."
+        }
+      },
+      {
+        "type": "new",
+        "text": {
+          "en": "This \"What's new\" window shows what changed in each version when you sign in.",
+          "pt-BR": "Esta janela de novidades mostra o que mudou em cada versão quando você entra."
         }
       },
       {
         "type": "improvement",
         "text": {
-          "en": "Example of an improvement (placeholder, replace before releasing).",
-          "pt-BR": "Exemplo de uma melhoria (provisório, substitua antes de lançar)."
+          "en": "Columns created by an enrichment are named in your language.",
+          "pt-BR": "As colunas criadas por um enriquecimento recebem o nome no seu idioma."
+        }
+      },
+      {
+        "type": "improvement",
+        "text": {
+          "en": "When a run you start by hand queues nothing, the table now tells you why.",
+          "pt-BR": "Quando uma execução iniciada por você não coloca nada na fila, a planilha agora explica o motivo."
+        }
+      },
+      {
+        "type": "improvement",
+        "text": {
+          "en": "Prospecting now opens a new page, still under construction. The old All domains and Qualification campaigns pages were switched off.",
+          "pt-BR": "A Prospecção agora abre uma página nova, ainda em construção. As páginas antigas Todos os domínios e Campanhas de qualificação foram desligadas."
         }
       },
       {
         "type": "fix",
         "text": {
-          "en": "Example of a fix (placeholder, replace before releasing).",
-          "pt-BR": "Exemplo de uma correção (provisório, substitua antes de lançar)."
+          "en": "Free actions now run on blank cells, so clearing a value also clears its old result.",
+          "pt-BR": "As ações gratuitas agora são executadas em células vazias: ao apagar um valor, o resultado antigo também é limpo."
         }
       },
       {

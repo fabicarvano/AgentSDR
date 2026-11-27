@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import packageJson from "../../../package.json";
+import { releaseNotesProblems } from "./readiness";
 import { getCurrentRelease, localizeRelease, RELEASES, shouldShowRelease } from "./releases";
 import { RELEASE_ITEM_TYPES } from "./types";
 
@@ -54,10 +56,17 @@ describe("content/releases.json", () => {
       for (const t of texts) {
         expect(t.en.trim()).not.toBe("");
         expect(t["pt-BR"].trim()).not.toBe("");
-        // Only entries marked placeholder may skip the translation check; real notes must really be translated.
-        if (!r.placeholder) expect(t["pt-BR"]).not.toBe(t.en);
+        expect(t["pt-BR"]).not.toBe(t.en);
       }
     }
+  });
+
+  test("the first entry is the notes of package.json's version, or the open entry of a later one", () => {
+    expect(releaseNotesProblems(RELEASES[0] ?? null, packageJson.version, "development")).toEqual([]);
+  });
+
+  test("only the first entry may be open", () => {
+    for (const r of RELEASES.slice(1)) expect(r.placeholder).toBeUndefined();
   });
 
   test("items have a valid type and each release has at least one", () => {

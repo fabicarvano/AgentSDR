@@ -21,4 +21,5 @@ Fixes #
 - [ ] Schema change: migration in `scripts/`, Drizzle schema updated, `db/schema.sql` regenerated, new tables classified in `src/lib/tenancy/registry.ts` — or N/A
 - [ ] New environment variables are in `.env.example` and `docs/configuration.md` — or N/A
 - [ ] Docs updated where behaviour changed — or N/A
+- [ ] A change people will notice has an item in the open entry of `content/releases.json` (en and pt-BR) and a line under Unreleased in `CHANGELOG.md` — or N/A
 - [ ] No secrets or personal data in code, tests, fixtures or screenshots

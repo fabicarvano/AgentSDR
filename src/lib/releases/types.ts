@@ -10,7 +10,7 @@ export type ReleaseNote = {
   version: string;
   /** YYYY-MM-DD */
   date: string;
-  /** Marks sample content: it is exempt from the "pt-BR differs from en" test and must be replaced before releasing. Never sent to the client. */
+  /** Marks the open entry: the notes of the next version, which pull requests add to until it is released. The release removes the mark (src/lib/releases/readiness.ts refuses a version tag with it). Never sent to the client. */
   placeholder?: boolean;
   title: LocalizedText;
   items: { type: ReleaseItemType; text: LocalizedText }[];
