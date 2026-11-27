@@ -45,29 +45,50 @@ produces the matching image tag.
    rebuilding (new scheduled job or endpoint, new webhook, key rotation) is written down
    in the release notes and in [../self-hosting.md](../self-hosting.md) if it is
    permanent.
-7. **Changelog and version.** Update `CHANGELOG.md`; set `version` in
+7. **"What's new" notes.** Review the open entry at the top of
+   `content/releases.json`, set its `date`, and remove `"placeholder": true`;
+   its `version` is the one being released (see below).
+8. **Changelog and version.** Update `CHANGELOG.md`; set `version` in
    `package.json`, and the same version as the image tag default in
    `docker-compose.yml` (`${AGENTSDR_VERSION:-X.Y.Z}`, also inlined in
    `docs/self-hosting/docker-compose.mdx`). CI fails if they differ.
-8. **Tag.** `git tag vX.Y.Z && git push origin vX.Y.Z`. Confirm the Docker
-   workflow publishes the image.
-9. **GitHub release.** Create a release from the tag, paste the changelog
+9. **Tag.** `git tag vX.Y.Z && git push origin vX.Y.Z`. Confirm the Docker
+   workflow publishes the image; it first runs
+   `bun scripts/check-release-notes.ts --release vX.Y.Z` and stops if the
+   notes are still open or are for another version.
+10. **GitHub release.** Create a release from the tag, paste the changelog
    section, and add the migration list and upgrade notes at the top.
 
 ## "What's new" pop-up
 
 The pop-up shown at sign-in reads `content/releases.json`, an array with the
-newest release first. To announce a release, add an entry at the top with
-`version` (semver), `date` (`YYYY-MM-DD`), `title` and `items` (each item has a
-`type` of `new`, `improvement` or `fix`, and a `text`); `title` and every
-`text` need both `en` and `pt-BR`. Versions must be unique and dates must not
-increase down the file; `src/lib/releases/releases.test.ts` checks this and
-that both languages are filled.
+newest release first. An entry has `version` (semver), `date` (`YYYY-MM-DD`),
+`title` and `items` (each item has a `type` of `new`, `improvement` or `fix`,
+and a `text`); `title` and every `text` need both `en` and `pt-BR`. Versions
+must be unique and dates must not increase down the file;
+`src/lib/releases/releases.test.ts` checks this and that both languages are
+filled.
 
-The version the pop-up compares is the first entry's `version`, not
-`package.json`. A change of that version shows the pop-up again to everyone;
-editing the text of the current entry does not. Skip the entry for releases
-not worth announcing.
+The notes are written as changes merge, not at release time:
+
+- **Between releases** the first entry is the *open entry*: the next version,
+  marked `"placeholder": true`. A pull request that changes something people
+  will notice adds an item to it, in both languages, with its line under
+  `Unreleased` in `CHANGELOG.md`. The first such pull request after a release
+  creates the entry (next patch version; raise it later if the release turns
+  out to be a minor one). Write for the person using the app: what they can
+  now do, not how it was built.
+- **The release** reviews the wording, sets the `date`, removes the mark and
+  sets `package.json` to the same version.
+
+`src/lib/releases/readiness.ts` holds the rule and the tests apply it on every
+commit: the first entry is either the notes of the `package.json` version or
+an open entry for a later one. A version tag accepts only the first, so an
+open entry cannot be published.
+
+A change of the first entry's version shows the pop-up again to everyone;
+editing the text of the current entry does not. Staging builds show the open
+entry as it stands.
 
 The first release that ships the pop-up needs the migration
 `scripts/add-user-release-dismissals.ts` (creates the table
