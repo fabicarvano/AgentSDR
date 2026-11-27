@@ -22,9 +22,11 @@ extensions/*/release
 
 # Migrations run by hand against a database, not from the image — except
 # the fresh-install setup the entrypoint runs before the app starts, and the
-# scheduler's migration, so Docker installs can run it in the container.
+# migrations a Docker install has to run in the container when upgrading
+# (the scheduler's and the release notes pop-up's).
 scripts
 !scripts/db/setup.ts
 !scripts/create-scheduled-job-runs.ts
+!scripts/add-user-release-dismissals.ts
 
 README.md
