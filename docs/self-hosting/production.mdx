@@ -182,10 +182,11 @@ Upgrading an existing install is **not** done with `db:setup`, and the app's sta
    ```
 
    The release notes in [CHANGELOG.md](https://github.com/fabicarvano/AgentSDR/blob/main/CHANGELOG.md) name any migration you must run.
-4. Run each new migration against your database, for example `bun scripts/<name>.ts` (older ones are plain JavaScript, run with `node scripts/<name>.js`). They load `.env.local` and connect with `DATABASE_URL`, are guarded with `IF NOT EXISTS` / `IF EXISTS`, and are safe to re-run. The Docker image contains only `scripts/db/setup.ts` and `scripts/create-scheduled-job-runs.ts`, so run other migrations from a checkout of the repository that can reach your database. For the scheduler's migration on Docker Compose:
+4. Run each new migration against your database, for example `bun scripts/<name>.ts` (older ones are plain JavaScript, run with `node scripts/<name>.js`). They load `.env.local` and connect with `DATABASE_URL`, are guarded with `IF NOT EXISTS` / `IF EXISTS`, and are safe to re-run. The Docker image contains only `scripts/db/setup.ts`, `scripts/create-scheduled-job-runs.ts` and `scripts/add-user-release-dismissals.ts`, so run other migrations from a checkout of the repository that can reach your database. For the scheduler's and the release notes pop-up's migrations on Docker Compose:
 
    ```sh
    docker compose exec app agentsdr-entrypoint bun scripts/create-scheduled-job-runs.ts
+   docker compose exec app agentsdr-entrypoint bun scripts/add-user-release-dismissals.ts
    ```
 
    The entrypoint supplies `DATABASE_URL` for the bundled database.

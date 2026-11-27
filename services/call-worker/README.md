@@ -157,8 +157,9 @@ worker's), so a worker-only change does not rebuild it; an extension change rebu
 the app serves the extension's zip. Not `**` beside it: with both, Dokploy rebuilt the app for a
 worker-only change (29 Oct 2026). Should the lone exclusion ever stop the app deploying at all,
 list what its image is built from instead: `src/**`, `public/**`, `extensions/**`, `db/**`,
-`docker/**`, `scripts/db/setup.ts`, `scripts/create-scheduled-job-runs.ts`, `package.json`,
-`bun.lock`, `Dockerfile`, `.dockerignore`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`.
+`docker/**`, `scripts/db/setup.ts`, `scripts/create-scheduled-job-runs.ts`,
+`scripts/add-user-release-dismissals.ts`, `package.json`, `bun.lock`, `Dockerfile`, `.dockerignore`,
+`next.config.ts`, `tsconfig.json`, `postcss.config.mjs`.
 
 Only one worker may run a given number: a laptop worker pointed at a dev server that shares the
 production database claims the same calls.
