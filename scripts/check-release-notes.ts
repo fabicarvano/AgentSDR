@@ -39,4 +39,5 @@ if (problems.length > 0) {
   for (const problem of problems) console.error(`release notes: ${problem}`);
   process.exit(1);
 }
-console.log(`release notes: ok (${releases[0]?.version}${tag === null ? "" : `, ${tag}`})`);
+const checked = [releases[0]?.version, tag].filter(Boolean).join(", ");
+console.log(`release notes: ok (${checked})`);

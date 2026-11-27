@@ -20,7 +20,7 @@ jobs:
       # A version tag publishes the image, so refuse one whose "What's new" notes
       # are still the open entry or are for another version.
       - if: startsWith(github.ref, 'refs/tags/v')
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
       - if: startsWith(github.ref, 'refs/tags/v')
         name: Release notes match the tag
         run: bun scripts/check-release-notes.ts --release "$GITHUB_REF_NAME"
