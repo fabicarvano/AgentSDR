@@ -63,6 +63,11 @@ pop-up (see Migrations).
   person creating them. Column keys and existing columns do not change.
 - **A manual run that queues nothing says so.** The table shows a notice that
   the rows were blank, already filled or missing what the column needs.
+- **Authentication emails follow the interface language.** The sign-up
+  confirmation, password reset and invitation emails are sent in English or
+  Brazilian Portuguese, matching the browser of whoever made the request
+  (`NEXT_LOCALE` cookie, then `Accept-Language`, then English). An invitation
+  uses the inviter's language. The text lives in the `authEmail` message domain.
 
 ### Fixed
 
@@ -73,17 +78,6 @@ pop-up (see Migrations).
 - **The pop-up's migration is in the Docker image.**
   `scripts/add-user-release-dismissals.ts` was missing from the image, so the
   Docker Compose command below failed.
-
-### Changed
-
-- **Authentication emails follow the interface language.** The sign-up
-  confirmation, password reset and invitation emails are sent in English or
-  Brazilian Portuguese, matching the browser of whoever made the request
-  (`NEXT_LOCALE` cookie, then `Accept-Language`, then English). An invitation
-  uses the inviter's language. The text lives in the `authEmail` message domain.
-
-### Fixed
-
 - Sign-in, Google sign-in, invitation and Settings → Organization screens no
   longer show Better Auth's English error messages when the interface is in
   Portuguese.
