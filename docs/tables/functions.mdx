@@ -1,25 +1,40 @@
 ---
-title: "AgentService"
-description: "Clean phones, emails, domains and LinkedIn links in a table with actions that run inside AgentSDR. No account or credits needed."
+title: "Functions"
+description: "Clean phones, emails, domains, LinkedIn profiles, names, CNPJ numbers and job titles in a table with functions that run inside AgentSDR. No account or credits needed."
 icon: "wand-sparkles"
 ---
 
-AgentService is the one integration that needs no account. Its actions run inside AgentSDR and call no outside provider, so they are always available, cost nothing and never spend credits. Add one from **Add enrichment**, pick **AgentService**, map the input to a column and choose the results you want. Each result becomes its own column, like any other enrichment.
+Functions clean and standardize the data already in a table. They run inside AgentSDR and call no outside provider, so they are always available, cost nothing and never spend credits. There is no account to choose or connect. You add one from the **Add column** menu, under **Functions**, map the input to a column and choose the results you want. Each result becomes its own column.
 
 A value that cannot be cleaned is not an error. The row finishes with an empty result and, where there is one, a **Valid** column set to false, so one bad row never stops the run. An empty cell counts as a value that cannot be cleaned: the result is empty and **Valid** is false.
 
-## Actions
+## Add a function
 
-| Action | Input | Results |
-|---|---|---|
-| **Normalize phone** | Phone (text or number) | Normalized Phone, Valid Phone, Mobile Phone, Second Phone |
-| **Normalize email** | Email (text) | Normalized Email, Valid Email, Personal Email |
-| **Domain from website** | Website (text or URL) | Domain |
-| **Company domain from email** | Email (text) | Company Domain |
-| **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
-| **Normalize name** | Full name (text) | First Name, Name 2 to Name 6, Last Name |
-| **Normalize CNPJ** | CNPJ (text or number) | Normalized CNPJ, Valid CNPJ, Headquarters |
-| **Normalize job title** | Job title (text) | Seniority Level |
+1. Open the **Add column** menu and click **Functions**. The item expands in place. The same menu opens from **More column types...**, from the empty **+ Add column** header and from **Insert column**, then **Left** or **Right**, in a column's menu.
+2. Pick a function. They are listed in two groups: **Clean and standardize** and **Extract**.
+3. Fill in the panel, which is a single screen:
+   - **Input:** choose the column each input reads from.
+   - **Columns to create:** tick the results you want. The first two are already ticked. For **Normalize name**, **First Name** and **Last Name** are ticked.
+   - **Run settings:** **Auto-run** and an optional run condition, as in an [enrichment](/tables/enrichment).
+
+   Then click **Save without running** or **Save & run 10 rows**.
+
+To change a function later, open the column's menu and click **Edit function**. The same panel opens. In the column's menu the type reads **Function**, and the header shows the function icon instead of a provider logo.
+
+Columns created with AgentService before Functions existed are not migrated. They keep running and now show as functions.
+
+## Functions
+
+| Group | Function | Input | Results |
+|---|---|---|---|
+| Clean and standardize | **Normalize phone** | Phone (text or number) | Normalized Phone, Valid Phone, Mobile Phone, Second Phone |
+| Clean and standardize | **Normalize email** | Email (text) | Normalized Email, Valid Email, Personal Email |
+| Clean and standardize | **Normalize LinkedIn profile** | LinkedIn profile (text or URL) | Profile Slug, Profile URL |
+| Clean and standardize | **Normalize name** | Full name (text) | First Name, Name 2 to Name 6, Last Name |
+| Clean and standardize | **Normalize CNPJ** | CNPJ (text or number) | Normalized CNPJ, Valid CNPJ, Headquarters |
+| Clean and standardize | **Normalize job title** | Job title (text) | Seniority Level, Level Code |
+| Extract | **Domain from website** | Website (text or URL) | Domain |
+| Extract | **Company domain from email** | Email (text) | Company Domain |
 
 ### Normalize phone
 
@@ -51,10 +66,10 @@ Gets the public profile name and the clean `https://www.linkedin.com/in/...` lin
 Splits a full name into one column per name: **First Name**, **Name 2**, **Name 3**, up to **Name 6**, plus **Last Name**. Particles (`da`, `de`, `do`, `das`, `dos`, `du`, `di`, `del`, `van`, `von`, `e`) and titles at the start (`Dr.`, `Sra.`, `Prof.`) are dropped, so `Maria da Silva dos Santos` gives `Maria`, `Silva` and `Santos`. A suffix such as `Junior` is kept as a name of its own.
 
 - **Last Name** is always the last word, so it is `Santos` above, whatever position that is.
-- Pick the columns you want when you add the enrichment. Positions a name does not have stay empty.
+- Pick the columns you want when you add the function. Positions a name does not have stay empty.
 - A name with more than six words puts the rest in **Name 6**.
 - A particle in first place is kept, so the first name is never blank. A single word has no last name.
-- Columns created before this change hold the old result until you run the enrichment again.
+- Columns created before this change hold the old result until you run the function again.
 
 ### Normalize CNPJ
 

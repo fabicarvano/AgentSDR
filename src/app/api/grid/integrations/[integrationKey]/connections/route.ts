@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIntegration } from "@/lib/integrations/catalog";
+import { isFunctionKey, getIntegration } from "@/lib/integrations/catalog";
 import {
   createIntegrationConnection,
   listIntegrationConnections,
@@ -15,7 +15,8 @@ export async function GET(
   try {
     return await withOrgContext(_request, async () => {
       const { integrationKey } = await params;
-      if (!getIntegration(integrationKey)) {
+      // A function (AgentService) is not an integration: it has no connections to list.
+      if (!getIntegration(integrationKey) || isFunctionKey(integrationKey)) {
         return NextResponse.json(apiErrorBody("notFound", "integration not found"), { status: 404 });
       }
       return NextResponse.json({ connections: await listIntegrationConnections(integrationKey) });
@@ -35,6 +36,10 @@ export async function POST(
     return await withOrgContext(request, async (ctx) => {
       requirePermission(ctx, { integrations: ["manage"] });
       const { integrationKey } = await params;
+      // Nor an account to add.
+      if (isFunctionKey(integrationKey)) {
+        return NextResponse.json(apiErrorBody("notFound", "integration not found"), { status: 404 });
+      }
       let body: { name?: string; credentials?: Record<string, string> };
       try {
         body = await request.json();

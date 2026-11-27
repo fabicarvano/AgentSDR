@@ -91,9 +91,6 @@
         },
         "icypeas": {
           "description": "Discover and verify emails, find professional profiles, and enrich people and companies."
-        },
-        "agentservice": {
-          "description": "Clean and standardize values inside AgentSDR. No account or credits needed."
         }
       }
     },
@@ -186,7 +183,6 @@
         "tabIntegrations": "Integrations",
         "tabDiscover": "Discover",
         "tabTemplates": "Templates",
-        "tabFunctions": "Functions",
         "checking": "Checking connection…",
         "connected": "Connected",
         "addIntegration": "Add integration",
@@ -199,6 +195,13 @@
         "findApiKey": "Find your API key",
         "enrichmentLine": "Enrichment · {name}",
         "openDocsAria": "Open documentation for {name}"
+      },
+      "functionMode": {
+        "actionLine": "Function · {name}",
+        "subtitle": "Clean and standardize data inside AgentSDR. No account, no credits.",
+        "inputTitle": "Input",
+        "outputsTitle": "Columns to create",
+        "outputsIntro": "The function runs once per row. Each result you pick becomes its own column."
       }
     },
     "ai": {

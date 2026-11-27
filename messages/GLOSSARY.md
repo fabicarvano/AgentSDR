@@ -19,6 +19,7 @@ wording in Brazilian B2B software, then add it here in the same change.
 | Analytics | Analytics | Kept. |
 | Table(s) (enrichment grid) | Planilha(s) | |
 | Enrichment / enrich | Enriquecimento / enriquecer | |
+| Function(s) (table column that cleans data inside AgentSDR) | Função / Funções | The AgentService actions. Not a provider: never "integração". |
 | Reply / replies | Resposta(s) | |
 | Draft(s) | Rascunho(s) | |
 | Do Not Contact | Não contactar | |

@@ -67,6 +67,11 @@ export type IntegrationActionDefinition = {
   tags: string[];
   inputs: ActionInputDefinition[];
   outputs: ActionOutputDefinition[];
+  /**
+   * Output keys ticked when a function is added to a table (see `defaultOutputKeys` in the catalog). Without it
+   * the first two outputs are ticked. Provider integrations start with none ticked and never read this.
+   */
+  defaultOutputs?: string[];
   handlerKey: string;
   /** False until the provider-specific server handler is registered. */
   implemented: boolean;
@@ -83,8 +88,17 @@ export type IntegrationActionDefinition = {
   };
 };
 
+/**
+ * How the tables present a definition. A "function" runs inside AgentSDR, needs no account and is added from
+ * Add column, Functions; an "integration" is a provider picked in the enrichment dialog. Not the same thing as
+ * the action-level ActionExecutionType "function".
+ */
+export type IntegrationKind = "integration" | "function";
+
 export type IntegrationDefinition = {
   key: string;
+  /** Absent means "integration". */
+  kind?: IntegrationKind;
   name: string;
   description: string;
   /** Canonical provider website. Used for the favicon fallback. */

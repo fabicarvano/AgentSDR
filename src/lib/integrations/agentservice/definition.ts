@@ -1,17 +1,18 @@
 import type { IntegrationActionDefinition, IntegrationDefinition } from "../types";
 
-const DOCS_URL = "https://github.com/fabicarvano/AgentSDR/blob/main/docs/tables/agentservice.mdx";
+const DOCS_URL = "https://github.com/fabicarvano/AgentSDR/blob/main/docs/tables/functions.mdx";
 
 function action(
-  definition: Pick<IntegrationActionDefinition, "key" | "name" | "description" | "tags" | "inputs" | "outputs"> & {
-    handler: string;
-  },
+  definition: Pick<IntegrationActionDefinition, "key" | "name" | "description" | "tags" | "inputs" | "outputs"> &
+    Partial<Pick<IntegrationActionDefinition, "category" | "defaultOutputs">> & {
+      handler: string;
+    },
 ): IntegrationActionDefinition {
   const { handler, ...rest } = definition;
   return {
+    category: "normalize",
     ...rest,
     docsUrl: DOCS_URL,
-    category: "normalize",
     type: "enrichment",
     handlerKey: `agentservice.${handler}`,
     implemented: true,
@@ -40,13 +41,15 @@ function cellInput(
 /**
  * AgentService: the actions that run inside AgentSDR and call nobody.
  *
- * It is an integration only because the grid knows no other way to offer an
- * action. There is no account to add: the organization always has one verified
- * connection (see agentServiceConnection in lib/grid/providers.ts), so the
- * actions are never greyed out and a run costs nothing.
+ * The tables offer them as functions (kind "function": Add column, Functions), not
+ * as a provider. Underneath it is still an integration definition, because the
+ * runner knows no other way to run an action: the organization always has one
+ * verified connection (see virtualConnectionFor in lib/grid/providers.ts), so a
+ * run needs no account and costs nothing.
  */
 export const AGENTSERVICE: IntegrationDefinition = {
   key: "agentservice",
+  kind: "function",
   name: "AgentService",
   description: "Clean and standardize values inside AgentSDR. No account or credits needed.",
   websiteUrl: "https://github.com/fabicarvano/AgentSDR",
@@ -106,6 +109,7 @@ export const AGENTSERVICE: IntegrationDefinition = {
     }),
     action({
       key: "site-domain",
+      category: "extract",
       name: "Domain from website",
       description: "Get the plain domain from a website address, without https, www or the page path.",
       tags: ["domain", "website", "url", "company"],
@@ -126,6 +130,7 @@ export const AGENTSERVICE: IntegrationDefinition = {
     }),
     action({
       key: "company-domain-from-email",
+      category: "extract",
       name: "Company domain from email",
       description: "Get the company domain behind a work email. Personal mailboxes such as Gmail return nothing.",
       tags: ["domain", "email", "company"],
@@ -169,6 +174,8 @@ export const AGENTSERVICE: IntegrationDefinition = {
     }),
     action({
       key: "normalize-name",
+      // First and last name, not First Name and Name 2.
+      defaultOutputs: ["firstName", "lastName"],
       name: "Normalize name",
       description: "Split a full name into one column per name, dropping particles such as da and dos and titles such as Dr.",
       tags: ["name", "first name", "last name", "middle name", "split"],

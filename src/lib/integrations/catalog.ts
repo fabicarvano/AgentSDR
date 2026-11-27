@@ -22,6 +22,7 @@ import type {
   InputValueType,
   IntegrationActionDefinition,
   IntegrationDefinition,
+  IntegrationKind,
 } from "./types";
 
 export const ACTION_CATEGORIES: ReadonlyArray<{ key: ActionCategory; name: string }> = [
@@ -53,9 +54,37 @@ export const INTEGRATIONS: readonly IntegrationDefinition[] = [
   SEMRUSH,
   ROCKETREACH,
   ICYPEAS,
-  // Last on purpose: the dialog opens on the first integration, and this one needs no account.
+  // A function, not a provider (kind "function"). It stays in this list because the runner, the handler
+  // registry and saved columns resolve it by key; the interface reads the two filtered lists below.
   AGENTSERVICE,
 ];
+
+export function integrationKind(definition: Pick<IntegrationDefinition, "kind">): IntegrationKind {
+  return definition.kind ?? "integration";
+}
+
+/** Providers offered in the enrichment dialog. */
+export function integrationDefinitions(): IntegrationDefinition[] {
+  return INTEGRATIONS.filter((definition) => integrationKind(definition) === "integration");
+}
+
+/** Definitions offered under Add column, Functions. */
+export function functionDefinitions(): IntegrationDefinition[] {
+  return INTEGRATIONS.filter((definition) => integrationKind(definition) === "function");
+}
+
+/** True when a saved column's integration key is a function. An unknown key is not. */
+export function isFunctionKey(integrationKey: string | null | undefined): boolean {
+  const definition = integrationKey ? getIntegration(integrationKey) : null;
+  return definition ? integrationKind(definition) === "function" : false;
+}
+
+/** The outputs ticked when a function is first added: the action's own list, or its first two. */
+export function defaultOutputKeys(action: Pick<IntegrationActionDefinition, "outputs" | "defaultOutputs">): string[] {
+  const known = new Set(action.outputs.map((output) => output.key));
+  const declared = (action.defaultOutputs ?? []).filter((key) => known.has(key));
+  return declared.length ? declared : action.outputs.slice(0, 2).map((output) => output.key);
+}
 
 export function getIntegration(key: string): IntegrationDefinition | null {
   return INTEGRATIONS.find((integration) => integration.key === key) ?? null;

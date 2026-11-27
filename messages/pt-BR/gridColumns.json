@@ -109,7 +109,8 @@
       "pin": "Fixar",
       "unpin": "Desafixar",
       "hide": "Ocultar",
-      "delete": "Excluir"
+      "delete": "Excluir",
+      "typeFunction": "Função"
     },
     "sortPanel": {
       "textAsc": "A → Z",
@@ -193,7 +194,12 @@
       "noMatch": "Nenhuma coluna encontrada."
     },
     "addColumnMenu": {
-      "comingSoon": "Em breve — veja docs/design/enrichment-plan.md"
+      "comingSoon": "Em breve — veja docs/design/enrichment-plan.md",
+      "functionsHint": "Limpe e padronize dados dentro do AgentSDR. Sem conta, sem crédito.",
+      "functionGroups": {
+        "normalize": "Limpar e padronizar",
+        "extract": "Extrair"
+      }
     }
   }
 }

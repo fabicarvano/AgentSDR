@@ -47,7 +47,7 @@ import {
   RiUploadCloud2Line,
 } from "@remixicon/react";
 import type { GridColumn, GridRow, GridTable } from "@/lib/grid/schema";
-import { getIntegration } from "@/lib/integrations/catalog";
+import { getIntegration, isFunctionKey } from "@/lib/integrations/catalog";
 import IntegrationIcon from "./IntegrationIcon";
 import {
   isStaticColumnType,
@@ -78,7 +78,7 @@ import ImportDialog from "./ImportDialog";
 import CreateCampaignFromGridDialog from "./CreateCampaignFromGridDialog";
 import Popover from "./Popover";
 import SortPanel from "./SortPanel";
-import { columnTypeDefaultName, columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
+import { FUNCTION_ICON, columnTypeDefaultName, columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
 import { clampGridPage, GRID_PAGE_SIZE, gridPageCount, gridPageRange } from "@/lib/grid/pagination";
 import * as Checkbox from "@/components/alignui/checkbox";
 import { useApiErrorText } from "@/i18n/useApiErrorText";
@@ -373,7 +373,16 @@ function ColumnHeader(props: IHeaderParams & {
   const meta = columnTypeMeta(props.valueType ?? props.colType);
   const integration = props.integrationKey ? getIntegration(props.integrationKey) : null;
   const iconClass = props.active ? "text-white" : "text-text-sub-600";
-  const icon = integration && props.colType === "enrichment" ? (
+  // A function is not a provider: its columns carry the function icon, not a logo.
+  const isFunction = isFunctionKey(props.integrationKey);
+  const icon = isFunction && props.colType === "enrichment" ? (
+    <FUNCTION_ICON className={`size-[15px] shrink-0 ${iconClass}`} />
+  ) : isFunction && props.colType === "integration_output" ? (
+    <span className="flex shrink-0 items-center gap-1">
+      <FUNCTION_ICON className={`size-[14px] ${iconClass}`} />
+      <meta.icon className={`size-[14px] ${iconClass}`} />
+    </span>
+  ) : integration && props.colType === "enrichment" ? (
     <IntegrationIcon integration={integration} size={17} className="rounded" />
   ) : integration && props.colType === "integration_output" ? (
     <span className="flex shrink-0 items-center gap-1">
@@ -726,6 +735,8 @@ export default function GridClient({
     column?: GridColumn;
     afterColumnId?: string;
     beforeColumnId?: string;
+    /** A function picked in the Add column menu: the dialog opens on it, with no catalog. */
+    initialAction?: { integrationKey: string; actionKey: string };
   } | null>(null);
   const [aiPosition, setAiPosition] = useState<{
     column?: GridColumn;
@@ -1213,6 +1224,9 @@ export default function GridClient({
 
   const addColumn = useCallback(
     async (type: ColumnType) => {
+      // Functions is a menu entry, not a column type to create: a function is an enrichment column, added by
+      // addFunctionColumn. Without this a stray pick would create a "functions" column nothing can configure.
+      if (type === "functions") return;
       if (type === "enrichment") {
         setEnrichmentPosition({
           afterColumnId: addMenu?.afterColumnId,
@@ -2532,7 +2546,12 @@ export default function GridClient({
   const configureProps = (column: GridColumn): { configureLabel?: string; onConfigure?: () => void } => {
     switch (column.type) {
       case "enrichment":
-        return { configureLabel: t("editEnrichment"), onConfigure: () => setEnrichmentPosition({ column }) };
+        return {
+          configureLabel: isFunctionKey((column.config as { integrationKey?: string }).integrationKey)
+            ? t("editFunction")
+            : t("editEnrichment"),
+          onConfigure: () => setEnrichmentPosition({ column }),
+        };
       case "ai":
         return { configureLabel: t("editAi"), onConfigure: () => setAiPosition({ column }) };
       case "http":
@@ -3102,6 +3121,13 @@ export default function GridClient({
         anchorRect={addMenu?.rect ?? null}
         onClose={closeAddMenu}
         onPick={addColumn}
+        onPickFunction={(integrationKey, actionKey) =>
+          setEnrichmentPosition({
+            afterColumnId: addMenu?.afterColumnId,
+            beforeColumnId: addMenu?.beforeColumnId,
+            initialAction: { integrationKey, actionKey },
+          })
+        }
       />
 
       {aiPosition && (
@@ -3129,7 +3155,13 @@ export default function GridClient({
       {enrichmentPosition && (
         <EnrichmentDialog
           // Keep enrichment on the same per-session lifecycle as AI.
-          key={enrichmentPosition.column?.id ?? "new-enrichment-column"}
+          key={
+            enrichmentPosition.column?.id
+            ?? (enrichmentPosition.initialAction
+              ? `new-function-${enrichmentPosition.initialAction.integrationKey}-${enrichmentPosition.initialAction.actionKey}`
+              : "new-enrichment-column")
+          }
+          initialAction={enrichmentPosition.initialAction}
           open
           tableId={table.id}
           columns={columns}

@@ -272,6 +272,7 @@
       "changeTypeHttp": "A configuração da requisição HTTP (URL, cabeçalhos, corpo e caminho da resposta) será descartada e a coluna passará a ser uma coluna comum. Os valores existentes permanecem, mas deixam de ser buscados.",
       "changeTypeConfirm": "Alterar tipo",
       "editEnrichment": "Editar enriquecimento",
+      "editFunction": "Editar função",
       "editAi": "Editar coluna de IA",
       "editHttp": "Editar API HTTP",
       "editFormula": "Editar fórmula",
