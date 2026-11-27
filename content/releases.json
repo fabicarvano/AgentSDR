@@ -50,17 +50,17 @@
         }
       },
       {
-        "type": "fix",
-        "text": {
-          "en": "Free actions now run on blank cells, so clearing a value also clears its old result.",
-          "pt-BR": "As ações gratuitas agora são executadas em células vazias: ao apagar um valor, o resultado antigo também é limpo."
-        }
-      },
-      {
         "type": "improvement",
         "text": {
           "en": "Sign-up confirmation, password reset and invitation emails now arrive in the language of your interface (English or Brazilian Portuguese).",
           "pt-BR": "Os e-mails de confirmação de cadastro, redefinição de senha e convite agora chegam no idioma da sua interface (inglês ou português do Brasil)."
+        }
+      },
+      {
+        "type": "fix",
+        "text": {
+          "en": "Free actions now run on blank cells, so clearing a value also clears its old result.",
+          "pt-BR": "As ações gratuitas agora são executadas em células vazias: ao apagar um valor, o resultado antigo também é limpo."
         }
       },
       {
