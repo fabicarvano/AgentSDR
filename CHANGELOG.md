@@ -22,6 +22,22 @@ Each release lists the database migrations it needs; see
   `GET /api/releases/current` and `POST /api/releases/dismiss` (answers 409
   if the version is not the current one).
 
+### Changed
+
+- **Authentication emails follow the interface language.** The sign-up
+  confirmation, password reset and invitation emails are sent in English or
+  Brazilian Portuguese, matching the browser of whoever made the request
+  (`NEXT_LOCALE` cookie, then `Accept-Language`, then English). An invitation
+  uses the inviter's language. The text lives in the `authEmail` message domain.
+
+### Fixed
+
+- Sign-in, Google sign-in, invitation and Settings → Organization screens no
+  longer show Better Auth's English error messages when the interface is in
+  Portuguese.
+- An expired or invalid confirmation link now shows a message on the sign-in
+  and invitation screens instead of landing there with no explanation.
+
 ### Migrations
 
 - `bun scripts/add-user-release-dismissals.ts` creates the table

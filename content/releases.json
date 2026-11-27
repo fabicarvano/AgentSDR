@@ -28,6 +28,20 @@
           "en": "Example of a fix (placeholder, replace before releasing).",
           "pt-BR": "Exemplo de uma correção (provisório, substitua antes de lançar)."
         }
+      },
+      {
+        "type": "improvement",
+        "text": {
+          "en": "Sign-up confirmation, password reset and invitation emails now arrive in the language of your interface (English or Brazilian Portuguese).",
+          "pt-BR": "Os e-mails de confirmação de cadastro, redefinição de senha e convite agora chegam no idioma da sua interface (inglês ou português do Brasil)."
+        }
+      },
+      {
+        "type": "fix",
+        "text": {
+          "en": "Sign-in, invitation and organization screens no longer show error messages in English when the interface is in Portuguese, and an expired confirmation link now explains what happened.",
+          "pt-BR": "As telas de login, convite e organização não mostram mais mensagens de erro em inglês com a interface em português, e um link de confirmação vencido agora explica o que aconteceu."
+        }
       }
     ]
   }

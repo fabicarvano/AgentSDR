@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { authClient, useSession } from "@/lib/auth/client";
 import { useAuthError } from "@/i18n/useAuthError";
+import { asVerifyError, type VerifyErrorCode } from "@/components/auth/verifyError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, SecondaryButton, linkClass } from "@/components/auth/fields";
 import { Spinner } from "@/components/auth/fields";
@@ -27,20 +28,27 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
   const { id } = use(params);
   const { data: session, isPending } = useSession();
   const [invite, setInvite] = useState<Invitation | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "missing" | "wrong-email">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "wrong-email" | "unverified">("loading");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<"accept" | "decline" | null>(null);
   const [declined, setDeclined] = useState(false);
   const [expired, setExpired] = useState(false);
+  // Someone who signed up from this invitation comes back here from the confirmation link; a bad link adds ?error=<CODE>.
+  const [verifyError, setVerifyError] = useState<VerifyErrorCode | null>(null);
 
   useEffect(() => {
     if (isPending) return;
     let cancelled = false;
     authClient.organization.getInvitation({ query: { id } }).then(({ data, error: err }) => {
       if (cancelled) return;
+      setVerifyError(asVerifyError(new URLSearchParams(window.location.search).get("error")));
       if (err || !data) {
-        // Signed out, a stranger's invitation, or gone: the API answers the same for all.
-        setState(session ? (err?.status === 403 ? "wrong-email" : "missing") : "ready");
+        // Signed out: the API will not say anything about the invitation, so offer to sign in.
+        // Signed in: 403 is either an unverified address or someone else's invitation; anything
+        // else (expired, cancelled, already used, never existed) answers as "not found".
+        if (!session) setState("ready");
+        else if (err?.code === "EMAIL_VERIFICATION_REQUIRED_FOR_INVITATION" || err?.code === "EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION") setState("unverified");
+        else setState(err?.status === 403 ? "wrong-email" : "missing");
         return;
       }
       const inv = data as Invitation;
@@ -113,6 +121,16 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
     );
   }
 
+  if (state === "unverified") {
+    return (
+      <AuthShell title={t("unverifiedTitle")} subtitle={t("unverifiedSubtitle")}>
+        <Link href={`/sign-in?from=${from}`} className={linkClass}>
+          {tc("backToSignIn")}
+        </Link>
+      </AuthShell>
+    );
+  }
+
   if (state === "missing" || expired) {
     return (
       <AuthShell
@@ -137,6 +155,7 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
         }
       >
         <div className="flex flex-col gap-3">
+          {verifyError && <ErrorCallout>{authError({ code: verifyError }, tc("genericError"))}</ErrorCallout>}
           <Link href={`/sign-in?from=${from}`} className="w-full rounded-lg bg-indigo-600 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500">
             {t("signInToAccept")}
           </Link>

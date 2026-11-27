@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
+import type { VerifyErrorCode } from "@/components/auth/verifyError";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ErrorCallout, Field, InfoCallout, SecondaryButton, SubmitButton, linkClass, quietLinkClass } from "@/components/auth/fields";
 import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
@@ -29,6 +31,7 @@ export function SignInForm({
   from,
   signupAvailable = true,
   accessRequestEmail = null,
+  verifyError = null,
 }: {
   googleEnabled: boolean;
   from: string | null;
@@ -36,13 +39,16 @@ export function SignInForm({
   signupAvailable?: boolean;
   /** Where "Need access?" writes to (ACCESS_REQUEST_EMAIL). Without it the sentence is shown without a link. */
   accessRequestEmail?: string | null;
+  /** Why the confirmation link that brought the visitor here failed, if it did. */
+  verifyError?: VerifyErrorCode | null;
 }) {
   const t = useTranslations("auth.signIn");
   const tc = useTranslations("auth.common");
+  const authError = useAuthError();
   const target = from || "/analytics";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => (verifyError ? authError({ code: verifyError }, t("errors.generic")) : ""));
   const [unverified, setUnverified] = useState(false);
   const [resent, setResent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,8 +69,7 @@ export function SignInForm({
     }
     if (err.code === "EMAIL_NOT_VERIFIED") setUnverified(true);
     else if (err.code === "INVALID_EMAIL_OR_PASSWORD") setError(t("errors.invalidCredentials"));
-    // err.message comes from Better Auth on the server, in English; only the fallback is translated.
-    else setError(err.message || t("errors.generic"));
+    else setError(authError(err, t("errors.generic")));
     setLoading(false);
   }
 
@@ -72,7 +77,7 @@ export function SignInForm({
     setResending(true);
     const { error: err } = await authClient.sendVerificationEmail({ email, callbackURL: target });
     setResending(false);
-    if (err) setError(err.message || t("errors.resendFailed"));
+    if (err) setError(authError(err, t("errors.resendFailed")));
     else setResent(true);
   }
 

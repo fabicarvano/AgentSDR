@@ -10,7 +10,9 @@ import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { authEmail, sendAuthEmail } from "./email";
+import { localeFromRequest } from "@/i18n/requestLocale";
+import { sendAuthEmail } from "./email";
+import { INVITATION_EXPIRES_DAYS, invitationEmail, resetPasswordEmail, verificationEmail } from "./emailContent";
 import { ac, roles } from "./permissions";
 import { authSchema, members } from "./schema";
 import { mayCreateAccount, mayCreateOrganization } from "./signup";
@@ -74,32 +76,20 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     // Not awaited: Better Auth's docs warn that waiting on delivery leaks,
     // through response timing, whether an address has an account.
-    sendResetPassword: async ({ user, url }) => {
-      void sendAuthEmail(
-        authEmail({
-          to: user.email,
-          subject: "Reset your AgentSDR password",
-          intro: "Someone asked to reset the password for this AgentSDR account.",
-          action: "Choose a new password",
-          url,
-        }),
-      ).catch((error) => console.error("[auth] reset email failed:", error));
+    sendResetPassword: async ({ user, url }, request) => {
+      void sendAuthEmail(resetPasswordEmail(localeFromRequest(request), { user, url })).catch((error) =>
+        console.error("[auth] reset email failed:", error),
+      );
     },
   },
 
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      void sendAuthEmail(
-        authEmail({
-          to: user.email,
-          subject: "Confirm your email for AgentSDR",
-          intro: `Welcome to AgentSDR, ${user.name}. Confirm this is your email address to finish creating your account.`,
-          action: "Confirm email",
-          url,
-        }),
-      ).catch((error) => console.error("[auth] verification email failed:", error));
+    sendVerificationEmail: async ({ user, url }, request) => {
+      void sendAuthEmail(verificationEmail(localeFromRequest(request), { user, url })).catch((error) =>
+        console.error("[auth] verification email failed:", error),
+      );
     },
   },
 
@@ -158,17 +148,17 @@ export const auth = betterAuth({
       roles,
       teams: { enabled: true },
       allowUserToCreateOrganization: (user) => mayCreateOrganization(user.id),
-      invitationExpiresIn: 7 * 24 * 60 * 60,
+      invitationExpiresIn: INVITATION_EXPIRES_DAYS * 24 * 60 * 60,
       cancelPendingInvitationsOnReInvite: true,
-      sendInvitationEmail: async ({ id, email, organization, inviter }) => {
+      // The request is the inviter's, so the invitation goes out in the inviter's language.
+      sendInvitationEmail: async ({ id, email, organization, inviter }, request) => {
         void sendAuthEmail(
-          authEmail({
+          invitationEmail(localeFromRequest(request), {
             to: email,
-            subject: `${inviter.user.name} invited you to ${organization.name} on AgentSDR`,
-            intro: `${inviter.user.name} (${inviter.user.email}) invited you to join ${organization.name} on AgentSDR.`,
-            action: "Accept invitation",
             url: `${baseURL}/accept-invitation/${id}`,
-            outro: "This invitation expires in 7 days. If you weren't expecting it, you can ignore this email.",
+            organizationName: organization.name,
+            inviterName: inviter.user.name,
+            inviterEmail: inviter.user.email,
           }),
         ).catch((error) => console.error("[auth] invitation email failed:", error));
       },

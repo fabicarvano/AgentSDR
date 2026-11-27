@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { authClient, useSession } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { roles, type OrgRole } from "@/lib/auth/permissions";
 
 // Written out rather than inferred: the client's inferred type is too deep for tsc to resolve here.
@@ -35,16 +36,17 @@ export function useOrgAccess() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const t = useTranslations("settingsOrg.access");
+  const authError = useAuthError();
 
   const reload = useCallback(async () => {
     const res = await authClient.organization.getFullOrganization();
-    if (res.error) setError(res.error.message || t("loadFailed"));
+    if (res.error) setError(authError(res.error, t("loadFailed")));
     else {
       setError("");
       setOrg(res.data as unknown as FullOrg | null);
     }
     setLoading(false);
-  }, [t]);
+  }, [t, authError]);
 
   useEffect(() => {
     // Initial fetch; state is set after the awaited response, not synchronously.
@@ -66,16 +68,17 @@ export function useOrgAccess() {
 
 export function useAsyncAction() {
   const t = useTranslations("settingsOrg.access");
+  const authError = useAuthError();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   /** Runs a Better Auth call; resolves true on success, otherwise shows its message inline. */
-  async function run(key: string, call: () => Promise<{ error?: { message?: string } | null }>): Promise<boolean> {
+  async function run(key: string, call: () => Promise<{ error?: { code?: string; message?: string } | null }>): Promise<boolean> {
     setBusy(key);
     setError("");
     try {
       const res = await call();
       if (res.error) {
-        setError(res.error.message || t("generic"));
+        setError(authError(res.error, t("generic")));
         return false;
       }
       return true;

@@ -15,6 +15,10 @@ AgentSDR sends a few emails of its own: the confirmation link when someone signs
 - About 15 minutes, plus DNS propagation.
 </Info>
 
+<Note>
+Each email goes out in English or Brazilian Portuguese, matching the interface language of the person who asked for it (the language their browser or the language picker is set to). An invitation uses the language of the person who sends it. English is the default.
+</Note>
+
 ## Overview
 
 AgentSDR calls Resend's `POST /emails` API with your key. Sign-up requires a verified email address, so without working email nobody but you (reading the server log) can finish creating an account.

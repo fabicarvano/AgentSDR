@@ -1,0 +1,24 @@
+{
+  "authEmail": {
+    "layout": {
+      "pasteLink": "Ou cole este link no navegador:",
+      "ignore": "Se você não pediu isso, ignore este e-mail."
+    },
+    "verification": {
+      "subject": "Confirme seu e-mail no AgentSDR",
+      "intro": "Boas-vindas ao AgentSDR, {name}. Confirme que este é o seu e-mail para concluir a criação da conta.",
+      "action": "Confirmar e-mail"
+    },
+    "resetPassword": {
+      "subject": "Redefinir sua senha do AgentSDR",
+      "intro": "Alguém pediu para redefinir a senha desta conta do AgentSDR.",
+      "action": "Redefinir senha"
+    },
+    "invitation": {
+      "subject": "{inviter} convidou você para {org} no AgentSDR",
+      "intro": "{inviter} ({inviterEmail}) convidou você para participar de {org} no AgentSDR.",
+      "action": "Aceitar convite",
+      "outro": "Este convite expira em {days, plural, one {# dia} other {# dias}}. Se você não esperava por ele, ignore este e-mail."
+    }
+  }
+}

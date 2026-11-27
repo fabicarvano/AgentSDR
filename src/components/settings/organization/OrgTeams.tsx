@@ -9,6 +9,7 @@ import { Frame, FrameHeader, FramePanel } from "@/components/analytics/kit/Frame
 import { useDialogs } from "@/components/DialogProvider";
 import { Callout } from "@/components/settings/SettingsKit";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { useAsyncAction, useOrgAccess, type OrgMember } from "./useOrgAccess";
 
 type Team = { id: string; name: string };
@@ -16,6 +17,7 @@ type Team = { id: string; name: string };
 export function OrgTeams() {
   const t = useTranslations("settingsOrg.teams");
   const ts = useTranslations("settingsOrg.state");
+  const authError = useAuthError();
   const { org, role, loading, error: loadError, can } = useOrgAccess();
   const dialogs = useDialogs();
   const { busy, error, run } = useAsyncAction();
@@ -30,7 +32,7 @@ export function OrgTeams() {
   const loadTeams = useCallback(async () => {
     if (!orgId) return;
     const res = await authClient.organization.listTeams({ query: { organizationId: orgId } });
-    if (res.error || !res.data) return setListError(res.error?.message || t("loadFailed"));
+    if (res.error || !res.data) return setListError(authError(res.error, t("loadFailed")));
     setListError("");
     setTeams(res.data.map((team) => ({ id: team.id, name: team.name })));
     const entries = await Promise.all(
@@ -40,7 +42,7 @@ export function OrgTeams() {
       }),
     );
     setTeamMembers(Object.fromEntries(entries));
-  }, [orgId, t]);
+  }, [orgId, t, authError]);
 
   useEffect(() => {
     // Fetch once the organization is known; state lands after the awaited responses.

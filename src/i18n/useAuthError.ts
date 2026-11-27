@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 
 type AuthError = { code?: string | null; message?: string | null } | null | undefined;
@@ -12,10 +13,14 @@ type AuthError = { code?: string | null; message?: string | null } | null | unde
  */
 export function useAuthError() {
   const t = useTranslations("auth.errors");
-  return (error: AuthError, fallback: string): string => {
-    const code = error?.code;
-    // `code` is any string at runtime; `has` is what says whether it is one we translate.
-    if (code && t.has(code as never)) return t(code as never);
-    return error?.message || fallback;
-  };
+  // Stable across renders (as `t` is), so it can sit in a hook's dependency list.
+  return useCallback(
+    (error: AuthError, fallback: string): string => {
+      const code = error?.code;
+      // `code` is any string at runtime; `has` is what says whether it is one we translate.
+      if (code && t.has(code as never)) return t(code as never);
+      return error?.message || fallback;
+    },
+    [t],
+  );
 }
