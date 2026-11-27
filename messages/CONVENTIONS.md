@@ -41,6 +41,13 @@ const t = await getTranslations("settings.appearance");
   `moment`: use `momentIn(locale, value)` from `@/i18n/moment`, never `moment.locale()` (it is global and shared between requests).
 - **Better Auth errors**: `const authError = useAuthError()` then `authError(err, t("errors.generic"))`. It uses `auth.errors.<CODE>` when the
   code is translated and falls back to the server's English message. Add new codes there when a screen can show them.
+  Never show `err.message` straight on a screen: it is the server's English text. Always go through `useAuthError()`.
+- **Text translated outside React**: code that has no component or `next/headers`, such as Better Auth's email hooks, cannot use
+  `useTranslations` or `getTranslations`. The authentication emails (sign-up confirmation, password reset, organization invitation)
+  live in the `authEmail` domain and are translated with `createTranslator` (`authEmailTranslator` in `src/lib/auth/email.ts`),
+  which reads only that domain. The language is `localeFromRequest(request)` from `@/i18n/requestLocale`: the `NEXT_LOCALE` cookie, then
+  `Accept-Language`, then English (also English when there is no request). An invitation uses the language of the person who sends it,
+  because the invitee has no stored language. Build each email in a pure function (`src/lib/auth/emailContent.ts`) so it can be tested.
 - `ICU` special characters: a literal `{`, `}` or `<` needs quoting (`'{'`). An apostrophe before a letter is fine ("isn't").
 
 ## What stays in English
@@ -49,7 +56,8 @@ const t = await getTranslations("settings.appearance");
   Findymail, ZeroBounce, Resend, Langfuse, Cal.com, GoLogin, CloakBrowser, Playwright, MCP, OAuth, API.
 - Code, identifiers, enum values, URLs, email addresses, file names, keyboard shortcuts (`⌘K`), CSS classes, field names sent to an API.
 - Server-side text that is not rendered through these catalogs yet (API error strings, `lib/` messages). They are a later batch;
-  do not translate them in a component by pattern-matching on the English text.
+  do not translate them in a component by pattern-matching on the English text. The authentication emails are not in this group:
+  they are translated (see "Text translated outside React").
 - The access-request mailto in `SignInForm.tsx` (it is written to the AgentSDR team, who read English).
 
 When something is left in English on purpose, leave a one-line comment in the code saying why.

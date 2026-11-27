@@ -1,0 +1,24 @@
+{
+  "authEmail": {
+    "layout": {
+      "pasteLink": "Or paste this link into your browser:",
+      "ignore": "If you didn't ask for this, you can ignore this email."
+    },
+    "verification": {
+      "subject": "Confirm your email for AgentSDR",
+      "intro": "Welcome to AgentSDR, {name}. Confirm this is your email address to finish creating your account.",
+      "action": "Confirm email"
+    },
+    "resetPassword": {
+      "subject": "Reset your AgentSDR password",
+      "intro": "Someone asked to reset the password for this AgentSDR account.",
+      "action": "Choose a new password"
+    },
+    "invitation": {
+      "subject": "{inviter} invited you to {org} on AgentSDR",
+      "intro": "{inviter} ({inviterEmail}) invited you to join {org} on AgentSDR.",
+      "action": "Accept invitation",
+      "outro": "This invitation expires in {days, plural, one {# day} other {# days}}. If you weren't expecting it, you can ignore this email."
+    }
+  }
+}

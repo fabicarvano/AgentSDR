@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
+import { useAuthError } from "@/i18n/useAuthError";
 import { SecondaryButton } from "./fields";
 
 function GoogleG() {
@@ -26,13 +27,14 @@ export function GoogleButton({
   label?: string;
 }) {
   const t = useTranslations("auth.common");
+  const authError = useAuthError();
   const [loading, setLoading] = useState(false);
 
   async function go() {
     setLoading(true);
     const { error } = await authClient.signIn.social({ provider: "google", callbackURL });
     if (error) {
-      onError(error.message || t("googleFailed"));
+      onError(authError(error, t("googleFailed")));
       setLoading(false);
     }
   }

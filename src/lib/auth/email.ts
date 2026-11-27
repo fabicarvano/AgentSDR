@@ -1,4 +1,9 @@
 import "server-only";
+// next-intl's React-free core. "next-intl" itself re-exports it, but its entry point also pulls in React, which a plain server module (and bun test) cannot load.
+import { createTranslator } from "use-intl/core";
+import type { Locale } from "@/i18n/config";
+import en from "../../../messages/en/authEmail.json";
+import ptBR from "../../../messages/pt-BR/authEmail.json";
 
 /**
  * Transactional email for authentication — verification, password reset,
@@ -52,17 +57,35 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-/** One plain, client-safe layout for every auth email: a line of text and a button. */
-export function authEmail(input: { to: string; subject: string; intro: string; action: string; url: string; outro?: string }): AuthEmail {
-  const outro = input.outro ?? "If you didn't ask for this, you can ignore this email.";
+const MESSAGES: Record<Locale, typeof en> = { en, "pt-BR": ptBR };
+
+/**
+ * The auth emails' own translator. These are sent from Better Auth's hooks, outside
+ * React and outside next-intl's request config, so the `authEmail` domain is read
+ * here directly instead of through getTranslations (which loads every domain and
+ * resolves the language from next/headers).
+ */
+export function authEmailTranslator(locale: Locale) {
+  return createTranslator({ locale, messages: MESSAGES[locale], namespace: "authEmail" });
+}
+
+/**
+ * One plain, client-safe layout for every auth email: a line of text and a button.
+ * The caller passes text already in `locale`; the layout's own fixed lines are
+ * translated here. Only the HTML is escaped: the subject and the text part are
+ * plain text, where an entity would show up literally.
+ */
+export function authEmail(input: { locale: Locale; to: string; subject: string; intro: string; action: string; url: string; outro?: string }): AuthEmail {
+  const t = authEmailTranslator(input.locale);
+  const outro = input.outro ?? t("layout.ignore");
   const text = `${input.intro}\n\n${input.action}: ${input.url}\n\n${outro}`;
-  const html = `<!doctype html><html><body style="margin:0;background:#f5f7fa;font-family:Inter,Arial,sans-serif;color:#0e121b">
+  const html = `<!doctype html><html lang="${input.locale}"><body style="margin:0;background:#f5f7fa;font-family:Inter,Arial,sans-serif;color:#0e121b">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px">
 <table role="presentation" width="100%" style="max-width:480px;background:#ffffff;border-radius:16px;padding:32px" cellpadding="0" cellspacing="0">
 <tr><td style="font-size:20px;font-weight:600;padding-bottom:16px">AgentSDR</td></tr>
 <tr><td style="font-size:15px;line-height:1.6;color:#525866;padding-bottom:24px">${escapeHtml(input.intro)}</td></tr>
 <tr><td style="padding-bottom:24px"><a href="${escapeHtml(input.url)}" style="display:inline-block;background:#335cff;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 20px;border-radius:10px">${escapeHtml(input.action)}</a></td></tr>
-<tr><td style="font-size:13px;line-height:1.6;color:#99a0ae">${escapeHtml(outro)}<br><br>Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(input.url)}</span></td></tr>
+<tr><td style="font-size:13px;line-height:1.6;color:#99a0ae">${escapeHtml(outro)}<br><br>${escapeHtml(t("layout.pasteLink"))}<br><span style="word-break:break-all">${escapeHtml(input.url)}</span></td></tr>
 </table></td></tr></table></body></html>`;
   return { to: input.to, subject: input.subject, text, html };
 }

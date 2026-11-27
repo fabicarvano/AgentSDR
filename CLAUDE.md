@@ -158,7 +158,16 @@ Env keeps only what is needed before the database can be read or decrypted
 (`DATABASE_URL`, `BETTER_AUTH_*`, `INTEGRATION_CREDENTIALS_KEY`), platform
 infrastructure shared by every organization (`RESEND_API_KEY`,
 `AUTH_EMAIL_FROM`, `GOOGLE_CLIENT_ID/SECRET` for sign-in), public URLs,
-cron secrets and tuning knobs. Two deliberate exceptions:
+cron secrets and tuning knobs.
+
+The auth emails (sign-up confirmation, password reset, invitation) are translated
+(en, pt-BR). The text lives only in the `authEmail` catalog domain
+(`messages/<locale>/authEmail.json`); `src/lib/auth/emailContent.ts` builds each
+email and `src/lib/auth/server.ts` sends it. The language is the browser language of
+whoever made the request (`localeFromRequest`, `src/i18n/requestLocale.ts`), English
+without a request. An invitation goes out in the inviter's language. Never write email text in code.
+
+Two deliberate exceptions to the env rule:
 
 - Prospecting's domain qualification reads `APOLLO_API_KEY` (a master key).
   It is not an integration because that section is slated for removal;
