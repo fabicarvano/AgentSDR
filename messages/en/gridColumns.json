@@ -109,7 +109,8 @@
       "pin": "Pin",
       "unpin": "Unpin",
       "hide": "Hide",
-      "delete": "Delete"
+      "delete": "Delete",
+      "typeFunction": "Function"
     },
     "sortPanel": {
       "textAsc": "A → Z",
@@ -193,7 +194,12 @@
       "noMatch": "No columns match."
     },
     "addColumnMenu": {
-      "comingSoon": "Coming soon — see docs/design/enrichment-plan.md"
+      "comingSoon": "Coming soon — see docs/design/enrichment-plan.md",
+      "functionsHint": "Clean and standardize data inside AgentSDR. No account, no credits.",
+      "functionGroups": {
+        "normalize": "Clean and standardize",
+        "extract": "Extract"
+      }
     }
   }
 }

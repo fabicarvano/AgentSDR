@@ -91,9 +91,6 @@
         },
         "icypeas": {
           "description": "Descubra e verifique e-mails, encontre perfis profissionais e enriqueça pessoas e empresas."
-        },
-        "agentservice": {
-          "description": "Limpe e padronize valores dentro do AgentSDR. Não precisa de conta nem de créditos."
         }
       }
     },
@@ -186,7 +183,6 @@
         "tabIntegrations": "Integrações",
         "tabDiscover": "Descobrir",
         "tabTemplates": "Modelos",
-        "tabFunctions": "Funções",
         "checking": "Verificando conexão…",
         "connected": "Conectado",
         "addIntegration": "Adicionar integração",
@@ -199,6 +195,13 @@
         "findApiKey": "Encontrar sua chave de API",
         "enrichmentLine": "Enriquecimento · {name}",
         "openDocsAria": "Abrir a documentação de {name}"
+      },
+      "functionMode": {
+        "actionLine": "Função · {name}",
+        "subtitle": "Limpe e padronize dados dentro do AgentSDR. Sem conta, sem crédito.",
+        "inputTitle": "Entrada",
+        "outputsTitle": "Colunas a criar",
+        "outputsIntro": "A função roda uma vez por linha. Cada resultado escolhido vira uma coluna."
       }
     },
     "ai": {

@@ -174,13 +174,29 @@ filled by whichever deployment's worker is live — test those after a deploy.
 |---|---|---|
 | M1 | Create campaign from selected rows (open dialog only) | Dialog lists the right rows and fields |
 
+## N. Functions
+
+| # | Operation | Pass when |
+|---|---|---|
+| N1 | Open Add column; click Functions | Functions is enabled and expands in place, with the groups Clean and standardize and Extract and 8 functions in all |
+| N2 | Open the same menu from Insert column → Left and → Right; add a function | Functions expands the same way; the new column lands at the chosen position |
+| N3 | Pick Normalize CNPJ | One-screen panel opens with no account section; Normalized CNPJ and Valid CNPJ are ticked |
+| N4 | Map the input column; Save & run 10 rows | Columns created and 10 rows filled; no credits spent |
+| N5 | Pick Normalize name | First Name and Last Name are ticked |
+| N6 | Column menu → Edit function | Same panel reopens; outputs already created are ticked and locked; another output can be added |
+| N7 | Open the column menu of the function column, and look at its header and the headers of its output columns | The function column's menu shows the type Function; its header and the output columns' headers show the function icon |
+| N8 | Open a table with an AgentService column created before this change (0.5.1) | Column shows as a function, runs again and opens in Edit function |
+| N9 | Open Add enrichment | AgentService is not listed; there is no Functions tab |
+| N10 | `GET /api/grid/integrations/agentservice/connections` | Responds 404 |
+| N11 | Switch the language to pt-BR; open Add column | The item reads "Funções"; the groups read "Limpar e padronizar" and "Extrair" |
+
 ## Not in Tables yet (Clay parity gaps)
 
 Shown in the menu but disabled, or absent:
 
 - **Find people / companies** sources that build a list from a search.
 - **Waterfall** enrichment (try providers in order until one hits).
-- **Merge columns**, **Functions**, **Message** column types.
+- **Merge columns**, **Message** column types.
 - **Write to another table** / lookups that write, and CRM sync columns.
 - **Scheduled re-runs** (refresh a column on a schedule) and webhooks into a table.
 - Credit usage per workbook ("View credit usage" is disabled).

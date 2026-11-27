@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { AGENTSERVICE_KEY, agentServiceConnectionIdFor } from "@/lib/integrations/agentservice/connection";
-import { getIntegration } from "@/lib/integrations/catalog";
+import { getIntegration, integrationKind } from "@/lib/integrations/catalog";
 import {
   decryptIntegrationCredential,
   decryptIntegrationCredentials,
@@ -51,20 +51,20 @@ function toConnection(provider: GridProvider, hasCredentialRecord = false): Inte
 }
 
 /**
- * AgentService is the integration for actions that run inside AgentSDR, so it
- * has no account to add. Every organization gets one connection that is always
+ * Functions (AgentService) run inside AgentSDR: there is no account, nothing to
+ * list or connect. The runner still resolves every enrichment column through a
+ * connection, so each organization has one virtual connection for them: always
  * enabled and verified, with no row in grid_providers and no credentials.
  *
  * Its id is derived from the organization (see connection.ts), so an id copied
- * from another organization does not match.
+ * from another organization does not match. Everything this file knows about
+ * it goes through the two functions below. They go away when functions get a
+ * column type of their own that runs without a connection ("Option B").
  */
-function agentServiceConnectionId(): string {
-  return agentServiceConnectionIdFor(currentOrganizationId());
-}
-
-function agentServiceConnection(): IntegrationConnection {
+export function virtualConnectionFor(integrationKey: string): IntegrationConnection | null {
+  if (integrationKey !== AGENTSERVICE_KEY) return null;
   return {
-    id: agentServiceConnectionId(),
+    id: agentServiceConnectionIdFor(currentOrganizationId()),
     integrationKey: AGENTSERVICE_KEY,
     name: "AgentService",
     enabled: true,
@@ -73,8 +73,12 @@ function agentServiceConnection(): IntegrationConnection {
   };
 }
 
+function virtualConnectionById(id: string): IntegrationConnection | null {
+  const connection = virtualConnectionFor(AGENTSERVICE_KEY);
+  return connection?.id === id ? connection : null;
+}
+
 export async function listIntegrationConnections(integrationKey: string) {
-  if (integrationKey === AGENTSERVICE_KEY) return [agentServiceConnection()];
   const rows = await db
     .select({ provider: gridProviders, credentialId: gridProviderCredentials.id })
     .from(gridProviders)
@@ -85,7 +89,8 @@ export async function listIntegrationConnections(integrationKey: string) {
 }
 
 export async function getIntegrationConnection(id: string) {
-  if (id === agentServiceConnectionId()) return agentServiceConnection();
+  const virtual = virtualConnectionById(id);
+  if (virtual) return virtual;
   const [row] = await db
     .select({ provider: gridProviders, credentialId: gridProviderCredentials.id })
     .from(gridProviders)
@@ -100,10 +105,9 @@ export async function createIntegrationConnection(input: {
   name: string;
   credentials: Record<string, string>;
 }) {
-  // Nothing to create: the organization already has its one connection.
-  if (input.integrationKey === AGENTSERVICE_KEY) return agentServiceConnection();
   const integration = getIntegration(input.integrationKey);
-  if (!integration) throw new Error("Unknown integration");
+  // A function has no account to add.
+  if (!integration || integrationKind(integration) === "function") throw new Error("Unknown integration");
   const allowedFields = new Set(integration.auth.fields.map((field) => field.key));
   if (Object.keys(input.credentials).some((key) => !allowedFields.has(key))) {
     throw new Error("One or more credential fields are invalid");
@@ -151,7 +155,7 @@ export async function createIntegrationConnection(input: {
 
 /** Server-only credential resolution. Never include this value in an API response. */
 export async function getIntegrationCredentials(id: string): Promise<Record<string, string> | null> {
-  if (id === agentServiceConnectionId()) return {};
+  if (virtualConnectionById(id)) return {};
   const [row] = await db
     .select({ provider: gridProviders, encryptedPayload: gridProviderCredentials.encryptedPayload })
     .from(gridProviders)

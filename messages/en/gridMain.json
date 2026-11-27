@@ -272,6 +272,7 @@
       "changeTypeHttp": "The HTTP request setup (URL, headers, body and response path) will be discarded and the column will become a plain column. Existing values stay, but they will no longer be fetched.",
       "changeTypeConfirm": "Change type",
       "editEnrichment": "Edit enrichment",
+      "editFunction": "Edit function",
       "editAi": "Edit AI column",
       "editHttp": "Edit HTTP API",
       "editFormula": "Edit formula",

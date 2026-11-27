@@ -6,6 +6,7 @@ import { getIntegrationAction } from "@/lib/integrations/catalog";
 import { enrichmentNamesFrom, type EnrichmentNames, type NameLookup } from "@/lib/grid/enrichmentNames";
 import { authContextErrorResponse, withOrgContext } from "@/lib/auth/context";
 import { clientMessage, isRecord, isUuid } from "@/lib/grid/validate";
+import { virtualConnectionFor } from "@/lib/grid/providers";
 import { invalidJsonResponse, tableNotFoundResponse } from "@/lib/grid/http-errors";
 
 /** The column names in the language of the current request; English when the catalog cannot be read. */
@@ -20,6 +21,14 @@ async function namesFor(integrationKey: string, actionKey: string): Promise<Enri
     console.error("enrichment names: could not load the catalog", error);
     return {};
   }
+}
+
+/**
+ * A function (AgentService) has no account, so the client sends no connection: the organization's virtual one
+ * is used, whatever the request says.
+ */
+function functionConnectionId(integrationKey: unknown): string | undefined {
+  return typeof integrationKey === "string" ? virtualConnectionFor(integrationKey)?.id : undefined;
 }
 
 export async function POST(
@@ -57,6 +66,7 @@ export async function POST(
       if (!body.integrationKey || !body.actionKey) {
         return NextResponse.json({ error: "integrationKey and actionKey are required" }, { status: 400 });
       }
+      body.connectionId = functionConnectionId(body.integrationKey) ?? body.connectionId;
       if (!body.inputs || !body.selectedOutputs || !body.connectionId) {
         return NextResponse.json({ error: "inputs, outputs, and a connection are required" }, { status: 400 });
       }
@@ -135,6 +145,7 @@ export async function PATCH(
       } catch {
         return invalidJsonResponse();
       }
+      body.connectionId = functionConnectionId(body.integrationKey) ?? body.connectionId;
       if (!body.columnId || !body.integrationKey || !body.actionKey || !body.inputs || !body.selectedOutputs || !body.connectionId) {
         return NextResponse.json({ error: "column, action, inputs, outputs, and connection are required" }, { status: 400 });
       }

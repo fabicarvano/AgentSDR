@@ -9,6 +9,17 @@ Each release lists the database migrations it needs; see
 
 ## [Unreleased]
 
+### Changed
+
+- **Functions in Tables.** The AgentService actions are no longer listed as an
+  integration in the enrichment dialog. They are the **Functions** entry of the
+  Add column menu (and of Insert left/right): pick a function, map its input,
+  choose the columns to create and save, on one screen with no account step.
+  The first results come ticked. Existing AgentService columns are not
+  migrated: they keep running and now show the function icon, the "Function"
+  type and "Edit function". `GET`/`POST /api/grid/integrations/agentservice/connections`
+  answer 404, since a function has no account to list or add.
+
 ## [0.5.1] - 2026-11-27
 
 Upgrading from 0.5.0 needs one database migration, for the "What's new"

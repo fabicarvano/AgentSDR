@@ -60,7 +60,7 @@
             "pages": [
               "tables/overview",
               "tables/enrichment",
-              "tables/agentservice",
+              "tables/functions",
               "tables/ai-columns"
             ]
           },
@@ -187,6 +187,12 @@
       }
     ]
   },
+  "redirects": [
+    {
+      "source": "/tables/agentservice",
+      "destination": "/tables/functions"
+    }
+  ],
   "footer": {
     "socials": {
       "github": "https://github.com/fabicarvano/AgentSDR",

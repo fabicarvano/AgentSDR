@@ -34,8 +34,6 @@ const VERIFIERS: Record<string, (credentials: Record<string, string>) => Promise
   semrush: verifySemrushCredentials,
   rocketreach: verifyRocketReachCredentials,
   icypeas: verifyIcypeasCredentials,
-  // Nothing to verify: AgentService has no credentials (see agentServiceConnection in grid/providers.ts).
-  agentservice: async () => {},
 };
 
 /** Dispatches credential checks to the provider-owned verifier. */

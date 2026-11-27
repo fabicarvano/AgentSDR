@@ -44,14 +44,24 @@ Each table tab has a menu with **Rename**, **Edit table settings**, **Move left*
 
 ## Column types
 
-**Actions**, then **Add column**, offers the four you will use most: **Add enrichment**, **Use AI**, **HTTP API** and **Formula**. **More column types...** lists the rest.
+**Actions**, then **Add column**, offers the four you will use most: **Add enrichment**, **Use AI**, **HTTP API** and **Formula**. **More column types...** lists the rest, including **Functions**.
 
-- **Run columns:** Add enrichment ([providers](/tables/enrichment)), Use AI and HTTP API ([AI and HTTP columns](/tables/ai-columns)), Formula.
+- **Run columns:** Add enrichment ([providers](/tables/enrichment)), Use AI and HTTP API ([AI and HTTP columns](/tables/ai-columns)), Formula, [Functions](/tables/functions).
 - **Data columns:** Text, Number, Currency, Date, URL, Email, Image from URL, Checkbox, Select, Multi-select, JSON.
 
 <Note>
-**Functions**, **Message**, **Waterfall** and **Merge columns** appear in the menu but are disabled. They can't be created yet, so there is no waterfall or fallback between providers today.
+**Message**, **Waterfall** and **Merge columns** appear in the menu but are disabled. They can't be created yet, so there is no waterfall or fallback between providers today.
 </Note>
+
+### Functions
+
+Functions clean and standardize data inside AgentSDR, such as phones, emails, names and CNPJ numbers. They need no account and spend no credits.
+
+1. In the **Add column** menu, click **Functions**. The item expands in place.
+2. Pick a function from **Clean and standardize** or **Extract**.
+3. In the panel, choose the input column, tick the columns to create, then click **Save without running** or **Save & run 10 rows**.
+
+See [Functions](/tables/functions) for the full list and the rules of each one.
 
 A **Formula** column evaluates one expression per row using `{{columnKey}}` tokens. It supports JavaScript, FormulaJS, lodash and moment, and `LOOKUP("Table", {{value}}, "Match column", "Return column")` to read from another table. You can ask AI to generate the formula.
 

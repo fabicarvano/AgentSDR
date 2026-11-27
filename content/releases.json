@@ -1,5 +1,23 @@
 [
   {
+    "version": "0.5.2",
+    "date": "2026-11-27",
+    "placeholder": true,
+    "title": {
+      "en": "Functions in Tables",
+      "pt-BR": "Funções nas Planilhas"
+    },
+    "items": [
+      {
+        "type": "improvement",
+        "text": {
+          "en": "Tables: the AgentService actions are now Functions. Add one from Add column, Functions, with no account to pick. Columns you already have keep working and show as functions.",
+          "pt-BR": "Planilhas: as ações do AgentService agora são Funções. Adicione uma em Adicionar coluna, Funções, sem escolher conta. As colunas que você já tem continuam funcionando e aparecem como funções."
+        }
+      }
+    ]
+  },
+  {
     "version": "0.5.1",
     "date": "2026-11-27",
     "title": {

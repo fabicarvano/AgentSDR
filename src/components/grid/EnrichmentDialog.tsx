@@ -9,6 +9,7 @@ import {
   RiCheckboxBlankLine,
   RiCheckboxLine,
   RiCloseLine,
+  RiCpuLine,
   RiExternalLinkLine,
   RiFlashlightLine,
   RiLoader4Line,
@@ -23,14 +24,24 @@ import { DocsLink } from "@/components/page/DocsLink";
 import IntegrationIcon from "./IntegrationIcon";
 import {
   ACTION_CATEGORIES,
-  INTEGRATIONS,
   getIntegration,
   getIntegrationAction,
+  integrationDefinitions,
 } from "@/lib/integrations/catalog";
 import type { Messages } from "@/i18n/catalog";
 import type { ActionCategory, ActionInputDefinition, IntegrationDefinition } from "@/lib/integrations/types";
 import { useColumnTypeLabel } from "./columnTypes";
 import { useApiErrorText } from "@/i18n/useApiErrorText";
+import {
+  dialogMode,
+  enrichmentRequestBody,
+  initialOutputs,
+  initialSelection,
+  type InitialAction,
+} from "./enrichmentDialogState";
+
+/** The providers of the catalog. Functions (AgentService) are added from Add column, Functions instead. */
+const CATALOG_INTEGRATIONS = integrationDefinitions();
 
 type Step = "setup" | "outputs";
 
@@ -44,7 +55,7 @@ type Step = "setup" | "outputs";
  */
 const INTEGRATION_KEYS = [
   "apollo", "cleanlist", "companyenrich", "snov", "millionverifier", "contactout", "findymail", "fullenrich",
-  "hunter", "leadmagic", "lusha", "zerobounce", "similarweb", "semrush", "rocketreach", "icypeas", "agentservice",
+  "hunter", "leadmagic", "lusha", "zerobounce", "similarweb", "semrush", "rocketreach", "icypeas",
 ] as const;
 const _enrichmentsCovered: Record<(typeof INTEGRATION_KEYS)[number], { description: string }> =
   {} as Messages["gridEnrich"]["registry"]["integrations"];
@@ -157,6 +168,7 @@ export default function EnrichmentDialog({
   column: columnProp,
   afterColumnId,
   beforeColumnId,
+  initialAction,
   onClose,
   onSaved,
 }: {
@@ -167,6 +179,8 @@ export default function EnrichmentDialog({
   column?: GridColumn;
   afterColumnId?: string;
   beforeColumnId?: string;
+  /** Opens a new column straight on this action (a function picked in the Add column menu). */
+  initialAction?: InitialAction;
   onClose: () => void;
   onSaved: (activeJobs?: number) => void | Promise<void>;
 }) {
@@ -178,16 +192,28 @@ export default function EnrichmentDialog({
   // dialog stays open on it and the next save updates it instead of adding another.
   const [created, setCreated] = useState<GridColumn | null>(null);
   const column = columnProp ?? created ?? undefined;
+  // A function has no catalog and no account step: one screen with input, columns to create and run settings.
+  const savedConfig = column?.type === "enrichment" ? (column.config as EnrichmentConfig) : null;
+  const functionMode = dialogMode(
+    savedConfig ? { integrationKey: savedConfig.integrationKey, actionKey: savedConfig.actionKey } : null,
+    initialAction,
+  ) === "function";
+  const initialIntegrationKey = initialAction?.integrationKey;
+  const initialActionKey = initialAction?.actionKey;
   const seededColumnId = useRef<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [outputSearch, setOutputSearch] = useState("");
-  const [integrationKey, setIntegrationKey] = useState(INTEGRATIONS[0]?.key ?? "");
-  const [actionKey, setActionKey] = useState<string | null>(null);
+  const [integrationKey, setIntegrationKey] = useState(() => initialSelection(initialAction).integrationKey);
+  const [actionKey, setActionKey] = useState<string | null>(() => initialSelection(initialAction).actionKey);
   const [step, setStep] = useState<Step>("setup");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
-  const [outputs, setOutputs] = useState<Set<string>>(new Set());
+  const [outputs, setOutputs] = useState<Set<string>>(() => {
+    const first = initialSelection(initialAction);
+    const firstAction = first.actionKey ? getIntegrationAction(first.integrationKey, first.actionKey) : null;
+    return new Set(initialOutputs(firstAction, dialogMode(null, initialAction)));
+  });
   const [connections, setConnections] = useState<IntegrationConnection[]>([]);
   const [connectedIntegrationKeys, setConnectedIntegrationKeys] = useState<Set<string>>(new Set());
   const [connectionsLoading, setConnectionsLoading] = useState(false);
@@ -216,11 +242,21 @@ export default function EnrichmentDialog({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearch("");
       setOutputSearch("");
-      setActionKey(null);
+      // Back to what a new column opens on: the catalog, or the function this dialog was opened for.
+      const first = initialSelection(
+        initialIntegrationKey && initialActionKey
+          ? { integrationKey: initialIntegrationKey, actionKey: initialActionKey }
+          : null,
+      );
+      setIntegrationKey(first.integrationKey);
+      setActionKey(first.actionKey);
       setStep("setup");
       setInputs({});
       setActiveFilterKeys([]);
-      setOutputs(new Set());
+      setOutputs(new Set(initialOutputs(
+        first.actionKey ? getIntegrationAction(first.integrationKey, first.actionKey) : null,
+        dialogMode(null, first.actionKey ? { integrationKey: first.integrationKey, actionKey: first.actionKey } : null),
+      )));
       setConnections([]);
       setConnectedIntegrationKeys(new Set());
       setConnectionsLoading(false);
@@ -230,7 +266,7 @@ export default function EnrichmentDialog({
       setCredentialValues({});
       setError(null);
     }
-  }, [open]);
+  }, [open, initialIntegrationKey, initialActionKey]);
 
   useEffect(() => {
     if (!open || !column || column.type !== "enrichment") return;
@@ -262,10 +298,11 @@ export default function EnrichmentDialog({
   }, [column, open]);
 
   useEffect(() => {
-    if (!open) return;
+    // The connected dots belong to the catalog, which a function never shows.
+    if (!open || functionMode) return;
     let cancelled = false;
     void Promise.all(
-      INTEGRATIONS.map(async (candidate) => {
+      CATALOG_INTEGRATIONS.map(async (candidate) => {
         try {
           const response = await fetch(`/api/grid/integrations/${candidate.key}/connections`);
           if (!response.ok) return null;
@@ -282,10 +319,11 @@ export default function EnrichmentDialog({
       if (!cancelled) setConnectedIntegrationKeys(new Set(keys.filter((key): key is string => Boolean(key))));
     });
     return () => { cancelled = true; };
-  }, [open]);
+  }, [open, functionMode]);
 
   useEffect(() => {
-    if (!open || !integrationKey) return;
+    // A function has no account: the server uses the organization's own connection.
+    if (!open || !integrationKey || functionMode) return;
     let cancelled = false;
     // Reflect the request started by this dependency change.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -316,7 +354,7 @@ export default function EnrichmentDialog({
       .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : t("errors.loadAccounts")))
       .finally(() => !cancelled && setConnectionsLoading(false));
     return () => { cancelled = true; };
-  }, [integrationKey, open, t, apiErrorText]);
+  }, [integrationKey, open, functionMode, t, apiErrorText]);
 
   function selectIntegration(key: string) {
     setIntegrationKey(key);
@@ -481,36 +519,45 @@ export default function EnrichmentDialog({
   }
 
   async function save(runFirstTen: boolean) {
-    if (!action || !connectionId) return;
+    if (!action) return;
+    if (!connectionId && !functionMode) return;
+    if (functionMode) {
+      const missing = action.inputs.find((input) => input.required && !inputs[input.key]);
+      if (missing) return setError(t("errors.selectColumnFor", { name: registry.inputName(integrationKey, actionKey, missing) }));
+      const mappedFilters = action.inputs.filter((input) => input.group === "filter" && inputs[input.key]).length;
+      if (action.filterBuilder && mappedFilters < action.filterBuilder.minFilters) {
+        return setError(t("errors.minFilters", { count: action.filterBuilder.minFilters }));
+      }
+    }
     if (!outputs.size) return setError(t("errors.selectOutput"));
     // The grid can hand over its coverage row, which is not a real row.
     const runRowIds = firstRowIds.filter((id) => id !== "__coverage").slice(0, 10);
     if (runFirstTen && action.implemented && runRowIds.length === 0) {
       return setError(t("errors.noRowsToRun"));
     }
-    const mappedInputs = Object.fromEntries(
-      Object.entries(inputs).filter(([, columnKey]) => Boolean(columnKey)),
-    );
     setBusy(true);
     setError(null);
     try {
       const response = await fetch(`/api/grid/tables/${tableId}/enrichments`, {
         method: column ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(enrichmentRequestBody({
           integrationKey,
           actionKey: action.key,
           columnId: column?.id,
-          connectionId,
-          inputs: mappedInputs,
-          selectedOutputs: [...outputs],
+          // Left out for a function: the server fills in the organization's connection.
+          connectionId: functionMode ? "" : connectionId,
+          inputs,
+          outputs,
           autoRun,
           runInBatches,
-          runCondition: conditionEnabled ? runCondition : undefined,
-          delaySeconds: delayEnabled ? delaySeconds : 0,
+          conditionEnabled,
+          runCondition,
+          delayEnabled,
+          delaySeconds,
           afterColumnId,
           beforeColumnId,
-        }),
+        })),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) return setError(apiErrorText(data, t("errors.addEnrichment")));
@@ -568,92 +615,10 @@ export default function EnrichmentDialog({
   ) ?? [];
   const unusedFilterInputs = filterInputs.filter((input) => !activeFilterKeys.includes(input.key));
 
-  return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px]" onClick={busy ? undefined : onClose} />
-      <div className={`absolute flex overflow-hidden bg-bg-white-0 shadow-2xl ring-1 ring-stroke-soft-200 ${action ? "inset-y-0 right-0 w-full max-w-[600px] flex-col" : "left-1/2 top-1/2 h-[min(760px,90vh)] w-[min(1000px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl"}`}>
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-stroke-soft-200 px-5">
-          <div className="flex min-w-0 items-center gap-2">
-            {action && <button type="button" onClick={() => step === "outputs" ? setStep("setup") : column ? onClose() : setActionKey(null)} disabled={busy} className="rounded-lg border border-stroke-soft-200 p-2 text-text-sub-600 hover:bg-bg-weak-50"><RiArrowLeftLine className="size-5" /></button>}
-            {action && integration && <IntegrationIcon integration={integration} size={32} />}
-            <h2 className="truncate text-[18px] font-semibold text-text-strong-950">{action ? registry.actionName(integrationKey, action) : t("title")}</h2>
-          </div>
-          <button type="button" onClick={onClose} disabled={busy} className="rounded-lg p-1.5 text-text-sub-600 hover:bg-bg-weak-50 disabled:opacity-50"><RiCloseLine className="size-5" /></button>
-        </div>
-
-        {!action ? (
-          <Catalog
-            search={search}
-            setSearch={setSearch}
-            integrationKey={integrationKey}
-            setIntegrationKey={selectIntegration}
-            filteredActions={filteredActions}
-            chooseAction={chooseAction}
-            connectedIntegrationKeys={connectedIntegrationKeys}
-            connectionsLoading={connectionsLoading}
-            addingAccount={addingAccount}
-            onAddingAccountChange={setAddingAccount}
-            accountName={accountName}
-            onAccountNameChange={(next) => { setAccountName(next); setError(null); }}
-            credentialValues={credentialValues}
-            onCredentialChange={(key, value) =>
-              { setCredentialValues((current) => ({ ...current, [key]: value })); setError(null); }
-            }
-            busy={busy}
-            error={error}
-            onAddAccount={addAccount}
-          />
-        ) : step === "setup" ? (
-          <>
-            <div className="min-h-0 flex-1 overflow-y-auto bg-bg-weak-50/50 p-5">
-              <section className="mb-4">
-                <h3 className="text-[13px] font-semibold text-text-strong-950">{t("action.title")}</h3>
-                <div className="mt-2 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-4">
-                  <p className="text-[14px] font-semibold text-text-strong-950">{integration?.name} <span className="mx-1 text-text-soft-400">›</span> {registry.actionName(integrationKey, action)}</p>
-                  <p className="mt-1 text-[13px] text-text-sub-600">{registry.actionDescription(integrationKey, action)}</p>
-                  <a href={action.docsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">{t("action.viewDocs")} <RiExternalLinkLine className="size-3.5" /></a>
-                  <p className="mt-2 text-[11px] font-medium text-text-soft-400">{t("action.categoryLine", { category: categoryName ?? "" })}</p>
-                </div>
-              </section>
-
+  // The three blocks below are shared by the two-step provider flow and the one-screen function flow.
+  const mappingSection = (title: string) => action && (
               <section className="mb-4 overflow-hidden rounded-xl border border-stroke-soft-200 bg-bg-white-0">
-                <h3 className="bg-bg-weak-50 px-4 py-3 text-[14px] font-semibold text-text-strong-950">{t("account.title")}</h3>
-                <div className="p-4">
-                  {connections.length > 0 && (
-                    <Select.Root size="small" value={connectionId} onValueChange={(next) => { setConnectionId(next); setError(null); }}>
-                      <Select.Trigger aria-label={t("account.aria", { provider: integration?.name ?? t("account.integrationFallback") })} className="w-full">
-                        <Select.Value />
-                      </Select.Trigger>
-                      <Select.Content>
-                        <Select.Item value="">{t("account.select", { provider: integration?.name ?? "" })}</Select.Item>
-                        {connections.map((connection) => (
-                          <Select.Item key={connection.id} value={connection.id} disabled={!connection.verified}>
-                            {connection.verified ? connection.name : t("account.needsVerification", { name: connection.name })}
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select.Root>
-                  )}
-                  {integration && integration.auth.fields.length === 0 ? null : !addingAccount ? (
-                    <button type="button" onClick={() => setAddingAccount(true)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-medium text-white hover:bg-blue-700"><RiAddLine className="size-4" />{t("account.add")}</button>
-                  ) : (
-                    <div className="mt-2 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 p-3">
-                      <input value={accountName} onChange={(event) => { setAccountName(event.target.value); setError(null); }} placeholder={t("account.namePlaceholder", { provider: integration?.name ?? "" })} className="mt-2 w-full rounded-lg border border-stroke-soft-200 bg-bg-white-0 px-3 py-2 text-[13px] outline-none focus:border-blue-500" />
-                      {integration?.auth.fields.map((field) => (
-                        <label key={field.key} className="mt-2 block">
-                          <span className="mb-1 block text-[11px] font-medium text-text-sub-600">{registry.fieldLabel(integration, field)}{field.required && <span className="text-red-500"> *</span>}</span>
-                          <input type={field.inputType} autoComplete="off" value={credentialValues[field.key] ?? ""} onChange={(event) => { setCredentialValues((current) => ({ ...current, [field.key]: event.target.value })); setError(null); }} placeholder={registry.fieldPlaceholder(integration, field)} className="w-full rounded-lg border border-stroke-soft-200 bg-bg-white-0 px-3 py-2 text-[13px] outline-none focus:border-blue-500" />
-                        </label>
-                      ))}
-                      <p className="mt-2 text-[11px] text-text-sub-600">{t("account.encryptedNote")}</p>
-                      <div className="mt-2 flex justify-end gap-2"><button type="button" onClick={() => { setAddingAccount(false); setCredentialValues({}); }} className="px-2 py-1.5 text-[12px] text-text-sub-600">{t("account.cancel")}</button><button type="button" onClick={() => void addAccount()} disabled={busy || integration?.auth.fields.some((field) => field.required && !credentialValues[field.key]?.trim())} className="rounded-md bg-blue-600 px-2.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-50">{busy ? t("account.verifying") : t("account.verifyConnect")}</button></div>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="mb-4 overflow-hidden rounded-xl border border-stroke-soft-200 bg-bg-white-0">
-                <h3 className="bg-bg-weak-50 px-4 py-3 text-[14px] font-semibold text-text-strong-950">{t("columnMapping.title")}</h3>
+                <h3 className="bg-bg-weak-50 px-4 py-3 text-[14px] font-semibold text-text-strong-950">{title}</h3>
                 <div className="space-y-4 p-4">
                   {standardInputs.length > 0 && (
                     <div className="space-y-4">
@@ -775,7 +740,8 @@ export default function EnrichmentDialog({
                   )}
                 </div>
               </section>
-
+  );
+  const runSection = (
               <section className="overflow-hidden rounded-xl border border-stroke-soft-200 bg-bg-white-0">
                 <h3 className="bg-bg-weak-50 px-4 py-3 text-[14px] font-semibold text-text-strong-950">{t("run.title")}</h3>
                 <div className="space-y-4 p-4 text-[13px]">
@@ -786,8 +752,136 @@ export default function EnrichmentDialog({
                   <div><p className="font-medium text-text-strong-950">{t("run.delay")}</p><label className="mt-2 flex items-center gap-2"><input type="radio" checked={!delayEnabled} onChange={() => setDelayEnabled(false)} />{t("run.immediately")}</label><label className="mt-2 flex items-center gap-2"><input type="radio" checked={delayEnabled} onChange={() => setDelayEnabled(true)} />{t("run.afterDelay")}</label>{delayEnabled && <label className="mt-2 flex items-center gap-2 pl-5"><input type="number" min={1} max={600} value={delaySeconds} onChange={(event) => setDelaySeconds(Math.max(1, Math.min(600, Number(event.target.value) || 1)))} className="w-20 rounded-lg border border-stroke-soft-200 px-2 py-1.5" />{t("run.seconds")}</label>}</div>
                 </div>
               </section>
+  );
+  const outputList = action && (
+              <div className="mt-4 space-y-2">{filteredOutputs.map((output) => { const selected = outputs.has(output.key); const alreadyAdded = column ? Object.prototype.hasOwnProperty.call((column.config as EnrichmentConfig).outputs, output.key) : false; return <button key={output.key} type="button" disabled={alreadyAdded} onClick={() => { setError(null); setOutputs((current) => { const next = new Set(current); if (selected) next.delete(output.key); else next.add(output.key); return next; }); }} className="flex w-full items-center gap-3 rounded-lg bg-bg-weak-50 px-3 py-3 text-left hover:bg-bg-weak-50 disabled:cursor-default">{selected ? <RiCheckboxLine className="size-5 text-blue-600 dark:text-blue-400" /> : <RiCheckboxBlankLine className="size-5 text-text-soft-400" />}<span className="min-w-0 flex-1"><span className="font-medium text-text-strong-950">{registry.outputName(integrationKey, actionKey, output)}</span>{output.example && <span className="ml-2 text-text-sub-600">{output.example}</span>}<span className="block text-[11px] text-text-soft-400">{alreadyAdded ? t("outputs.typeAlreadyAdded", { type: columnTypeLabel(output.columnType) }) : columnTypeLabel(output.columnType)}</span></span></button>; })}</div>
+  );
+  const errorAlert = error && <p role="alert" className="mx-5 mb-3 mt-3 shrink-0 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[13px] text-red-700 dark:text-red-400">{error}</p>;
+  const saveButtons = action && (
+    <>
+      <button type="button" onClick={() => void save(false)} disabled={busy || !outputs.size} className="rounded-lg border border-stroke-soft-200 px-3 py-2.5 text-[13px] font-semibold text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50">{column ? t("outputs.saveChanges") : t("outputs.saveWithoutRunning")}</button>
+      <button type="button" title={action.implemented ? undefined : t("outputs.notImplemented")} onClick={() => void save(true)} disabled={busy || !outputs.size || !action.implemented} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-semibold text-white disabled:bg-blue-300">{busy && <RiLoader4Line className="size-4 animate-spin" />}{t("outputs.saveAndRun")}</button>
+    </>
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px]" onClick={busy ? undefined : onClose} />
+      <div className={`absolute flex overflow-hidden bg-bg-white-0 shadow-2xl ring-1 ring-stroke-soft-200 ${action ? "inset-y-0 right-0 w-full max-w-[600px] flex-col" : "left-1/2 top-1/2 h-[min(760px,90vh)] w-[min(1000px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl"}`}>
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-stroke-soft-200 px-5">
+          <div className="flex min-w-0 items-center gap-2">
+            {action && <button type="button" onClick={() => step === "outputs" ? setStep("setup") : column || functionMode ? onClose() : setActionKey(null)} disabled={busy} className="rounded-lg border border-stroke-soft-200 p-2 text-text-sub-600 hover:bg-bg-weak-50"><RiArrowLeftLine className="size-5" /></button>}
+            {action && functionMode && <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-bg-weak-50 text-text-sub-600"><RiCpuLine className="size-5" /></span>}
+            {action && !functionMode && integration && <IntegrationIcon integration={integration} size={32} />}
+            <h2 className="truncate text-[18px] font-semibold text-text-strong-950">{action ? registry.actionName(integrationKey, action) : t("title")}</h2>
+          </div>
+          <button type="button" onClick={onClose} disabled={busy} className="rounded-lg p-1.5 text-text-sub-600 hover:bg-bg-weak-50 disabled:opacity-50"><RiCloseLine className="size-5" /></button>
+        </div>
+
+        {!action ? (
+          <Catalog
+            search={search}
+            setSearch={setSearch}
+            integrationKey={integrationKey}
+            setIntegrationKey={selectIntegration}
+            filteredActions={filteredActions}
+            chooseAction={chooseAction}
+            connectedIntegrationKeys={connectedIntegrationKeys}
+            connectionsLoading={connectionsLoading}
+            addingAccount={addingAccount}
+            onAddingAccountChange={setAddingAccount}
+            accountName={accountName}
+            onAccountNameChange={(next) => { setAccountName(next); setError(null); }}
+            credentialValues={credentialValues}
+            onCredentialChange={(key, value) =>
+              { setCredentialValues((current) => ({ ...current, [key]: value })); setError(null); }
+            }
+            busy={busy}
+            error={error}
+            onAddAccount={addAccount}
+          />
+        ) : functionMode ? (
+          <>
+            <div className="min-h-0 flex-1 overflow-y-auto bg-bg-weak-50/50 p-5">
+              <section className="mb-4 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-4">
+                <p className="text-[14px] font-semibold text-text-strong-950">{t("functionMode.actionLine", { name: registry.actionName(integrationKey, action) })}</p>
+                <p className="mt-1 text-[13px] text-text-sub-600">{registry.actionDescription(integrationKey, action)}</p>
+                <a href={action.docsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">{t("action.viewDocs")} <RiExternalLinkLine className="size-3.5" /></a>
+                <p className="mt-2 text-[11px] font-medium text-text-soft-400">{t("functionMode.subtitle")}</p>
+              </section>
+
+              {mappingSection(t("functionMode.inputTitle"))}
+
+              <section className="mb-4 overflow-hidden rounded-xl border border-stroke-soft-200 bg-bg-white-0">
+                <div className="flex items-center justify-between gap-3 bg-bg-weak-50 px-4 py-3">
+                  <h3 className="text-[14px] font-semibold text-text-strong-950">{t("functionMode.outputsTitle")}</h3>
+                  <span className="shrink-0 text-[12px] text-text-sub-600">{t("outputs.selected", { count: outputs.size })}</span>
+                </div>
+                <div className="p-4">
+                  <p className="text-[12px] leading-5 text-text-sub-600">{t("functionMode.outputsIntro")}</p>
+                  {outputList}
+                </div>
+              </section>
+
+              {runSection}
             </div>
-            {error && <p role="alert" className="mx-5 mb-3 mt-3 shrink-0 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[13px] text-red-700 dark:text-red-400">{error}</p>}
+            {errorAlert}
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-stroke-soft-200 bg-bg-white-0 px-5 py-4">{saveButtons}</div>
+          </>
+        ) : step === "setup" ? (
+          <>
+            <div className="min-h-0 flex-1 overflow-y-auto bg-bg-weak-50/50 p-5">
+              <section className="mb-4">
+                <h3 className="text-[13px] font-semibold text-text-strong-950">{t("action.title")}</h3>
+                <div className="mt-2 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-4">
+                  <p className="text-[14px] font-semibold text-text-strong-950">{integration?.name} <span className="mx-1 text-text-soft-400">›</span> {registry.actionName(integrationKey, action)}</p>
+                  <p className="mt-1 text-[13px] text-text-sub-600">{registry.actionDescription(integrationKey, action)}</p>
+                  <a href={action.docsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">{t("action.viewDocs")} <RiExternalLinkLine className="size-3.5" /></a>
+                  <p className="mt-2 text-[11px] font-medium text-text-soft-400">{t("action.categoryLine", { category: categoryName ?? "" })}</p>
+                </div>
+              </section>
+
+              <section className="mb-4 overflow-hidden rounded-xl border border-stroke-soft-200 bg-bg-white-0">
+                <h3 className="bg-bg-weak-50 px-4 py-3 text-[14px] font-semibold text-text-strong-950">{t("account.title")}</h3>
+                <div className="p-4">
+                  {connections.length > 0 && (
+                    <Select.Root size="small" value={connectionId} onValueChange={(next) => { setConnectionId(next); setError(null); }}>
+                      <Select.Trigger aria-label={t("account.aria", { provider: integration?.name ?? t("account.integrationFallback") })} className="w-full">
+                        <Select.Value />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="">{t("account.select", { provider: integration?.name ?? "" })}</Select.Item>
+                        {connections.map((connection) => (
+                          <Select.Item key={connection.id} value={connection.id} disabled={!connection.verified}>
+                            {connection.verified ? connection.name : t("account.needsVerification", { name: connection.name })}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Root>
+                  )}
+                  {integration && integration.auth.fields.length === 0 ? null : !addingAccount ? (
+                    <button type="button" onClick={() => setAddingAccount(true)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-medium text-white hover:bg-blue-700"><RiAddLine className="size-4" />{t("account.add")}</button>
+                  ) : (
+                    <div className="mt-2 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 p-3">
+                      <input value={accountName} onChange={(event) => { setAccountName(event.target.value); setError(null); }} placeholder={t("account.namePlaceholder", { provider: integration?.name ?? "" })} className="mt-2 w-full rounded-lg border border-stroke-soft-200 bg-bg-white-0 px-3 py-2 text-[13px] outline-none focus:border-blue-500" />
+                      {integration?.auth.fields.map((field) => (
+                        <label key={field.key} className="mt-2 block">
+                          <span className="mb-1 block text-[11px] font-medium text-text-sub-600">{registry.fieldLabel(integration, field)}{field.required && <span className="text-red-500"> *</span>}</span>
+                          <input type={field.inputType} autoComplete="off" value={credentialValues[field.key] ?? ""} onChange={(event) => { setCredentialValues((current) => ({ ...current, [field.key]: event.target.value })); setError(null); }} placeholder={registry.fieldPlaceholder(integration, field)} className="w-full rounded-lg border border-stroke-soft-200 bg-bg-white-0 px-3 py-2 text-[13px] outline-none focus:border-blue-500" />
+                        </label>
+                      ))}
+                      <p className="mt-2 text-[11px] text-text-sub-600">{t("account.encryptedNote")}</p>
+                      <div className="mt-2 flex justify-end gap-2"><button type="button" onClick={() => { setAddingAccount(false); setCredentialValues({}); }} className="px-2 py-1.5 text-[12px] text-text-sub-600">{t("account.cancel")}</button><button type="button" onClick={() => void addAccount()} disabled={busy || integration?.auth.fields.some((field) => field.required && !credentialValues[field.key]?.trim())} className="rounded-md bg-blue-600 px-2.5 py-1.5 text-[12px] font-medium text-white disabled:opacity-50">{busy ? t("account.verifying") : t("account.verifyConnect")}</button></div>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {mappingSection(t("columnMapping.title"))}
+
+              {runSection}
+            </div>
+            {errorAlert}
             <div className="flex shrink-0 items-center justify-between border-t border-stroke-soft-200 bg-bg-white-0 px-5 py-4"><span className="text-[12px] text-text-sub-600">{configuredConnection ? t("footer.accountConnected") : t("footer.apiKeyRequired")}</span><button type="button" onClick={continueToOutputs} disabled={busy || missingInputs || !configuredConnection} className="rounded-lg bg-blue-600 px-4 py-2.5 text-[13px] font-semibold text-white disabled:bg-blue-300">{t("footer.continue")}</button></div>
           </>
         ) : (
@@ -795,10 +889,10 @@ export default function EnrichmentDialog({
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               <div className="flex items-start justify-between gap-3"><div><h3 className="text-[18px] font-semibold text-text-strong-950">{t("outputs.title")}</h3><p className="mt-2 text-[13px] leading-5 text-text-sub-600">{t("outputs.intro")}</p></div><span className="shrink-0 text-[13px] text-text-sub-600">{t("outputs.selected", { count: outputs.size })}</span></div>
               <label className="mt-5 flex items-center gap-2 rounded-lg border border-stroke-soft-200 px-3 py-2.5"><RiSearchLine className="size-4 text-text-soft-400" /><input value={outputSearch} onChange={(event) => setOutputSearch(event.target.value)} placeholder={t("outputs.searchPlaceholder")} className="min-w-0 flex-1 text-[13px] outline-none" /></label>
-              <div className="mt-4 space-y-2">{filteredOutputs.map((output) => { const selected = outputs.has(output.key); const alreadyAdded = column ? Object.prototype.hasOwnProperty.call((column.config as EnrichmentConfig).outputs, output.key) : false; return <button key={output.key} type="button" disabled={alreadyAdded} onClick={() => { setError(null); setOutputs((current) => { const next = new Set(current); if (selected) next.delete(output.key); else next.add(output.key); return next; }); }} className="flex w-full items-center gap-3 rounded-lg bg-bg-weak-50 px-3 py-3 text-left hover:bg-bg-weak-50 disabled:cursor-default">{selected ? <RiCheckboxLine className="size-5 text-blue-600 dark:text-blue-400" /> : <RiCheckboxBlankLine className="size-5 text-text-soft-400" />}<span className="min-w-0 flex-1"><span className="font-medium text-text-strong-950">{registry.outputName(integrationKey, actionKey, output)}</span>{output.example && <span className="ml-2 text-text-sub-600">{output.example}</span>}<span className="block text-[11px] text-text-soft-400">{alreadyAdded ? t("outputs.typeAlreadyAdded", { type: columnTypeLabel(output.columnType) }) : columnTypeLabel(output.columnType)}</span></span></button>; })}</div>
+              {outputList}
             </div>
-            {error && <p role="alert" className="mx-5 mb-3 mt-3 shrink-0 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[13px] text-red-700 dark:text-red-400">{error}</p>}
-            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-stroke-soft-200 bg-bg-white-0 px-5 py-4"><button type="button" onClick={() => void save(false)} disabled={busy || !outputs.size} className="rounded-lg border border-stroke-soft-200 px-3 py-2.5 text-[13px] font-semibold text-text-strong-950 hover:bg-bg-weak-50 disabled:opacity-50">{column ? t("outputs.saveChanges") : t("outputs.saveWithoutRunning")}</button><button type="button" title={action.implemented ? undefined : t("outputs.notImplemented")} onClick={() => void save(true)} disabled={busy || !outputs.size || !action.implemented} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-[13px] font-semibold text-white disabled:bg-blue-300">{busy && <RiLoader4Line className="size-4 animate-spin" />}{t("outputs.saveAndRun")}</button></div>
+            {errorAlert}
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-stroke-soft-200 bg-bg-white-0 px-5 py-4">{saveButtons}</div>
           </>
         )}
       </div>
@@ -858,11 +952,10 @@ function Catalog({
         <span className="border-b-2 border-blue-600 px-1 pb-3 text-[14px] font-semibold text-blue-600 dark:text-blue-400">{t("catalog.tabIntegrations")}</span>
         <span className="px-1 pb-3 text-[14px] text-text-disabled-300">{t("catalog.tabDiscover")}</span>
         <span className="px-1 pb-3 text-[14px] text-text-disabled-300">{t("catalog.tabTemplates")}</span>
-        <span className="px-1 pb-3 text-[14px] text-text-disabled-300">{t("catalog.tabFunctions")}</span>
       </div>
       <div className="flex min-h-0 flex-1">
         <aside className="w-64 shrink-0 overflow-y-auto border-r border-stroke-soft-200 p-3">
-          {INTEGRATIONS.map((candidate) => {
+          {CATALOG_INTEGRATIONS.map((candidate) => {
             const candidateConnected = connectedIntegrationKeys.has(candidate.key);
             return (
               <button key={candidate.key} type="button" onClick={() => setIntegrationKey(candidate.key)} className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[14px] font-medium ${candidate.key === integrationKey ? "bg-bg-weak-50" : "hover:bg-bg-weak-50"}`}>

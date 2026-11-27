@@ -22,7 +22,8 @@ import {
 import type { RemixiconComponentType } from "@remixicon/react";
 import type { GridColumn } from "@/lib/grid/schema";
 import type { ColumnType, StaticColumnType } from "@/lib/grid/types";
-import { columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
+import { isFunctionKey } from "@/lib/integrations/catalog";
+import { FUNCTION_ICON, columnTypeMeta, useColumnTypeLabel } from "./columnTypes";
 import { effectiveColumnType } from "@/lib/grid/value-types";
 
 const CHANGEABLE_TYPES: StaticColumnType[] = [
@@ -98,6 +99,9 @@ export default function ColumnMenu({
 
   const usedIn = columns.filter((candidate) => candidate.dependsOn.includes(column.key));
   const valueType = effectiveColumnType(column);
+  // A function is stored as an enrichment column; the menu names it for what the person added.
+  const isFunction = column.type === "enrichment"
+    && isFunctionKey((column.config as { integrationKey?: string }).integrationKey);
   // Output columns are shaped by their source; enrichment and AI columns have
   // no plain-column form to turn into.
   const isOutput = column.type === "integration_output" || column.type === "ai_output";
@@ -240,7 +244,7 @@ export default function ColumnMenu({
       </HoverSubmenu>
 
       <Divider />
-      <MenuButton icon={columnTypeMeta(valueType).icon} label={typeLabel(valueType)} suffix={canChangeType} active={showTypes} onClick={canChangeType ? () => setShowTypes((value) => !value) : undefined} />
+      <MenuButton icon={isFunction ? FUNCTION_ICON : columnTypeMeta(valueType).icon} label={isFunction ? t("typeFunction") : typeLabel(valueType)} suffix={canChangeType} active={showTypes} onClick={canChangeType ? () => setShowTypes((value) => !value) : undefined} />
       {showTypes && canChangeType && (
         <div className="ml-7 border-l border-stroke-soft-200 pl-1">
           {CHANGEABLE_TYPES.map((type) => {
